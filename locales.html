@@ -11,27 +11,33 @@
   <div class="container">
     <h1 class="my-4">Gestión de Menús</h1>
     
-    <!-- Login/Registro para Locales -->
+    <!-- Login/Registro con Botones -->
     <div id="auth-section" class="mb-4">
-      <h2>Login / Registro Local</h2>
-      <form id="local-register-form" class="mb-3">
+      <h2>Acceso Local</h2>
+      <button id="show-register" class="btn btn-secondary me-2">Registrar Local</button>
+      <button id="show-login" class="btn btn-primary">Login Local</button>
+      <form id="local-register-form" class="mt-3 d-none">
         <input type="text" id="reg-local-name" placeholder="Nombre del Local" class="form-control mb-2" required>
         <input type="email" id="reg-local-email" placeholder="Email" class="form-control mb-2" required>
         <input type="password" id="reg-local-password" placeholder="Contraseña" class="form-control mb-2" required>
-        <button type="submit" class="btn btn-secondary">Registrar Local</button>
+        <button type="submit" class="btn btn-secondary">Confirmar Registro</button>
       </form>
-      <form id="local-login-form">
+      <form id="local-login-form" class="mt-3 d-none">
         <input type="email" id="login-local-email" placeholder="Email" class="form-control mb-2" required>
         <input type="password" id="login-local-password" placeholder="Contraseña" class="form-control mb-2" required>
-        <button type="submit" class="btn btn-primary">Login Local</button>
+        <button type="submit" class="btn btn-primary">Confirmar Login</button>
       </form>
       <div id="auth-status" class="mt-2"></div>
     </div>
     
-    <form id="menu-form" class="mb-4">
+    <form id="menu-form" class="mb-4 d-none">
       <div class="mb-3">
-        <label for="titulo" class="form-label">Título del Ítem</label>
-        <input type="text" class="form-control" id="titulo" required>
+        <label for="nombre" class="form-label">Nombre del Ítem</label>
+        <input type="text" class="form-control" id="nombre" required>
+      </div>
+      <div class="mb-3">
+        <label for="categoria" class="form-label">Categoría</label>
+        <input type="text" class="form-control" id="categoria" required>
       </div>
       <div class="mb-3">
         <label for="descripcion" class="form-label">Descripción</label>
@@ -39,15 +45,30 @@
       </div>
       <div class="mb-3">
         <label for="precio" class="form-label">Precio</label>
-        <input type="number" class="form-control" id="precio" required>
+        <input type="number" class="form-control" id="precio" step="0.01" required>
       </div>
       <div class="mb-3">
-        <label for="foto_url" class="form-label">URL de Foto</label>
-        <input type="url" class="form-control" id="foto_url" required>
+        <label for="disponibilidad" class="form-label">Disponibilidad</label>
+        <select class="form-control" id="disponibilidad" required>
+          <option value="Sí">Sí</option>
+          <option value="No">No</option>
+        </select>
       </div>
       <div class="mb-3">
-        <label for="tipo_comida" class="form-label">Tipo de Comida</label>
-        <input type="text" class="form-control" id="tipo_comida" required>
+        <label for="tamano_porcion" class="form-label">Tamaño/Porción</label>
+        <input type="text" class="form-control" id="tamano_porcion" required>
+      </div>
+      <div class="mb-3">
+        <label for="variantes" class="form-label">Variantes/Opciones</label>
+        <input type="text" class="form-control" id="variantes" required>
+      </div>
+      <div class="mb-3">
+        <label for="tiempo_preparacion" class="form-label">Tiempo de Preparación (min)</label>
+        <input type="number" class="form-control" id="tiempo_preparacion" required>
+      </div>
+      <div class="mb-3">
+        <label for="foto" class="form-label">Foto del Ítem</label>
+        <input type="file" class="form-control" id="foto" accept="image/*" required>
       </div>
       <button type="submit" class="btn btn-primary">Agregar Ítem</button>
     </form>
@@ -55,15 +76,26 @@
   </div>
 
   <script>
-    const API_URL = 'YOUR_APPS_SCRIPT_URL';
-    let localToken = localStorage.getItem('localToken');
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+    const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
+    const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET'; // Reemplaza con tu preset unsigned
 
+    let localToken = localStorage.getItem('localToken');
     if (localToken) {
       document.getElementById('auth-section').innerHTML = '<p>Logueado como local. <button id="logout" class="btn btn-danger">Logout</button></p>';
+      document.getElementById('menu-form').classList.remove('d-none');
       document.getElementById('logout').addEventListener('click', () => { localStorage.removeItem('localToken'); location.reload(); });
-    } else {
-      document.getElementById('menu-form').style.display = 'none'; // Ocultar form si no logueado
     }
+
+    // Mostrar/Ocultar formularios
+    document.getElementById('show-register').addEventListener('click', () => {
+      document.getElementById('local-register-form').classList.toggle('d-none');
+      document.getElementById('local-login-form').classList.add('d-none');
+    });
+    document.getElementById('show-login').addEventListener('click', () => {
+      document.getElementById('local-login-form').classList.toggle('d-none');
+      document.getElementById('local-register-form').classList.add('d-none');
+    });
 
     // Registro Local
     document.getElementById('local-register-form').addEventListener('submit', async (e) => {
@@ -73,9 +105,19 @@
         email: document.getElementById('reg-local-email').value,
         password: document.getElementById('reg-local-password').value
       };
-      const response = await fetch(`${API_URL}?action=registerLocal`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } });
-      const result = await response.json();
-      document.getElementById('auth-status').innerHTML = result.success ? '<div class="alert alert-success">Local registrado!</div>' : '<div class="alert alert-danger">Error</div>';
+      try {
+        const response = await fetch(`${API_URL}?action=registerLocal`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+        document.getElementById('auth-status').innerHTML = result.success
+          ? '<div class="alert alert-success">Local registrado!</div>'
+          : '<div class="alert alert-danger">Error al registrar</div>';
+      } catch (error) {
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
+      }
     });
 
     // Login Local
@@ -85,32 +127,81 @@
         email: document.getElementById('login-local-email').value,
         password: document.getElementById('login-local-password').value
       };
-      const response = await fetch(`${API_URL}?action=loginLocal`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } });
-      const result = await response.json();
-      if (result.success) {
-        localStorage.setItem('localToken', result.localId);
-        location.reload();
-      } else {
-        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales inválidas</div>';
+      try {
+        const response = await fetch(`${API_URL}?action=loginLocal`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+        if (result.success) {
+          localStorage.setItem('localToken', result.localId);
+          location.reload();
+        } else {
+          document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales inválidas</div>';
+        }
+      } catch (error) {
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
       }
     });
 
-    // Agregar ítem (require login)
+    // Subir imagen a Cloudinary y agregar ítem
     document.getElementById('menu-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!localToken) return alert('Debes loguearte como local');
+      
+      const fileInput = document.getElementById('foto');
+      const file = fileInput.files[0];
+      let imagenUrl = '';
+      
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        
+        try {
+          const response = await fetch(CLOUDINARY_URL, {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (result.secure_url) {
+            imagenUrl = result.secure_url;
+          } else {
+            throw new Error('Error en subida');
+          }
+        } catch (error) {
+          document.getElementById('status').innerHTML = `<div class="alert alert-danger">Error subiendo imagen: ${error.message}</div>`;
+          return;
+        }
+      }
+
       const menuData = {
         localId: localToken,
-        titulo: document.getElementById('titulo').value,
+        nombre: document.getElementById('nombre').value,
+        categoria: document.getElementById('categoria').value,
         descripcion: document.getElementById('descripcion').value,
         precio: parseFloat(document.getElementById('precio').value),
-        foto_url: document.getElementById('foto_url').value,
-        tipo_comida: document.getElementById('tipo_comida').value
+        disponibilidad: document.getElementById('disponibilidad').value,
+        tamano_porcion: document.getElementById('tamano_porcion').value,
+        variantes: document.getElementById('variantes').value,
+        tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value),
+        imagen_url: imagenUrl
       };
-      const response = await fetch(`${API_URL}?action=addMenuItem`, { method: 'POST', body: JSON.stringify(menuData), headers: { 'Content-Type': 'application/json' } });
-      const result = await response.json();
-      document.getElementById('status').innerHTML = `<div class="alert alert-success">Ítem agregado: ${menuData.titulo}</div>`;
-      document.getElementById('menu-form').reset();
+      
+      try {
+        const response = await fetch(`${API_URL}?action=addMenuItem`, {
+          method: 'POST',
+          body: JSON.stringify(menuData),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+        document.getElementById('status').innerHTML = `<div class="alert alert-success">Ítem agregado: ${menuData.nombre}</div>`;
+        document.getElementById('menu-form').reset();
+        fileInput.value = '';
+      } catch (error) {
+        document.getElementById('status').innerHTML = `<div class="alert alert-danger">Error al agregar ítem</div>`;
+      }
     });
   </script>
 </body>
