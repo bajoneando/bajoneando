@@ -109,14 +109,16 @@
         const response = await fetch(`${API_URL}?action=registerLocal`, {
           method: 'POST',
           body: JSON.stringify(data),
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
+          credentials: 'same-origin'
         });
         const result = await response.json();
         document.getElementById('auth-status').innerHTML = result.success
-          ? '<div class="alert alert-success">Local registrado!</div>'
-          : '<div class="alert alert-danger">Error al registrar</div>';
+          ? '<div class="alert alert-success">Local registrado con éxito!</div>'
+          : '<div class="alert alert-danger">Error al registrar: ' + (result.error || 'Inténtalo de nuevo') + '</div>';
       } catch (error) {
-        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión: ' + error.message + '</div>';
       }
     });
 
@@ -131,7 +133,9 @@
         const response = await fetch(`${API_URL}?action=loginLocal`, {
           method: 'POST',
           body: JSON.stringify(data),
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
+          credentials: 'same-origin'
         });
         const result = await response.json();
         if (result.success) {
@@ -141,7 +145,7 @@
           document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales inválidas</div>';
         }
       } catch (error) {
-        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión: ' + error.message + '</div>';
       }
     });
 
@@ -168,7 +172,7 @@
           if (result.secure_url) {
             imagenUrl = result.secure_url;
           } else {
-            throw new Error('Error en subida');
+            throw new Error('Error al subir imagen');
           }
         } catch (error) {
           document.getElementById('status').innerHTML = `<div class="alert alert-danger">Error subiendo imagen: ${error.message}</div>`;
@@ -193,14 +197,16 @@
         const response = await fetch(`${API_URL}?action=addMenuItem`, {
           method: 'POST',
           body: JSON.stringify(menuData),
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
+          credentials: 'same-origin'
         });
         const result = await response.json();
         document.getElementById('status').innerHTML = `<div class="alert alert-success">Ítem agregado: ${menuData.nombre}</div>`;
         document.getElementById('menu-form').reset();
         fileInput.value = '';
       } catch (error) {
-        document.getElementById('status').innerHTML = `<div class="alert alert-danger">Error al agregar ítem</div>`;
+        document.getElementById('status').innerHTML = `<div class="alert alert-danger">Error al agregar ítem: ${error.message}</div>`;
       }
     });
   </script>
