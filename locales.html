@@ -1,1 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plataforma de Comidas - Gestión de Locales</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="my-4">Gestión de Menús</h1>
+    
+    <!-- Login/Registro para Locales -->
+    <div id="auth-section" class="mb-4">
+      <h2>Login / Registro Local</h2>
+      <form id="local-register-form" class="mb-3">
+        <input type="text" id="reg-local-name" placeholder="Nombre del Local" class="form-control mb-2" required>
+        <input type="email" id="reg-local-email" placeholder="Email" class="form-control mb-2" required>
+        <input type="password" id="reg-local-password" placeholder="Contraseña" class="form-control mb-2" required>
+        <button type="submit" class="btn btn-secondary">Registrar Local</button>
+      </form>
+      <form id="local-login-form">
+        <input type="email" id="login-local-email" placeholder="Email" class="form-control mb-2" required>
+        <input type="password" id="login-local-password" placeholder="Contraseña" class="form-control mb-2" required>
+        <button type="submit" class="btn btn-primary">Login Local</button>
+      </form>
+      <div id="auth-status" class="mt-2"></div>
+    </div>
+    
+    <form id="menu-form" class="mb-4">
+      <div class="mb-3">
+        <label for="titulo" class="form-label">Título del Ítem</label>
+        <input type="text" class="form-control" id="titulo" required>
+      </div>
+      <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea class="form-control" id="descripcion" required></textarea>
+      </div>
+      <div class="mb-3">
+        <label for="precio" class="form-label">Precio</label>
+        <input type="number" class="form-control" id="precio" required>
+      </div>
+      <div class="mb-3">
+        <label for="foto_url" class="form-label">URL de Foto</label>
+        <input type="url" class="form-control" id="foto_url" required>
+      </div>
+      <div class="mb-3">
+        <label for="tipo_comida" class="form-label">Tipo de Comida</label>
+        <input type="text" class="form-control" id="tipo_comida" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Agregar Ítem</button>
+    </form>
+    <div id="status" class="mt-3"></div>
+  </div>
 
+  <script>
+    const API_URL = 'YOUR_APPS_SCRIPT_URL';
+    let localToken = localStorage.getItem('localToken');
+
+    if (localToken) {
+      document.getElementById('auth-section').innerHTML = '<p>Logueado como local. <button id="logout" class="btn btn-danger">Logout</button></p>';
+      document.getElementById('logout').addEventListener('click', () => { localStorage.removeItem('localToken'); location.reload(); });
+    } else {
+      document.getElementById('menu-form').style.display = 'none'; // Ocultar form si no logueado
+    }
+
+    // Registro Local
+    document.getElementById('local-register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        nombre: document.getElementById('reg-local-name').value,
+        email: document.getElementById('reg-local-email').value,
+        password: document.getElementById('reg-local-password').value
+      };
+      const response = await fetch(`${API_URL}?action=registerLocal`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } });
+      const result = await response.json();
+      document.getElementById('auth-status').innerHTML = result.success ? '<div class="alert alert-success">Local registrado!</div>' : '<div class="alert alert-danger">Error</div>';
+    });
+
+    // Login Local
+    document.getElementById('local-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        email: document.getElementById('login-local-email').value,
+        password: document.getElementById('login-local-password').value
+      };
+      const response = await fetch(`${API_URL}?action=loginLocal`, { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } });
+      const result = await response.json();
+      if (result.success) {
+        localStorage.setItem('localToken', result.localId);
+        location.reload();
+      } else {
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales inválidas</div>';
+      }
+    });
+
+    // Agregar ítem (require login)
+    document.getElementById('menu-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!localToken) return alert('Debes loguearte como local');
+      const menuData = {
+        localId: localToken,
+        titulo: document.getElementById('titulo').value,
+        descripcion: document.getElementById('descripcion').value,
+        precio: parseFloat(document.getElementById('precio').value),
+        foto_url: document.getElementById('foto_url').value,
+        tipo_comida: document.getElementById('tipo_comida').value
+      };
+      const response = await fetch(`${API_URL}?action=addMenuItem`, { method: 'POST', body: JSON.stringify(menuData), headers: { 'Content-Type': 'application/json' } });
+      const result = await response.json();
+      document.getElementById('status').innerHTML = `<div class="alert alert-success">Ítem agregado: ${menuData.titulo}</div>`;
+      document.getElementById('menu-form').reset();
+    });
+  </script>
+</body>
+</html>
