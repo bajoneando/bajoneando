@@ -109,6 +109,46 @@
             max-height: 100%;
             border-radius: 10px;
         }
+        #menu-display {
+            margin-top: 40px;
+        }
+        #menu-display h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .menu-items {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .menu-item {
+            width: 200px;
+            margin: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .menu-item img {
+            max-width: 100%;
+            border-radius: 10px;
+        }
+        .menu-item h3 {
+            margin: 10px 0 5px;
+            font-size: 18px;
+        }
+        .menu-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .no-results {
+            text-align: center;
+            color: #666;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -131,21 +171,99 @@
         <div class="suggestions">
             <h2>Sugerencias</h2>
             <div class="suggestion-items">
-                <!-- Ejemplos de sugerencias con placeholders para imágenes de logos -->
-                <div class="suggestion">
-                    <img src="https://via.placeholder.com/200?text=Local+1" alt="Logo Local 1">
-                </div>
-                <div class="suggestion">
-                    <img src="https://via.placeholder.com/200?text=Local+2" alt="Logo Local 2">
-                </div>
-                <div class="suggestion">
-                    <img src="https://via.placeholder.com/200?text=Local+3" alt="Logo Local 3">
-                </div>
-                <div class="suggestion">
-                    <img src="https://via.placeholder.com/200?text=Local+4" alt="Logo Local 4">
-                </div>
+                <!-- Se llenará dinámicamente -->
             </div>
         </div>
+        <div id="menu-display" style="display: none;"></div>
     </main>
+    <script>
+        const scriptUrl = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/exec'; // Reemplaza con la URL de tu app web
+
+        window.addEventListener('load', () => {
+            fetch(scriptUrl + '?action=getFilters')
+                .then(response => response.json())
+                .then(data => {
+                    const suggestionItems = document.querySelector('.suggestion-items');
+                    suggestionItems.innerHTML = '';
+                    data.locals.forEach(local => {
+                        const suggestionDiv = document.createElement('div');
+                        suggestionDiv.className = 'suggestion';
+                        suggestionDiv.dataset.local = local.local_id;
+                        suggestionDiv.innerHTML = `
+                            <img src="https://via.placeholder.com/200?text=${encodeURIComponent(local.nombre_local)}" alt="${local.nombre_local}">
+                        `;
+                        suggestionItems.appendChild(suggestionDiv);
+                    });
+                })
+                .catch(error => console.error('Error loading filters:', error));
+
+            document.querySelector('.categories').addEventListener('click', (event) => {
+                const category = event.target.closest('.category');
+                if (category) {
+                    const categoryText = category.textContent.trim();
+                    fetchMenus(categoryText, null);
+                }
+            });
+
+            document.querySelector('.suggestion-items').addEventListener('click', (event) => {
+                const suggestion = event.target.closest('.suggestion');
+                if (suggestion) {
+                    const localId = suggestion.dataset.local;
+                    fetchMenus(null, localId);
+                }
+            });
+        });
+
+        function fetchMenus(type, local) {
+            let params = '?action=getMenus';
+            if (type) params += '&type=' + encodeURIComponent(type);
+            if (local) params += '&local=' + encodeURIComponent(local);
+            fetch(scriptUrl + params)
+                .then(response => response.json())
+                .then(menus => displayMenus(menus, type || local))
+                .catch(error => {
+                    console.error('Error fetching menus:', error);
+                    displayMenus([], type || local);
+                });
+        }
+
+        function displayMenus(menus, filter) {
+            const container = document.getElementById('menu-display');
+            container.innerHTML = '';
+            const h2 = document.createElement('h2');
+            h2.textContent = filter ? `Menús - ${filter}` : 'Menús';
+            container.appendChild(h2);
+            const itemsDiv = document.createElement('div');
+            itemsDiv.className = 'menu-items';
+            container.appendChild(itemsDiv);
+
+            if (menus.length === 0) {
+                const noResults = document.createElement('p');
+                noResults.className = 'no-results';
+                noResults.textContent = 'No se encontraron menús para esta selección.';
+                itemsDiv.appendChild(noResults);
+            } else {
+                menus.forEach(menu => {
+                    const menuDiv = document.createElement('div');
+                    menuDiv.className = 'menu-item';
+                    const img = document.createElement('img');
+                    img.src = menu.imagen_url || 'https://via.placeholder.com/200?text=Sin+Imagen';
+                    img.alt = menu.nombre;
+                    menuDiv.appendChild(img);
+                    const h3 = document.createElement('h3');
+                    h3.textContent = menu.nombre;
+                    menuDiv.appendChild(h3);
+                    const descP = document.createElement('p');
+                    descP.textContent = menu.descripcion || 'Sin descripción';
+                    menuDiv.appendChild(descP);
+                    const priceP = document.createElement('p');
+                    priceP.textContent = `Precio: $${menu.precio}`;
+                    menuDiv.appendChild(priceP);
+                    itemsDiv.appendChild(menuDiv);
+                });
+            }
+            container.style.display = 'block';
+        }
+    </script>
 </body>
 </html>
