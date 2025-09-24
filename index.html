@@ -1,1 +1,151 @@
-
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bajoneando - Plataforma de Comidas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f8f8;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #fff;
+            padding: 10px 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .logo {
+            width: 150px; /* Espacio para el logo */
+            height: 50px;
+            background-color: #ddd; /* Placeholder para el logo */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+            color: #666;
+        }
+        .search-bar {
+            flex: 1;
+            max-width: 400px;
+            margin: 0 20px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .profile {
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+        }
+        main {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .categories {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        .category {
+            width: 150px;
+            height: 150px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px;
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        .suggestions {
+            margin-top: 40px;
+        }
+        .suggestions h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .suggestion-items {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .suggestion {
+            width: 200px;
+            height: 200px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        .suggestion img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Logo Aquí</div>
+        <div class="search-bar">
+            <input type="text" placeholder="Buscar Locales">
+        </div>
+        <div class="profile">Mi Perfil</div>
+    </header>
+    <main>
+        <h1>Hola! ¿Qué se te antoja comer?</h1>
+        <div class="categories">
+            <div class="category">Hamburguesas</div>
+            <div class="category">Pizza</div>
+            <div class="category">Helados</div>
+            <div class="category">Postres</div>
+            <div class="category">Merienda</div>
+        </div>
+        <div class="suggestions">
+            <h2>Sugerencias</h2>
+            <div class="suggestion-items">
+                <!-- Ejemplos de sugerencias con placeholders para imágenes de logos -->
+                <div class="suggestion">
+                    <img src="https://via.placeholder.com/200?text=Local+1" alt="Logo Local 1">
+                </div>
+                <div class="suggestion">
+                    <img src="https://via.placeholder.com/200?text=Local+2" alt="Logo Local 2">
+                </div>
+                <div class="suggestion">
+                    <img src="https://via.placeholder.com/200?text=Local+3" alt="Logo Local 3">
+                </div>
+                <div class="suggestion">
+                    <img src="https://via.placeholder.com/200?text=Local+4" alt="Logo Local 4">
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
