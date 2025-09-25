@@ -20,9 +20,9 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .logo {
-            width: 150px;
+            width: 150px; /* Espacio para el logo */
             height: 50px;
-            background-color: #ddd;
+            background-color: #ddd; /* Placeholder para el logo */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -144,7 +144,7 @@
             margin: 5px 0;
             color: #666;
         }
-        .no-results, .error-message {
+        .no-results {
             text-align: center;
             color: #666;
             font-size: 16px;
@@ -162,7 +162,11 @@
     <main>
         <h1>Hola! ¿Qué se te antoja comer?</h1>
         <div class="categories">
-            <!-- Se llenará dinámicamente -->
+            <div class="category">Hamburguesas</div>
+            <div class="category">Pizza</div>
+            <div class="category">Helados</div>
+            <div class="category">Postres</div>
+            <div class="category">Merienda</div>
         </div>
         <div class="suggestions">
             <h2>Sugerencias</h2>
@@ -176,20 +180,10 @@
         const scriptUrl = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/exec'; // Reemplaza con la URL de tu app web
 
         window.addEventListener('load', () => {
+            // Cargar locales para sugerencias
             fetch(scriptUrl + '?action=getFilters')
                 .then(response => response.json())
                 .then(data => {
-                    // Cargar categorías dinámicamente
-                    const categoriesDiv = document.querySelector('.categories');
-                    categoriesDiv.innerHTML = '';
-                    data.types.forEach(type => {
-                        const categoryDiv = document.createElement('div');
-                        categoryDiv.className = 'category';
-                        categoryDiv.textContent = type;
-                        categoriesDiv.appendChild(categoryDiv);
-                    });
-
-                    // Cargar sugerencias dinámicamente
                     const suggestionItems = document.querySelector('.suggestion-items');
                     suggestionItems.innerHTML = '';
                     data.locals.forEach(local => {
@@ -202,51 +196,50 @@
                         suggestionItems.appendChild(suggestionDiv);
                     });
                 })
-                .catch(error => {
-                    console.error('Error loading filters:', error);
-                    document.querySelector('.categories').innerHTML = '<p class="error-message">Error al cargar categorías</p>';
-                });
+                .catch(error => console.error('Error loading filters:', error));
+        });
 
-            document.querySelector('.categories').addEventListener('click', (event) => {
-                const category = event.target.closest('.category');
-                if (category) {
-                    const categoryText = category.textContent.trim();
-                    console.log('Fetching menus for category:', categoryText);
-                    fetchMenus(categoryText, null);
-                }
-            });
+        // Event listener para categorías
+        document.querySelector('.categories').addEventListener('click', (event) => {
+            const category = event.target.closest('.category');
+            if (category) {
+                const categoryText = category.textContent.trim();
+                console.log('Categoría seleccionada:', categoryText); // Depuración
+                fetchMenus(categoryText, null);
+            }
+        });
 
-            document.querySelector('.suggestion-items').addEventListener('click', (event) => {
-                const suggestion = event.target.closest('.suggestion');
-                if (suggestion) {
-                    const localId = suggestion.dataset.local;
-                    console.log('Fetching menus for local:', localId);
-                    fetchMenus(null, localId);
-                }
-            });
+        // Event listener para sugerencias
+        document.querySelector('.suggestion-items').addEventListener('click', (event) => {
+            const suggestion = event.target.closest('.suggestion');
+            if (suggestion) {
+                const localId = suggestion.dataset.local;
+                console.log('Local seleccionado:', localId); // Depuración
+                fetchMenus(null, localId);
+            }
         });
 
         function fetchMenus(type, local) {
             let params = '?action=getMenus';
             if (type) params += '&type=' + encodeURIComponent(type);
             if (local) params += '&local=' + encodeURIComponent(local);
-            console.log('Fetch URL:', scriptUrl + params);
+            console.log('URL de solicitud:', scriptUrl + params); // Depuración
             fetch(scriptUrl + params)
                 .then(response => {
-                    if (!response.ok) throw new Error('Network response was not ok');
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
                     return response.json();
                 })
                 .then(menus => {
-                    console.log('Menus received:', menus);
+                    console.log('Menús recibidos:', menus); // Depuración
                     displayMenus(menus, type || local);
                 })
                 .catch(error => {
                     console.error('Error fetching menus:', error);
-                    displayMenus([], type || local, 'Error al cargar los menús. Por favor, intenta de nuevo.');
+                    displayMenus([], type || local);
                 });
         }
 
-        function displayMenus(menus, filter, errorMessage = null) {
+        function displayMenus(menus, filter) {
             const container = document.getElementById('menu-display');
             container.innerHTML = '';
             const h2 = document.createElement('h2');
@@ -256,12 +249,7 @@
             itemsDiv.className = 'menu-items';
             container.appendChild(itemsDiv);
 
-            if (errorMessage) {
-                const errorP = document.createElement('p');
-                errorP.className = 'error-message';
-                errorP.textContent = errorMessage;
-                itemsDiv.appendChild(errorP);
-            } else if (menus.length === 0) {
+            if (menus.length === 0) {
                 const noResults = document.createElement('p');
                 noResults.className = 'no-results';
                 noResults.textContent = 'No se encontraron menús para esta selección.';
@@ -273,7 +261,6 @@
                     const img = document.createElement('img');
                     img.src = menu.imagen_url || 'https://via.placeholder.com/200?text=Sin+Imagen';
                     img.alt = menu.nombre;
-                    img.onerror = () => { img.src = 'https://via.placeholder.com/200?text=Sin+Imagen'; };
                     menuDiv.appendChild(img);
                     const h3 = document.createElement('h3');
                     h3.textContent = menu.nombre;
