@@ -177,13 +177,17 @@
         <div id="menu-display" style="display: none;"></div>
     </main>
     <script>
-        const scriptUrl = 'https://script.google.com/macros/s/YOUR_WEB_APP_ID/exec'; // Reemplaza con la URL de tu app web
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
 
         window.addEventListener('load', () => {
             // Cargar locales para sugerencias
             fetch(scriptUrl + '?action=getFilters')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al cargar filtros: ' + response.status);
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Filtros recibidos:', data); // Depuración
                     const suggestionItems = document.querySelector('.suggestion-items');
                     suggestionItems.innerHTML = '';
                     data.locals.forEach(local => {
@@ -226,7 +230,7 @@
             console.log('URL de solicitud:', scriptUrl + params); // Depuración
             fetch(scriptUrl + params)
                 .then(response => {
-                    if (!response.ok) throw new Error('Error en la respuesta del servidor');
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor: ' + response.status);
                     return response.json();
                 })
                 .then(menus => {
