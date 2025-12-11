@@ -43,72 +43,46 @@
       margin: 0 auto 1rem;
     }
 
-    /* Toggle pequeño y moderno */
+    /* Toggle pequeño */
     .status-toggle-sm {
-      width: 70px;
-      height: 36px;
-      position: relative;
-      display: inline-block;
+      width: 70px; height: 36px; position: relative; display: inline-block;
     }
     .status-toggle-sm input { opacity: 0; width: 0; height: 0; }
     .status-slider-sm {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s; border-radius: 34px;
     }
     .status-slider-sm:before {
-      position: absolute;
-      content: "";
-      height: 28px;
-      width: 28px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
+      position: absolute; content: ""; height: 28px; width: 28px;
+      left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
     }
-    input:checked + .status-slider-sm {
-      background-color: #27ae60;
-    }
-    input:checked + .status-slider-sm:before {
-      transform: translateX(34px);
-    }
+    input:checked + .status-slider-sm { background-color: #27ae60; }
+    input:checked + .status-slider-sm:before { transform: translateX(34px); }
 
     /* Tarjeta horizontal */
     .menu-card-horizontal {
-      display: flex;
-      align-items: center;
-      background: white;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
+      display: flex; align-items: center; background: white; border-radius: 16px;
+      overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s ease;
       margin-bottom: 1rem;
     }
     .menu-card-horizontal:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 15px 35px rgba(211,47,47,0.2);
+      transform: translateY(-5px); box-shadow: 0 15px 35px rgba(211,47,47,0.2);
     }
     .menu-card-horizontal img {
-      width: 120px;
-      height: 120px;
-      object-fit: cover;
+      width: 120px; height: 120px; object-fit: cover;
     }
-    .card-body-horizontal {
-      padding: 1.5rem;
-      flex: 1;
-    }
+    .card-body-horizontal { padding: 1.5rem; flex: 1; }
     .precio { font-size: 1.8rem; font-weight: 700; color: #d32f2f; }
+
+    /* Loading spinner */
+    .loading {
+      color: #d32f2f;
+      font-weight: 600;
+    }
 
     /* Footer */
     footer {
-      background: #c62828;
-      color: white;
-      padding: 2rem 0;
-      margin-top: auto;
+      background: #c62828; color: white; padding: 2rem 0; margin-top: auto;
     }
     footer a { color: #ffcdd2; text-decoration: none; }
     footer a:hover { color: white; }
@@ -119,9 +93,7 @@
   <!-- Header -->
   <header class="header">
     <div class="container text-center">
-      <div class="logo-placeholder mx-auto">
-        Logo Aquí
-      </div>
+      <div class="logo-placeholder mx-auto">Logo Aquí</div>
       <h1 class="display-5 fw-bold text-rojo">Antojate</h1>
       <p class="text-muted">Panel de Gestión del Menú</p>
     </div>
@@ -164,7 +136,6 @@
           </div>
           <span class="fw-medium">Estado del Local</span>
         </div>
-
         <div class="dropdown">
           <button class="btn btn-outline-danger btn-lg dropdown-toggle" data-bs-toggle="dropdown">Mi Perfil</button>
           <ul class="dropdown-menu dropdown-menu-end">
@@ -180,7 +151,7 @@
         <button id="btn-agregar-item" class="btn btn-rojo btn-modern btn-lg px-5">Agregar Plato</button>
       </div>
 
-      <!-- FILTROS: Buscador + Categorías -->
+      <!-- FILTROS -->
       <div id="filtros-menu" class="card p-4 mb-4 d-none">
         <div class="row g-3 align-items-center">
           <div class="col-md-6">
@@ -219,7 +190,10 @@
         </div>
         <div class="mt-4 text-end">
           <button type="button" id="cancelar-form" class="btn btn-secondary btn-lg me-3">Cancelar</button>
-          <button type="submit" class="btn btn-success btn-lg px-5">Guardar Plato</button>
+          <button type="submit" class="btn btn-success btn-lg px-5" id="guardar-btn">
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            Guardar Plato
+          </button>
         </div>
       </form>
 
@@ -233,12 +207,22 @@
         </div>
         <div class="mt-4 text-end">
           <button type="button" id="cancelar-perfil" class="btn btn-secondary btn-lg me-3">Cancelar</button>
-          <button type="button" id="guardar-perfil" class="btn btn-success btn-lg px-5">Guardar Cambios</button>
+          <button type="button" id="guardar-perfil" class="btn btn-success btn-lg px-5">
+            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            Guardar Cambios
+          </button>
         </div>
       </div>
 
-      <!-- Listado de Menú (tarjetas horizontales) -->
-      <div id="menu-listado"></div>
+      <!-- Listado de Menú -->
+      <div id="menu-listado">
+        <div class="text-center py-5 loading">
+          <div class="spinner-border text-danger" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-3">Cargando menú...</p>
+        </div>
+      </div>
     </div>
   </div>
 
