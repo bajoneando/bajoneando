@@ -295,13 +295,12 @@
                 });
         }
         
-        // Event listener para categorías (usando data-type para mejor control)
-        document.querySelector('.categories').addEventListener('click', (event) => {
+                document.querySelector('.categories').addEventListener('click', (event) => {
             const category = event.target.closest('.category');
             if (category) {
                 const categoryText = category.dataset.type || category.textContent.trim();
                 console.log('Categoría seleccionada:', categoryText);
-                fetchMenus(categoryText, null);   // ← así, sin normalizeText
+                fetchMenus(categoryText, null);  // ← Ahora envía "Hamburguesas" tal cual
             }
         });
         
