@@ -200,13 +200,20 @@
     });
 
     document.getElementById('btn-agregar-item')?.addEventListener('click', () => {
-      document.getElementById('menu-form').classList.remove('d-none');
-      document.getElementById('perfil-form').classList.add('d-none');
-      document.getElementById('menu-listado').innerHTML = '';
-      document.getElementById('form-titulo').textContent = "Nuevo Plato";
-      document.getElementById('menu-form').reset();
-      document.getElementById('edit-item-id').value = '';
-    });
+  document.getElementById('menu-form').classList.remove('d-none');
+  document.getElementById('perfil-form').classList.add('d-none');
+  document.getElementById('menu-listado').innerHTML = '';  // Limpia el listado para que no se vea mientras editas/agregas
+  document.getElementById('form-titulo').textContent = "Nuevo Plato";
+  
+  // Resetea todos los campos del formulario
+  document.getElementById('menu-form').reset();
+  
+  // Limpia el ID de edición (por si venías de editar otro plato)
+  document.getElementById('edit-item-id').value = '';
+  
+  // ← IMPORTANTE: Limpia el input de archivo para que no quede una foto seleccionada por error
+  document.getElementById('foto').value = '';
+});
 
     document.getElementById('cancelar-form')?.addEventListener('click', () => {
       document.getElementById('menu-form').classList.add('d-none');
