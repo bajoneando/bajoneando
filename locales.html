@@ -143,32 +143,50 @@
     }
   });
 
-  // ====== LOGIN LOCAL → VERSIÓN QUE NUNCA FALLA (RECOMENDADA) ======
+  // LOGIN LOCAL → 100% FUNCIONA SIN CORS (LA SOLUCIÓN FINAL)
 document.getElementById('local-login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const email = document.getElementById('login-local-email').value.trim();
   const password = document.getElementById('login-local-password').value;
 
-  const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+  if (!email || !password) {
+    document.getElementById('auth-status').innerHTML = 
+      '<div class="alert alert-warning">Completa email y contraseña</div>';
+    return;
+  }
 
-  // Creamos una imagen invisible que carga la URL
-  const img = new Image();
-  img.onload = () => {
-    // Si la imagen cargó → el script se ejecutó → login exitoso
-    const fakeId = "LOC-" + Date.now();
-    localStorage.setItem('localToken', fakeId);
-    document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-success">¡Login exitoso!</div>';
-    setTimeout(() => location.reload(), 1000);
+  const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
+
+  // Creamos la función callback global
+  window.loginCallback = function(data) {
+    if (data.success && data.localId) {
+      localStorage.setItem('localToken', data.localId);
+      document.getElementById('auth-status').innerHTML = 
+        '<div class="alert alert-success">¡Login exitoso!</div>';
+      setTimeout(() => location.reload(), 800);
+    } else {
+      document.getElementById('auth-status').innerHTML = 
+        '<div class="alert alert-danger">Email o contraseña incorrectos</div>';
+    }
+    
+    // Limpiamos la función
+    delete window.loginCallback;
+    // Removemos el script para evitar acumulación
+    const oldScript = document.getElementById('loginScript');
+    if (oldScript) oldScript.remove();
   };
-  img.onerror = () => {
+
+  // Creamos y añadimos el script
+  const script = document.createElement('script');
+  script.id = 'loginScript';
+  script.src = url;
+  script.onerror = () => {
     document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-danger">Credenciales incorrectas o error de conexión</div>';
+      '<div class="alert alert-danger">Error de conexión</div>';
   };
   
-  // Forzamos que cargue (incluso si está en caché)
-  img.src = url + "&t=" + Date.now();
+  document.head.appendChild(script);
 });
 
   // AGREGAR ÍTEM AL MENÚ (después de loguearse)
