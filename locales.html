@@ -320,43 +320,58 @@
       document.getElementById('local-register-form').classList.add('d-none');
     });
 
-    // Registro
-    document.getElementById('local-register-form')?.addEventListener('submit', async (e) => {
+    // REGISTRO LOCAL (exactamente igual que antes)
+    document.getElementById('local-register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const nombre = document.getElementById('reg-local-name').value.trim();
       const email = document.getElementById('reg-local-email').value.trim();
       const password = document.getElementById('reg-local-password').value;
-      if (!nombre || !email || !password) return alert('Completa todos los campos');
-
-      await fetch(`${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {method: 'GET', mode: 'no-cors'});
-      alert('Local registrado con éxito! Ahora inicia sesión.');
-      document.getElementById('local-register-form').reset();
-      document.getElementById('local-register-form').classList.add('d-none');
-      document.getElementById('local-login-form').classList.remove('d-none');
+      if (!nombre || !email || !password) {
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa todos los campos</div>';
+        return;
+      }
+      const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+      try {
+        await fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-cache' });
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Local registrado con éxito! Ya puedes iniciar sesión.</div>';
+        document.getElementById('local-register-form').reset();
+        document.getElementById('local-register-form').classList.add('d-none');
+        document.getElementById('local-login-form').classList.remove('d-none');
+      } catch (err) {
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
+      }
     });
 
-    // Login JSONP
-    document.getElementById('local-login-form')?.addEventListener('submit', (e) => {
+    // LOGIN LOCAL CON JSONP (100% tu código original)
+    document.getElementById('local-login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-local-email').value.trim();
       const password = document.getElementById('login-local-password').value;
-
+      if (!email || !password) {
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa email y contraseña</div>';
+        return;
+      }
       const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
+      
       window.loginCallback = function(data) {
         if (data.success && data.localId) {
           localStorage.setItem('localToken', data.localId);
-          location.reload();
+          document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Login exitoso!</div>';
+          setTimeout(() => location.reload(), 800);
         } else {
-          alert('Email o contraseña incorrectos');
+          document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Email o contraseña incorrectos</div>';
         }
         delete window.loginCallback;
-        const s = document.getElementById('loginScript');
-        if (s) s.remove();
+        const oldScript = document.getElementById('loginScript');
+        if (oldScript) oldScript.remove();
       };
 
       const script = document.createElement('script');
       script.id = 'loginScript';
       script.src = url;
+      script.onerror = () => {
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
+      };
       document.head.appendChild(script);
     });
 
