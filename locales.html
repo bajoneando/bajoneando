@@ -57,7 +57,7 @@
 
     /* Toggle pequeño */
     .status-toggle-sm {
-      width: 70px; height: 36px; position: relative; display: inline-block;
+      width: 50px; height: 30px; position: relative; display: inline-block;
     }
     .status-toggle-sm input { opacity: 0; width: 0; height: 0; }
     .status-slider-sm {
@@ -65,11 +65,11 @@
       background-color: #ccc; transition: .4s; border-radius: 34px;
     }
     .status-slider-sm:before {
-      position: absolute; content: ""; height: 28px; width: 28px;
-      left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
+      position: absolute; content: ""; height: 24px; width: 24px;
+      left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
     }
     input:checked + .status-slider-sm { background-color: #27ae60; }
-    input:checked + .status-slider-sm:before { transform: translateX(34px); }
+    input:checked + .status-slider-sm:before { transform: translateX(20px); }
 
     /* Tarjeta horizontal */
     .menu-card-horizontal {
@@ -91,7 +91,7 @@
 
     /* Footer */
     footer {
-      background: #c62828; color: white; padding: 2rem 0; margin-top: auto;
+      background: #bdf62828; color: white; padding: 2rem 0; margin-top: auto;
     }
     footer a { color: #ffcdd2; text-decoration: none; }
     footer a:hover { color: white; }
@@ -102,7 +102,7 @@
   <!-- Header -->
   <header class="header">
     <div class="container text-center">
-      <!-- Logo de la plataforma Antojate (puedes reemplazar con tu imagen real) -->
+      <!-- Logo de la plataforma Antojate -->
       <img src="https://via.placeholder.com/300x100/ffffff/d32f2f?text=Antojate" alt="Logo Antojate" class="logo-plataforma mb-3">
       <h1 class="display-5 fw-bold text-rojo">Panel de Gestión del Menú</h1>
     </div>
@@ -117,12 +117,28 @@
         <button id="show-register" class="btn btn-outline-danger btn-lg me-3">Registrar Local</button>
         <button id="show-login" class="btn btn-rojo btn-lg">Iniciar Sesión</button>
       </div>
+
+      <!-- Formulario Registro -->
       <form id="local-register-form" class="mt-4 d-none">
+        <div class="text-center mb-4">
+          <div id="reg-foto-preview" class="d-none">
+            <img src="" alt="Vista previa" class="img-fluid rounded" style="max-width:150px;">
+          </div>
+          <div class="mt-3">
+            <input type="file" id="reg-foto" class="form-control form-control-lg" accept="image/*">
+            <small class="text-muted">Foto de perfil (opcional)</small>
+          </div>
+        </div>
         <input type="text" id="reg-local-name" placeholder="Nombre del Local" class="form-control form-control-lg mb-3" required>
         <input type="email" id="reg-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
         <input type="password" id="reg-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
-        <button type="submit" class="btn btn-success btn-lg w-100">Registrar Local</button>
+        <button type="submit" class="btn btn-success btn-lg w-100">
+          <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+          Registrar Local
+        </button>
       </form>
+
+      <!-- Formulario Login -->
       <form id="local-login-form" class="mt-4 d-none">
         <input type="email" id="login-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
         <input type="password" id="login-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
@@ -134,7 +150,7 @@
     <!-- PANEL PRINCIPAL -->
     <div id="panel-principal" class="d-none">
 
-      <!-- Barra superior: Estado + Perfil con foto -->
+      <!-- Barra superior -->
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
           <div class="text-center">
@@ -147,7 +163,7 @@
           <span class="fw-medium">Estado del Local</span>
         </div>
 
-        <!-- Foto de perfil + Botón Mi Perfil -->
+        <!-- Foto de perfil + Dropdown -->
         <div class="d-flex align-items-center gap-3">
           <div id="perfil-foto-container">
             <div class="logo-perfil-placeholder">Foto</div>
@@ -308,14 +324,31 @@
       }
     }
 
+    // === CARGAR FOTO DE PERFIL (en barra superior) ===
+    async function cargarFotoPerfil() {
+      if (!localToken) return;
+      try {
+        const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
+        const data = await res.json();
+        if (data.success && data.foto_url) {
+          perfilFotoUrl = data.foto_url;
+          document.getElementById('perfil-foto-container').innerHTML = `<img src="${perfilFotoUrl}" alt="Foto del local" class="logo-perfil-sm">`;
+        }
+      } catch (err) {
+        console.log('No se pudo cargar foto de perfil');
+      }
+    }
+
     // === ESTADO LOCAL ===
     async function cargarEstadoLocal() {
       if (!localToken) return;
-      const res = await fetch(`${API_URL}?action=getLocalEstado&localId=${localToken}`);
-      const data = await res.json();
-      const activo = data.estado === "Activo";
-      document.getElementById('estado-local-toggle').checked = activo;
-      document.getElementById('estado-texto').textContent = activo ? "Abierto" : "Cerrado";
+      try {
+        const res = await fetch(`${API_URL}?action=getLocalEstado&localId=${localToken}`);
+        const data = await res.json();
+        const activo = data.estado === "Activo";
+        document.getElementById('estado-local-toggle').checked = activo;
+        document.getElementById('estado-texto').textContent = activo ? "Abierto" : "Cerrado";
+      } catch (err) { console.error(err); }
     }
 
     document.getElementById('estado-local-toggle')?.addEventListener('change', async function() {
@@ -324,13 +357,14 @@
       await fetch(`${API_URL}?action=updateLocalEstado&localId=${localToken}&estado=${estado}`);
     });
 
-    // === MOSTRAR PANEL ===
+    // === INICIO ===
     if (localToken) {
       document.getElementById('auth-section').classList.add('d-none');
       document.getElementById('panel-principal').classList.remove('d-none');
-      cargarEstadoLocal();
-      cargarMenuCompleto();
       document.getElementById('filtros-menu').classList.remove('d-none');
+      cargarEstadoLocal();
+      cargarFotoPerfil();
+      cargarMenuCompleto();
     }
 
     document.getElementById('logout')?.addEventListener('click', () => {
@@ -338,20 +372,159 @@
       location.reload();
     });
 
-    // === CARGAR FOTO DE PERFIL Y MOSTRAR EN HEADER ===
-    async function cargarFotoPerfil() {
-      if (!localToken) return;
+    // === REGISTRO CON FOTO ===
+    document.getElementById('reg-foto').addEventListener('change', function(e) {
+      if (e.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('reg-foto-preview').querySelector('img').src = ev.target.result;
+          document.getElementById('reg-foto-preview').classList.remove('d-none');
+        };
+        reader.readAsDataURL(e.target.files[0]);
+      }
+    });
+
+    document.getElementById('local-register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button[type="submit"]');
+      const spinner = btn.querySelector('.spinner-border');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+
+      try {
+        let fotoUrl = '';
+        if (document.getElementById('reg-foto').files[0]) {
+          fotoUrl = await subirImagen(document.getElementById('reg-foto').files[0]);
+        }
+
+        const nombre = document.getElementById('reg-local-name').value.trim();
+        const email = document.getElementById('reg-local-email').value.trim();
+        const password = document.getElementById('reg-local-password').value;
+
+        const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}${fotoUrl ? '&foto_url=' + encodeURIComponent(fotoUrl) : ''}`;
+        await fetch(url, { method: 'GET', mode: 'no-cors' });
+
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Registrado! Ya puedes iniciar sesión.</div>';
+        document.getElementById('local-register-form').reset();
+        document.getElementById('reg-foto-preview').classList.add('d-none');
+        document.getElementById('local-register-form').classList.add('d-none');
+        document.getElementById('local-login-form').classList.remove('d-none');
+      } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+      }
+    });
+
+    // === LOGIN ===
+    document.getElementById('local-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-local-email').value.trim();
+      const password = document.getElementById('login-local-password').value;
+      const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
+
+      window.loginCallback = function(data) {
+        if (data.success && data.localId) {
+          localStorage.setItem('localToken', data.localId);
+          setTimeout(() => location.reload(), 800);
+        } else {
+          document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales incorrectas</div>';
+        }
+        delete window.loginCallback;
+        const s = document.getElementById('loginScript'); if (s) s.remove();
+      };
+
+      const script = document.createElement('script');
+      script.id = 'loginScript';
+      script.src = url;
+      document.head.appendChild(script);
+    });
+
+    // === EDITAR PERFIL (con foto) ===
+    document.getElementById('editar-perfil-btn')?.addEventListener('click', async () => {
+      document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('menu-listado').innerHTML = '';
+      document.getElementById('perfil-form').classList.remove('d-none');
+
+      const btn = document.getElementById('guardar-perfil');
+      const spinner = btn.querySelector('.spinner-border');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+
       try {
         const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
         const data = await res.json();
-        if (data.success && data.foto_url) {
-          perfilFotoUrl = data.foto_url;
-          document.getElementById('logo-container').innerHTML = `<img src="${perfilFotoUrl}" alt="Foto del local" class="logo-perfil">`;
+        if (data.success) {
+          document.getElementById('perfil-nombre').value = data.nombre || '';
+          document.getElementById('perfil-email').value = data.email || '';
+          if (data.foto_url) {
+            document.getElementById('perfil-foto-preview').src = data.foto_url;
+            document.getElementById('perfil-foto-preview').style.display = 'block';
+            document.getElementById('perfil-foto-placeholder').style.display = 'none';
+          } else {
+            document.getElementById('perfil-foto-preview').style.display = 'none';
+            document.getElementById('perfil-foto-placeholder').style.display = 'flex';
+          }
         }
-      } catch (err) {
-        console.log('No se pudo cargar foto de perfil');
+      } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
       }
-    }
+    });
+
+    document.getElementById('perfil-foto').addEventListener('change', function(e) {
+      if (e.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+          document.getElementById('perfil-foto-preview').src = ev.target.result;
+          document.getElementById('perfil-foto-preview').style.display = 'block';
+          document.getElementById('perfil-foto-placeholder').style.display = 'none';
+        };
+        reader.readAsDataURL(e.target.files[0]);
+      }
+    });
+
+    document.getElementById('guardar-perfil').addEventListener('click', async () => {
+      const btn = document.getElementById('guardar-perfil');
+      const spinner = btn.querySelector('.spinner-border');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+
+      try {
+        let nuevaFotoUrl = perfilFotoUrl;
+        if (document.getElementById('perfil-foto').files[0]) {
+          nuevaFotoUrl = await subirImagen(document.getElementById('perfil-foto').files[0]);
+        }
+
+        const payload = {
+          localId: localToken,
+          nombre: document.getElementById('perfil-nombre').value,
+          email: document.getElementById('perfil-email').value,
+          password: document.getElementById('perfil-password').value,
+          ...(nuevaFotoUrl && { foto_url: nuevaFotoUrl })
+        };
+
+        await fetch(`${API_URL}?action=updatePerfilLocal`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors'
+        });
+
+        alert('Perfil actualizado correctamente');
+        document.getElementById('perfil-form').classList.add('d-none');
+        if (nuevaFotoUrl) {
+          perfilFotoUrl = nuevaFotoUrl;
+          cargarFotoPerfil();
+        }
+      } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('cancelar-perfil')?.addEventListener('click', () => {
+      document.getElementById('perfil-form').classList.add('d-none');
+    });
     
     // === CARGAR MENÚ Y RENDERIZAR ===
     async function cargarMenuCompleto() {
@@ -694,53 +867,6 @@
       }
     });
     
-    // === LOGIN Y REGISTRO (100% original) ===
-    document.getElementById('show-register').addEventListener('click', () => {
-      document.getElementById('local-register-form').classList.toggle('d-none');
-      document.getElementById('local-login-form').classList.add('d-none');
-    });
-    document.getElementById('show-login').addEventListener('click', () => {
-      document.getElementById('local-login-form').classList.toggle('d-none');
-      document.getElementById('local-register-form').classList.add('d-none');
-    });
-
-    document.getElementById('local-register-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nombre = document.getElementById('reg-local-name').value.trim();
-      const email = document.getElementById('reg-local-email').value.trim();
-      const password = document.getElementById('reg-local-password').value;
-      if (!nombre || !email || !password) return document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa todos los campos</div>';
-
-      const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-      await fetch(url, { method: 'GET', mode: 'no-cors' });
-      document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Registrado! Ya puedes iniciar sesión.</div>';
-      document.getElementById('local-register-form').reset();
-      document.getElementById('local-register-form').classList.add('d-none');
-      document.getElementById('local-login-form').classList.remove('d-none');
-    });
-
-    document.getElementById('local-login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-local-email').value.trim();
-      const password = document.getElementById('login-local-password').value;
-      const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
-
-      window.loginCallback = function(data) {
-        if (data.success && data.localId) {
-          localStorage.setItem('localToken', data.localId);
-          setTimeout(() => location.reload(), 800);
-        } else {
-          document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales incorrectas</div>';
-        }
-        delete window.loginCallback;
-        const s = document.getElementById('loginScript'); if (s) s.remove();
-      };
-
-      const script = document.createElement('script');
-      script.id = 'loginScript';
-      script.src = url;
-      document.head.appendChild(script);
-    });
   </script>
 </body>
 </html>
