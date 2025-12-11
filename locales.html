@@ -17,96 +17,45 @@
 
     /* Toggle Grande Activo/Inactivo */
     .status-toggle {
-      width: 220px;
-      height: 90px;
-      position: relative;
-      display: inline-block;
+      width: 220px; height: 90px; position: relative; display: inline-block;
     }
     .status-toggle input { opacity: 0; width: 0; height: 0; }
     .status-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #e74c3c;
-      transition: .5s;
-      border-radius: 50px;
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #e74c3c; transition: .5s; border-radius: 50px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
     .status-slider:before {
-      position: absolute;
-      content: "";
-      height: 78px;
-      width: 78px;
-      left: 10px;
-      bottom: 6px;
-      background-color: white;
-      transition: .5s;
-      border-radius: 50%;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      position: absolute; content: ""; height: 78px; width: 78px;
+      left: 10px; bottom: 6px; background-color: white; transition: .5s;
+      border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     }
-    input:checked + .status-slider {
-      background-color: #27ae60;
-    }
-    input:checked + .status-slider:before {
-      transform: translateX(120px);
-    }
+    input:checked + .status-slider { background-color: #27ae60; }
+    input:checked + .status-slider:before { transform: translateX(120px); }
     .status-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      font-weight: 700;
-      font-size: 1.4rem;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-      pointer-events: none;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: white; font-weight: 700; font-size: 1.4rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
-    /* Tarjetas de menú modernas */
+    /* Tarjetas de menú */
     .menu-card {
-      border: none;
-      border-radius: 16px;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-      background: white;
+      border: none; border-radius: 16px; overflow: hidden; transition: all 0.3s ease;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1); background: white;
     }
-    .menu-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-    }
-    .menu-card img {
-      height: 200px;
-      object-fit: cover;
-    }
-    .precio {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: #27ae60;
-    }
+    .menu-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+    .menu-card img { height: 200px; object-fit: cover; }
+    .precio { font-size: 1.6rem; font-weight: 700; color: #27ae60; }
 
-    /* Botones modernos */
-    .btn-modern {
-      border-radius: 12px;
-      padding: 12px 30px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
+    .btn-modern { border-radius: 12px; padding: 12px 30px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .btn-primary-modern { background: #3498db; border: none; }
     .btn-success-modern { background: #27ae60; border: none; }
-
-    .dropdown-menu {
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-      border: none;
-    }
+    .dropdown-menu { border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: none; }
   </style>
 </head>
 <body>
   <div class="container py-5">
 
-    <!-- LOGIN / REGISTRO (sin cambios) -->
+    <!-- LOGIN / REGISTRO -->
     <div id="auth-section" class="card shadow-lg p-5 mb-5 bg-white rounded-4">
       <h2 class="text-center mb-4">Acceso Local</h2>
       <div class="text-center mb-4">
@@ -129,7 +78,7 @@
       <div id="auth-status" class="mt-3"></div>
     </div>
 
-    <!-- PANEL PRINCIPAL (solo logueado) -->
+    <!-- PANEL PRINCIPAL -->
     <div id="panel-principal" class="d-none">
 
       <div class="d-flex justify-content-between align-items-center mb-5">
@@ -139,20 +88,16 @@
         <div class="text-center">
           <label class="status-toggle">
             <input type="checkbox" id="estado-local-toggle">
-            <span class="status-slider">
-              <span class="status-text" id="estado-texto">Inactivo</span>
-            </span>
+            <span class="status-slider"><span class="status-text" id="estado-texto">Inactivo</span></span>
           </label>
           <p class="mt-2 text-muted fw-medium">Estado del Local</p>
         </div>
 
         <!-- Perfil -->
         <div class="dropdown">
-          <button class="btn btn-outline-dark btn-lg dropdown-toggle" data-bs-toggle="dropdown">
-            Mi Perfil
-          </button>
+          <button class="btn btn-outline-dark btn-lg dropdown-toggle" data-bs-toggle="dropdown">Mi Perfil</button>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="#">Editar Perfil</a></li>
+            <li><a class="dropdown-item" href="#" id="editar-perfil-btn">Editar Perfil</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item text-danger" href="#" id="logout">Cerrar sesión</a></li>
           </ul>
@@ -165,12 +110,13 @@
         <button id="btn-agregar-item" class="btn btn-primary-modern btn-modern btn-lg px-5">Agregar Ítem</button>
       </div>
 
-      <!-- Formulario Agregar -->
+      <!-- Formulario Agregar / Editar Plato -->
       <div id="menu-form" class="card shadow-lg p-4 mb-5 d-none">
-        <h3 class="mb-4">Nuevo Plato</h3>
+        <h3 class="mb-4" id="form-titulo">Nuevo Plato</h3>
+        <input type="hidden" id="edit-item-id">
         <div class="row g-3">
           <div class="col-md-6"><input type="text" id="nombre" class="form-control form-control-lg" placeholder="Nombre del plato" required></div>
-          <div class="col-md-6"><input type="text" id="categoria" class="form-control form-control-lg" placeholder="Categoría (ej: Hamburguesas)" required></div>
+          <div class="col-md-6"><input type="text" id="categoria" class="form-control form-control-lg" placeholder="Categoría" required></div>
           <div class="col-12"><textarea id="descripcion" class="form-control" rows="2" placeholder="Descripción breve" required></textarea></div>
           <div class="col-md-4"><input type="number" id="precio" class="form-control form-control-lg" placeholder="Precio" step="0.01" required></div>
           <div class="col-md-4">
@@ -180,13 +126,27 @@
             </select>
           </div>
           <div class="col-md-4"><input type="text" id="tamano_porcion" class="form-control form-control-lg" placeholder="Tamaño/Porción" required></div>
-          <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes (ej: con queso, sin cebolla)" required></div>
-          <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo preparación (min)" required></div>
+          <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes" required></div>
+          <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo (min)" required></div>
           <div class="col-12"><input type="file" id="foto" class="form-control form-control-lg" accept="image/*"></div>
         </div>
         <div class="mt-4 text-end">
           <button type="button" id="cancelar-form" class="btn btn-secondary btn-lg me-3">Cancelar</button>
-          <button type="submit" class="btn btn-success btn-lg px-5">Guardar Plato</button>
+          <button type="submit" class="btn btn-success btn-lg px-5" id="guardar-plato-btn">Guardar Plato</button>
+        </div>
+      </div>
+
+      <!-- Formulario Editar Perfil -->
+      <div id="perfil-form" class="card shadow-lg p-4 mb-5 d-none">
+        <h3 class="mb-4">Editar Perfil del Local</h3>
+        <div class="row g-3">
+          <div class="col-md-6"><input type="text" id="perfil-nombre" class="form-control form-control-lg" placeholder="Nombre del local" required></div>
+          <div class="col-md-6"><input type="email" id="perfil-email" class="form-control form-control-lg" placeholder="Email" required></div>
+          <div class="col-12"><input type="password" id="perfil-password" class="form-control form-control-lg" placeholder="Nueva contraseña (dejar vacío para no cambiar)"></div>
+        </div>
+        <div class="mt-4 text-end">
+          <button type="button" id="cancelar-perfil" class="btn btn-secondary btn-lg me-3">Cancelar</button>
+          <button type="button" id="guardar-perfil" class="btn btn-success btn-lg px-5">Guardar Cambios</button>
         </div>
       </div>
 
@@ -201,7 +161,6 @@
     const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
     const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
     const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
-
     let localToken = localStorage.getItem('localToken');
 
     // === CARGAR ESTADO LOCAL ===
@@ -236,20 +195,64 @@
     // === NAVEGACIÓN ===
     document.getElementById('btn-mi-menu')?.addEventListener('click', () => {
       document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('perfil-form').classList.add('d-none');
       cargarMenuCompleto();
     });
 
     document.getElementById('btn-agregar-item')?.addEventListener('click', () => {
       document.getElementById('menu-form').classList.remove('d-none');
+      document.getElementById('perfil-form').classList.add('d-none');
       document.getElementById('menu-listado').innerHTML = '';
+      document.getElementById('form-titulo').textContent = "Nuevo Plato";
+      document.getElementById('menu-form').reset();
+      document.getElementById('edit-item-id').value = '';
     });
 
     document.getElementById('cancelar-form')?.addEventListener('click', () => {
       document.getElementById('menu-form').classList.add('d-none');
       document.getElementById('menu-form').reset();
+      document.getElementById('edit-item-id').value = '';
     });
 
-    // === CARGAR MENÚ (filtrando por columna K = localId) ===
+    // === EDITAR PERFIL ===
+    document.getElementById('editar-perfil-btn')?.addEventListener('click', async () => {
+      document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('menu-listado').innerHTML = '';
+      document.getElementById('perfil-form').classList.remove('d-none');
+
+      const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('perfil-nombre').value = data.nombre;
+        document.getElementById('perfil-email').value = data.email;
+      }
+    });
+
+    document.getElementById('cancelar-perfil')?.addEventListener('click', () => {
+      document.getElementById('perfil-form').classList.add('d-none');
+    });
+
+    document.getElementById('guardar-perfil')?.addEventListener('click', async () => {
+      const payload = {
+        localId: localToken,
+        nombre: document.getElementById('perfil-nombre').value,
+        email: document.getElementById('perfil-email').value,
+        password: document.getElementById('perfil-password').value
+      };
+
+      const res = await fetch(`${API_URL}?action=updatePerfilLocal`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert('Perfil actualizado correctamente');
+        document.getElementById('perfil-form').classList.add('d-none');
+      }
+    });
+
+    // === CARGAR Y MOSTRAR MENÚ ===
     async function cargarMenuCompleto() {
       const res = await fetch(`${API_URL}?action=getMenuByLocalIdColK&localId=${localToken}`);
       const items = await res.json();
@@ -276,12 +279,12 @@
                   <div class="d-flex justify-content-between align-items-center mb-3">
                     <span class="precio">$${parseFloat(item.precio).toFixed(2)}</span>
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="disp-${item.id}" ${disp ? 'checked' : ''}>
+                      <input class="form-check-input toggle-disponibilidad" type="checkbox" id="disp-${item.id}" ${disp ? 'checked' : ''} data-id="${item.id}">
                       <label class="form-check-label fw-medium" for="disp-${item.id}">${disp ? 'Disponible' : 'No disponible'}</label>
                     </div>
                   </div>
                   <div class="text-end">
-                    <button class="btn btn-warning btn-sm me-2">Editar</button>
+                    <button class="btn btn-warning btn-sm me-2 editar-plato" data-id="${item.id}">Editar</button>
                     <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">Eliminar</button>
                   </div>
                 </div>
@@ -293,34 +296,58 @@
 
       document.getElementById('menu-listado').innerHTML = html || '<div class="text-center py-5"><h4>Aún no tienes platos en el menú</h4></div>';
 
-      // Toggle disponibilidad
-      document.querySelectorAll('[id^="disp-"]').forEach(el => {
+      // Eventos después de cargar
+      document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
         el.addEventListener('change', async () => {
-          const itemId = el.id.split('-')[1];
+          const itemId = el.dataset.id;
           const val = el.checked ? "Sí" : "No";
           await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${itemId}&disponibilidad=${val}`);
         });
       });
 
-      // Eliminar
       document.querySelectorAll('.eliminar-item').forEach(btn => {
         btn.addEventListener('click', async () => {
-          if (confirm('¿Eliminar este plato permanentemente?')) {
+          if (confirm('¿Eliminar permanentemente?')) {
             await fetch(`${API_URL}?action=deleteMenuItem&itemId=${btn.dataset.id}`);
             cargarMenuCompleto();
           }
         });
       });
+
+      document.querySelectorAll('.editar-plato').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const itemId = btn.dataset.id;
+          const res = await fetch(`${API_URL}?action=getMenuItemById&itemId=${itemId}`);
+          const item = await res.json();
+
+          if (item.success) {
+            document.getElementById('menu-form').classList.remove('d-none');
+            document.getElementById('perfil-form').classList.add('d-none');
+            document.getElementById('menu-listado').innerHTML = '';
+            document.getElementById('form-titulo').textContent = "Editar Plato";
+
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('nombre').value = item.nombre;
+            document.getElementById('categoria').value = item.categoria;
+            document.getElementById('descripcion').value = item.descripcion;
+            document.getElementById('precio').value = item.precio;
+            document.getElementById('disponibilidad').value = item.disponibilidad;
+            document.getElementById('tamano_porcion').value = item.tamano_porcion;
+            document.getElementById('variantes').value = item.variantes;
+            document.getElementById('tiempo_preparacion').value = item.tiempo_preparacion;
+          }
+        });
+      });
     }
 
-    // === AGREGAR ÍTEM (con localId en columna K) ===
+    // === GUARDAR / ACTUALIZAR PLATO ===
     document.getElementById('menu-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!localToken) return alert('No estás logueado');
+      const itemId = document.getElementById('edit-item-id').value;
+      const esEdicion = itemId !== '';
 
-      const file = document.getElementById('foto').files[0];
       let imagenUrl = '';
-
+      const file = document.getElementById('foto').files[0];
       if (file) {
         const formData = new FormData();
         formData.append('file', file);
@@ -331,7 +358,7 @@
       }
 
       const payload = {
-        localId: localToken,  // Este va a la columna K
+        localId: localToken,
         nombre: document.getElementById('nombre').value,
         categoria: document.getElementById('categoria').value,
         descripcion: document.getElementById('descripcion').value,
@@ -340,27 +367,29 @@
         tamano_porcion: document.getElementById('tamano_porcion').value,
         variantes: document.getElementById('variantes').value,
         tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value),
-        imagen_url: imagenUrl
+        imagen_url: imagenUrl || undefined
       };
 
-      const res = await fetch(`${API_URL}?action=addMenuItem`, {
+      if (esEdicion) payload.itemId = itemId;
+
+      const action = esEdicion ? 'updateMenuItem' : 'addMenuItem';
+      const res = await fetch(`${API_URL}?action=${action}`, {
         method: 'POST',
         body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json' },
-        mode: 'cors'
+        headers: { 'Content-Type': 'application/json' }
       });
       const result = await res.json();
 
       if (result.success) {
-        document.getElementById('status').innerHTML = '<div class="alert alert-success">¡Plato agregado!</div>';
-        document.getElementById('menu-form').reset();
+        document.getElementById('status').innerHTML = `<div class="alert alert-success">¡${esEdicion ? 'Actualizado' : 'Agregado'} correctamente!</div>`;
         document.getElementById('menu-form').classList.add('d-none');
+        document.getElementById('menu-form').reset();
+        document.getElementById('edit-item-id').value = '';
         cargarMenuCompleto();
       }
     });
 
-    // === LOGIN Y REGISTRO (100% original - sin cambios) ===
-    // ... (todo el código de registro y login que ya tenías, lo dejo igual)
+    // === LOGIN Y REGISTRO (100% original) ===
     document.getElementById('show-register').addEventListener('click', () => {
       document.getElementById('local-register-form').classList.toggle('d-none');
       document.getElementById('local-login-form').classList.add('d-none');
@@ -375,107 +404,37 @@
       const nombre = document.getElementById('reg-local-name').value.trim();
       const email = document.getElementById('reg-local-email').value.trim();
       const password = document.getElementById('reg-local-password').value;
-      if (!nombre || !email || !password) {
-        document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa todos los campos</div>';
-        return;
-      }
+      if (!nombre || !email || !password) return document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa todos los campos</div>';
+
       const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-      try {
-        await fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-cache' });
-        document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Local registrado con éxito! Ya puedes iniciar sesión.</div>';
-        document.getElementById('local-register-form').reset();
-        document.getElementById('local-register-form').classList.add('d-none');
-        document.getElementById('local-login-form').classList.remove('d-none');
-      } catch (err) {
-        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión. Inténtalo de nuevo.</div>';
-      }
+      await fetch(url, { method: 'GET', mode: 'no-cors' });
+      document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Registrado! Ya puedes iniciar sesión.</div>';
+      document.getElementById('local-register-form').reset();
+      document.getElementById('local-register-form').classList.add('d-none');
+      document.getElementById('local-login-form').classList.remove('d-none');
     });
 
     document.getElementById('local-login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-local-email').value.trim();
       const password = document.getElementById('login-local-password').value;
-      if (!email || !password) {
-        document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa email y contraseña</div>';
-        return;
-      }
       const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
+
       window.loginCallback = function(data) {
         if (data.success && data.localId) {
           localStorage.setItem('localToken', data.localId);
-          document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Login exitoso!</div>';
           setTimeout(() => location.reload(), 800);
         } else {
-          document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Email o contraseña incorrectos</div>';
+          document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales incorrectas</div>';
         }
         delete window.loginCallback;
-        const oldScript = document.getElementById('loginScript');
-        if (oldScript) oldScript.remove();
+        const s = document.getElementById('loginScript'); if (s) s.remove();
       };
+
       const script = document.createElement('script');
       script.id = 'loginScript';
       script.src = url;
-      script.onerror = () => {
-        document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Error de conexión</div>';
-      };
       document.head.appendChild(script);
-    });
-
-    // === AGREGAR ÍTEM (funcionalidad original mejorada) ===
-    document.getElementById('menu-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!localToken) return alert('Debes estar logueado');
-
-      const fileInput = document.getElementById('foto');
-      const file = fileInput.files[0];
-      let imagenUrl = '';
-
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        document.getElementById('status').innerHTML = '<div class="alert alert-info">Subiendo imagen...</div>';
-        try {
-          const uploadRes = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
-          const uploadData = await uploadRes.json();
-          imagenUrl = uploadData.secure_url || '';
-        } catch (err) {
-          document.getElementById('status').innerHTML = `<div class="alert alert-danger">Error subiendo imagen</div>`;
-          return;
-        }
-      }
-
-      const menuData = {
-        localId: localToken,
-        nombre: document.getElementById('nombre').value,
-        categoria: document.getElementById('categoria').value,
-        descripcion: document.getElementById('descripcion').value,
-        precio: parseFloat(document.getElementById('precio').value),
-        disponibilidad: document.getElementById('disponibilidad').value,
-        tamano_porcion: document.getElementById('tamano_porcion').value,
-        variantes: document.getElementById('variantes').value,
-        tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value),
-        imagen_url: imagenUrl
-      };
-
-      try {
-        const response = await fetch(`${API_URL}?action=addMenuItem`, {
-          method: 'POST',
-          body: JSON.stringify(menuData),
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'cors'
-        });
-        const result = await response.json();
-        if (result.success) {
-          document.getElementById('status').innerHTML = `<div class="alert alert-success">¡Ítem agregado!</div>`;
-          document.getElementById('menu-form').reset();
-          fileInput.value = '';
-          document.getElementById('menu-form').classList.add('d-none');
-          cargarMenuCompleto();
-        }
-      } catch (err) {
-        document.getElementById('status').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
-      }
     });
   </script>
 </body>
