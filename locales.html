@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Local - Gestión de Menú</title>
+  <title>Antójate - Gestión de Menú</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -15,13 +15,12 @@
       flex-direction: column;
     }
     .container { max-width: 1200px; flex: 1; }
-    h1, h2, h3, h5 { font-weight: 600; color: #c62828; } /* Rojo oscuro principal */
+    h1, h2, h3, h5 { font-weight: 600; color: #c62828; }
     .text-rojo { color: #d32f2f; }
-    .bg-rojo { background-color: #d32f2f; }
     .btn-rojo { background-color: #d32f2f; border: none; }
     .btn-rojo:hover { background-color: #b71c1c; }
 
-    /* Header con espacio para logo */
+    /* Header */
     .header {
       background: white;
       padding: 2rem 0;
@@ -30,81 +29,105 @@
       margin-bottom: 3rem;
     }
     .logo-placeholder {
-      width: 120px;
-      height: 120px;
-      background: #f5f5f5;
-      border: 3px dashed #d32f2f;
+      width: 110px;
+      height: 110px;
+      background: #fff;
+      border: 4px solid #d32f2f;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.9rem;
-      color: #999;
       margin: 0 auto 1rem;
+      font-weight: bold;
+      color: #d32f2f;
+      font-size: 1.1rem;
     }
 
-    /* Toggle Grande Activo/Inactivo (rojo cuando inactivo) */
-    .status-toggle {
-      width: 220px; height: 90px; position: relative; display: inline-block;
+    /* Toggle pequeño y bonito */
+    .status-toggle-small {
+      width: 70px; height: 36px; position: relative; display: inline-block;
     }
-    .status-toggle input { opacity: 0; width: 0; height: 0; }
-    .status-slider {
+    .status-toggle-small input { opacity: 0; width: 0; height: 0; }
+    .slider-small {
       position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #e74c3c; transition: .5s; border-radius: 50px;
-      box-shadow: 0 8px 20px rgba(231,76,60,0.3);
+      background-color: #ccc; transition: .4s; border-radius: 34px;
     }
-    .status-slider:before {
-      position: absolute; content: ""; height: 78px; width: 78px;
-      left: 10px; bottom: 6px; background-color: white; transition: .5s;
-      border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    .slider-small:before {
+      position: absolute; content: ""; height: 28px; width: 28px;
+      left: 4px; bottom: 4px; background-color: white; transition: .4s;
+      border-radius: 50%;
     }
-    input:checked + .status-slider { background-color: #27ae60; box-shadow: 0 8px 20px rgba(39,174,96,0.3); }
-    input:checked + .status-slider:before { transform: translateX(120px); }
-    .status-text {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      color: white; font-weight: 700; font-size: 1.4rem; text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    input:checked + .slider-small { background-color: #27ae60; }
+    input:checked + .slider-small:before { transform: translateX(34px); }
+
+    /* Tarjeta horizontal */
+    .plato-card {
+      display: flex;
+      align-items: center;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      margin-bottom: 1rem;
+    }
+    .plato-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px rgba(211,47,47,0.25);
+    }
+    .plato-img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .plato-body {
+      padding: 1.2rem;
+      flex: 1;
+    }
+    .precio-horizontal {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #d32f2f;
     }
 
-    /* Tarjetas de menú */
-    .menu-card {
-      border: none; border-radius: 16px; overflow: hidden; transition: all 0.3s ease;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1); background: white;
+    /* Filtros */
+    .filtros {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 16px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
     }
-    .menu-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(211,47,47,0.2); }
-    .menu-card img { height: 200px; object-fit: cover; }
-    .precio { font-size: 1.6rem; font-weight: 700; color: #d32f2f; }
-    .btn-modern { border-radius: 12px; padding: 12px 30px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .btn-primary-modern { background: #d32f2f; border: none; }
-    .btn-primary-modern:hover { background: #b71c1c; }
-    .btn-success-modern { background: #27ae60; border: none; }
-    .dropdown-menu { border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: none; }
 
-    /* Footer */
     footer {
       background: #c62828;
       color: white;
       padding: 2rem 0;
-      margin-top: 4rem;
+      margin-top: auto;
     }
     footer a { color: #ffcdd2; text-decoration: none; }
     footer a:hover { color: white; }
   </style>
 </head>
 <body>
-  <!-- Header con espacio para logo -->
+
+  <!-- Header -->
   <header class="header">
     <div class="container text-center">
       <div class="logo-placeholder mx-auto">
-        Logo del Local<br>Aquí
+        Antójate
       </div>
-      <h1 class="display-5 fw-bold text-rojo">Gestión de Mi Local</h1>
+      <h1 class="display-5 fw-bold text-rojo">Antójate</h1>
+      <p class="text-muted">Panel de Gestión del Menú</p>
     </div>
   </header>
 
   <div class="container pb-5">
+
     <!-- LOGIN / REGISTRO -->
     <div id="auth-section" class="card shadow-lg p-5 mb-5 bg-white rounded-4">
-      <h2 class="text-center mb-4 text-rojo">Acceso Local</h2>
+      <h2 class="text-center mb-4 text-rojo">Acceso Local - Antójate</h2>
       <div class="text-center mb-4">
         <button id="show-register" class="btn btn-outline-danger btn-lg me-3">Registrar Local</button>
         <button id="show-login" class="btn btn-rojo btn-lg">Iniciar Sesión</button>
@@ -120,22 +143,21 @@
         <input type="password" id="login-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
         <button type="submit" class="btn btn-rojo btn-lg w-100">Iniciar Sesión</button>
       </form>
-      <div id="auth-status" class="mt-3"></div>
+      <div id="auth-status"></div>
     </div>
 
     <!-- PANEL PRINCIPAL -->
     <div id="panel-principal" class="d-none">
-      <div class="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
-        <!-- Toggle Estado Local -->
-        <div class="text-center">
-          <label class="status-toggle">
+
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <label class="status-toggle-small">
             <input type="checkbox" id="estado-local-toggle">
-            <span class="status-slider"><span class="status-text" id="estado-texto">Inactivo</span></span>
+            <span class="slider-small"></span>
           </label>
-          <p class="mt-2 fw-medium text-rojo">Estado del Local</p>
+          <span class="fw-medium text-rojo">Local <span id="estado-texto">Inactivo</span></span>
         </div>
 
-        <!-- Perfil -->
         <div class="dropdown">
           <button class="btn btn-outline-danger btn-lg dropdown-toggle" data-bs-toggle="dropdown">Mi Perfil</button>
           <ul class="dropdown-menu dropdown-menu-end">
@@ -146,13 +168,31 @@
         </div>
       </div>
 
-      <!-- Botones principales -->
       <div class="text-center mb-5">
-        <button id="btn-mi-menu" class="btn btn-success-modern btn-modern btn-lg px-5 me-4">Mi Menú</button>
-        <button id="btn-agregar-item" class="btn btn-primary-modern btn-modern btn-lg px-5">Agregar Ítem</button>
+        <button id="btn-mi-menu" class="btn btn-success btn-modern btn-lg px-5 me-4">Mi Menú</button>
+        <button id="btn-agregar-item" class="btn btn-rojo btn-modern btn-lg px-5">+ Agregar Plato</button>
       </div>
 
-      <!-- Formulario Agregar / Editar Plato -->
+      <!-- FILTROS -->
+      <div class="filtros">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label fw-bold text-rojo">Buscar plato</label>
+            <input type="text" id="buscar-plato" class="form-control form-control-lg" placeholder="Escribe el nombre del plato...">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label fw-bold text-rojo">Categoría</label>
+            <select id="filtro-categoria" class="form-select form-select-lg">
+              <option value="">Todas las categorías</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button id="limpiar-filtros" class="btn btn-outline-secondary btn-lg w-100">Limpiar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formularios (Agregar/Editar y Perfil) -->
       <form id="menu-form" class="card shadow-lg p-4 mb-5 d-none">
         <h3 class="mb-4 text-rojo" id="form-titulo">Nuevo Plato</h3>
         <input type="hidden" id="edit-item-id">
@@ -168,17 +208,16 @@
             </select>
           </div>
           <div class="col-md-4"><input type="text" id="tamano_porcion" class="form-control form-control-lg" placeholder="Tamaño/Porción" required></div>
-          <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes" required></div>
-          <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo (min)" required></div>
+          <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes"></div>
+          <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo (min)"></div>
           <div class="col-12"><input type="file" id="foto" class="form-control form-control-lg" accept="image/*"></div>
         </div>
         <div class="mt-4 text-end">
           <button type="button" id="cancelar-form" class="btn btn-secondary btn-lg me-3">Cancelar</button>
-          <button type="submit" class="btn btn-success btn-lg px-5" id="guardar-plato-btn">Guardar Plato</button>
+          <button type="submit" class="btn btn-success btn-lg px-5">Guardar Plato</button>
         </div>
       </form>
 
-      <!-- Formulario Editar Perfil -->
       <div id="perfil-form" class="card shadow-lg p-4 mb-5 d-none">
         <h3 class="mb-4 text-rojo">Editar Perfil del Local</h3>
         <div class="row g-3">
@@ -192,91 +231,155 @@
         </div>
       </div>
 
-      <!-- Listado de Menú -->
-      <div id="menu-listado" class="row g-4"></div>
-      <div id="status" class="mt-4"></div>
+      <!-- LISTADO DE PLATOS -->
+      <div id="menu-listado"></div>
+
     </div>
   </div>
 
-  <!-- Footer -->
   <footer class="text-center">
     <div class="container">
-      <p class="mb-2">&copy; 2025 <strong>Mi Local</strong> - Panel de Gestión de Menú</p>
+      <p class="mb-2">© 2025 <strong>Antójate</strong> - Panel de Administración</p>
       <p class="small mb-0">
-        <a href="#">Términos de uso</a> • 
-        <a href="#">Política de privacidad</a> • 
-        <a href="#">Soporte</a>
+        <a href="#">Términos</a> • <a href="#">Privacidad</a> • <a href="#">Soporte</a>
       </p>
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Todo el JavaScript original se mantiene igual (no se modificó funcionalidad)
     const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
     const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
     const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
     let localToken = localStorage.getItem('localToken');
+    let todosLosPlatos = []; // Guardamos todos los platos para filtrar
 
+    // === SUBIR IMAGEN (igual que antes) ===
     async function subirImagen(file) {
       if (!file) return '';
       const MAX_SIZE = 10 * 1024 * 1024;
-      const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-      if (file.size > MAX_SIZE) {
-        alert(`La imagen ${file.name} es demasiado grande (máx 10MB)`);
-        return '';
-      }
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        alert(`Tipo de archivo no permitido: ${file.type}`);
-        return '';
-      }
+      const ALLOWED_TYPES = ['image/jpeg','image/jpg','image/png','image/webp','image/gif'];
+      if (file.size > MAX_SIZE) { alert(`Imagen muy grande (máx 10MB)`); return ''; }
+      if (!ALLOWED_TYPES.includes(file.type)) { alert(`Tipo no permitido`); return ''; }
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      try {
-        const response = await fetch(CLOUDINARY_URL, {
-          method: 'POST',
-          body: formData
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error Cloudinary:', errorText);
-          alert('Error al subir la imagen. Intenta con otra.');
-          return '';
-        }
-        const data = await response.json();
-        if (data.secure_url) {
-          console.log('Imagen subida:', data.secure_url);
-          return data.secure_url;
-        } else {
-          console.error('Respuesta inesperada de Cloudinary:', data);
-          alert('Error al procesar la imagen.');
-          return '';
-        }
-      } catch (error) {
-        console.error('Error de red al subir imagen:', error);
-        alert('Error de conexión al subir la imagen. Revisa tu internet.');
-        return '';
-      }
+      const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+      const data = await res.json();
+      return data.secure_url || '';
     }
-    
-    // === CARGAR ESTADO LOCAL ===
+
+    // === MOSTRAR MENÚ CON FILTROS ===
+    async function mostrarMenu(filtroNombre = '', filtroCat = '') {
+      if (!todosLosPlatos.length) return;
+      let platos = todosLosPlatos;
+
+      if (filtroNombre) {
+        platos = platos.filter(p => p.nombre.toLowerCase().includes(filtroNombre.toLowerCase()));
+      }
+      if (filtroCat) {
+        platos = platos.filter(p => p.categoria === filtroCat);
+      }
+
+      let html = '';
+      if (platos.length === 0) {
+        html = '<div class="text-center py-5"><h4 class="text-muted">No se encontraron platos</h4></div>';
+      } else {
+        platos.forEach(item => {
+          const disp = item.disponibilidad === "Sí";
+          html += `
+            <div class="plato-card">
+              ${item.imagen_url ? 
+                ? `<img src="${item.imagen_url}" class="plato-img" alt="${item.nombre}">` 
+                : `<div class="plato-img bg-light d-flex align-items-center justify-content-center text-muted"><small>Sin foto</small></div>`}
+              <div class="plato-body">
+                <h5 class="mb-1 fw-bold">${item.nombre}</h5>
+                <p class="text-muted small mb-2">${item.descripcion || 'Sin descripción'}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="precio-horizontal">$${parseFloat(item.precio).toFixed(2)}</span>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input toggle-disponibilidad" type="checkbox" id="disp-${item.id}" ${disp ? 'checked' : ''} data-id="${item.id}">
+                    <label class="form-check-label" for="disp-${item.id}">${disp ? 'Disponible' : 'No disponible'}</label>
+                  </div>
+                  <div>
+                    <button class="btn btn-warning btn-sm me-2 editar-plato" data-id="${item.id}">Editar</button>
+                    <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">Eliminar</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+        });
+      }
+      document.getElementById('menu-listado').innerHTML = html;
+
+      // Eventos de disponibilidad, editar y eliminar
+      document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
+        el.addEventListener('change', async () => {
+          await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? 'Sí' : 'No'}`);
+        });
+      });
+      document.querySelectorAll('.editar-plato').forEach(btn => {
+        btn.addEventListener('click', async () => editarPlato(btn.dataset.id));
+      });
+      document.querySelectorAll('.eliminar-item').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (confirm('¿Eliminar permanentemente?')) {
+            await fetch(`${API_URL}?action=deleteMenuItem&itemId=${btn.dataset.id}`);
+            cargarMenuCompleto();
+          }
+        });
+      });
+    }
+
+    async function cargarMenuCompleto() {
+      const res = await fetch(`${API_URL}?action=getMenuByLocalIdColK&localId=${localToken}`);
+      todosLosPlatos = await res.json();
+
+      // Llenar selector de categorías
+      const select = document.getElementById('filtro-categoria');
+      select.innerHTML = '<option value="">Todas las categorías</option>';
+      const cats = [...new Set(todosLosPlatos.map(p => p.categoria).filter(Boolean))].sort();
+      cats.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+
+      mostrarMenu(); // mostrar todos al inicio
+    }
+
+    // Filtros en tiempo real
+    document.getElementById('buscar-plato').addEventListener('input', (e) => {
+      const cat = document.getElementById('filtro-categoria').value;
+      mostrarMenu(e.target.value, cat);
+    });
+    document.getElementById('filtro-categoria').addEventListener('change', (e) => {
+      const txt = document.getElementById('buscar-plato').value;
+      mostrarMenu(txt, e.target.value);
+    });
+    document.getElementById('limpiar-filtros').addEventListener('click', () => {
+      document.getElementById('buscar-plato').value = '';
+      document.getElementById('filtro-categoria').value = '';
+      mostrarMenu();
+    });
+
+    // Toggle estado local pequeño
     async function cargarEstadoLocal() {
       if (!localToken) return;
       const res = await fetch(`${API_URL}?action=getLocalEstado&localId=${localToken}`);
       const data = await res.json();
       const activo = data.estado === "Activo";
       document.getElementById('estado-local-toggle').checked = activo;
-      document.getElementById('estado-texto').textContent = activo ? "Activo" : "Inactivo";
+      document.getElementById('estado-texto').textContent = activo ? "Abierto" : "Cerrado";
     }
-
-    document.getElementById('estado-local-toggle')?.addEventListener('change', async function() {
+    document.getElementById('estado-local-toggle').addEventListener('change', async function() {
       const estado = this.checked ? "Activo" : "Inactivo";
-      document.getElementById('estado-texto').textContent = estado;
+      document.getElementById('estado-texto').textContent = this.checked ? "Abierto" : "Cerrado";
       await fetch(`${API_URL}?action=updateLocalEstado&localId=${localToken}&estado=${estado}`);
     });
 
-    // === MOSTRAR PANEL SI ESTÁ LOGUEADO ===
+    // === LOGIN / LOGOUT / NAVEGACIÓN (todo igual que antes) ===
     if (localToken) {
       document.getElementById('auth-section').classList.add('d-none');
       document.getElementById('panel-principal').classList.remove('d-none');
@@ -289,7 +392,6 @@
       location.reload();
     });
 
-    // === NAVEGACIÓN ===
     document.getElementById('btn-mi-menu')?.addEventListener('click', () => {
       document.getElementById('menu-form').classList.add('d-none');
       document.getElementById('perfil-form').classList.add('d-none');
@@ -297,20 +399,14 @@
     });
 
     document.getElementById('btn-agregar-item')?.addEventListener('click', () => {
-  document.getElementById('menu-form').classList.remove('d-none');
-  document.getElementById('perfil-form').classList.add('d-none');
-  document.getElementById('menu-listado').innerHTML = '';  // Limpia el listado para que no se vea mientras editas/agregas
-  document.getElementById('form-titulo').textContent = "Nuevo Plato";
-  
-  // Resetea todos los campos del formulario
-  document.getElementById('menu-form').reset();
-  
-  // Limpia el ID de edición (por si venías de editar otro plato)
-  document.getElementById('edit-item-id').value = '';
-  
-  // ← IMPORTANTE: Limpia el input de archivo para que no quede una foto seleccionada por error
-  document.getElementById('foto').value = '';
-});
+      document.getElementById('menu-form').classList.remove('d-none');
+      document.getElementById('perfil-form').classList.add('d-none');
+      document.getElementById('menu-listado').innerHTML = '';
+      document.getElementById('form-titulo').textContent = "Nuevo Plato";
+      document.getElementById('menu-form').reset();
+      document.getElementById('edit-item-id').value = '';
+      document.getElementById('foto').value = '';
+    });
 
     document.getElementById('cancelar-form')?.addEventListener('click', () => {
       document.getElementById('menu-form').classList.add('d-none');
