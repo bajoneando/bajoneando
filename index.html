@@ -301,7 +301,7 @@
             if (category) {
                 const categoryText = category.dataset.type || category.textContent.trim();
                 console.log('Categoría seleccionada:', categoryText);
-                fetchMenus(categoryText, null);  // ← Enviamos el texto original (ej: "Hamburguesas")
+                fetchMenus(categoryText, null);   // ← así, sin normalizeText
             }
         });
         
@@ -413,7 +413,6 @@
             }
             container.style.display = 'block';
         }
-        
     </script>
 </body>
 </html>
