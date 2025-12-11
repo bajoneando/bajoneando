@@ -20,9 +20,9 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         .logo {
-            width: 150px; /* Espacio para el logo */
+            width: 150px;
             height: 50px;
-            background-color: #ddd; /* Placeholder para el logo */
+            background-color: #ddd;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -77,6 +77,10 @@
             color: #333;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .category:hover {
+            background-color: #e8f4fd;
         }
         .suggestions {
             margin-top: 40px;
@@ -103,6 +107,10 @@
             justify-content: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .suggestion:hover {
+            transform: scale(1.05);
         }
         .suggestion img {
             max-width: 100%;
@@ -131,6 +139,10 @@
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: center;
+            transition: box-shadow 0.3s;
+        }
+        .menu-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .menu-item img {
             max-width: 100%;
@@ -144,137 +156,258 @@
             margin: 5px 0;
             color: #666;
         }
-        .no-results {
+        .no-results, .error-message {
             text-align: center;
             color: #666;
             font-size: 16px;
+            padding: 20px;
+        }
+        .error-message {
+            color: #d32f2f;
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-radius: 5px;
+            margin: 20px;
+        }
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin: 0 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Responsive para móviles */
+        @media (max-width: 768px) {
+            .categories, .suggestion-items, .menu-items {
+                flex-direction: column;
+                align-items: center;
+            }
+            .category, .suggestion, .menu-item {
+                width: 90%;
+                max-width: 300px;
+            }
         }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo">Logo Aquí</div>
+        <div class="logo">Bajoneando</div>
         <div class="search-bar">
-            <input type="text" placeholder="Buscar Locales">
+            <input type="text" id="search-input" placeholder="Buscar menús o locales...">
         </div>
         <div class="profile">Mi Perfil</div>
     </header>
     <main>
-        <h1>Hola! ¿Qué se te antoja comer?</h1>
+        <h1>¡Hola! ¿Qué se te antoja comer?</h1>
         <div class="categories">
-            <div class="category">Hamburguesas</div>
-            <div class="category">Pizza</div>
-            <div class="category">Helados</div>
-            <div class="category">Postres</div>
-            <div class="category">Merienda</div>
+            <div class="category" data-type="Hamburguesas">Hamburguesas</div>
+            <div class="category" data-type="Pizza">Pizza</div>
+            <div class="category" data-type="Helados">Helados</div>
+            <div class="category" data-type="Postres">Postres</div>
+            <div class="category" data-type="Merienda">Merienda</div>
         </div>
         <div class="suggestions">
-            <h2>Sugerencias</h2>
-            <div class="suggestion-items">
-                <!-- Se llenará dinámicamente -->
+            <h2>Sugerencias de Locales</h2>
+            <div class="suggestion-items" id="suggestion-items">
+                <!-- Se llenará dinámicamente o con mensaje si vacío -->
             </div>
         </div>
-        <div id="menu-display" style="display: none;"></div>
+        <div id="menu-display" style="display: none;">
+            <!-- Menús se mostrarán aquí -->
+        </div>
     </main>
     <script>
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
-
+        
+        // Función para normalizar texto (por si acaso, aunque backend ya lo hace)
+        function normalizeText(text) {
+            return text.toString().trim().toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Quita tildes
+        }
+        
+        // Mostrar loading
+        function showLoading(container) {
+            container.innerHTML = '<div class="loading"><span class="spinner"></span>Cargando...</div>';
+        }
+        
+        // Mostrar error amigable
+        function showError(container, message) {
+            container.innerHTML = `<div class="error-message">¡Ups! ${message}. Intenta de nuevo.</div>`;
+        }
+        
         window.addEventListener('load', () => {
-            // Cargar locales para sugerencias
+            loadFilters();
+            setupSearch();
+        });
+        
+        // Cargar filtros y locales para sugerencias
+        function loadFilters() {
+            const suggestionItems = document.getElementById('suggestion-items');
+            showLoading(suggestionItems);
+            
             fetch(scriptUrl + '?action=getFilters')
                 .then(response => {
-                    if (!response.ok) throw new Error('Error al cargar filtros: ' + response.status);
+                    if (!response.ok) throw new Error(`Error ${response.status}: No se pudieron cargar los filtros`);
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Filtros recibidos:', data); // Depuración
-                    const suggestionItems = document.querySelector('.suggestion-items');
+                    console.log('Filtros recibidos:', data);
                     suggestionItems.innerHTML = '';
-                    data.locals.forEach(local => {
-                        const suggestionDiv = document.createElement('div');
-                        suggestionDiv.className = 'suggestion';
-                        suggestionDiv.dataset.local = local.local_id;
-                        suggestionDiv.innerHTML = `
-                            <img src="https://via.placeholder.com/200?text=${encodeURIComponent(local.nombre_local)}" alt="${local.nombre_local}">
-                        `;
-                        suggestionItems.appendChild(suggestionDiv);
-                    });
+                    
+                    // Cargar locales para sugerencias
+                    if (data.locals && data.locals.length > 0) {
+                        data.locals.forEach(local => {
+                            const suggestionDiv = document.createElement('div');
+                            suggestionDiv.className = 'suggestion';
+                            suggestionDiv.dataset.local = local.local_id;
+                            suggestionDiv.innerHTML = `
+                                <img src="${local.imagen_url || `https://via.placeholder.com/200?text=${encodeURIComponent(local.nombre_local)}`}" 
+                                     alt="${local.nombre_local}" onerror="this.src='https://via.placeholder.com/200?text=Sin+Imagen'">
+                            `;
+                            suggestionDiv.addEventListener('click', () => fetchMenus(null, local.local_id));
+                            suggestionItems.appendChild(suggestionDiv);
+                        });
+                    } else {
+                        // Fallback si no hay locales
+                        const noLocals = document.createElement('p');
+                        noLocals.className = 'no-results';
+                        noLocals.textContent = 'Aún no hay locales disponibles. ¡Pronto más opciones!';
+                        suggestionItems.appendChild(noLocals);
+                    }
+                    
+                    // Opcional: poblar categorías dinámicamente si quieres (por ahora hardcodeadas)
                 })
-                .catch(error => console.error('Error loading filters:', error));
-        });
-
-        // Event listener para categorías
+                .catch(error => {
+                    console.error('Error loading filters:', error);
+                    showError(suggestionItems, 'No se pudieron cargar las sugerencias');
+                });
+        }
+        
+        // Event listener para categorías (usando data-type para mejor control)
         document.querySelector('.categories').addEventListener('click', (event) => {
             const category = event.target.closest('.category');
             if (category) {
-                const categoryText = category.textContent.trim();
-                console.log('Categoría seleccionada:', categoryText); // Depuración
-                fetchMenus(categoryText, null);
+                const categoryText = category.dataset.type || category.textContent.trim();
+                console.log('Categoría seleccionada:', categoryText);
+                fetchMenus(normalizeText(categoryText), null); // Normaliza por si acaso
             }
         });
-
+        
         // Event listener para sugerencias
-        document.querySelector('.suggestion-items').addEventListener('click', (event) => {
+        document.addEventListener('click', (event) => {
             const suggestion = event.target.closest('.suggestion');
             if (suggestion) {
                 const localId = suggestion.dataset.local;
-                console.log('Local seleccionado:', localId); // Depuración
+                console.log('Local seleccionado:', localId);
                 fetchMenus(null, localId);
             }
         });
-
+        
+        // Búsqueda por barra (básica: filtra menús por nombre)
+        function setupSearch() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', (e) => {
+                const term = normalizeText(e.target.value);
+                if (term.length > 2) {
+                    // Podrías hacer una fetch con parámetro de búsqueda, pero por ahora filtra locales existentes
+                    console.log('Buscando:', term);
+                    // TODO: Integrar búsqueda real en backend si quieres
+                }
+            });
+        }
+        
         function fetchMenus(type, local) {
+            const container = document.getElementById('menu-display');
+            showLoading(container);
+            
             let params = '?action=getMenus';
             if (type) params += '&type=' + encodeURIComponent(type);
             if (local) params += '&local=' + encodeURIComponent(local);
-            console.log('URL de solicitud:', scriptUrl + params); // Depuración
+            
+            console.log('URL de solicitud:', scriptUrl + params);
+            
             fetch(scriptUrl + params)
                 .then(response => {
-                    if (!response.ok) throw new Error('Error en la respuesta del servidor: ' + response.status);
+                    if (!response.ok) throw new Error(`Error ${response.status}: Servidor no responde`);
                     return response.json();
                 })
                 .then(menus => {
-                    console.log('Menús recibidos:', menus); // Depuración
-                    displayMenus(menus, type || local);
+                    console.log('Menús recibidos:', menus);
+                    displayMenus(menus, type ? type : local ? 'Locales' : 'Todos');
                 })
                 .catch(error => {
                     console.error('Error fetching menus:', error);
-                    displayMenus([], type || local);
+                    showError(container, error.message);
                 });
         }
-
+        
         function displayMenus(menus, filter) {
             const container = document.getElementById('menu-display');
             container.innerHTML = '';
+            
             const h2 = document.createElement('h2');
-            h2.textContent = filter ? `Menús - ${filter}` : 'Menús';
+            h2.textContent = `Menús - ${filter}`;
             container.appendChild(h2);
+            
             const itemsDiv = document.createElement('div');
             itemsDiv.className = 'menu-items';
             container.appendChild(itemsDiv);
-
+            
             if (menus.length === 0) {
                 const noResults = document.createElement('p');
                 noResults.className = 'no-results';
-                noResults.textContent = 'No se encontraron menús para esta selección.';
+                noResults.textContent = `No se encontraron menús para "${filter}". Prueba otra categoría.`;
                 itemsDiv.appendChild(noResults);
             } else {
                 menus.forEach(menu => {
                     const menuDiv = document.createElement('div');
                     menuDiv.className = 'menu-item';
+                    
                     const img = document.createElement('img');
                     img.src = menu.imagen_url || 'https://via.placeholder.com/200?text=Sin+Imagen';
                     img.alt = menu.nombre;
+                    img.onerror = () => { img.src = 'https://via.placeholder.com/200?text=Sin+Imagen'; };
                     menuDiv.appendChild(img);
+                    
                     const h3 = document.createElement('h3');
                     h3.textContent = menu.nombre;
                     menuDiv.appendChild(h3);
+                    
                     const descP = document.createElement('p');
                     descP.textContent = menu.descripcion || 'Sin descripción';
                     menuDiv.appendChild(descP);
+                    
                     const priceP = document.createElement('p');
+                    priceP.style.fontWeight = 'bold';
+                    priceP.style.color = '#27ae60';
                     priceP.textContent = `Precio: $${menu.precio}`;
                     menuDiv.appendChild(priceP);
+                    
+                    // Botón agregar al carrito (placeholder)
+                    const addBtn = document.createElement('button');
+                    addBtn.textContent = 'Agregar al carrito';
+                    addBtn.style.marginTop = '10px';
+                    addBtn.style.padding = '5px 10px';
+                    addBtn.style.backgroundColor = '#3498db';
+                    addBtn.style.color = 'white';
+                    addBtn.style.border = 'none';
+                    addBtn.style.borderRadius = '5px';
+                    addBtn.style.cursor = 'pointer';
+                    addBtn.onclick = () => alert(`¡Agregado: ${menu.nombre}!`); // TODO: Integrar con pedidos
+                    menuDiv.appendChild(addBtn);
+                    
                     itemsDiv.appendChild(menuDiv);
                 });
             }
