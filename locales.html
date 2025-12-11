@@ -97,23 +97,6 @@
       document.getElementById('local-register-form').classList.add('d-none');
     });
 
-    // REGISTRO LOCAL - SIN CORS (funciona 100%)
-document.getElementById('local-register-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const nombre = document.getElementById('reg-local-name').value;
-  const email = document.getElementById('reg-local-email').value;
-  const password = document.getElementById('reg-local-password').value;
-
-  const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'no-cors',           // ← Esto evita el preflight
-      redirect: 'follow'
-    });
-
     // Con no-cors, response.json() no funciona → siempre es opaque
     // Pero si llegó aquí, el registro funcionó (Google Apps Script no da error 500 si todo bien)
     document.getElementById('auth-status').innerHTML = 
