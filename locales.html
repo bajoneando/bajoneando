@@ -126,9 +126,10 @@ document.getElementById('local-register-form').addEventListener('submit', async 
   }
 });
 
-// REGISTRO → ahora SÍ llega a la hoja
+// ====== REGISTRO LOCAL (solo uno) ======
 document.getElementById('local-register-form').addEventListener('submit', async (e) => {
   e.preventDefault();
+
   const nombre = document.getElementById('reg-local-name').value.trim();
   const email = document.getElementById('reg-local-email').value.trim();
   const password = document.getElementById('reg-local-password').value;
@@ -136,18 +137,20 @@ document.getElementById('local-register-form').addEventListener('submit', async 
   const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
 
   try {
-    await fetch(url, { method: 'GET', mode: 'no-cors' });
+    await fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-cache' });
     document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-success">¡Local registrado! Ya puedes hacer login.</div>';
+      '<div class="alert alert-success">¡Local registrado con éxito! Ya puedes iniciar sesión.</div>';
+    document.getElementById('local-register-form').reset();
   } catch (err) {
     document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-danger">Error de red</div>';
+      '<div class="alert alert-danger">Error de conexión</div>';
   }
 });
 
-// LOGIN → ahora devuelve el localId real
+// ====== LOGIN LOCAL (perfecto como está) ======
 document.getElementById('local-login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
+
   const email = document.getElementById('login-local-email').value.trim();
   const password = document.getElementById('login-local-password').value;
 
@@ -162,7 +165,7 @@ document.getElementById('local-login-form').addEventListener('submit', async (e)
       location.reload();
     } else {
       document.getElementById('auth-status').innerHTML = 
-        '<div class="alert alert-danger">' + (result.error || "Credenciales inválidas") + '</div>';
+        '<div class="alert alert-danger">Credenciales inválidas</div>';
     }
   } catch (err) {
     document.getElementById('auth-status').innerHTML = 
