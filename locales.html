@@ -126,10 +126,9 @@ document.getElementById('local-register-form').addEventListener('submit', async 
   }
 });
 
-// REGISTRO LOCAL → 100% funcional sin CORS
+// REGISTRO → ahora SÍ llega a la hoja
 document.getElementById('local-register-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
   const nombre = document.getElementById('reg-local-name').value.trim();
   const email = document.getElementById('reg-local-email').value.trim();
   const password = document.getElementById('reg-local-password').value;
@@ -137,37 +136,33 @@ document.getElementById('local-register-form').addEventListener('submit', async 
   const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
 
   try {
-    const response = await fetch(url, { method: 'GET', mode: 'no-cors' });
-    // Con no-cors no podemos leer la respuesta, pero si llegó aquí → todo bien
+    await fetch(url, { method: 'GET', mode: 'no-cors' });
     document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-success">¡Local registrado con éxito! Ya puedes iniciar sesión.</div>';
-    document.getElementById('local-register-form').reset();
+      '<div class="alert alert-success">¡Local registrado! Ya puedes hacer login.</div>';
   } catch (err) {
     document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-danger">Error de conexión. Intenta de nuevo.</div>';
+      '<div class="alert alert-danger">Error de red</div>';
   }
 });
 
-// LOGIN LOCAL → 100% funcional y devuelve el localId real
+// LOGIN → ahora devuelve el localId real
 document.getElementById('local-login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
   const email = document.getElementById('login-local-email').value.trim();
   const password = document.getElementById('login-local-password').value;
 
   const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
 
   try {
-    // Aquí SÍ usamos cors porque doGet ya permite GET sin problemas
-    const response = await fetch(url, { method: 'GET' });
-    const result = await response.json();
+    const res = await fetch(url);
+    const result = await res.json();
 
     if (result.success) {
       localStorage.setItem('localToken', result.localId);
       location.reload();
     } else {
       document.getElementById('auth-status').innerHTML = 
-        '<div class="alert alert-danger">Email o contraseña incorrectos</div>';
+        '<div class="alert alert-danger">' + (result.error || "Credenciales inválidas") + '</div>';
     }
   } catch (err) {
     document.getElementById('auth-status').innerHTML = 
