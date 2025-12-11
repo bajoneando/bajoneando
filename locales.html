@@ -29,18 +29,25 @@
       border-radius: 0 0 20px 20px;
       margin-bottom: 3rem;
     }
+    .logo-perfil {
+      width: 140px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid #d32f2f;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
     .logo-placeholder {
-      width: 120px;
-      height: 120px;
+      width: 140px;
+      height: 140px;
       background: #f5f5f5;
-      border: 3px dashed #d32f2f;
+      border: 4px dashed #d32f2f;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.9rem;
+      font-size: 1rem;
       color: #999;
-      margin: 0 auto 1rem;
     }
 
     /* Toggle pequeño */
@@ -74,11 +81,8 @@
     .card-body-horizontal { padding: 1.5rem; flex: 1; }
     .precio { font-size: 1.8rem; font-weight: 700; color: #d32f2f; }
 
-    /* Loading spinner */
-    .loading {
-      color: #d32f2f;
-      font-weight: 600;
-    }
+    /* Loading */
+    .loading { color: #d32f2f; font-weight: 600; }
 
     /* Footer */
     footer {
@@ -93,7 +97,9 @@
   <!-- Header -->
   <header class="header">
     <div class="container text-center">
-      <div class="logo-placeholder mx-auto">Logo Aquí</div>
+      <div id="logo-container" class="mx-auto">
+        <div class="logo-placeholder">Sube tu foto de perfil</div>
+      </div>
       <h1 class="display-5 fw-bold text-rojo">Antojate</h1>
       <p class="text-muted">Panel de Gestión del Menú</p>
     </div>
@@ -174,7 +180,16 @@
         <input type="hidden" id="edit-item-id">
         <div class="row g-3">
           <div class="col-md-6"><input type="text" id="nombre" class="form-control form-control-lg" placeholder="Nombre del plato" required></div>
-          <div class="col-md-6"><input type="text" id="categoria" class="form-control form-control-lg" placeholder="Categoría" required></div>
+          <div class="col-md-6">
+            <select id="categoria" class="form-select form-select-lg" required>
+              <option value="">Seleccionar categoría</option>
+              <option value="Hamburguesas">Hamburguesas</option>
+              <option value="Pizza">Pizza</option>
+              <option value="Helados">Helados</option>
+              <option value="Postres">Postres</option>
+              <option value="Merienda">Merienda</option>
+            </select>
+          </div>
           <div class="col-12"><textarea id="descripcion" class="form-control" rows="2" placeholder="Descripción breve" required></textarea></div>
           <div class="col-md-4"><input type="number" id="precio" class="form-control form-control-lg" placeholder="Precio" step="0.01" required></div>
           <div class="col-md-4">
@@ -183,15 +198,23 @@
               <option value="No">No disponible</option>
             </select>
           </div>
-          <div class="col-md-4"><input type="text" id="tamano_porcion" class="form-control form-control-lg" placeholder="Tamaño/Porción" required></div>
-          <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes"></div>
+          <div class="col-md-4">
+            <select id="tamano_porcion" class="form-select form-select-lg" required>
+              <option value="">Tamaño/Porción</option>
+              <option value="1 persona">1 persona</option>
+              <option value="2 personas">2 personas</option>
+              <option value="3 personas">3 personas</option>
+              <option value="4+ personas">4+ personas</option>
+            </select>
+          </div>
+          <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes (opcional)"></div>
           <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo (min)"></div>
           <div class="col-12"><input type="file" id="foto" class="form-control form-control-lg" accept="image/*"></div>
         </div>
         <div class="mt-4 text-end">
           <button type="button" id="cancelar-form" class="btn btn-secondary btn-lg me-3">Cancelar</button>
           <button type="submit" class="btn btn-success btn-lg px-5" id="guardar-btn">
-            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
             Guardar Plato
           </button>
         </div>
@@ -200,6 +223,14 @@
       <!-- Formulario Editar Perfil -->
       <div id="perfil-form" class="card shadow-lg p-4 mb-5 d-none">
         <h3 class="mb-4 text-rojo">Editar Perfil del Local</h3>
+        <div class="text-center mb-4">
+          <img id="perfil-foto-preview" src="" alt="Foto del local" class="logo-perfil" style="display:none;">
+          <div id="perfil-foto-placeholder" class="logo-placeholder mx-auto">Sin foto</div>
+          <div class="mt-3">
+            <input type="file" id="perfil-foto" class="form-control form-control-lg" accept="image/*">
+            <small class="text-muted">Sube una nueva foto de perfil (opcional)</small>
+          </div>
+        </div>
         <div class="row g-3">
           <div class="col-md-6"><input type="text" id="perfil-nombre" class="form-control form-control-lg" placeholder="Nombre del local" required></div>
           <div class="col-md-6"><input type="email" id="perfil-email" class="form-control form-control-lg" placeholder="Email" required></div>
@@ -208,7 +239,7 @@
         <div class="mt-4 text-end">
           <button type="button" id="cancelar-perfil" class="btn btn-secondary btn-lg me-3">Cancelar</button>
           <button type="button" id="guardar-perfil" class="btn btn-success btn-lg px-5">
-            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
             Guardar Cambios
           </button>
         </div>
@@ -296,6 +327,21 @@
       location.reload();
     });
 
+    // === CARGAR FOTO DE PERFIL Y MOSTRAR EN HEADER ===
+    async function cargarFotoPerfil() {
+      if (!localToken) return;
+      try {
+        const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
+        const data = await res.json();
+        if (data.success && data.foto_url) {
+          perfilFotoUrl = data.foto_url;
+          document.getElementById('logo-container').innerHTML = `<img src="${perfilFotoUrl}" alt="Foto del local" class="logo-perfil">`;
+        }
+      } catch (err) {
+        console.log('No se pudo cargar foto de perfil');
+      }
+    }
+    
     // === CARGAR MENÚ Y RENDERIZAR ===
     async function cargarMenuCompleto() {
       const res = await fetch(`${API_URL}?action=getMenuByLocalIdColK&localId=${localToken}`);
@@ -321,7 +367,6 @@
         cont.innerHTML = '<div class="text-center py-5"><h4>No hay platos</h4></div>';
         return;
       }
-
       let html = '';
       items.forEach(item => {
         const disp = item.disponibilidad === "Sí";
@@ -344,7 +389,9 @@
                 </div>
                 <div>
                   <button class="btn btn-warning btn-sm me-2 editar-plato" data-id="${item.id}">Editar</button>
-                  <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">Eliminar</button>
+                  <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">
+                    <span class="spinner-border spinner-border-sm d-none"></span> Eliminar
+                  </button>
                 </div>
               </div>
             </div>
@@ -352,27 +399,32 @@
       });
       cont.innerHTML = html;
 
-      // Eventos de disponibilidad y botones
+      // Eventos...
       document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
         el.addEventListener('change', async () => {
-          const val = el.checked ? "Sí" : "No";
-          await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${val}`);
+          await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
         });
       });
 
       document.querySelectorAll('.eliminar-item').forEach(btn => {
         btn.addEventListener('click', async () => {
-          if (confirm('¿Eliminar este plato?')) {
+          if (!confirm('¿Eliminar permanentemente?')) return;
+          const spinner = btn.querySelector('.spinner-border');
+          spinner.classList.remove('d-none');
+          btn.disabled = true;
+          try {
             await fetch(`${API_URL}?action=deleteMenuItem&itemId=${btn.dataset.id}`);
             cargarMenuCompleto();
+          } finally {
+            spinner.classList.add('d-none');
+            btn.disabled = false;
           }
         });
       });
 
       document.querySelectorAll('.editar-plato').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.dataset.id;
-          const item = menuItems.find(i => i.id == id);
+        btn.addEventListener('click', () => {
+          const item = menuItems.find(i => i.id == btn.dataset.id);
           if (item) {
             document.getElementById('menu-form').classList.remove('d-none');
             document.getElementById('form-titulo').textContent = "Editar Plato";
@@ -391,24 +443,20 @@
       });
     }
 
-    // === FILTROS EN TIEMPO REAL ===
+    // Filtros, navegación y guardar plato (igual que antes, solo con los selects nuevos)
     document.getElementById('buscador-plato')?.addEventListener('input', filtrarMenu);
     document.getElementById('filtro-categoria')?.addEventListener('change', filtrarMenu);
-
     function filtrarMenu() {
       const texto = document.getElementById('buscador-plato').value.toLowerCase();
       const cat = document.getElementById('filtro-categoria').value;
-
       const filtrados = menuItems.filter(item => {
         const coincideNombre = item.nombre.toLowerCase().includes(texto);
         const coincideCat = !cat || (item.categoria || "Sin categoría") === cat;
         return coincideNombre && coincideCat;
       });
-
       renderizarMenu(filtrados);
     }
 
-    // === BOTONES PRINCIPALES ===
     document.getElementById('btn-mi-menu')?.addEventListener('click', () => {
       document.getElementById('menu-form').classList.add('d-none');
       document.getElementById('perfil-form').classList.add('d-none');
@@ -423,50 +471,218 @@
       document.getElementById('menu-form').reset();
       document.getElementById('edit-item-id').value = '';
       document.getElementById('foto').value = '';
+      document.getElementById('categoria').value = '';
+      document.getElementById('tamano_porcion').value = '';
     });
 
-    // === GUARDAR PLATO (add / update) ===
     document.getElementById('menu-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const itemId = document.getElementById('edit-item-id').value;
-      const esEdicion = itemId !== '';
+      const btn = document.getElementById('guardar-btn');
+      const spinner = btn.querySelector('.spinner-border');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
 
-      let imagenUrl = '';
-      if (document.getElementById('foto').files[0]) {
-        imagenUrl = await subirImagen(document.getElementById('foto').files[0]);
+      try {
+        let imagenUrl = '';
+        if (document.getElementById('foto').files[0]) {
+          imagenUrl = await subirImagen(document.getElementById('foto').files[0]);
+        }
+
+        const payload = {
+          localId: localToken,
+          nombre: document.getElementById('nombre').value.trim(),
+          categoria: document.getElementById('categoria').value,
+          descripcion: document.getElementById('descripcion').value.trim(),
+          precio: parseFloat(document.getElementById('precio').value),
+          disponibilidad: document.getElementById('disponibilidad').value,
+          tamano_porcion: document.getElementById('tamano_porcion').value,
+          variantes: document.getElementById('variantes').value.trim(),
+          tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0,
+          ...(imagenUrl && { imagen_url: imagenUrl })
+        };
+
+        if (document.getElementById('edit-item-id').value) {
+          payload.itemId = document.getElementById('edit-item-id').value;
+        }
+
+        const action = payload.itemId ? 'updateMenuItem' : 'addMenuItem';
+        await fetch(`${API_URL}?action=${action}`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors'
+        });
+
+        alert(payload.itemId ? 'Plato actualizado' : 'Plato agregado');
+        document.getElementById('menu-form').classList.add('d-none');
+        cargarMenuCompleto();
+      } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
       }
+    });
 
-      const payload = {
-        localId: localToken,
-        nombre: document.getElementById('nombre').value.trim(),
-        categoria: document.getElementById('categoria').value.trim(),
-        descripcion: document.getElementById('descripcion').value.trim(),
-        precio: parseFloat(document.getElementById('precio').value),
-        disponibilidad: document.getElementById('disponibilidad').value,
-        tamano_porcion: document.getElementById('tamano_porcion').value.trim(),
-        variantes: document.getElementById('variantes').value.trim(),
-        tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0,
-        ...(imagenUrl && { imagen_url: imagenUrl })
-      };
+    function renderizarMenu(items) {
+      const cont = document.getElementById('menu-listado');
+      if (items.length === 0) {
+        cont.innerHTML = '<div class="text-center py-5"><h4>No hay platos</h4></div>';
+        return;
+      }
+      let html = '';
+      items.forEach(item => {
+        const disp = item.disponibilidad === "Sí";
+        html += `
+          <div class="menu-card-horizontal">
+            ${item.imagen_url ? `<img src="${item.imagen_url}" alt="${item.nombre}">` : '<div style="width:120px;height:120px;background:#eee;"></div>'}
+            <div class="card-body-horizontal">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h5 class="fw-bold mb-1">${item.nombre}</h5>
+                  <p class="text-muted small mb-2">${item.descripcion || ''}</p>
+                  <span class="badge bg-secondary mb-2">${item.categoria || 'Sin categoría'}</span>
+                </div>
+                <span class="precio">$${parseFloat(item.precio).toFixed(2)}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input toggle-disponibilidad" type="checkbox" id="disp-${item.id}" ${disp ? 'checked' : ''} data-id="${item.id}">
+                  <label class="form-check-label" for="disp-${item.id}">${disp ? 'Disponible' : 'No disponible'}</label>
+                </div>
+                <div>
+                  <button class="btn btn-warning btn-sm me-2 editar-plato" data-id="${item.id}">Editar</button>
+                  <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">
+                    <span class="spinner-border spinner-border-sm d-none"></span> Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      });
+      cont.innerHTML = html;
 
-      if (esEdicion) payload.itemId = itemId;
-
-      const action = esEdicion ? 'updateMenuItem' : 'addMenuItem';
-
-      await fetch(`${API_URL}?action=${action}`, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json' },
-        mode: 'no-cors'
+      // Eventos...
+      document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
+        el.addEventListener('change', async () => {
+          await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
+        });
       });
 
-      alert(esEdicion ? 'Plato actualizado' : 'Plato agregado');
-      document.getElementById('menu-form').reset();
-      document.getElementById('foto').value = '';
+      document.querySelectorAll('.eliminar-item').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('¿Eliminar permanentemente?')) return;
+          const spinner = btn.querySelector('.spinner-border');
+          spinner.classList.remove('d-none');
+          btn.disabled = true;
+          try {
+            await fetch(`${API_URL}?action=deleteMenuItem&itemId=${btn.dataset.id}`);
+            cargarMenuCompleto();
+          } finally {
+            spinner.classList.add('d-none');
+            btn.disabled = false;
+          }
+        });
+      });
+
+      document.querySelectorAll('.editar-plato').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = menuItems.find(i => i.id == btn.dataset.id);
+          if (item) {
+            document.getElementById('menu-form').classList.remove('d-none');
+            document.getElementById('form-titulo').textContent = "Editar Plato";
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('nombre').value = item.nombre;
+            document.getElementById('categoria').value = item.categoria || '';
+            document.getElementById('descripcion').value = item.descripcion || '';
+            document.getElementById('precio').value = item.precio;
+            document.getElementById('disponibilidad').value = item.disponibilidad;
+            document.getElementById('tamano_porcion').value = item.tamano_porcion || '';
+            document.getElementById('variantes').value = item.variantes || '';
+            document.getElementById('tiempo_preparacion').value = item.tiempo_preparacion || '';
+            document.getElementById('menu-listado').innerHTML = '';
+          }
+        });
+      });
+    }
+
+    // Filtros, navegación y guardar plato (igual que antes, solo con los selects nuevos)
+    document.getElementById('buscador-plato')?.addEventListener('input', filtrarMenu);
+    document.getElementById('filtro-categoria')?.addEventListener('change', filtrarMenu);
+    function filtrarMenu() {
+      const texto = document.getElementById('buscador-plato').value.toLowerCase();
+      const cat = document.getElementById('filtro-categoria').value;
+      const filtrados = menuItems.filter(item => {
+        const coincideNombre = item.nombre.toLowerCase().includes(texto);
+        const coincideCat = !cat || (item.categoria || "Sin categoría") === cat;
+        return coincideNombre && coincideCat;
+      });
+      renderizarMenu(filtrados);
+    }
+
+    document.getElementById('btn-mi-menu')?.addEventListener('click', () => {
       document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('perfil-form').classList.add('d-none');
       cargarMenuCompleto();
     });
 
+    document.getElementById('btn-agregar-item')?.addEventListener('click', () => {
+      document.getElementById('menu-form').classList.remove('d-none');
+      document.getElementById('perfil-form').classList.add('d-none');
+      document.getElementById('menu-listado').innerHTML = '';
+      document.getElementById('form-titulo').textContent = "Nuevo Plato";
+      document.getElementById('menu-form').reset();
+      document.getElementById('edit-item-id').value = '';
+      document.getElementById('foto').value = '';
+      document.getElementById('categoria').value = '';
+      document.getElementById('tamano_porcion').value = '';
+    });
+
+    document.getElementById('menu-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('guardar-btn');
+      const spinner = btn.querySelector('.spinner-border');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+
+      try {
+        let imagenUrl = '';
+        if (document.getElementById('foto').files[0]) {
+          imagenUrl = await subirImagen(document.getElementById('foto').files[0]);
+        }
+
+        const payload = {
+          localId: localToken,
+          nombre: document.getElementById('nombre').value.trim(),
+          categoria: document.getElementById('categoria').value,
+          descripcion: document.getElementById('descripcion').value.trim(),
+          precio: parseFloat(document.getElementById('precio').value),
+          disponibilidad: document.getElementById('disponibilidad').value,
+          tamano_porcion: document.getElementById('tamano_porcion').value,
+          variantes: document.getElementById('variantes').value.trim(),
+          tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0,
+          ...(imagenUrl && { imagen_url: imagenUrl })
+        };
+
+        if (document.getElementById('edit-item-id').value) {
+          payload.itemId = document.getElementById('edit-item-id').value;
+        }
+
+        const action = payload.itemId ? 'updateMenuItem' : 'addMenuItem';
+        await fetch(`${API_URL}?action=${action}`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors'
+        });
+
+        alert(payload.itemId ? 'Plato actualizado' : 'Plato agregado');
+        document.getElementById('menu-form').classList.add('d-none');
+        cargarMenuCompleto();
+      } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+      }
+    });
+    
     // === LOGIN Y REGISTRO (100% original) ===
     document.getElementById('show-register').addEventListener('click', () => {
       document.getElementById('local-register-form').classList.toggle('d-none');
