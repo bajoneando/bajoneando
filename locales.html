@@ -57,7 +57,7 @@
 
     /* Toggle pequeño */
     .status-toggle-sm {
-      width: 50px; height: 30px; position: relative; display: inline-block;
+      width: 70px; height: 36px; position: relative; display: inline-block;
     }
     .status-toggle-sm input { opacity: 0; width: 0; height: 0; }
     .status-slider-sm {
@@ -65,11 +65,11 @@
       background-color: #ccc; transition: .4s; border-radius: 34px;
     }
     .status-slider-sm:before {
-      position: absolute; content: ""; height: 24px; width: 24px;
-      left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
+      position: absolute; content: ""; height: 28px; width: 28px;
+      left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
     }
     input:checked + .status-slider-sm { background-color: #27ae60; }
-    input:checked + .status-slider-sm:before { transform: translateX(20px); }
+    input:checked + .status-slider-sm:before { transform: translateX(34px); }
 
     /* Tarjeta horizontal */
     .menu-card-horizontal {
@@ -91,7 +91,7 @@
 
     /* Footer */
     footer {
-      background: #bdf62828; color: white; padding: 2rem 0; margin-top: auto;
+      background: #c62828; color: white; padding: 2rem 0; margin-top: auto;
     }
     footer a { color: #ffcdd2; text-decoration: none; }
     footer a:hover { color: white; }
@@ -102,7 +102,6 @@
   <!-- Header -->
   <header class="header">
     <div class="container text-center">
-      <!-- Logo de la plataforma Antojate -->
       <img src="https://via.placeholder.com/300x100/ffffff/d32f2f?text=Antojate" alt="Logo Antojate" class="logo-plataforma mb-3">
       <h1 class="display-5 fw-bold text-rojo">Panel de Gestión del Menú</h1>
     </div>
@@ -118,27 +117,21 @@
         <button id="show-login" class="btn btn-rojo btn-lg">Iniciar Sesión</button>
       </div>
 
-      <!-- Formulario Registro -->
+      <!-- Formulario Registro con foto -->
       <form id="local-register-form" class="mt-4 d-none">
         <div class="text-center mb-4">
-          <div id="reg-foto-preview" class="d-none">
-            <img src="" alt="Vista previa" class="img-fluid rounded" style="max-width:150px;">
-          </div>
+          <div class="logo-placeholder mx-auto">Foto de Perfil</div>
           <div class="mt-3">
-            <input type="file" id="reg-foto" class="form-control form-control-lg" accept="image/*">
-            <small class="text-muted">Foto de perfil (opcional)</small>
+            <input type="file" id="reg-perfil-foto" class="form-control form-control-lg" accept="image/*">
+            <small class="text-muted">Opcional: sube una foto para tu local</small>
           </div>
         </div>
         <input type="text" id="reg-local-name" placeholder="Nombre del Local" class="form-control form-control-lg mb-3" required>
         <input type="email" id="reg-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
         <input type="password" id="reg-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
-        <button type="submit" class="btn btn-success btn-lg w-100">
-          <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-          Registrar Local
-        </button>
+        <button type="submit" class="btn btn-success btn-lg w-100">Registrar Local</button>
       </form>
 
-      <!-- Formulario Login -->
       <form id="local-login-form" class="mt-4 d-none">
         <input type="email" id="login-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
         <input type="password" id="login-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
@@ -150,7 +143,7 @@
     <!-- PANEL PRINCIPAL -->
     <div id="panel-principal" class="d-none">
 
-      <!-- Barra superior -->
+      <!-- Barra superior: Estado + Perfil con foto -->
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
           <div class="text-center">
@@ -163,7 +156,7 @@
           <span class="fw-medium">Estado del Local</span>
         </div>
 
-        <!-- Foto de perfil + Dropdown -->
+        <!-- Foto de perfil + Botón Mi Perfil -->
         <div class="d-flex align-items-center gap-3">
           <div id="perfil-foto-container">
             <div class="logo-perfil-placeholder">Foto</div>
@@ -324,7 +317,37 @@
       }
     }
 
-    // === CARGAR FOTO DE PERFIL (en barra superior) ===
+    // === ESTADO LOCAL ===
+    async function cargarEstadoLocal() {
+      if (!localToken) return;
+      const res = await fetch(`${API_URL}?action=getLocalEstado&localId=${localToken}`);
+      const data = await res.json();
+      const activo = data.estado === "Activo";
+      document.getElementById('estado-local-toggle').checked = activo;
+      document.getElementById('estado-texto').textContent = activo ? "Abierto" : "Cerrado";
+    }
+
+    document.getElementById('estado-local-toggle')?.addEventListener('change', async function() {
+      const estado = this.checked ? "Activo" : "Inactivo";
+      document.getElementById('estado-texto').textContent = this.checked ? "Abierto" : "Cerrado";
+      await fetch(`${API_URL}?action=updateLocalEstado&localId=${localToken}&estado=${estado}`);
+    });
+
+    // === MOSTRAR PANEL ===
+    if (localToken) {
+      document.getElementById('auth-section').classList.add('d-none');
+      document.getElementById('panel-principal').classList.remove('d-none');
+      cargarEstadoLocal();
+      cargarMenuCompleto();
+      document.getElementById('filtros-menu').classList.remove('d-none');
+    }
+
+    document.getElementById('logout')?.addEventListener('click', () => {
+      localStorage.removeItem('localToken');
+      location.reload();
+    });
+
+    // === CARGAR FOTO DE PERFIL (al lado de Mi Perfil) ===
     async function cargarFotoPerfil() {
       if (!localToken) return;
       try {
@@ -335,196 +358,9 @@
           document.getElementById('perfil-foto-container').innerHTML = `<img src="${perfilFotoUrl}" alt="Foto del local" class="logo-perfil-sm">`;
         }
       } catch (err) {
-        console.log('No se pudo cargar foto de perfil');
+        console.log('No hay foto de perfil');
       }
     }
-
-    // === ESTADO LOCAL ===
-    async function cargarEstadoLocal() {
-      if (!localToken) return;
-      try {
-        const res = await fetch(`${API_URL}?action=getLocalEstado&localId=${localToken}`);
-        const data = await res.json();
-        const activo = data.estado === "Activo";
-        document.getElementById('estado-local-toggle').checked = activo;
-        document.getElementById('estado-texto').textContent = activo ? "Abierto" : "Cerrado";
-      } catch (err) { console.error(err); }
-    }
-
-    document.getElementById('estado-local-toggle')?.addEventListener('change', async function() {
-      const estado = this.checked ? "Activo" : "Inactivo";
-      document.getElementById('estado-texto').textContent = this.checked ? "Abierto" : "Cerrado";
-      await fetch(`${API_URL}?action=updateLocalEstado&localId=${localToken}&estado=${estado}`);
-    });
-
-    // === INICIO ===
-    if (localToken) {
-      document.getElementById('auth-section').classList.add('d-none');
-      document.getElementById('panel-principal').classList.remove('d-none');
-      document.getElementById('filtros-menu').classList.remove('d-none');
-      cargarEstadoLocal();
-      cargarFotoPerfil();
-      cargarMenuCompleto();
-    }
-
-    document.getElementById('logout')?.addEventListener('click', () => {
-      localStorage.removeItem('localToken');
-      location.reload();
-    });
-
-    // === REGISTRO CON FOTO ===
-    document.getElementById('reg-foto').addEventListener('change', function(e) {
-      if (e.target.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-          document.getElementById('reg-foto-preview').querySelector('img').src = ev.target.result;
-          document.getElementById('reg-foto-preview').classList.remove('d-none');
-        };
-        reader.readAsDataURL(e.target.files[0]);
-      }
-    });
-
-    document.getElementById('local-register-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = e.target.querySelector('button[type="submit"]');
-      const spinner = btn.querySelector('.spinner-border');
-      spinner.classList.remove('d-none');
-      btn.disabled = true;
-
-      try {
-        let fotoUrl = '';
-        if (document.getElementById('reg-foto').files[0]) {
-          fotoUrl = await subirImagen(document.getElementById('reg-foto').files[0]);
-        }
-
-        const nombre = document.getElementById('reg-local-name').value.trim();
-        const email = document.getElementById('reg-local-email').value.trim();
-        const password = document.getElementById('reg-local-password').value;
-
-        const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}${fotoUrl ? '&foto_url=' + encodeURIComponent(fotoUrl) : ''}`;
-        await fetch(url, { method: 'GET', mode: 'no-cors' });
-
-        document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Registrado! Ya puedes iniciar sesión.</div>';
-        document.getElementById('local-register-form').reset();
-        document.getElementById('reg-foto-preview').classList.add('d-none');
-        document.getElementById('local-register-form').classList.add('d-none');
-        document.getElementById('local-login-form').classList.remove('d-none');
-      } finally {
-        spinner.classList.add('d-none');
-        btn.disabled = false;
-      }
-    });
-
-    // === LOGIN ===
-    document.getElementById('local-login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-local-email').value.trim();
-      const password = document.getElementById('login-local-password').value;
-      const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
-
-      window.loginCallback = function(data) {
-        if (data.success && data.localId) {
-          localStorage.setItem('localToken', data.localId);
-          setTimeout(() => location.reload(), 800);
-        } else {
-          document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales incorrectas</div>';
-        }
-        delete window.loginCallback;
-        const s = document.getElementById('loginScript'); if (s) s.remove();
-      };
-
-      const script = document.createElement('script');
-      script.id = 'loginScript';
-      script.src = url;
-      document.head.appendChild(script);
-    });
-
-    // === EDITAR PERFIL (con foto) ===
-    document.getElementById('editar-perfil-btn')?.addEventListener('click', async () => {
-      document.getElementById('menu-form').classList.add('d-none');
-      document.getElementById('menu-listado').innerHTML = '';
-      document.getElementById('perfil-form').classList.remove('d-none');
-
-      const btn = document.getElementById('guardar-perfil');
-      const spinner = btn.querySelector('.spinner-border');
-      spinner.classList.remove('d-none');
-      btn.disabled = true;
-
-      try {
-        const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('perfil-nombre').value = data.nombre || '';
-          document.getElementById('perfil-email').value = data.email || '';
-          if (data.foto_url) {
-            document.getElementById('perfil-foto-preview').src = data.foto_url;
-            document.getElementById('perfil-foto-preview').style.display = 'block';
-            document.getElementById('perfil-foto-placeholder').style.display = 'none';
-          } else {
-            document.getElementById('perfil-foto-preview').style.display = 'none';
-            document.getElementById('perfil-foto-placeholder').style.display = 'flex';
-          }
-        }
-      } finally {
-        spinner.classList.add('d-none');
-        btn.disabled = false;
-      }
-    });
-
-    document.getElementById('perfil-foto').addEventListener('change', function(e) {
-      if (e.target.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-          document.getElementById('perfil-foto-preview').src = ev.target.result;
-          document.getElementById('perfil-foto-preview').style.display = 'block';
-          document.getElementById('perfil-foto-placeholder').style.display = 'none';
-        };
-        reader.readAsDataURL(e.target.files[0]);
-      }
-    });
-
-    document.getElementById('guardar-perfil').addEventListener('click', async () => {
-      const btn = document.getElementById('guardar-perfil');
-      const spinner = btn.querySelector('.spinner-border');
-      spinner.classList.remove('d-none');
-      btn.disabled = true;
-
-      try {
-        let nuevaFotoUrl = perfilFotoUrl;
-        if (document.getElementById('perfil-foto').files[0]) {
-          nuevaFotoUrl = await subirImagen(document.getElementById('perfil-foto').files[0]);
-        }
-
-        const payload = {
-          localId: localToken,
-          nombre: document.getElementById('perfil-nombre').value,
-          email: document.getElementById('perfil-email').value,
-          password: document.getElementById('perfil-password').value,
-          ...(nuevaFotoUrl && { foto_url: nuevaFotoUrl })
-        };
-
-        await fetch(`${API_URL}?action=updatePerfilLocal`, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'no-cors'
-        });
-
-        alert('Perfil actualizado correctamente');
-        document.getElementById('perfil-form').classList.add('d-none');
-        if (nuevaFotoUrl) {
-          perfilFotoUrl = nuevaFotoUrl;
-          cargarFotoPerfil();
-        }
-      } finally {
-        spinner.classList.add('d-none');
-        btn.disabled = false;
-      }
-    });
-
-    document.getElementById('cancelar-perfil')?.addEventListener('click', () => {
-      document.getElementById('perfil-form').classList.add('d-none');
-    });
     
     // === CARGAR MENÚ Y RENDERIZAR ===
     async function cargarMenuCompleto() {
@@ -705,7 +541,291 @@
         btn.disabled = false;
       }
     });
+
+    function renderizarMenu(items) {
+      const cont = document.getElementById('menu-listado');
+      if (items.length === 0) {
+        cont.innerHTML = '<div class="text-center py-5"><h4>No hay platos</h4></div>';
+        return;
+      }
+      let html = '';
+      items.forEach(item => {
+        const disp = item.disponibilidad === "Sí";
+        html += `
+          <div class="menu-card-horizontal">
+            ${item.imagen_url ? `<img src="${item.imagen_url}" alt="${item.nombre}">` : '<div style="width:120px;height:120px;background:#eee;"></div>'}
+            <div class="card-body-horizontal">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h5 class="fw-bold mb-1">${item.nombre}</h5>
+                  <p class="text-muted small mb-2">${item.descripcion || ''}</p>
+                  <span class="badge bg-secondary mb-2">${item.categoria || 'Sin categoría'}</span>
+                </div>
+                <span class="precio">$${parseFloat(item.precio).toFixed(2)}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input toggle-disponibilidad" type="checkbox" id="disp-${item.id}" ${disp ? 'checked' : ''} data-id="${item.id}">
+                  <label class="form-check-label" for="disp-${item.id}">${disp ? 'Disponible' : 'No disponible'}</label>
+                </div>
+                <div>
+                  <button class="btn btn-warning btn-sm me-2 editar-plato" data-id="${item.id}">Editar</button>
+                  <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">
+                    <span class="spinner-border spinner-border-sm d-none"></span> Eliminar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      });
+      cont.innerHTML = html;
+
+      // Eventos...
+      document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
+        el.addEventListener('change', async () => {
+          await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
+        });
+      });
+
+      document.querySelectorAll('.eliminar-item').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('¿Eliminar permanentemente?')) return;
+          const spinner = btn.querySelector('.spinner-border');
+          spinner.classList.remove('d-none');
+          btn.disabled = true;
+          try {
+            await fetch(`${API_URL}?action=deleteMenuItem&itemId=${btn.dataset.id}`);
+            cargarMenuCompleto();
+          } finally {
+            spinner.classList.add('d-none');
+            btn.disabled = false;
+          }
+        });
+      });
+
+      document.querySelectorAll('.editar-plato').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = menuItems.find(i => i.id == btn.dataset.id);
+          if (item) {
+            document.getElementById('menu-form').classList.remove('d-none');
+            document.getElementById('form-titulo').textContent = "Editar Plato";
+            document.getElementById('edit-item-id').value = item.id;
+            document.getElementById('nombre').value = item.nombre;
+            document.getElementById('categoria').value = item.categoria || '';
+            document.getElementById('descripcion').value = item.descripcion || '';
+            document.getElementById('precio').value = item.precio;
+            document.getElementById('disponibilidad').value = item.disponibilidad;
+            document.getElementById('tamano_porcion').value = item.tamano_porcion || '';
+            document.getElementById('variantes').value = item.variantes || '';
+            document.getElementById('tiempo_preparacion').value = item.tiempo_preparacion || '';
+            document.getElementById('menu-listado').innerHTML = '';
+          }
+        });
+      });
+    }
+
+    // Filtros, navegación y guardar plato (igual que antes, solo con los selects nuevos)
+    document.getElementById('buscador-plato')?.addEventListener('input', filtrarMenu);
+    document.getElementById('filtro-categoria')?.addEventListener('change', filtrarMenu);
+    function filtrarMenu() {
+      const texto = document.getElementById('buscador-plato').value.toLowerCase();
+      const cat = document.getElementById('filtro-categoria').value;
+      const filtrados = menuItems.filter(item => {
+        const coincideNombre = item.nombre.toLowerCase().includes(texto);
+        const coincideCat = !cat || (item.categoria || "Sin categoría") === cat;
+        return coincideNombre && coincideCat;
+      });
+      renderizarMenu(filtrados);
+    }
+
+    document.getElementById('btn-mi-menu')?.addEventListener('click', () => {
+      document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('perfil-form').classList.add('d-none');
+      cargarMenuCompleto();
+    });
+
+    document.getElementById('btn-agregar-item')?.addEventListener('click', () => {
+      document.getElementById('menu-form').classList.remove('d-none');
+      document.getElementById('perfil-form').classList.add('d-none');
+      document.getElementById('menu-listado').innerHTML = '';
+      document.getElementById('form-titulo').textContent = "Nuevo Plato";
+      document.getElementById('menu-form').reset();
+      document.getElementById('edit-item-id').value = '';
+      document.getElementById('foto').value = '';
+      document.getElementById('categoria').value = '';
+      document.getElementById('tamano_porcion').value = '';
+    });
+
+    document.getElementById('menu-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('guardar-btn');
+      const spinner = btn.querySelector('.spinner-border');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+
+      try {
+        let imagenUrl = '';
+        if (document.getElementById('foto').files[0]) {
+          imagenUrl = await subirImagen(document.getElementById('foto').files[0]);
+        }
+
+        const payload = {
+          localId: localToken,
+          nombre: document.getElementById('nombre').value.trim(),
+          categoria: document.getElementById('categoria').value,
+          descripcion: document.getElementById('descripcion').value.trim(),
+          precio: parseFloat(document.getElementById('precio').value),
+          disponibilidad: document.getElementById('disponibilidad').value,
+          tamano_porcion: document.getElementById('tamano_porcion').value,
+          variantes: document.getElementById('variantes').value.trim(),
+          tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0,
+          ...(imagenUrl && { imagen_url: imagenUrl })
+        };
+
+        if (document.getElementById('edit-item-id').value) {
+          payload.itemId = document.getElementById('edit-item-id').value;
+        }
+
+        const action = payload.itemId ? 'updateMenuItem' : 'addMenuItem';
+        await fetch(`${API_URL}?action=${action}`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors'
+        });
+
+        alert(payload.itemId ? 'Plato actualizado' : 'Plato agregado');
+        document.getElementById('menu-form').classList.add('d-none');
+        cargarMenuCompleto();
+      } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+      }
+    });
     
+    // === LOGIN Y REGISTRO (100% original) ===
+    document.getElementById('show-register').addEventListener('click', () => {
+      document.getElementById('local-register-form').classList.toggle('d-none');
+      document.getElementById('local-login-form').classList.add('d-none');
+    });
+    document.getElementById('show-login').addEventListener('click', () => {
+      document.getElementById('local-login-form').classList.toggle('d-none');
+      document.getElementById('local-register-form').classList.add('d-none');
+    });
+
+    // === INICIO DE SESIÓN ===
+    if (localToken) {
+      document.getElementById('auth-section').classList.add('d-none');
+      document.getElementById('panel-principal').classList.remove('d-none');
+      document.getElementById('filtros-menu').classList.remove('d-none');
+      cargarEstadoLocal();
+      cargarFotoPerfil();
+      cargarMenuCompleto();
+    }
+
+    document.getElementById('logout')?.addEventListener('click', () => {
+      localStorage.removeItem('localToken');
+      location.reload();
+    });
+
+    // === REGISTRO CON FOTO DE PERFIL ===
+    document.getElementById('local-register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById('reg-local-name').value.trim();
+      const email = document.getElementById('reg-local-email').value.trim();
+      const password = document.getElementById('reg-local-password').value;
+
+      if (!nombre || !email || !password) {
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa todos los campos</div>';
+        return;
+      }
+
+      let fotoUrl = '';
+      if (document.getElementById('reg-perfil-foto').files[0]) {
+        fotoUrl = await subirImagen(document.getElementById('reg-perfil-foto').files[0]);
+      }
+
+      const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}${fotoUrl ? '&foto_url=' + encodeURIComponent(fotoUrl) : ''}`;
+      await fetch(url, { method: 'GET', mode: 'no-cors' });
+
+      document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Registrado! Ya puedes iniciar sesión.</div>';
+      document.getElementById('local-register-form').reset();
+      document.getElementById('local-register-form').classList.add('d-none');
+      document.getElementById('local-login-form').classList.remove('d-none');
+    });
+
+    // === EDITAR PERFIL (corregido y con foto) ===
+    document.getElementById('editar-perfil-btn').addEventListener('click', async (e) => {
+      e.preventDefault();
+      document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('menu-listado').innerHTML = '';
+      document.getElementById('perfil-form').classList.remove('d-none');
+
+      const btn = document.getElementById('guardar-perfil');
+      const spinner = btn.querySelector('.spinner-border');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('perfil-nombre').value = data.nombre || '';
+          document.getElementById('perfil-email').value = data.email || '';
+          if (data.foto_url) {
+            document.getElementById('perfil-foto-preview').src = data.foto_url;
+            document.getElementById('perfil-foto-preview').style.display = 'block';
+            document.getElementById('perfil-foto-placeholder').style.display = 'none';
+          } else {
+            document.getElementById('perfil-foto-preview').style.display = 'none';
+            document.getElementById('perfil-foto-placeholder').style.display = 'flex';
+          }
+        }
+      } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('cancelar-perfil').addEventListener('click', () => {
+      document.getElementById('perfil-form').classList.add('d-none');
+    });
+
+    document.getElementById('guardar-perfil').addEventListener('click', async () => {
+      const btn = document.getElementById('guardar-perfil');
+      const spinner = btn.querySelector('.spinner-border');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+
+      try {
+        let nuevaFotoUrl = perfilFotoUrl;
+        if (document.getElementById('perfil-foto').files[0]) {
+          nuevaFotoUrl = await subirImagen(document.getElementById('perfil-foto').files[0]);
+        }
+
+        const payload = {
+          localId: localToken,
+          nombre: document.getElementById('perfil-nombre').value,
+          email: document.getElementById('perfil-email').value,
+          password: document.getElementById('perfil-password').value || undefined,
+          ...(nuevaFotoUrl && { foto_url: nuevaFotoUrl })
+        };
+
+        await fetch(`${API_URL}?action=updatePerfilLocal`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors'
+        });
+
+        alert('Perfil actualizado correctamente');
+        document.getElementById('perfil-form').classList.add('d-none');
+        if (nuevaFotoUrl) cargarFotoPerfil();
+      } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
