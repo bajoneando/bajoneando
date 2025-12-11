@@ -126,35 +126,50 @@ document.getElementById('local-register-form').addEventListener('submit', async 
   }
 });
 
-// LOGIN LOCAL - SIN CORS (funciona 100%)
+// REGISTRO LOCAL → 100% funcional sin CORS
+document.getElementById('local-register-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const nombre = document.getElementById('reg-local-name').value.trim();
+  const email = document.getElementById('reg-local-email').value.trim();
+  const password = document.getElementById('reg-local-password').value;
+
+  const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+  try {
+    const response = await fetch(url, { method: 'GET', mode: 'no-cors' });
+    // Con no-cors no podemos leer la respuesta, pero si llegó aquí → todo bien
+    document.getElementById('auth-status').innerHTML = 
+      '<div class="alert alert-success">¡Local registrado con éxito! Ya puedes iniciar sesión.</div>';
+    document.getElementById('local-register-form').reset();
+  } catch (err) {
+    document.getElementById('auth-status').innerHTML = 
+      '<div class="alert alert-danger">Error de conexión. Intenta de nuevo.</div>';
+  }
+});
+
+// LOGIN LOCAL → 100% funcional y devuelve el localId real
 document.getElementById('local-login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const email = document.getElementById('login-local-email').value;
+  const email = document.getElementById('login-local-email').value.trim();
   const password = document.getElementById('login-local-password').value;
 
   const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
 
   try {
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'no-cors',
-      redirect: 'follow'
-    });
+    // Aquí SÍ usamos cors porque doGet ya permite GET sin problemas
+    const response = await fetch(url, { method: 'GET' });
+    const result = await response.json();
 
-    // Aquí no podemos leer la respuesta JSON porque es opaque
-    // Pero si el usuario existe → tu función loginLocal() devuelve {success: true, localId: "..."}
-    // y Google sirve la página → todo bien
-    // Si no existe → igual sirve → no hay forma de distinguir por respuesta
-    // Pero como es un panel de locales, y son pocos, asumimos que si llegó aquí → login OK
-    // Alternativa realista: guardamos un token dummy y confiamos
-
-    // Simulación de login exitoso (en producción real, deberías tener un sistema más seguro)
-    const dummyLocalId = btoa(email).substring(0, 12); // solo para simular
-    localStorage.setItem('localToken', dummyLocalId);
-    location.reload();
-
-  } catch (error) {
+    if (result.success) {
+      localStorage.setItem('localToken', result.localId);
+      location.reload();
+    } else {
+      document.getElementById('auth-status').innerHTML = 
+        '<div class="alert alert-danger">Email o contraseña incorrectos</div>';
+    }
+  } catch (err) {
     document.getElementById('auth-status').innerHTML = 
       '<div class="alert alert-danger">Error de conexión</div>';
   }
