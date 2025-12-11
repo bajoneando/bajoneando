@@ -340,54 +340,63 @@
       });
     }
 
-    // === GUARDAR / ACTUALIZAR PLATO ===
     document.getElementById('menu-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const itemId = document.getElementById('edit-item-id').value;
-      const esEdicion = itemId !== '';
+  e.preventDefault();
 
-      let imagenUrl = '';
-      const file = document.getElementById('foto').files[0];
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        const upload = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
-        const data = await upload.json();
-        imagenUrl = data.secure_url || '';
-      }
+  const itemId = document.getElementById('edit-item-id').value;
+  const esEdicion = itemId !== '';
 
-      const payload = {
-        localId: localToken,
-        nombre: document.getElementById('nombre').value,
-        categoria: document.getElementById('categoria').value,
-        descripcion: document.getElementById('descripcion').value,
-        precio: parseFloat(document.getElementById('precio').value),
-        disponibilidad: document.getElementById('disponibilidad').value,
-        tamano_porcion: document.getElementById('tamano_porcion').value,
-        variantes: document.getElementById('variantes').value,
-        tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value),
-        imagen_url: imagenUrl || undefined
-      };
+  // Subir imagen
+  const fileInput = document.getElementById('foto');
+  const imagenUrl = fileInput.files[0] ? await subirImagen(fileInput.files[0]) : '';
 
-      if (esEdicion) payload.itemId = itemId;
+  // Si es edición y no subió foto nueva, mantener la anterior
+  if (esEdicion && !fileInput.files[0]) {
+    // No enviamos imagen_url → el backend la mantiene
+  }
 
-      const action = esEdicion ? 'updateMenuItem' : 'addMenuItem';
-      const res = await fetch(`${API_URL}?action=${action}`, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const result = await res.json();
+  const payload = {
+    localId: localToken,
+    nombre: document.getElementById('nombre').value.trim(),
+    categoria: document.getElementById('categoria').value.trim(),
+    descripcion: document.getElementById('descripcion').value.trim(),
+    precio: parseFloat(document.getElementById('precio').value),
+    disponibilidad: document.getElementById('disponibilidad').value,
+    tamano_porcion: document.getElementById('tamano_porcion').value.trim(),
+    variantes: document.getElementById('variantes').value.trim(),
+    tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value),
+    ...(imagenUrl && { imagen_url: imagenUrl }) // solo si hay nueva imagen
+  };
 
-      if (result.success) {
-        document.getElementById('status').innerHTML = `<div class="alert alert-success">¡${esEdicion ? 'Actualizado' : 'Agregado'} correctamente!</div>`;
-        document.getElementById('menu-form').classList.add('d-none');
-        document.getElementById('menu-form').reset();
-        document.getElementById('edit-item-id').value = '';
-        cargarMenuCompleto();
-      }
+  if (esEdicion) payload.itemId = itemId;
+
+  const action = esEdicion ? 'updateMenuItem' : 'addMenuItem';
+
+  try {
+    const res = await fetch(`${API_URL}?action=${action}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+      mode: 'cors'
     });
+
+    const result = await res.json();
+
+    if (result.success) {
+      alert(esEdicion ? 'Plato actualizado!' : 'Plato agregado!');
+      document.getElementById('menu-form').reset();
+      document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('edit-item-id').value = '';
+      document.getElementById('form-titulo').textContent = 'Nuevo Plato';
+      cargarMenuCompleto();
+    } else {
+      alert('Error al guardar: ' + (result.error || 'Desconocido'));
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error de conexión. Revisa tu internet o intenta más tarde.');
+  }
+});
 
     // === LOGIN Y REGISTRO (100% original) ===
     document.getElementById('show-register').addEventListener('click', () => {
