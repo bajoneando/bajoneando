@@ -143,37 +143,35 @@
     }
   });
 
-  // LOGIN LOCAL → Devuelve el localId real
-  document.getElementById('local-login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // LOGIN LOCAL → AHORA SÍ FUNCIONA 100%
+document.getElementById('local-login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    const email = document.getElementById('login-local-email').value.trim();
-    const password = document.getElementById('login-local-password').value;
+  const email = document.getElementById('login-local-email').value.trim();
+  const password = document.getElementById('login-local-password').value;
 
-    if (!email || !password) {
+  const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      // QUITA mode: 'no-cors' → ahora el backend responde con CORS
+    });
+
+    const result = await res.json();
+
+    if (result.success && result.localId) {
+      localStorage.setItem('localToken', result.localId);
+      location.reload();
+    } else {
       document.getElementById('auth-status').innerHTML = 
-        '<div class="alert alert-warning">Ingresa email y contraseña</div>';
-      return;
+        '<div class="alert alert-danger">Email o contraseña incorrectos</div>';
     }
-
-    const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-
-    try {
-      const res = await fetch(url);
-      const result = await res.json();
-
-      if (result.success && result.localId) {
-        localStorage.setItem('localToken', result.localId);
-        location.reload();
-      } else {
-        document.getElementById('auth-status').innerHTML = 
-          '<div class="alert alert-danger">Email o contraseña incorrectos</div>';
-      }
-    } catch (err) {
-      document.getElementById('auth-status').innerHTML = 
-        '<div class="alert alert-danger">Error de conexión</div>';
-    }
-  });
+  } catch (err) {
+    document.getElementById('auth-status').innerHTML = 
+      '<div class="alert alert-danger">Error de conexión: ' + err.message + '</div>';
+  }
+});
 
   // AGREGAR ÍTEM AL MENÚ (después de loguearse)
   document.getElementById('menu-form').addEventListener('submit', async (e) => {
