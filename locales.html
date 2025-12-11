@@ -163,6 +163,59 @@
     const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
     let localToken = localStorage.getItem('localToken');
 
+
+    // === FUNCIÓN PARA SUBIR UNA SOLA IMAGEN A CLOUDINARY (versión simple y efectiva) ===
+async function subirImagen(file) {
+  if (!file) return '';
+
+  // Validación básica
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+
+  if (file.size > MAX_SIZE) {
+    alert(`La imagen ${file.name} es demasiado grande (máx 10MB)`);
+    return '';
+  }
+
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    alert(`Tipo de archivo no permitido: ${file.type}`);
+    return '';
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  try {
+    const response = await fetch(CLOUDINARY_URL, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error Cloudinary:', errorText);
+      alert('Error al subir la imagen. Intenta con otra.');
+      return '';
+    }
+
+    const data = await response.json();
+    
+    if (data.secure_url) {
+      console.log('Imagen subida:', data.secure_url);
+      return data.secure_url;
+    } else {
+      console.error('Respuesta inesperada de Cloudinary:', data);
+      alert('Error al procesar la imagen.');
+      return '';
+    }
+  } catch (error) {
+    console.error('Error de red al subir imagen:', error);
+    alert('Error de conexión al subir la imagen. Revisa tu internet.');
+    return '';
+  }
+}
+    
     // === CARGAR ESTADO LOCAL ===
     async function cargarEstadoLocal() {
       if (!localToken) return;
