@@ -111,30 +111,30 @@
       </div>
 
       <!-- Formulario Agregar / Editar Plato -->
-      <div id="menu-form" class="card shadow-lg p-4 mb-5 d-none">
-        <h3 class="mb-4" id="form-titulo">Nuevo Plato</h3>
-        <input type="hidden" id="edit-item-id">
-        <div class="row g-3">
-          <div class="col-md-6"><input type="text" id="nombre" class="form-control form-control-lg" placeholder="Nombre del plato" required></div>
-          <div class="col-md-6"><input type="text" id="categoria" class="form-control form-control-lg" placeholder="Categoría" required></div>
-          <div class="col-12"><textarea id="descripcion" class="form-control" rows="2" placeholder="Descripción breve" required></textarea></div>
-          <div class="col-md-4"><input type="number" id="precio" class="form-control form-control-lg" placeholder="Precio" step="0.01" required></div>
-          <div class="col-md-4">
-            <select id="disponibilidad" class="form-select form-select-lg">
-              <option value="Sí">Disponible</option>
-              <option value="No">No disponible</option>
-            </select>
-          </div>
-          <div class="col-md-4"><input type="text" id="tamano_porcion" class="form-control form-control-lg" placeholder="Tamaño/Porción" required></div>
-          <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes" required></div>
-          <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo (min)" required></div>
-          <div class="col-12"><input type="file" id="foto" class="form-control form-control-lg" accept="image/*"></div>
-        </div>
-        <div class="mt-4 text-end">
-          <button type="button" id="cancelar-form" class="btn btn-secondary btn-lg me-3">Cancelar</button>
-          <button type="submit" class="btn btn-success btn-lg px-5" id="guardar-plato-btn">Guardar Plato</button>
-        </div>
-      </div>
+<form id="menu-form" class="card shadow-lg p-4 mb-5 d-none">
+  <h3 class="mb-4" id="form-titulo">Nuevo Plato</h3>
+  <input type="hidden" id="edit-item-id">
+  <div class="row g-3">
+    <div class="col-md-6"><input type="text" id="nombre" class="form-control form-control-lg" placeholder="Nombre del plato" required></div>
+    <div class="col-md-6"><input type="text" id="categoria" class="form-control form-control-lg" placeholder="Categoría" required></div>
+    <div class="col-12"><textarea id="descripcion" class="form-control" rows="2" placeholder="Descripción breve" required></textarea></div>
+    <div class="col-md-4"><input type="number" id="precio" class="form-control form-control-lg" placeholder="Precio" step="0.01" required></div>
+    <div class="col-md-4">
+      <select id="disponibilidad" class="form-select form-select-lg">
+        <option value="Sí">Disponible</option>
+        <option value="No">No disponible</option>
+      </select>
+    </div>
+    <div class="col-md-4"><input type="text" id="tamano_porcion" class="form-control form-control-lg" placeholder="Tamaño/Porción" required></div>
+    <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes" required></div>
+    <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo (min)" required></div>
+    <div class="col-12"><input type="file" id="foto" class="form-control form-control-lg" accept="image/*"></div>
+  </div>
+  <div class="mt-4 text-end">
+    <button type="button" id="cancelar-form" class="btn btn-secondary btn-lg me-3">Cancelar</button>
+    <button type="submit" class="btn btn-success btn-lg px-5" id="guardar-plato-btn">Guardar Plato</button>
+  </div>
+</form>
 
       <!-- Formulario Editar Perfil -->
       <div id="perfil-form" class="card shadow-lg p-4 mb-5 d-none">
