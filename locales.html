@@ -76,146 +76,182 @@
   </div>
 
   <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
-    const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
-    const CLOUDINARY_UPLOAD_PRESET = 'YOUR_UPLOAD_PRESET'; // Reemplaza con tu preset unsigned
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+  const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
+  const CLOUDINARY_UPLOAD_PRESET = 'ml_default'; // ← Cambia esto por tu preset unsigned real
 
-    let localToken = localStorage.getItem('localToken');
-    if (localToken) {
-      document.getElementById('auth-section').innerHTML = '<p>Logueado como local. <button id="logout" class="btn btn-danger">Logout</button></p>';
-      document.getElementById('menu-form').classList.remove('d-none');
-      document.getElementById('logout').addEventListener('click', () => { localStorage.removeItem('localToken'); location.reload(); });
-    }
+  // Verificar si ya está logueado como local
+  let localToken = localStorage.getItem('localToken');
+  if (localToken) {
+    document.getElementById('auth-section').innerHTML = `
+      <p class="alert alert-success">
+        Logueado como local (ID: ${localToken})
+        <button id="logout" class="btn btn-danger btn-sm ms-3">Cerrar sesión</button>
+      </p>`;
+    document.getElementById('menu-form').classList.remove('d-none');
 
-    // Mostrar/Ocultar formularios
-    document.getElementById('show-register').addEventListener('click', () => {
-      document.getElementById('local-register-form').classList.toggle('d-none');
-      document.getElementById('local-login-form').classList.add('d-none');
-    });
-    document.getElementById('show-login').addEventListener('click', () => {
-      document.getElementById('local-login-form').classList.toggle('d-none');
-      document.getElementById('local-register-form').classList.add('d-none');
-    });
-
-    // Con no-cors, response.json() no funciona → siempre es opaque
-    // Pero si llegó aquí, el registro funcionó (Google Apps Script no da error 500 si todo bien)
-    document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-success">Local registrado con éxito! Ya puedes hacer login.</div>';
-    
-    document.getElementById('local-register-form').reset();
-  } catch (error) {
-    document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-danger">Error de conexión. Inténtalo más tarde.</div>';
-  }
-});
-
-// ====== REGISTRO LOCAL (solo uno) ======
-document.getElementById('local-register-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const nombre = document.getElementById('reg-local-name').value.trim();
-  const email = document.getElementById('reg-local-email').value.trim();
-  const password = document.getElementById('reg-local-password').value;
-
-  const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-
-  try {
-    await fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-cache' });
-    document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-success">¡Local registrado con éxito! Ya puedes iniciar sesión.</div>';
-    document.getElementById('local-register-form').reset();
-  } catch (err) {
-    document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-danger">Error de conexión</div>';
-  }
-});
-
-// ====== LOGIN LOCAL (perfecto como está) ======
-document.getElementById('local-login-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const email = document.getElementById('login-local-email').value.trim();
-  const password = document.getElementById('login-local-password').value;
-
-  const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-
-  try {
-    const res = await fetch(url);
-    const result = await res.json();
-
-    if (result.success) {
-      localStorage.setItem('localToken', result.localId);
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('localToken');
       location.reload();
-    } else {
-      document.getElementById('auth-status').innerHTML = 
-        '<div class="alert alert-danger">Credenciales inválidas</div>';
-    }
-  } catch (err) {
-    document.getElementById('auth-status').innerHTML = 
-      '<div class="alert alert-danger">Error de conexión</div>';
+    });
   }
-});
 
-    // Subir imagen a Cloudinary y agregar ítem
-    document.getElementById('menu-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!localToken) return alert('Debes loguearte como local');
+  // Mostrar/ocultar formularios
+  document.getElementById('show-register').addEventListener('click', () => {
+    document.getElementById('local-register-form').classList.toggle('d-none');
+    document.getElementById('local-login-form').classList.add('d-none');
+  });
+
+  document.getElementById('show-login').addEventListener('click', () => {
+    document.getElementById('local-login-form').classList.toggle('d-none');
+    document.getElementById('local-register-form').classList.add('d-none');
+  });
+
+  // REGISTRO LOCAL → Solo 1 vez, sin duplicar
+  document.getElementById('local-register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const nombre = document.getElementById('reg-local-name').value.trim();
+    const email = document.getElementById('reg-local-email').value.trim();
+    const password = document.getElementById('reg-local-password').value;
+
+    if (!nombre || !email || !password) {
+      document.getElementById('auth-status').innerHTML = 
+        '<div class="alert alert-warning">Completa todos los campos</div>';
+      return;
+    }
+
+    const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+    try {
+      await fetch(url, { 
+        method: 'GET', 
+        mode: 'no-cors',
+        cache: 'no-cache'
+      });
+
+      document.getElementById('auth-status').innerHTML = 
+        '<div class="alert alert-success">¡Local registrado con éxito! Ya puedes iniciar sesión.</div>';
       
-      const fileInput = document.getElementById('foto');
-      const file = fileInput.files[0];
-      let imagenUrl = '';
+      document.getElementById('local-register-form').reset();
+      document.getElementById('local-register-form').classList.add('d-none');
+      document.getElementById('local-login-form').classList.remove('d-none');
       
-      if (file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        
-        try {
-          const response = await fetch(CLOUDINARY_URL, {
-            method: 'POST',
-            body: formData
-          });
-          const result = await response.json();
-          if (result.secure_url) {
-            imagenUrl = result.secure_url;
-          } else {
-            throw new Error('Error al subir imagen');
-          }
-        } catch (error) {
-          document.getElementById('status').innerHTML = `<div class="alert alert-danger">Error subiendo imagen: ${error.message}</div>`;
-          return;
-        }
+    } catch (err) {
+      document.getElementById('auth-status').innerHTML = 
+        '<div class="alert alert-danger">Error de conexión. Inténtalo de nuevo.</div>';
+    }
+  });
+
+  // LOGIN LOCAL → Devuelve el localId real
+  document.getElementById('local-login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const email = document.getElementById('login-local-email').value.trim();
+    const password = document.getElementById('login-local-password').value;
+
+    if (!email || !password) {
+      document.getElementById('auth-status').innerHTML = 
+        '<div class="alert alert-warning">Ingresa email y contraseña</div>';
+      return;
+    }
+
+    const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+    try {
+      const res = await fetch(url);
+      const result = await res.json();
+
+      if (result.success && result.localId) {
+        localStorage.setItem('localToken', result.localId);
+        location.reload();
+      } else {
+        document.getElementById('auth-status').innerHTML = 
+          '<div class="alert alert-danger">Email o contraseña incorrectos</div>';
       }
+    } catch (err) {
+      document.getElementById('auth-status').innerHTML = 
+        '<div class="alert alert-danger">Error de conexión</div>';
+    }
+  });
 
-      const menuData = {
-        localId: localToken,
-        nombre: document.getElementById('nombre').value,
-        categoria: document.getElementById('categoria').value,
-        descripcion: document.getElementById('descripcion').value,
-        precio: parseFloat(document.getElementById('precio').value),
-        disponibilidad: document.getElementById('disponibilidad').value,
-        tamano_porcion: document.getElementById('tamano_porcion').value,
-        variantes: document.getElementById('variantes').value,
-        tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value),
-        imagen_url: imagenUrl
-      };
-      
+  // AGREGAR ÍTEM AL MENÚ (después de loguearse)
+  document.getElementById('menu-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (!localToken) {
+      alert('Error: No estás logueado como local');
+      return;
+    }
+
+    const fileInput = document.getElementById('foto');
+    const file = fileInput.files[0];
+    let imagenUrl = '';
+
+    // Subir imagen a Cloudinary
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      document.getElementById('status').innerHTML = '<div class="alert alert-info">Subiendo imagen...</div>';
+
       try {
-        const response = await fetch(`${API_URL}?action=addMenuItem`, {
+        const uploadRes = await fetch(CLOUDINARY_URL, {
           method: 'POST',
-          body: JSON.stringify(menuData),
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'cors',
-          credentials: 'same-origin'
+          body: formData
         });
-        const result = await response.json();
-        document.getElementById('status').innerHTML = `<div class="alert alert-success">Ítem agregado: ${menuData.nombre}</div>`;
+        const uploadData = await uploadRes.json();
+        if (uploadData.secure_url) {
+          imagenUrl = uploadData.secure_url;
+        } else {
+          throw new Error('No se recibió URL de imagen');
+        }
+      } catch (err) {
+        document.getElementById('status').innerHTML = 
+          `<div class="alert alert-danger">Error subiendo imagen: ${err.message}</div>`;
+        return;
+      }
+    }
+
+    // Enviar datos del ítem
+    const menuData = {
+      localId: localToken,
+      nombre: document.getElementById('nombre').value,
+      categoria: document.getElementById('categoria').value,
+      descripcion: document.getElementById('descripcion').value,
+      precio: parseFloat(document.getElementById('precio').value),
+      disponibilidad: document.getElementById('disponibilidad').value,
+      tamano_porcion: document.getElementById('tamano_porcion').value,
+      variantes: document.getElementById('variantes').value,
+      tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value),
+      imagen_url: imagenUrl
+    };
+
+    try {
+      const response = await fetch(`${API_URL}?action=addMenuItem`, {
+        method: 'POST',
+        body: JSON.stringify(menuData),
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors'
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        document.getElementById('status').innerHTML = 
+          `<div class="alert alert-success">¡Ítem agregado exitosamente!</div>`;
         document.getElementById('menu-form').reset();
         fileInput.value = '';
-      } catch (error) {
-        document.getElementById('status').innerHTML = `<div class="alert alert-danger">Error al agregar ítem: ${error.message}</div>`;
+      } else {
+        document.getElementById('status').innerHTML = 
+          `<div class="alert alert-danger">Error al guardar: ${result.error || 'Desconocido'}</div>`;
       }
-    });
-  </script>
+    } catch (err) {
+      document.getElementById('status').innerHTML = 
+        `<div class="alert alert-danger">Error de conexión: ${err.message}</div>`;
+    }
+  });
+</script>
 </body>
 </html>
