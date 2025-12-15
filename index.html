@@ -82,6 +82,41 @@
         .category:hover {
             background-color: #e8f4fd;
         }
+        .suggestions {
+            margin-top: 40px;
+        }
+        .suggestions h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .suggestion-items {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .suggestion {
+            width: 200px;
+            height: 200px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .suggestion:hover {
+            transform: scale(1.05);
+        }
+        .suggestion img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+        }
         #menu-display {
             margin-top: 40px;
         }
@@ -155,11 +190,11 @@
         }
         /* Responsive para móviles */
         @media (max-width: 768px) {
-            .categories, .menu-items {
+            .categories, .suggestion-items, .menu-items {
                 flex-direction: column;
                 align-items: center;
             }
-            .category, .menu-item {
+            .category, .suggestion, .menu-item {
                 width: 90%;
                 max-width: 300px;
             }
@@ -183,7 +218,12 @@
             <div class="category" data-type="Postres">Postres</div>
             <div class="category" data-type="Merienda">Merienda</div>
         </div>
-
+        <div class="suggestions">
+            <h2>Sugerencias de Locales</h2>
+            <div class="suggestion-items" id="suggestion-items">
+                <!-- Se llenará dinámicamente o con mensaje si vacío -->
+            </div>
+        </div>
         <div id="menu-display" style="display: none;">
             <!-- Menús se mostrarán aquí -->
         </div>
@@ -191,7 +231,7 @@
     <script>
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
        
-        // Función para normalizar texto
+        // Función para normalizar texto (por si acaso, aunque backend ya lo hace)
         function normalizeText(text) {
             return text.toString().trim().toLowerCase()
                 .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Quita tildes
@@ -208,27 +248,81 @@
         }
        
         window.addEventListener('load', () => {
+            loadFilters();
             setupSearch();
         });
        
-        // Click en categorías
+        // Cargar filtros y locales para sugerencias
+        function loadFilters() {
+            const suggestionItems = document.getElementById('suggestion-items');
+            showLoading(suggestionItems);
+           
+            fetch(scriptUrl + '?action=getFilters')
+                .then(response => {
+                    if (!response.ok) throw new Error(`Error ${response.status}: No se pudieron cargar los filtros`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Filtros recibidos:', data);
+                    suggestionItems.innerHTML = '';
+                   
+                    // Cargar locales para sugerencias
+                    if (data.locals && data.locals.length > 0) {
+                        data.locals.forEach(local => {
+                            const suggestionDiv = document.createElement('div');
+                            suggestionDiv.className = 'suggestion';
+                            suggestionDiv.dataset.local = local.local_id;
+                            suggestionDiv.innerHTML = `
+                                <img src="${local.imagen_url || `https://placehold.co/200x200?text=${encodeURIComponent(local.nombre_local)}`}"
+                                     alt="${local.nombre_local}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">
+                            `;
+                            suggestionDiv.addEventListener('click', () => fetchMenus(null, local.local_id));
+                            suggestionItems.appendChild(suggestionDiv);
+                        });
+                    } else {
+                        // Fallback si no hay locales
+                        const noLocals = document.createElement('p');
+                        noLocals.className = 'no-results';
+                        noLocals.textContent = 'Aún no hay locales disponibles. ¡Pronto más opciones!';
+                        suggestionItems.appendChild(noLocals);
+                    }
+                   
+                    // Opcional: poblar categorías dinámicamente si quieres (por ahora hardcodeadas)
+                })
+                .catch(error => {
+                    console.error('Error loading filters:', error);
+                    showError(suggestionItems, 'No se pudieron cargar las sugerencias');
+                });
+        }
+       
         document.querySelector('.categories').addEventListener('click', (event) => {
             const category = event.target.closest('.category');
             if (category) {
                 const categoryText = category.dataset.type || category.textContent.trim();
                 console.log('Categoría seleccionada:', categoryText);
-                fetchMenus(categoryText, null);
+                fetchMenus(categoryText, null); // ← Ahora envía "Hamburguesas" tal cual
             }
         });
        
-        // Búsqueda por barra
+        // Event listener para sugerencias
+        document.addEventListener('click', (event) => {
+            const suggestion = event.target.closest('.suggestion');
+            if (suggestion) {
+                const localId = suggestion.dataset.local;
+                console.log('Local seleccionado:', localId);
+                fetchMenus(null, localId);
+            }
+        });
+       
+        // Búsqueda por barra (básica: filtra menús por nombre)
         function setupSearch() {
             const searchInput = document.getElementById('search-input');
             searchInput.addEventListener('input', (e) => {
                 const term = normalizeText(e.target.value);
                 if (term.length > 2) {
+                    // Podrías hacer una fetch con parámetro de búsqueda, pero por ahora filtra locales existentes
                     console.log('Buscando:', term);
-                    // Aquí podrías implementar una búsqueda real si el backend lo soporta
+                    // TODO: Integrar búsqueda real en backend si quieres
                 }
             });
         }
@@ -281,9 +375,9 @@
                     menuDiv.className = 'menu-item';
                    
                     const img = document.createElement('img');
-                    img.src = menu.imagen_url || 'https://via.placeholder.com/200?text=Sin+Imagen';
+                    img.src = menu.imagen_url || 'https://placehold.co/200x200?text=Sin+Imagen';
                     img.alt = menu.nombre;
-                    img.onerror = () => { img.src = 'https://via.placeholder.com/200?text=Sin+Imagen'; };
+                    img.onerror = () => { img.src = 'https://placehold.co/200x200?text=Sin+Imagen'; };
                     menuDiv.appendChild(img);
                    
                     const h3 = document.createElement('h3');
@@ -310,7 +404,7 @@
                     addBtn.style.border = 'none';
                     addBtn.style.borderRadius = '5px';
                     addBtn.style.cursor = 'pointer';
-                    addBtn.onclick = () => alert(`¡Agregado: ${menu.nombre}!`);
+                    addBtn.onclick = () => alert(`¡Agregado: ${menu.nombre}!`); // TODO: Integrar con pedidos
                     menuDiv.appendChild(addBtn);
                    
                     itemsDiv.appendChild(menuDiv);
