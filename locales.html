@@ -286,59 +286,65 @@
     let localToken = localStorage.getItem('localToken');
     let menuItems = []; // Guardamos todos los items para filtrar
 
-    // === FUNCIÓN PARA MOSTRAR EL PANEL PRINCIPAL ===
+    // === MOSTRAR PANEL PRINCIPAL ===
     function mostrarPanelPrincipal() {
       document.getElementById('auth-section').classList.add('d-none');
       document.getElementById('panel-principal').classList.remove('d-none');
-      document.getElementById('filtros-menu').classList.remove('d-none');
+      document.getElementById('filtros-menu')?.classList.remove('d-none');
       cargarEstadoLocal();
       cargarMenuCompleto();
     }
 
-    // === AL INICIAR: Siempre mostrar login (incluso con token guardado) ===
-    // Se eliminó la comprobación automática de localToken al cargar
-
-    // === LOGIN Y REGISTRO ===
+    // === BOTONES MOSTRAR FORMULARIOS (corregido: usa remove/add, no toggle) ===
     document.getElementById('show-register').addEventListener('click', () => {
-      document.getElementById('local-register-form').classList.toggle('d-none');
+      document.getElementById('local-register-form').classList.remove('d-none');
       document.getElementById('local-login-form').classList.add('d-none');
+      document.getElementById('auth-status').innerHTML = '';
     });
 
     document.getElementById('show-login').addEventListener('click', () => {
-      document.getElementById('local-login-form').classList.toggle('d-none');
+      document.getElementById('local-login-form').classList.remove('d-none');
       document.getElementById('local-register-form').classList.add('d-none');
+      document.getElementById('auth-status').innerHTML = '';
     });
 
+    // === REGISTRO ===
     document.getElementById('local-register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const nombre = document.getElementById('reg-local-name').value.trim();
       const email = document.getElementById('reg-local-email').value.trim();
       const password = document.getElementById('reg-local-password').value;
-      if (!nombre || !email || !password) return document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa todos los campos</div>';
+      if (!nombre || !email || !password) {
+        document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa todos los campos</div>';
+        return;
+      }
       const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
       await fetch(url, { method: 'GET', mode: 'no-cors' });
-      document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Registrado! Ya puedes iniciar sesión.</div>';
+      document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Registrado con éxito! Ahora inicia sesión.</div>';
       document.getElementById('local-register-form').reset();
-      document.getElementById('local-register-form').classList.add('d-none');
-      document.getElementById('local-login-form').classList.remove('d-none');
+      document.getElementById('show-login').click();
     });
 
+    // === LOGIN ===
     document.getElementById('local-login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-local-email').value.trim();
       const password = document.getElementById('login-local-password').value;
       const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
+
       window.loginCallback = function(data) {
         if (data.success && data.localId) {
           localStorage.setItem('localToken', data.localId);
           localToken = data.localId;
-          mostrarPanelPrincipal();  // Ahora sí mostramos el panel
+          mostrarPanelPrincipal();
         } else {
           document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales incorrectas</div>';
         }
         delete window.loginCallback;
-        const s = document.getElementById('loginScript'); if (s) s.remove();
+        const script = document.getElementById('loginScript');
+        if (script) script.remove();
       };
+
       const script = document.createElement('script');
       script.id = 'loginScript';
       script.src = url;
@@ -346,24 +352,23 @@
     });
 
     // === CERRAR SESIÓN ===
-    document.getElementById('logout')?.addEventListener('click', () => {
+    document.getElementById('logout')?.addEventListener('click', (e) => {
+      e.preventDefault();
       localStorage.removeItem('localToken');
       localToken = null;
       location.reload();
     });
-    
+
     // === SUBIR IMAGEN ===
     async function subirImagen(file) {
       if (!file) return '';
       const MAX_SIZE = 10 * 1024 * 1024;
       const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-      if (file.size > MAX_SIZE) { alert(`Imagen demasiado grande`); return ''; }
-      if (!ALLOWED_TYPES.includes(file.type)) { alert(`Tipo no permitido`); return ''; }
-
+      if (file.size > MAX_SIZE) { alert('Imagen demasiado grande'); return ''; }
+      if (!ALLOWED_TYPES.includes(file.type)) { alert('Tipo no permitido'); return ''; }
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
       try {
         const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
         const data = await res.json();
@@ -390,41 +395,10 @@
       await fetch(`${API_URL}?action=updateLocalEstado&localId=${localToken}&estado=${estado}`);
     });
 
-    // === MOSTRAR PANEL ===
-    if (localToken) {
-      document.getElementById('auth-section').classList.add('d-none');
-      document.getElementById('panel-principal').classList.remove('d-none');
-      cargarEstadoLocal();
-      cargarMenuCompleto();
-      document.getElementById('filtros-menu').classList.remove('d-none');
-    }
-
-    document.getElementById('logout')?.addEventListener('click', () => {
-      localStorage.removeItem('localToken');
-      location.reload();
-    });
-
-    // === CARGAR FOTO DE PERFIL Y MOSTRAR EN HEADER ===
-    async function cargarFotoPerfil() {
-      if (!localToken) return;
-      try {
-        const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
-        const data = await res.json();
-        if (data.success && data.foto_url) {
-          perfilFotoUrl = data.foto_url;
-          document.getElementById('logo-container').innerHTML = `<img src="${perfilFotoUrl}" alt="Foto del local" class="logo-perfil">`;
-        }
-      } catch (err) {
-        console.log('No se pudo cargar foto de perfil');
-      }
-    }
-    
-    // === CARGAR MENÚ Y RENDERIZAR ===
+    // === CARGAR MENÚ ===
     async function cargarMenuCompleto() {
       const res = await fetch(`${API_URL}?action=getMenuByLocalIdColK&localId=${localToken}`);
       menuItems = await res.json();
-
-      // Llenar selector de categorías
       const select = document.getElementById('filtro-categoria');
       select.innerHTML = '<option value="">Todas las categorías</option>';
       const cats = [...new Set(menuItems.map(i => i.categoria || "Sin categoría"))].sort();
@@ -434,10 +408,10 @@
         opt.textContent = cat;
         select.appendChild(opt);
       });
-
       renderizarMenu(menuItems);
     }
 
+    // === RENDERIZAR MENÚ (única definición) ===
     function renderizarMenu(items) {
       const cont = document.getElementById('menu-listado');
       if (items.length === 0) {
@@ -476,7 +450,7 @@
       });
       cont.innerHTML = html;
 
-      // Eventos...
+      // Eventos dinámicos
       document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
         el.addEventListener('change', async () => {
           await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
@@ -520,9 +494,10 @@
       });
     }
 
-    // Filtros, navegación y guardar plato (igual que antes, solo con los selects nuevos)
+    // === FILTROS Y NAVEGACIÓN ===
     document.getElementById('buscador-plato')?.addEventListener('input', filtrarMenu);
     document.getElementById('filtro-categoria')?.addEventListener('change', filtrarMenu);
+
     function filtrarMenu() {
       const texto = document.getElementById('buscador-plato').value.toLowerCase();
       const cat = document.getElementById('filtro-categoria').value;
@@ -558,13 +533,11 @@
       const spinner = btn.querySelector('.spinner-border');
       spinner.classList.remove('d-none');
       btn.disabled = true;
-
       try {
         let imagenUrl = '';
         if (document.getElementById('foto').files[0]) {
           imagenUrl = await subirImagen(document.getElementById('foto').files[0]);
         }
-
         const payload = {
           localId: localToken,
           nombre: document.getElementById('nombre').value.trim(),
@@ -577,11 +550,9 @@
           tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0,
           ...(imagenUrl && { imagen_url: imagenUrl })
         };
-
         if (document.getElementById('edit-item-id').value) {
           payload.itemId = document.getElementById('edit-item-id').value;
         }
-
         const action = payload.itemId ? 'updateMenuItem' : 'addMenuItem';
         await fetch(`${API_URL}?action=${action}`, {
           method: 'POST',
@@ -589,7 +560,6 @@
           headers: { 'Content-Type': 'application/json' },
           mode: 'no-cors'
         });
-
         alert(payload.itemId ? 'Plato actualizado' : 'Plato agregado');
         document.getElementById('menu-form').classList.add('d-none');
         cargarMenuCompleto();
@@ -597,215 +567,6 @@
         spinner.classList.add('d-none');
         btn.disabled = false;
       }
-    });
-
-    function renderizarMenu(items) {
-      const cont = document.getElementById('menu-listado');
-      if (items.length === 0) {
-        cont.innerHTML = '<div class="text-center py-5"><h4>No hay platos</h4></div>';
-        return;
-      }
-      let html = '';
-      items.forEach(item => {
-        const disp = item.disponibilidad === "Sí";
-        html += `
-          <div class="menu-card-horizontal">
-            ${item.imagen_url ? `<img src="${item.imagen_url}" alt="${item.nombre}">` : '<div style="width:120px;height:120px;background:#eee;"></div>'}
-            <div class="card-body-horizontal">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <h5 class="fw-bold mb-1">${item.nombre}</h5>
-                  <p class="text-muted small mb-2">${item.descripcion || ''}</p>
-                  <span class="badge bg-secondary mb-2">${item.categoria || 'Sin categoría'}</span>
-                </div>
-                <span class="precio">$${parseFloat(item.precio).toFixed(2)}</span>
-              </div>
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <div class="form-check form-switch">
-                  <input class="form-check-input toggle-disponibilidad" type="checkbox" id="disp-${item.id}" ${disp ? 'checked' : ''} data-id="${item.id}">
-                  <label class="form-check-label" for="disp-${item.id}">${disp ? 'Disponible' : 'No disponible'}</label>
-                </div>
-                <div>
-                  <button class="btn btn-warning btn-sm me-2 editar-plato" data-id="${item.id}">Editar</button>
-                  <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">
-                    <span class="spinner-border spinner-border-sm d-none"></span> Eliminar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>`;
-      });
-      cont.innerHTML = html;
-
-      // Eventos...
-      document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
-        el.addEventListener('change', async () => {
-          await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
-        });
-      });
-
-      document.querySelectorAll('.eliminar-item').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (!confirm('¿Eliminar permanentemente?')) return;
-          const spinner = btn.querySelector('.spinner-border');
-          spinner.classList.remove('d-none');
-          btn.disabled = true;
-          try {
-            await fetch(`${API_URL}?action=deleteMenuItem&itemId=${btn.dataset.id}`);
-            cargarMenuCompleto();
-          } finally {
-            spinner.classList.add('d-none');
-            btn.disabled = false;
-          }
-        });
-      });
-
-      document.querySelectorAll('.editar-plato').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const item = menuItems.find(i => i.id == btn.dataset.id);
-          if (item) {
-            document.getElementById('menu-form').classList.remove('d-none');
-            document.getElementById('form-titulo').textContent = "Editar Plato";
-            document.getElementById('edit-item-id').value = item.id;
-            document.getElementById('nombre').value = item.nombre;
-            document.getElementById('categoria').value = item.categoria || '';
-            document.getElementById('descripcion').value = item.descripcion || '';
-            document.getElementById('precio').value = item.precio;
-            document.getElementById('disponibilidad').value = item.disponibilidad;
-            document.getElementById('tamano_porcion').value = item.tamano_porcion || '';
-            document.getElementById('variantes').value = item.variantes || '';
-            document.getElementById('tiempo_preparacion').value = item.tiempo_preparacion || '';
-            document.getElementById('menu-listado').innerHTML = '';
-          }
-        });
-      });
-    }
-
-    // Filtros, navegación y guardar plato (igual que antes, solo con los selects nuevos)
-    document.getElementById('buscador-plato')?.addEventListener('input', filtrarMenu);
-    document.getElementById('filtro-categoria')?.addEventListener('change', filtrarMenu);
-    function filtrarMenu() {
-      const texto = document.getElementById('buscador-plato').value.toLowerCase();
-      const cat = document.getElementById('filtro-categoria').value;
-      const filtrados = menuItems.filter(item => {
-        const coincideNombre = item.nombre.toLowerCase().includes(texto);
-        const coincideCat = !cat || (item.categoria || "Sin categoría") === cat;
-        return coincideNombre && coincideCat;
-      });
-      renderizarMenu(filtrados);
-    }
-
-    document.getElementById('btn-mi-menu')?.addEventListener('click', () => {
-      document.getElementById('menu-form').classList.add('d-none');
-      document.getElementById('perfil-form').classList.add('d-none');
-      cargarMenuCompleto();
-    });
-
-    document.getElementById('btn-agregar-item')?.addEventListener('click', () => {
-      document.getElementById('menu-form').classList.remove('d-none');
-      document.getElementById('perfil-form').classList.add('d-none');
-      document.getElementById('menu-listado').innerHTML = '';
-      document.getElementById('form-titulo').textContent = "Nuevo Plato";
-      document.getElementById('menu-form').reset();
-      document.getElementById('edit-item-id').value = '';
-      document.getElementById('foto').value = '';
-      document.getElementById('categoria').value = '';
-      document.getElementById('tamano_porcion').value = '';
-    });
-
-    document.getElementById('menu-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('guardar-btn');
-      const spinner = btn.querySelector('.spinner-border');
-      spinner.classList.remove('d-none');
-      btn.disabled = true;
-
-      try {
-        let imagenUrl = '';
-        if (document.getElementById('foto').files[0]) {
-          imagenUrl = await subirImagen(document.getElementById('foto').files[0]);
-        }
-
-        const payload = {
-          localId: localToken,
-          nombre: document.getElementById('nombre').value.trim(),
-          categoria: document.getElementById('categoria').value,
-          descripcion: document.getElementById('descripcion').value.trim(),
-          precio: parseFloat(document.getElementById('precio').value),
-          disponibilidad: document.getElementById('disponibilidad').value,
-          tamano_porcion: document.getElementById('tamano_porcion').value,
-          variantes: document.getElementById('variantes').value.trim(),
-          tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0,
-          ...(imagenUrl && { imagen_url: imagenUrl })
-        };
-
-        if (document.getElementById('edit-item-id').value) {
-          payload.itemId = document.getElementById('edit-item-id').value;
-        }
-
-        const action = payload.itemId ? 'updateMenuItem' : 'addMenuItem';
-        await fetch(`${API_URL}?action=${action}`, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'no-cors'
-        });
-
-        alert(payload.itemId ? 'Plato actualizado' : 'Plato agregado');
-        document.getElementById('menu-form').classList.add('d-none');
-        cargarMenuCompleto();
-      } finally {
-        spinner.classList.add('d-none');
-        btn.disabled = false;
-      }
-    });
-    
-    // === LOGIN Y REGISTRO (100% original) ===
-    document.getElementById('show-register').addEventListener('click', () => {
-      document.getElementById('local-register-form').classList.toggle('d-none');
-      document.getElementById('local-login-form').classList.add('d-none');
-    });
-    document.getElementById('show-login').addEventListener('click', () => {
-      document.getElementById('local-login-form').classList.toggle('d-none');
-      document.getElementById('local-register-form').classList.add('d-none');
-    });
-
-    document.getElementById('local-register-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nombre = document.getElementById('reg-local-name').value.trim();
-      const email = document.getElementById('reg-local-email').value.trim();
-      const password = document.getElementById('reg-local-password').value;
-      if (!nombre || !email || !password) return document.getElementById('auth-status').innerHTML = '<div class="alert alert-warning">Completa todos los campos</div>';
-
-      const url = `${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-      await fetch(url, { method: 'GET', mode: 'no-cors' });
-      document.getElementById('auth-status').innerHTML = '<div class="alert alert-success">¡Registrado! Ya puedes iniciar sesión.</div>';
-      document.getElementById('local-register-form').reset();
-      document.getElementById('local-register-form').classList.add('d-none');
-      document.getElementById('local-login-form').classList.remove('d-none');
-    });
-
-    document.getElementById('local-login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-local-email').value.trim();
-      const password = document.getElementById('login-local-password').value;
-      const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
-
-      window.loginCallback = function(data) {
-        if (data.success && data.localId) {
-          localStorage.setItem('localToken', data.localId);
-          setTimeout(() => location.reload(), 800);
-        } else {
-          document.getElementById('auth-status').innerHTML = '<div class="alert alert-danger">Credenciales incorrectas</div>';
-        }
-        delete window.loginCallback;
-        const s = document.getElementById('loginScript'); if (s) s.remove();
-      };
-
-      const script = document.createElement('script');
-      script.id = 'loginScript';
-      script.src = url;
-      document.head.appendChild(script);
     });
   </script>
 </body>
