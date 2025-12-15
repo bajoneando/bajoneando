@@ -20,7 +20,6 @@
     .text-rojo { color: #d32f2f; }
     .btn-rojo { background-color: #d32f2f; border: none; }
     .btn-rojo:hover { background-color: #b71c1c; }
-
     /* Header */
     .header {
       background: white;
@@ -54,7 +53,6 @@
       font-size: 0.8rem;
       color: #999;
     }
-
     /* Toggle pequeño */
     .status-toggle-sm {
       width: 70px; height: 36px; position: relative; display: inline-block;
@@ -70,7 +68,6 @@
     }
     input:checked + .status-slider-sm { background-color: #27ae60; }
     input:checked + .status-slider-sm:before { transform: translateX(34px); }
-
     /* Tarjeta horizontal */
     .menu-card-horizontal {
       display: flex; align-items: center; background: white; border-radius: 16px;
@@ -85,10 +82,8 @@
     }
     .card-body-horizontal { padding: 1.5rem; flex: 1; }
     .precio { font-size: 1.8rem; font-weight: 700; color: #d32f2f; }
-
     /* Loading */
     .loading { color: #d32f2f; font-weight: 600; }
-
     /* Footer */
     footer {
       background: #c62828; color: white; padding: 2rem 0; margin-top: auto;
@@ -98,18 +93,14 @@
   </style>
 </head>
 <body>
-
   <!-- Header -->
   <header class="header">
     <div class="container text-center">
-      <!-- Logo de la plataforma Antojate (puedes reemplazar con tu imagen real) -->
       <img src="https://via.placeholder.com/300x100/ffffff/d32f2f?text=Antojate" alt="Logo Antojate" class="logo-plataforma mb-3">
       <h1 class="display-5 fw-bold text-rojo">Panel de Gestión del Menú</h1>
     </div>
   </header>
-
   <div class="container pb-5">
-
     <!-- LOGIN / REGISTRO -->
     <div id="auth-section" class="card shadow-lg p-5 mb-5 bg-white rounded-4">
       <h2 class="text-center mb-4 text-rojo">Acceso Local</h2>
@@ -117,7 +108,6 @@
         <button id="show-register" class="btn btn-outline-danger btn-lg me-3">Registrar Local</button>
         <button id="show-login" class="btn btn-rojo btn-lg">Iniciar Sesión</button>
       </div>
-
       <form id="local-register-form" class="mt-4 d-none">
         <input type="text" id="reg-local-name" placeholder="Nombre del Local" class="form-control form-control-lg mb-3" required>
         <input type="email" id="reg-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
@@ -127,7 +117,6 @@
           Registrar Local
         </button>
       </form>
-
       <form id="local-login-form" class="mt-4">
         <input type="email" id="login-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
         <input type="password" id="login-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
@@ -136,12 +125,12 @@
           Iniciar Sesión
         </button>
       </form>
-
       <div id="auth-status" class="mt-3"></div>
     </div>
 
     <!-- PANEL PRINCIPAL -->
     <div id="panel-principal" class="d-none">
+      <!-- Barra superior: Estado del Local + Perfil (ÚNICA VEZ) -->
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div class="d-flex align-items-center gap-3">
           <div class="text-center">
@@ -168,11 +157,13 @@
         </div>
       </div>
 
+      <!-- Botones principales (ÚNICA VEZ) -->
       <div class="text-center mb-5">
         <button id="btn-mi-menu" class="btn btn-success btn-lg px-5 me-4">Mi Menú</button>
         <button id="btn-agregar-item" class="btn btn-rojo btn-lg px-5">Agregar Plato</button>
       </div>
 
+      <!-- Filtros -->
       <div id="filtros-menu" class="card p-4 mb-4 d-none">
         <div class="row g-3 align-items-center">
           <div class="col-md-6">
@@ -189,7 +180,7 @@
         </div>
       </div>
 
-      <!-- Formulario Plato -->
+      <!-- Formulario Agregar / Editar Plato -->
       <form id="menu-form" class="card shadow-lg p-4 mb-5 d-none">
         <h3 class="mb-4 text-rojo" id="form-titulo">Nuevo Plato</h3>
         <input type="hidden" id="edit-item-id">
@@ -261,57 +252,6 @@
         <div id="perfil-status" class="mt-3"></div>
       </div>
 
-      <!-- Barra superior: Estado + Perfil con foto -->
-      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-        <div class="d-flex align-items-center gap-3">
-          <div class="text-center">
-            <label class="status-toggle-sm">
-              <input type="checkbox" id="estado-local-toggle">
-              <span class="status-slider-sm"></span>
-            </label>
-            <small class="d-block mt-1 text-rojo fw-bold" id="estado-texto">Inactivo</small>
-          </div>
-          <span class="fw-medium">Estado del Local</span>
-        </div>
-
-        <!-- Foto de perfil + Botón Mi Perfil -->
-        <div class="d-flex align-items-center gap-3">
-          <div id="perfil-foto-container">
-            <div class="logo-perfil-placeholder">Foto</div>
-          </div>
-          <div class="dropdown">
-            <button class="btn btn-outline-danger btn-lg dropdown-toggle" data-bs-toggle="dropdown">Mi Perfil</button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="#" id="editar-perfil-btn">Editar Perfil</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="#" id="logout">Cerrar sesión</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div class="text-center mb-5">
-        <button id="btn-mi-menu" class="btn btn-success btn-modern btn-lg px-5 me-4">Mi Menú</button>
-        <button id="btn-agregar-item" class="btn btn-rojo btn-modern btn-lg px-5">Agregar Plato</button>
-      </div>
-
-      <!-- FILTROS -->
-      <div id="filtros-menu" class="card p-4 mb-4 d-none">
-        <div class="row g-3 align-items-center">
-          <div class="col-md-6">
-            <div class="input-group input-group-lg">
-              <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-              <input type="text" id="buscador-plato" class="form-control" placeholder="Buscar plato...">
-            </div>
-          </div>
-          <div class="col-md-6">
-            <select id="filtro-categoria" class="form-select form-select-lg">
-              <option value="">Todas las categorías</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
       <!-- Listado de Menú -->
       <div id="menu-listado">
         <div class="text-center py-5 loading">
@@ -340,7 +280,7 @@
     const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
     const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
     let localToken = localStorage.getItem('localToken');
-    let menuItems = []; // Guardamos todos los items para filtrar
+    let menuItems = [];
 
     // === MOSTRAR PANEL PRINCIPAL ===
     function mostrarPanelPrincipal() {
@@ -351,13 +291,12 @@
       cargarMenuCompleto();
     }
 
-    // === BOTONES MOSTRAR FORMULARIOS (corregido: usa remove/add, no toggle) ===
+    // === BOTONES MOSTRAR FORMULARIOS ===
     document.getElementById('show-register').addEventListener('click', () => {
       document.getElementById('local-register-form').classList.remove('d-none');
       document.getElementById('local-login-form').classList.add('d-none');
       document.getElementById('auth-status').innerHTML = '';
     });
-
     document.getElementById('show-login').addEventListener('click', () => {
       document.getElementById('local-login-form').classList.remove('d-none');
       document.getElementById('local-register-form').classList.add('d-none');
@@ -387,7 +326,6 @@
       const email = document.getElementById('login-local-email').value.trim();
       const password = document.getElementById('login-local-password').value;
       const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
-
       window.loginCallback = function(data) {
         if (data.success && data.localId) {
           localStorage.setItem('localToken', data.localId);
@@ -400,7 +338,6 @@
         const script = document.getElementById('loginScript');
         if (script) script.remove();
       };
-
       const script = document.createElement('script');
       script.id = 'loginScript';
       script.src = url;
@@ -415,13 +352,12 @@
       location.reload();
     });
 
-    // === EDITAR PERFIL (NUEVO) ===
+    // === EDITAR PERFIL ===
     document.getElementById('editar-perfil-btn')?.addEventListener('click', async (e) => {
       e.preventDefault();
       document.getElementById('menu-form').classList.add('d-none');
       document.getElementById('perfil-form').classList.remove('d-none');
-      document.getElementById('menu-listado').innerHTML = '<div class="text-center py-5 loading-text"><div class="spinner-border text-danger"></div><p class="mt-3">Cargando datos del perfil...</p></div>';
-
+      document.getElementById('menu-listado').innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p class="mt-3">Cargando datos del perfil...</p></div>';
       try {
         const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
         const data = await res.json();
@@ -437,7 +373,7 @@
       } catch (err) {
         console.error('Error cargando perfil');
       } finally {
-        document.getElementById('menu-listado').innerHTML = ''; // Limpia mensaje de carga
+        document.getElementById('menu-listado').innerHTML = '';
       }
     });
 
@@ -452,12 +388,10 @@
       spinner.classList.remove('d-none');
       btn.disabled = true;
       document.getElementById('perfil-status').innerHTML = '<div class="alert alert-info">Guardando cambios...</div>';
-
       let fotoUrl = '';
       if (document.getElementById('perfil-foto').files[0]) {
         fotoUrl = await subirImagen(document.getElementById('perfil-foto').files[0]);
       }
-
       const payload = {
         localId: localToken,
         nombre: document.getElementById('perfil-nombre').value.trim(),
@@ -467,14 +401,12 @@
         payload.password = document.getElementById('perfil-password').value;
       }
       if (fotoUrl) payload.foto_url = fotoUrl;
-
       await fetch(`${API_URL}?action=updatePerfilLocal`, {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: { 'Content-Type': 'application/json' },
         mode: 'no-cors'
       });
-
       spinner.classList.add('d-none');
       btn.disabled = false;
       document.getElementById('perfil-status').innerHTML = '<div class="alert alert-success">¡Perfil actualizado!</div>';
@@ -525,7 +457,6 @@
       document.getElementById('estado-local-toggle').checked = activo;
       document.getElementById('estado-texto').textContent = activo ? "Abierto" : "Cerrado";
     }
-
     document.getElementById('estado-local-toggle')?.addEventListener('change', async function() {
       const estado = this.checked ? "Activo" : "Inactivo";
       document.getElementById('estado-texto').textContent = this.checked ? "Abierto" : "Cerrado";
@@ -548,7 +479,7 @@
       renderizarMenu(menuItems);
     }
 
-    // === RENDERIZAR MENÚ (única definición) ===
+    // === RENDERIZAR MENÚ ===
     function renderizarMenu(items) {
       const cont = document.getElementById('menu-listado');
       if (items.length === 0) {
@@ -587,13 +518,11 @@
       });
       cont.innerHTML = html;
 
-      // Eventos dinámicos
       document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
         el.addEventListener('change', async () => {
           await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
         });
       });
-
       document.querySelectorAll('.eliminar-item').forEach(btn => {
         btn.addEventListener('click', async () => {
           if (!confirm('¿Eliminar permanentemente?')) return;
@@ -609,7 +538,6 @@
           }
         });
       });
-
       document.querySelectorAll('.editar-plato').forEach(btn => {
         btn.addEventListener('click', () => {
           const item = menuItems.find(i => i.id == btn.dataset.id);
@@ -634,7 +562,6 @@
     // === FILTROS Y NAVEGACIÓN ===
     document.getElementById('buscador-plato')?.addEventListener('input', filtrarMenu);
     document.getElementById('filtro-categoria')?.addEventListener('change', filtrarMenu);
-
     function filtrarMenu() {
       const texto = document.getElementById('buscador-plato').value.toLowerCase();
       const cat = document.getElementById('filtro-categoria').value;
