@@ -84,6 +84,34 @@
     .precio { font-size: 1.8rem; font-weight: 700; color: #d32f2f; }
     /* Loading */
     .loading { color: #d32f2f; font-weight: 600; }
+
+    /* Pedidos panel */
+    .pedido-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .pedido-header {
+      background: #d32f2f;
+      color: white;
+      padding: 1rem 1.5rem;
+    }
+    .pedido-body {
+      padding: 1.5rem;
+    }
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .item-list li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    .item-list li:last-child { border-bottom: none; }
+    
     /* Footer */
     footer {
       background: #c62828; color: white; padding: 2rem 0; margin-top: auto;
@@ -157,10 +185,11 @@
         </div>
       </div>
 
-      <!-- Botones principales (ÚNICA VEZ) -->
+      <!-- Botones principales -->
       <div class="text-center mb-5">
         <button id="btn-mi-menu" class="btn btn-success btn-lg px-5 me-4">Mi Menú</button>
-        <button id="btn-agregar-item" class="btn btn-rojo btn-lg px-5">Agregar Plato</button>
+        <button id="btn-agregar-item" class="btn btn-rojo btn-lg px-5 me-3">Agregar Plato</button>
+        <button id="btn-mis-pedidos" class="btn btn-primary btn-lg px-5">Mis Pedidos</button>
       </div>
 
       <!-- Filtros -->
@@ -261,6 +290,17 @@
           <p class="mt-3">Cargando menú...</p>
         </div>
       </div>
+
+      <!-- Panel Mis Pedidos -->
+      <div id="pedidos-panel" class="d-none">
+        <h2 class="mb-4 text-rojo text-center">Mis Pedidos</h2>
+        <div id="pedidos-listado">
+          <div class="text-center py-5 loading">
+            <div class="spinner-border text-danger" role="status"></div>
+            <p class="mt-3">Cargando pedidos...</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -351,6 +391,104 @@
       localToken = null;
       location.reload();
     });
+
+    // === BOTONES DE NAVEGACIÓN ===
+    document.getElementById('btn-mi-menu').addEventListener('click', () => {
+      ocultarTodo();
+      document.getElementById('filtros-menu').classList.remove('d-none');
+      document.getElementById('menu-listado').classList.remove('d-none');
+      cargarMenuCompleto();
+    });
+
+    document.getElementById('btn-agregar-item').addEventListener('click', () => {
+      ocultarTodo();
+      document.getElementById('menu-form').classList.remove('d-none');
+      document.getElementById('form-titulo').textContent = "Nuevo Plato";
+      document.getElementById('menu-form').reset();
+      document.getElementById('edit-item-id').value = '';
+    });
+
+    document.getElementById('btn-mis-pedidos').addEventListener('click', () => {
+      ocultarTodo();
+      document.getElementById('pedidos-panel').classList.remove('d-none');
+      cargarMisPedidos();
+    });
+
+    function ocultarTodo() {
+      document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('perfil-form').classList.add('d-none');
+      document.getElementById('menu-listado').classList.add('d-none');
+      document.getElementById('pedidos-panel').classList.add('d-none');
+      document.getElementById('filtros-menu').classList.add('d-none');
+    }
+
+    // === CARGAR MIS PEDIDOS ===
+    async function cargarMisPedidos() {
+      const cont = document.getElementById('pedidos-listado');
+      cont.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p class="mt-3">Cargando pedidos...</p></div>';
+
+      try {
+        // Primero obtener todos los pedidos locales del local
+        const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
+        const locales = await resLocales.json();
+
+        if (!locales || locales.length === 0) {
+          cont.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos aún</h4></div>';
+          return;
+        }
+
+        let html = '';
+        for (const localPedido of locales) {
+          const idPedido = localPedido[1]; // Columna B = ID_PEDIDO
+          const idPedidoLocal = localPedido[0];
+          const estadoLocal = localPedido[4];
+
+          // Obtener items del pedido local
+          const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
+          const items = await resItems.json();
+
+          // Obtener datos generales del pedido
+          const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
+          const general = await resGeneral.json();
+          const direccion = general.direccion || 'No especificada';
+          const observaciones = general.observaciones || 'Ninguna';
+          const metodoPago = general.metodoPago || 'No especificado';
+
+          let itemsHtml = '<ul class="item-list">';
+          let subtotal = 0;
+          items.forEach(item => {
+            const totalItem = item[7]; // Total Item
+            subtotal += totalItem;
+            itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
+          });
+          itemsHtml += '</ul>';
+
+          html += `
+            <div class="pedido-card">
+              <div class="pedido-header d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>Pedido #${idPedido}</strong> — Parte Local: ${idPedidoLocal}
+                </div>
+                <span class="badge bg-light text-dark fs-6">${estadoLocal}</span>
+              </div>
+              <div class="pedido-body">
+                <p><strong>Dirección:</strong> ${direccion}</p>
+                <p><strong>Método de pago:</strong> ${metodoPago}</p>
+                <p><strong>Observaciones:</strong> ${observaciones}</p>
+                <h6 class="mt-3">Items:</h6>
+                ${itemsHtml}
+                <div class="text-end mt-3">
+                  <strong>Subtotal local: $${subtotal}</strong>
+                </div>
+              </div>
+            </div>`;
+        }
+        cont.innerHTML = html || '<div class="text-center py-5"><h4>No se encontraron pedidos</h4></div>';
+      } catch (err) {
+        console.error('Error cargando pedidos:', err);
+        cont.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+      }
+    }
 
     // === EDITAR PERFIL ===
     document.getElementById('editar-perfil-btn')?.addEventListener('click', async (e) => {
