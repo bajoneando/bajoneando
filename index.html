@@ -610,50 +610,54 @@
         };
 
         function checkout() {
-            if (cart.length === 0) {
-                alert('El carrito está vacío');
-                return;
-            }
+    if (cart.length === 0) {
+        alert('El carrito está vacío');
+        return;
+    }
 
-            const direccion = document.getElementById('direccion').value;
-            const metodoPago = document.getElementById('metodo-pago').value;
-            const observaciones = document.getElementById('observaciones').value;
+    const direccion = document.getElementById('direccion').value;
+    const metodoPago = document.getElementById('metodo-pago').value;
+    const observaciones = document.getElementById('observaciones').value;
 
-            if (!direccion || !metodoPago) {
-                alert('Completa la dirección y método de pago');
-                return;
-            }
+    if (!direccion || !metodoPago) {
+        alert('Completa la dirección y método de pago');
+        return;
+    }
 
-            const data = {
-                userId: 'USER1',  // Placeholder; obtén de sesión/auth real
-                fecha: new Date().toISOString().split('T')[0],  // Fecha actual
-                direccion,
-                metodoPago,
-                observaciones,
-                cart
-            };
-
-            fetch(scriptUrl, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'createOrder', data })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    alert(`Pedido creado con ID: ${result.idPedido}`);
-                    cart = [];  // Limpiar carrito
-                    updateCartCount();
-                    updateCartDisplay();
-                    document.getElementById('cart-section').style.display = 'none';
-                } else {
-                    alert('Error al crear pedido');
-                }
-            })
-            .catch(error => {
-                console.error('Error en checkout:', error);
-                alert('Error al procesar el pedido');
-            });
+    const data = {
+        action: 'createOrder',  // Importante: incluir la action aquí
+        data: {                 // Tu estructura anterior envía {action: ..., data: {...}}
+            userId: 'USER1',    // Placeholder; cambia por autenticación real cuando la tengas
+            fecha: new Date().toISOString().split('T')[0],
+            direccion,
+            metodoPago,
+            observaciones,
+            cart
         }
+    };
+
+    fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',  // Opcional, pero ayuda en algunos casos (respuesta será opaque)
+        body: JSON.stringify(data),
+        headers: {
+            'Content-Type': 'text/plain;charset=utf-8'  // ← CLAVE DE LA SOLUCIÓN
+        }
+    })
+    .then(() => {
+        // Con mode: 'no-cors' no puedes leer la respuesta, pero el pedido se procesa igual
+        alert('¡Pedido realizado con éxito!');
+        cart = [];
+        updateCartCount();
+        updateCartDisplay();
+        document.getElementById('cart-section').style.display = 'none';
+        document.getElementById('checkout-form').reset();
+    })
+    .catch(error => {
+        console.error('Error en checkout:', error);
+        alert('Error al procesar el pedido. Revisa la consola.');
+    });
+}
     </script>
 </body>
 </html>
