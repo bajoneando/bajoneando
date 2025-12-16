@@ -231,6 +231,7 @@
             <input type="text" id="search-input" placeholder="Buscar menús o locales...">
         </div>
         <div class="profile">Mi Perfil</div>
+        <div class="cart-icon" id="cart-icon">🛒<span class="cart-count" id="cart-count">0</span></div>
     </header>
     <main>
         <h1>¡Hola! ¿Qué se te antoja comer?</h1>
@@ -261,6 +262,27 @@
             <!-- Menús se mostrarán aquí -->
         </div>
     </main>
+   </main>
+    <div id="cart-modal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h2>Tu Carrito</h2>
+                <button onclick="closeCart()">Cerrar</button>
+            </div>
+            <div id="cart-items"></div>
+            <div class="cart-total" id="cart-total">Total: $0</div>
+            <div class="confirm-form">
+                <input type="text" id="address" placeholder="Dirección de entrega" required>
+                <select id="payment-method" required>
+                    <option value="">Método de pago</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Efectivo">Efectivo</option>
+                </select>
+                <textarea id="observations" placeholder="Observaciones"></textarea>
+                <button class="confirm-btn" onclick="confirmOrder()">Confirmar Pedido</button>
+            </div>
+        </div>
+    </div>
     <script>
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
     
@@ -408,7 +430,165 @@
                     showError(container, error.message);
                 });
         }
-    
+
+// Existing functions remain
+        
+        // Cart logic (client-side)
+        let cart = []; // Array of items
+        
+        // Load cart from localStorage on init
+        window.addEventListener('load', () => {
+            loadFilters();
+            setupSearch();
+            loadCart();
+            updateCartCount();
+            document.getElementById('cart-icon').addEventListener('click', openCart);
+        });
+        
+        function loadCart() {
+            const savedCart = localStorage.getItem('cart');
+            if (savedCart) {
+                cart = JSON.parse(savedCart);
+            }
+        }
+        
+        function saveCart() {
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+        }
+        
+        function updateCartCount() {
+            const count = cart.reduce((sum, item) => sum + item.cantidad, 0);
+            document.getElementById('cart-count').textContent = count;
+        }
+        
+        function openCart() {
+            displayCart();
+            document.getElementById('cart-modal').style.display = 'flex';
+        }
+        
+        function closeCart() {
+            document.getElementById('cart-modal').style.display = 'none';
+        }
+        
+        function displayCart() {
+            const container = document.getElementById('cart-items');
+            container.innerHTML = '';
+            
+            if (cart.length === 0) {
+                container.innerHTML = '<p>Carrito vacío</p>';
+                document.getElementById('cart-total').textContent = 'Total: $0';
+                return;
+            }
+            
+            // Group by local
+            const grouped = {};
+            cart.forEach(item => {
+                if (!grouped[item.id_local]) {
+                    grouped[item.id_local] = { nombre_local: item.nombre_local, items: [] };
+                }
+                grouped[item.id_local].items.push(item);
+            });
+            
+            let total = 0;
+            for (const [idLocal, group] of Object.entries(grouped)) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'cart-local-group';
+                groupDiv.innerHTML = `<h3>${group.nombre_local}</h3>`;
+                
+                let subtotal = 0;
+                group.items.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'cart-item';
+                    const totalItem = item.precio_unitario * item.cantidad;
+                    subtotal += totalItem;
+                    itemDiv.innerHTML = `
+                        <span>${item.nombre_producto} x${item.cantidad} (${item.variantes})</span>
+                        <span>$${totalItem}</span>
+                        <button onclick="removeFromCart(${idLocal}, ${index})">Eliminar</button>
+                    `;
+                    groupDiv.appendChild(itemDiv);
+                });
+                
+                groupDiv.innerHTML += `<p>Subtotal: $${subtotal}</p>`;
+                // Assume shipping per local (for display, actual calc in backend)
+                const shipping = group.items[0].local_shipping || 0;
+                groupDiv.innerHTML += `<p>Envío: $${shipping}</p>`;
+                total += subtotal + shipping;
+                
+                container.appendChild(groupDiv);
+            }
+            
+            document.getElementById('cart-total').textContent = `Total: $${total}`;
+        }
+        
+        function addToCart(menu) {
+            // Assume menu has id_producto, nombre, precio, id_local, nombre_local
+            // For simplicity, add with cantidad 1, no variantes
+            // In production, show modal for quantity/variants
+            const existing = cart.find(item => item.id_producto === menu.id_producto && item.id_local === menu.local_id);
+            if (existing) {
+                existing.cantidad += 1;
+            } else {
+                cart.push({
+                    id_producto: menu.id_producto || menu.id, // Adjust based on data
+                    nombre_producto: menu.nombre,
+                    precio_unitario: menu.precio,
+                    cantidad: 1,
+                    id_local: menu.local_id,
+                    nombre_local: menu.nombre_local || 'Unknown',
+                    variantes: '',
+                    local_shipping: 5, // Dummy, fetch real if needed
+                    prep_time: 30 // Dummy
+                });
+            }
+            saveCart();
+            alert(`¡Agregado: ${menu.nombre}!`);
+        }
+        
+        function removeFromCart(idLocal, index) {
+            const group = cart.filter(item => item.id_local === idLocal);
+            group.splice(index, 1);
+            cart = cart.filter(item => item.id_local !== idLocal).concat(group);
+            saveCart();
+            displayCart();
+        }
+        
+        function confirmOrder() {
+            const address = document.getElementById('address').value;
+            const paymentMethod = document.getElementById('payment-method').value;
+            const observations = document.getElementById('observations').value;
+            const userId = 'user123'; // Assume logged in user, hardcoded for example
+            
+            if (!address || !paymentMethod) {
+                alert('Completa dirección y método de pago');
+                return;
+            }
+            
+            const params = new URLSearchParams({
+                action: 'createOrder',
+                userId,
+                address,
+                paymentMethod,
+                observations,
+                cart: JSON.stringify(cart)
+            });
+            
+            fetch(`${scriptUrl}?${params.toString()}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        alert(`Pedido creado! ID: ${result.pedidoId}`);
+                        cart = [];
+                        saveCart();
+                        closeCart();
+                    } else {
+                        alert('Error: ' + result.error);
+                    }
+                })
+                .catch(error => alert('Error al confirmar: ' + error));
+                }
+        
         // Mostrar menús (usado tanto por categorías, locales como búsqueda)
         function displayMenus(menus, filter) {
             const container = document.getElementById('menu-display');
@@ -461,7 +641,7 @@
                     addBtn.style.border = 'none';
                     addBtn.style.borderRadius = '5px';
                     addBtn.style.cursor = 'pointer';
-                    addBtn.onclick = () => addToCart(menu);
+                    addBtn.onclick = () => alert(`¡Agregado: ${menu.nombre}!`);
                     menuDiv.appendChild(addBtn);
                 
                     itemsDiv.appendChild(menuDiv);
@@ -469,285 +649,6 @@
             }
             container.style.display = 'block';
         }
-
-        // Lógica añadida para gestión de pedidos
-        // Suposiciones explícitas:
-        // - Las "hojas" se simulan con arrays globales en JS (PEDIDOS_GENERAL, PEDIDOS_LOCALES, PEDIDOS_ITEMS) para fines de demostración.
-        // - En un entorno real, estas operaciones se harían en el backend (Google Apps Script) escribiendo en Google Sheets reales via SpreadsheetApp.
-        // - Generación de IDs: Incremental simple usando contadores globales (nextPedidoId, etc.).
-        // - Costo de envío por local: Fijo en $5 por local (puede parametrizarse).
-        // - Tiempo de preparación por local: Fijo en 30 minutos (puede parametrizarse).
-        // - IDs de usuario, dirección, método de pago y observaciones se pasan como parámetros (en producción, del perfil del usuario).
-        // - Snapshot de nombre y precio: Se guarda directamente del carrito en el momento de creación.
-        // - Variantes/opciones: Se asume como string simple (ej: "sin cebolla").
-        // - Estados iniciales: Pedido general 'Pendiente', locales 'Pendiente'.
-        // - Para actualizar estados, se proporcionan funciones separadas que verifican reglas (ej: general 'Entregado' solo si todos locales 'Listo').
-        // - El carrito es un array de objetos: { id_local, nombre_local, id_producto, nombre_producto, precio_unitario, cantidad, variantes }
-        // - En producción, después de crear en local arrays, se enviaría via POST a Google Apps Script para persistir en Sheets.
-        // - Para demo, se puede llamar placeOrder() desde consola con params hardcodeados.
-
-        // Simulación de hojas como arrays
-        const PEDIDOS_GENERAL = [];
-        const PEDIDOS_LOCALES = [];
-        const PEDIDOS_ITEMS = [];
-
-        // Contadores para IDs (en producción, usar Sheet.getLastRow() + 1 o UUID)
-        let nextPedidoId = 1;
-        let nextPedidoLocalId = 1;
-        let nextItemId = 1;
-
-        // Carrito global (en producción, usar localStorage o estado)
-        let cart = [];
-
-        // Función para agregar al carrito (integrada con el botón)
-        function addToCart(menu) {
-            // Asumimos que el objeto menu del backend incluye: id (id_producto), local_id, nombre_local
-            // Si no, ajustar fetch para incluirlos. Para demo, hardcodeamos si faltan.
-            const cantidad = parseInt(prompt('Cantidad:', 1)) || 1;
-            const variantes = prompt('Variantes/Opciones (opcional):', '') || '';
-            cart.push({
-                id_local: menu.local_id || 'loc_default',  // Asumir si no está en menu
-                nombre_local: menu.nombre_local || 'Local Default',
-                id_producto: menu.id || 'prod_' + Math.random().toString(36).slice(2, 7),  // Generar si no hay
-                nombre_producto: menu.nombre,
-                precio_unitario: menu.precio,
-                cantidad: cantidad,
-                variantes: variantes
-            });
-            alert(`¡Agregado: ${menu.nombre} x${cantidad}! Carrito actual: ${cart.length} items.`);
-            console.log('Carrito actual:', cart);
-        }
-
-        // Función principal para crear pedido desde carrito
-        function crearPedido(carrito, idUsuario, direccion, metodoPago, observaciones) {
-            if (carrito.length === 0) {
-                throw new Error('Carrito vacío');
-            }
-
-            // Crear pedido general
-            const idPedido = crearPedidoGeneral(idUsuario, new Date().toISOString(), direccion, metodoPago, observaciones);
-
-            // Agrupar items por local
-            const groupedItems = agruparPorLocal(carrito);
-
-            let totalGeneral = 0;
-
-            // Para cada local, crear pedido local e items
-            for (const [idLocal, items] of Object.entries(groupedItems)) {
-                const nombreLocal = items[0].nombre_local;  // Tomar del primer item
-                const costoEnvioLocal = 5;  // Fijo, o calcular basado en local
-                const tiempoPreparacion = 30;  // Minutos fijos
-
-                const idPedidoLocal = crearPedidoLocal(idPedido, idLocal, nombreLocal, costoEnvioLocal, tiempoPreparacion);
-
-                let subtotalLocal = 0;
-
-                // Crear items y calcular subtotal
-                items.forEach(item => {
-                    subtotalLocal += crearPedidoItem(idPedido, idPedidoLocal, item);
-                });
-
-                // Actualizar subtotal y total en pedido local
-                actualizarSubtotalLocal(idPedidoLocal, subtotalLocal);
-
-                // Acumular para total general
-                totalGeneral += subtotalLocal + costoEnvioLocal;
-            }
-
-            // Actualizar total en pedido general
-            actualizarTotalGeneral(idPedido, totalGeneral);
-
-            return idPedido;
-        }
-
-        // Función auxiliar: Agrupar carrito por ID_LOCAL
-        function agruparPorLocal(carrito) {
-            return carrito.reduce((acc, item) => {
-                if (!acc[item.id_local]) {
-                    acc[item.id_local] = [];
-                }
-                acc[item.id_local].push(item);
-                return acc;
-            }, {});
-        }
-
-        // Función separada: Crear pedido general
-        function crearPedidoGeneral(idUsuario, fecha, direccion, metodoPago, observaciones) {
-            const idPedido = nextPedidoId++;
-            PEDIDOS_GENERAL.push({
-                ID_PEDIDO: idPedido,
-                ID_USUARIO: idUsuario,
-                Fecha: fecha,
-                Dirección: direccion,
-                Estado_Pedido: 'Pendiente',
-                Total_Pedido: 0,  // Se actualizará después
-                Método_de_Pago: metodoPago,
-                Observaciones: observaciones
-            });
-            return idPedido;
-        }
-
-        // Función separada: Crear pedido local
-        function crearPedidoLocal(idPedido, idLocal, nombreLocal, costoEnvioLocal, tiempoPreparacion) {
-            const idPedidoLocal = nextPedidoLocalId++;
-            PEDIDOS_LOCALES.push({
-                ID_PEDIDO_LOCAL: idPedidoLocal,
-                ID_PEDIDO: idPedido,
-                ID_LOCAL: idLocal,
-                Nombre_Local: nombreLocal,
-                Estado_Local: 'Pendiente',
-                Subtotal_Local: 0,  // Se actualizará después
-                Costo_Envío_Local: costoEnvioLocal,
-                Tiempo_Preparación: tiempoPreparacion
-            });
-            return idPedidoLocal;
-        }
-
-        // Función separada: Crear item de pedido
-        function crearPedidoItem(idPedido, idPedidoLocal, item) {
-            const idItem = nextItemId++;
-            const totalItem = item.precio_unitario * item.cantidad;
-            PEDIDOS_ITEMS.push({
-                ID_ITEM: idItem,
-                ID_PEDIDO: idPedido,
-                ID_PEDIDO_LOCAL: idPedidoLocal,
-                ID_PRODUCTO: item.id_producto,
-                Nombre_Producto: item.nombre_producto,  // Snapshot
-                Precio_Unitario: item.precio_unitario,  // Snapshot
-                Cantidad: item.cantidad,
-                Total_Item: totalItem,
-                Variantes_Opciones: item.variantes
-            });
-            return totalItem;
-        }
-
-        // Función separada: Actualizar subtotal de local (calcular suma de items)
-        function actualizarSubtotalLocal(idPedidoLocal, subtotalLocal) {
-            const pedidoLocal = PEDIDOS_LOCALES.find(p => p.ID_PEDIDO_LOCAL === idPedidoLocal);
-            if (pedidoLocal) {
-                pedidoLocal.Subtotal_Local = subtotalLocal;
-            }
-        }
-
-        // Función separada: Actualizar total general (suma de subtotales + envíos)
-        function actualizarTotalGeneral(idPedido, totalGeneral) {
-            const pedidoGeneral = PEDIDOS_GENERAL.find(p => p.ID_PEDIDO === idPedido);
-            if (pedidoGeneral) {
-                pedidoGeneral.Total_Pedido = totalGeneral;
-            }
-        }
-
-        // Función para actualizar estado de un pedido local
-        function actualizarEstadoLocal(idPedidoLocal, nuevoEstado) {
-            // Estados válidos: Pendiente / Aceptado / Preparando / Listo / Rechazado
-            const estadosValidos = ['Pendiente', 'Aceptado', 'Preparando', 'Listo', 'Rechazado'];
-            if (!estadosValidos.includes(nuevoEstado)) {
-                throw new Error('Estado local inválido');
-            }
-            const pedidoLocal = PEDIDOS_LOCALES.find(p => p.ID_PEDIDO_LOCAL === idPedidoLocal);
-            if (pedidoLocal) {
-                pedidoLocal.Estado_Local = nuevoEstado;
-                // Verificar si todos locales están 'Listo' para actualizar general
-                checkAndUpdateEstadoGeneral(pedidoLocal.ID_PEDIDO);
-            }
-        }
-
-        // Función para actualizar estado general (con chequeo para 'Entregado')
-        function actualizarEstadoGeneral(idPedido, nuevoEstado) {
-            // Estados válidos: Pendiente / Confirmado / Entregado / Cancelado
-            const estadosValidos = ['Pendiente', 'Confirmado', 'Entregado', 'Cancelado'];
-            if (!estadosValidos.includes(nuevoEstado)) {
-                throw new Error('Estado general inválido');
-            }
-            const pedidoGeneral = PEDIDOS_GENERAL.find(p => p.ID_PEDIDO === idPedido);
-            if (pedidoGeneral) {
-                if (nuevoEstado === 'Entregado') {
-                    // Solo permitir si todos locales 'Listo'
-                    if (checkAllLocalesListos(idPedido)) {
-                        pedidoGeneral.Estado_Pedido = 'Entregado';
-                    } else {
-                        throw new Error('No todos los locales están Listo');
-                    }
-                } else {
-                    pedidoGeneral.Estado_Pedido = nuevoEstado;
-                }
-            }
-        }
-
-        // Función auxiliar: Chequear si todos locales de un pedido están 'Listo'
-        function checkAllLocalesListos(idPedido) {
-            const locales = PEDIDOS_LOCALES.filter(p => p.ID_PEDIDO === idPedido);
-            return locales.every(p => p.Estado_Local === 'Listo');
-        }
-
-        // Función auxiliar: Chequear y actualizar general a 'Entregado' si aplica
-        function checkAndUpdateEstadoGeneral(idPedido) {
-            if (checkAllLocalesListos(idPedido)) {
-                actualizarEstadoGeneral(idPedido, 'Entregado');
-            }
-        }
-
-        // Ejemplo de uso (entrada y salida)
-        // Para demo, llamar desde consola: placeOrderDemo()
-        function placeOrderDemo() {
-            // Ejemplo de entrada: carrito mezclado de locales
-            const ejemploCarrito = [
-                {
-                    id_local: 'loc1',
-                    nombre_local: 'Burger King',
-                    id_producto: 'prod1',
-                    nombre_producto: 'Hamburguesa',
-                    precio_unitario: 10,
-                    cantidad: 2,
-                    variantes: 'sin cebolla'
-                },
-                {
-                    id_local: 'loc1',
-                    nombre_local: 'Burger King',
-                    id_producto: 'prod2',
-                    nombre_producto: 'Papas',
-                    precio_unitario: 5,
-                    cantidad: 1,
-                    variantes: ''
-                },
-                {
-                    id_local: 'loc2',
-                    nombre_local: 'Pizza Hut',
-                    id_producto: 'prod3',
-                    nombre_producto: 'Pizza Margherita',
-                    precio_unitario: 15,
-                    cantidad: 1,
-                    variantes: 'extra queso'
-                }
-            ];
-
-            // Crear pedido (parámetros de usuario)
-            const idPedido = crearPedido(
-                ejemploCarrito,
-                'user123',  // ID_USUARIO
-                'Calle Falsa 123',  // Dirección
-                'Tarjeta',  // Método de Pago
-                'Entregar en puerta'  // Observaciones
-            );
-
-            console.log('Pedido creado:', idPedido);
-            console.log('Datos guardados en GENERAL:', PEDIDOS_GENERAL);
-            console.log('Datos guardados en LOCALES:', PEDIDOS_LOCALES);
-            console.log('Datos guardados en ITEMS:', PEDIDOS_ITEMS);
-
-            // Ejemplo de actualización de estados
-            // Asumir IDs generados: pedido local 1 y 2
-            actualizarEstadoLocal(1, 'Listo');
-            actualizarEstadoLocal(2, 'Listo');
-            console.log('Después de actualizar locales a Listo:', PEDIDOS_GENERAL);  // Debería estar 'Entregado'
-
-            // Limpiar carrito después de pedido
-            cart = [];
-        }
-
-        // En producción, agregar botón para llamar crearPedido(cart, ...) y enviar a backend via fetch POST
-        // Ej: fetch(scriptUrl + '?action=createOrder', { method: 'POST', body: JSON.stringify({ cart, userData }) })
-
     </script>
 </body>
 </html>
