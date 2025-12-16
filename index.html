@@ -223,78 +223,40 @@
             }
         }
 
-        /* Add styles for cart */
-        .cart-icon {
-            position: relative;
-            cursor: pointer;
-            font-size: 24px;
-            margin-left: 20px;
+        /* Carrito */
+        .cart-icon { position: relative; cursor: pointer; font-size: 28px; margin-left: 20px; }
+        .cart-count { position: absolute; top: -10px; right: -10px; background: red; color: white; border-radius: 50%; padding: 3px 7px; font-size: 12px; }
+
+        /* Modal de agregar al carrito */
+        #add-to-cart-modal, #cart-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000;
         }
-        .cart-count {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 12px;
+        .modal-content {
+            background: white; padding: 20px; border-radius: 12px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
         }
-        #cart-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .cart-content {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80%;
-            overflow-y: auto;
-        }
-        .cart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 10px;
-        }
-        .cart-local-group {
-            margin-bottom: 20px;
-        }
-        .cart-total {
-            font-weight: bold;
-            text-align: right;
-        }
-        .confirm-form {
-            margin-top: 20px;
-        }
-        .confirm-form input, .confirm-form select, .confirm-form textarea {
-            width: 100%;
-            margin: 5px 0;
-            padding: 8px;
-        }
-        .confirm-btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            width: 100%;
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .quantity-control { display: flex; align-items: center; justify-content: center; margin: 15px 0; }
+        .quantity-control button { width: 40px; height: 40px; font-size: 20px; background: #eee; border: none; cursor: pointer; }
+        .quantity-control span { margin: 0 20px; font-size: 20px; min-width: 50px; text-align: center; }
+        .extras-section { margin: 20px 0; }
+        .extra-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .add-extra-btn { background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
+        .modal-footer { display: flex; justify-content: space-between; margin-top: 20px; }
+        .btn-primary { background: #3498db; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn-ver-pedido { background: #e67e22; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+
+        /* Carrito final */
+        .cart-content { background: white; padding: 20px; border-radius: 10px; max-width: 600px; width: 90%; max-height: 80%; overflow-y: auto; }
+        .cart-header { display: flex; justify-content: space-between; align-items: center; }
+        .cart-item { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .cart-local-group { margin-bottom: 20px; }
+        .cart-total { font-weight: bold; text-align: right; font-size: 18px; margin: 15px 0; }
+        .confirm-form input, .confirm-form select, .confirm-form textarea { width: 100%; margin: 8px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .confirm-btn { background: #27ae60; color: white; border: none; padding: 12px; cursor: pointer; width: 100%; font-size: 18px; border-radius: 5px; }
+
+        @media (max-width: 768px) {
+            .categories, .suggestion-items, .menu-items { flex-direction: column; align-items: center; }
+            .category, .suggestion, .menu-item { width: 90%; max-width: 300px; height: 180px; }
         }
     </style>
 </head>
@@ -337,11 +299,57 @@
         </div>
     </main>
    </main>
+    
+    <!-- Modal para agregar al carrito -->
+    <div id="add-to-cart-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-product-name"></h2>
+                <button onclick="closeAddModal()" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button>
+            </div>
+            <p id="modal-product-price" style="font-weight:bold;color:#27ae60;font-size:18px;"></p>
+
+            <div class="quantity-control">
+                <button onclick="changeQuantity(-1)">−</button>
+                <span id="modal-quantity">1</span>
+                <button onclick="changeQuantity(1)">+</button>
+            </div>
+
+            <div class="extras-section">
+                <h3>Opciones extra (bebidas, acompañamientos, etc.)</h3>
+                <div id="extras-list">
+                    <!-- Ejemplo estático, puedes cargar dinámicamente -->
+                    <div class="extra-item">
+                        <span>Coca Cola 500ml</span>
+                        <span>$3</span>
+                        <button class="add-extra-btn" onclick="addExtra('Coca Cola 500ml', 3)">Agregar</button>
+                    </div>
+                    <div class="extra-item">
+                        <span>Papas fritas grandes</span>
+                        <span>$5</span>
+                        <button class="add-extra-btn" onclick="addExtra('Papas fritas grandes', 5)">Agregar</button>
+                    </div>
+                    <div class="extra-item">
+                        <span>Agua mineral</span>
+                        <span>$2</span>
+                        <button class="add-extra-btn" onclick="addExtra('Agua mineral', 2)">Agregar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="addProductToCart()">Agregar al carrito</button>
+                <button class="btn-ver-pedido" onclick="addProductToCart(); openCart();">Ver pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal del carrito final -->
     <div id="cart-modal">
         <div class="cart-content">
             <div class="cart-header">
                 <h2>Tu Carrito</h2>
-                <button onclick="closeCart()">Cerrar</button>
+                <button onclick="closeCart()" style="background:none;border:none;font-size:24px;cursor:pointer;">×</button>
             </div>
             <div id="cart-items"></div>
             <div class="cart-total" id="cart-total">Total: $0</div>
@@ -352,7 +360,7 @@
                     <option value="Tarjeta">Tarjeta</option>
                     <option value="Efectivo">Efectivo</option>
                 </select>
-                <textarea id="observations" placeholder="Observaciones"></textarea>
+                <textarea id="observations" placeholder="Observaciones (ej: sin cebolla)"></textarea>
                 <button class="confirm-btn" onclick="confirmOrder()">Confirmar Pedido</button>
             </div>
         </div>
@@ -505,163 +513,179 @@
                 });
         }
 
-// Existing functions remain
-        
-        // Cart logic (client-side)
-        let cart = []; // Array of items
-        
-        // Load cart from localStorage on init
-        window.addEventListener('load', () => {
-            loadFilters();
-            setupSearch();
-            loadCart();
-            updateCartCount();
-            document.getElementById('cart-icon').addEventListener('click', openCart);
-        });
-        
-        function loadCart() {
-            const savedCart = localStorage.getItem('cart');
-            if (savedCart) {
-                cart = JSON.parse(savedCart);
-            }
+// === Carrito básico ===
+        function loadCartFromStorage() {
+            const saved = localStorage.getItem('cart');
+            if (saved) cart = JSON.parse(saved);
         }
-        
+
         function saveCart() {
             localStorage.setItem('cart', JSON.stringify(cart));
             updateCartCount();
         }
-        
+
         function updateCartCount() {
-            const count = cart.reduce((sum, item) => sum + item.cantidad, 0);
-            document.getElementById('cart-count').textContent = count;
+            const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
+            document.getElementById('cart-count').textContent = totalItems;
         }
-        
+
+        // === Modal de agregar producto ===
+        function openAddModal(menu) {
+            currentProduct = menu;
+            currentQuantity = 1;
+            currentExtras = [];
+
+            document.getElementById('modal-product-name').textContent = menu.nombre;
+            document.getElementById('modal-product-price').textContent = `Precio: $${menu.precio}`;
+            document.getElementById('modal-quantity').textContent = currentQuantity;
+
+            document.getElementById('add-to-cart-modal').style.display = 'flex';
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-to-cart-modal').style.display = 'none';
+            currentProduct = null;
+        }
+
+        function changeQuantity(delta) {
+            currentQuantity = Math.max(1, currentQuantity + delta);
+            document.getElementById('modal-quantity').textContent = currentQuantity;
+        }
+
+        function addExtra(nombre, precio) {
+            currentExtras.push({ nombre, precio });
+            alert(`Agregado: ${nombre}`);
+        }
+
+        function addProductToCart() {
+            if (!currentProduct) return;
+
+            const variantes = currentExtras.length > 0
+                ? currentExtras.map(e => `${e.nombre} (+$${e.precio})`).join(', ')
+                : '';
+
+            const precioConExtras = currentProduct.precio + currentExtras.reduce((s, e) => s + e.precio, 0);
+
+            const item = {
+                id_producto: currentProduct.id || currentProduct.id_producto,
+                nombre_producto: currentProduct.nombre,
+                precio_unitario: precioConExtras,
+                cantidad: currentQuantity,
+                id_local: currentProduct.local_id,
+                nombre_local: currentProduct.nombre_local || 'Local desconocido',
+                variantes: variantes,
+                local_shipping: 5,   // Puedes obtenerlo del backend si es dinámico
+                prep_time: 30
+            };
+
+            // Si ya existe el mismo producto con las mismas opciones, sumar cantidad
+            const existingIndex = cart.findIndex(i =>
+                i.id_producto === item.id_producto &&
+                i.id_local === item.id_local &&
+                i.variantes === item.variantes
+            );
+
+            if (existingIndex > -1) {
+                cart[existingIndex].cantidad += currentQuantity;
+            } else {
+                cart.push(item);
+            }
+
+            saveCart();
+            alert(`¡${currentQuantity} ${currentProduct.nombre} agregado(s) al carrito!`);
+            closeAddModal();
+        }
+
+        // === Carrito final ===
         function openCart() {
             displayCart();
             document.getElementById('cart-modal').style.display = 'flex';
         }
-        
+
         function closeCart() {
             document.getElementById('cart-modal').style.display = 'none';
         }
-        
+
         function displayCart() {
             const container = document.getElementById('cart-items');
             container.innerHTML = '';
-            
+
             if (cart.length === 0) {
-                container.innerHTML = '<p>Carrito vacío</p>';
+                container.innerHTML = '<p style="text-align:center;">Tu carrito está vacío</p>';
                 document.getElementById('cart-total').textContent = 'Total: $0';
                 return;
             }
-            
-            // Group by local
+
             const grouped = {};
             cart.forEach(item => {
                 if (!grouped[item.id_local]) {
-                    grouped[item.id_local] = { nombre_local: item.nombre_local, items: [] };
+                    grouped[item.id_local] = { nombre_local: item.nombre_local, items: [], shipping: item.local_shipping };
                 }
                 grouped[item.id_local].items.push(item);
             });
-            
+
             let total = 0;
-            for (const [idLocal, group] of Object.entries(grouped)) {
+            Object.values(grouped).forEach(group => {
                 const groupDiv = document.createElement('div');
                 groupDiv.className = 'cart-local-group';
                 groupDiv.innerHTML = `<h3>${group.nombre_local}</h3>`;
-                
+
                 let subtotal = 0;
-                group.items.forEach((item, index) => {
+                group.items.forEach((item, idx) => {
+                    const itemTotal = item.precio_unitario * item.cantidad;
+                    subtotal += itemTotal;
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'cart-item';
-                    const totalItem = item.precio_unitario * item.cantidad;
-                    subtotal += totalItem;
                     itemDiv.innerHTML = `
-                        <span>${item.nombre_producto} x${item.cantidad} (${item.variantes})</span>
-                        <span>$${totalItem}</span>
-                        <button onclick="removeFromCart(${idLocal}, ${index})">Eliminar</button>
+                        <div>
+                            <strong>${item.nombre_producto}</strong> ×${item.cantidad}<br>
+                            <small>${item.variantes || 'Sin extras'}</small>
+                        </div>
+                        <div>$${itemTotal}</div>
                     `;
                     groupDiv.appendChild(itemDiv);
                 });
-                
-                groupDiv.innerHTML += `<p>Subtotal: $${subtotal}</p>`;
-                // Assume shipping per local (for display, actual calc in backend)
-                const shipping = group.items[0].local_shipping || 0;
-                groupDiv.innerHTML += `<p>Envío: $${shipping}</p>`;
-                total += subtotal + shipping;
-                
+
+                groupDiv.innerHTML += `<p><strong>Subtotal:</strong> $${subtotal}</p>`;
+                groupDiv.innerHTML += `<p>Envío: $${group.shipping}</p>`;
+                total += subtotal + group.shipping;
                 container.appendChild(groupDiv);
-            }
-            
+            });
+
             document.getElementById('cart-total').textContent = `Total: $${total}`;
         }
-        
-        function addToCart(menu) {
-            // Assume menu has id_producto, nombre, precio, id_local, nombre_local
-            // For simplicity, add with cantidad 1, no variantes
-            // In production, show modal for quantity/variants
-            const existing = cart.find(item => item.id_producto === menu.id_producto && item.id_local === menu.local_id);
-            if (existing) {
-                existing.cantidad += 1;
-            } else {
-                cart.push({
-                    id_producto: menu.id_producto || menu.id, // Adjust based on data
-                    nombre_producto: menu.nombre,
-                    precio_unitario: menu.precio,
-                    cantidad: 1,
-                    id_local: menu.local_id,
-                    nombre_local: menu.nombre_local || 'Unknown',
-                    variantes: '',
-                    local_shipping: 5, // Dummy, fetch real if needed
-                    prep_time: 30 // Dummy
-                });
-            }
-            saveCart();
-            alert(`¡Agregado: ${menu.nombre}!`);
-        }
-        
-        function removeFromCart(idLocal, index) {
-            const group = cart.filter(item => item.id_local === idLocal);
-            group.splice(index, 1);
-            cart = cart.filter(item => item.id_local !== idLocal).concat(group);
-            saveCart();
-            displayCart();
-        }
-        
+
         function confirmOrder() {
-            const address = document.getElementById('address').value;
+            const address = document.getElementById('address').value.trim();
             const paymentMethod = document.getElementById('payment-method').value;
-            const observations = document.getElementById('observations').value;
-            const userId = 'user123'; // Assume logged in user, hardcoded for example
-            
             if (!address || !paymentMethod) {
-                alert('Completa dirección y método de pago');
+                alert('Por favor completa la dirección y método de pago');
                 return;
             }
-            
+
             const params = new URLSearchParams({
                 action: 'createOrder',
-                userId,
+                userId: 'user123', // En producción: obtener del login
                 address,
                 paymentMethod,
-                observations,
+                observations: document.getElementById('observations').value,
                 cart: JSON.stringify(cart)
             });
-            
-            fetch(`${scriptUrl}?${params.toString()}`)
-                .then(response => response.json())
+
+            fetch(`${scriptUrl}?${params}`)
+                .then(r => r.json())
                 .then(result => {
                     if (result.success) {
-                        alert(`Pedido creado! ID: ${result.pedidoId}`);
+                        alert(`¡Pedido confirmado! ID: ${result.pedidoId}`);
                         cart = [];
                         saveCart();
                         closeCart();
                     } else {
-                        alert('Error: ' + result.error);
+                        alert('Error: ' + (result.error || 'Intenta más tarde'));
                     }
                 })
-                .catch(error => alert('Error al confirmar: ' + error));
-                }
+                .catch(() => alert('Error de conexión'));
+        }
         
         // Mostrar menús (usado tanto por categorías, locales como búsqueda)
         function displayMenus(menus, filter) {
