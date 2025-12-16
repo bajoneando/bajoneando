@@ -46,82 +46,24 @@
             color: #333;
             cursor: pointer;
         }
-
-        /* Panel de agregar al carrito */
-        .quantity-selector {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
-            font-size: 20px;
+        .cart-icon {
+            position: relative;
+            cursor: pointer;
+            margin-left: 20px;
         }
-        .quantity-btn {
-            width: 40px;
-            height: 40px;
-            border: 1px solid #ccc;
-            background: #f9f9f9;
+        .cart-icon span {
             font-size: 24px;
-            cursor: pointer;
-            border-radius: 8px;
         }
-        .quantity-display {
-            min-width: 50px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .extras-section {
-            margin: 20px 0;
-        }
-        .extra-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .extra-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .extra-btn {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #ccc;
-            background: #fff;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 18px;
-        }
-        .extra-count {
-            min-width: 30px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .add-to-cart-final {
-            background: #27ae60;
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background-color: red;
             color: white;
-            border: none;
-            width: 100%;
-            padding: 14px;
-            font-size: 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 20px;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
         }
-
-        /* Carrito modal (ya existente, mejorado) */
-        #cart-modal .cart-local-group h3 {
-            border-bottom: 2px solid #27ae60;
-            padding-bottom: 8px;
-        }
-        .cart-item span:first-child {
-            flex: 1;
-        }
-        
         main {
             max-width: 1200px;
             margin: 20px auto;
@@ -286,6 +228,35 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Estilos para carrito */
+        #cart-section {
+            display: none;
+            margin-top: 40px;
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .cart-item span {
+            flex: 1;
+        }
+        .cart-total {
+            font-weight: bold;
+            text-align: right;
+            margin-top: 10px;
+        }
+        #checkout-form {
+            margin-top: 20px;
+        }
+        #checkout-form input, #checkout-form textarea {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
         /* Responsive para móviles */
         @media (max-width: 768px) {
             .categories, .suggestion-items, .menu-items {
@@ -298,80 +269,6 @@
                 height: 180px;
             }
         }
-
-        /* Add styles for cart */
-        .cart-icon {
-            position: relative;
-            cursor: pointer;
-            font-size: 24px;
-            margin-left: 20px;
-        }
-        .cart-count {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: red;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 12px;
-        }
-        #cart-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .cart-content {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80%;
-            overflow-y: auto;
-        }
-        .cart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .cart-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 10px 0;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 10px;
-        }
-        .cart-local-group {
-            margin-bottom: 20px;
-        }
-        .cart-total {
-            font-weight: bold;
-            text-align: right;
-        }
-        .confirm-form {
-            margin-top: 20px;
-        }
-        .confirm-form input, .confirm-form select, .confirm-form textarea {
-            width: 100%;
-            margin: 5px 0;
-            padding: 8px;
-        }
-        .confirm-btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-            width: 100%;
-        }
     </style>
 </head>
 <body>
@@ -381,7 +278,10 @@
             <input type="text" id="search-input" placeholder="Buscar menús o locales...">
         </div>
         <div class="profile">Mi Perfil</div>
-        <div class="cart-icon" id="cart-icon">🛒<span class="cart-count" id="cart-count">0</span></div>
+        <div class="cart-icon" id="cart-icon">
+            <span>🛒</span>
+            <div class="cart-count" id="cart-count">0</div>
+        </div>
     </header>
     <main>
         <h1>¡Hola! ¿Qué se te antoja comer?</h1>
@@ -411,340 +311,25 @@
         <div id="menu-display" style="display: none;">
             <!-- Menús se mostrarán aquí -->
         </div>
-    </main>
-   </main>
-    <!-- Modal para agregar al carrito -->
-    <div id="add-item-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modal-title">Agregar al carrito</h2>
-                <button class="close-modal" onclick="closeAddModal()">&times;</button>
-            </div>
-            <img id="modal-img" src="" alt="" style="width:100%; border-radius:10px; margin-bottom:15px;">
-            <h3 id="modal-name"></h3>
-            <p id="modal-desc" style="color:#666;"></p>
-            <p style="font-size:18px; font-weight:bold; color:#27ae60;" id="modal-price"></p>
-
-            <div class="quantity-selector">
-                <button class="quantity-btn" onclick="changeQuantity(-1)">−</button>
-                <div class="quantity-display" id="quantity">1</div>
-                <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
-            </div>
-
-            <div class="extras-section">
-                <h3>¿Querés agregar algo más?</h3>
-                <div id="extras-list">
-                    <!-- Extras se generan dinámicamente -->
-                </div>
-            </div>
-
-            <button class="add-to-cart-final" onclick="confirmAddToCart()">
-                Añadir al carrito (<span id="item-total-price">$0</span>)
-            </button>
-        </div>
-    </div>
-
-    <!-- Modal del carrito -->
-    <div id="cart-modal" class="modal">
-        <div class="modal-content cart-content">
-            <div class="modal-header cart-header">
-                <h2>Tu Carrito</h2>
-                <button class="close-modal" onclick="closeCart()">&times;</button>
-            </div>
+        <div id="cart-section">
+            <h2>Tu Carrito</h2>
             <div id="cart-items"></div>
             <div class="cart-total" id="cart-total">Total: $0</div>
-            <div class="confirm-form">
-                <input type="text" id="address" placeholder="Dirección de entrega" required>
-                <select id="payment-method" required>
+            <form id="checkout-form">
+                <input type="text" id="direccion" placeholder="Dirección de entrega" required>
+                <select id="metodo-pago" required>
                     <option value="">Método de pago</option>
                     <option value="Tarjeta">Tarjeta</option>
                     <option value="Efectivo">Efectivo</option>
                 </select>
-                <textarea id="observations" placeholder="Observaciones (ej: sin cebolla)"></textarea>
-                <button class="confirm-btn" onclick="confirmOrder()">Confirmar Pedido</button>
-            </div>
+                <textarea id="observaciones" placeholder="Observaciones"></textarea>
+                <button type="button" id="checkout-btn">Realizar Pedido</button>
+            </form>
         </div>
-    </div>
+    </main>
     <script>
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
-
-        let cart = [];
-        let currentMenuItem = null; // Item que se está configurando
-        let currentQuantity = 1;
-        let currentExtras = {};
-
-        // Extras de ejemplo (puedes cargar desde backend)
-        const sampleExtras = [
-            { id: 'extra1', nombre: 'Papas fritas', precio: 4 },
-            { id: 'extra2', nombre: 'Gaseosa 500ml', precio: 3 },
-            { id: 'extra3', nombre: 'Salsa extra', precio: 1 },
-            { id: 'extra4', nombre: 'Queso cheddar', precio: 2 }
-        ];
-
-        window.addEventListener('load', () => {
-            loadFilters();
-            setupSearch();
-            loadCart();
-            updateCartCount();
-        });
-
-        // === CARRITO ===
-        function loadCart() {
-            const saved = localStorage.getItem('cart');
-            if (saved) cart = JSON.parse(saved);
-            updateCartCount();
-        }
-
-        function saveCart() {
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartCount();
-        }
-
-        function updateCartCount() {
-            const totalItems = cart.reduce((sum, item) => sum + item.cantidad, 0);
-            document.getElementById('cart-count').textContent = totalItems;
-        }
-
-        function openCart() {
-            displayCart();
-            document.getElementById('cart-modal').style.display = 'flex';
-        }
-
-        function closeCart() {
-            document.getElementById('cart-modal').style.display = 'none';
-        }
-
-        function displayCart() {
-            const container = document.getElementById('cart-items');
-            container.innerHTML = '';
-
-            if (cart.length === 0) {
-                container.innerHTML = '<p style="text-align:center; color:#666;">Tu carrito está vacío</p>';
-                document.getElementById('cart-total').textContent = 'Total: $0';
-                return;
-            }
-
-            const grouped = {};
-            cart.forEach(item => {
-                const key = item.id_local;
-                if (!grouped[key]) grouped[key] = { nombre_local: item.nombre_local, items: [], shipping: item.local_shipping || 5 };
-                grouped[key].items.push(item);
-            });
-
-            let total = 0;
-            Object.values(grouped).forEach(group => {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = 'cart-local-group';
-                groupDiv.innerHTML = `<h3>${group.nombre_local}</h3>`;
-
-                let subtotal = 0;
-                group.items.forEach(item => {
-                    const itemTotal = item.precio_unitario * item.cantidad + (item.extrasTotal || 0);
-                    subtotal += itemTotal;
-
-                    const extrasText = item.extras ? Object.entries(item.extras).map(([id, qty]) => {
-                        const extra = sampleExtras.find(e => e.id === id);
-                        return `${extra?.nombre} x${qty}`;
-                    }).join(', ') : '';
-
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'cart-item';
-                    itemDiv.innerHTML = `
-                        <span>${item.nombre_producto} x${item.cantidad}<br>
-                            <small style="color:#666;">${extrasText || 'Sin extras'}</small>
-                        </span>
-                        <span>$${itemTotal}</span>
-                    `;
-                    groupDiv.appendChild(itemDiv);
-                });
-
-                groupDiv.innerHTML += `<p><strong>Subtotal:</strong> $${subtotal}</p>`;
-                groupDiv.innerHTML += `<p>Envío: $${group.shipping}</p>`;
-                total += subtotal + group.shipping;
-                container.appendChild(groupDiv);
-            });
-
-            document.getElementById('cart-total').textContent = `Total: $${total}`;
-        }
-
-        // === MODAL DE AGREGAR AL CARRITO ===
-        function openAddModal(menu) {
-            currentMenuItem = menu;
-            currentQuantity = 1;
-            currentExtras = {};
-
-            document.getElementById('modal-title').textContent = menu.nombre;
-            document.getElementById('modal-img').src = menu.imagen_url || 'https://placehold.co/400x300?text=Sin+Imagen';
-            document.getElementById('modal-name').textContent = menu.nombre;
-            document.getElementById('modal-desc').textContent = menu.descripcion || 'Sin descripción';
-            document.getElementById('modal-price').textContent = `$${menu.precio}`;
-
-            document.getElementById('quantity').textContent = '1';
-            updateItemTotalPrice();
-
-            // Cargar extras
-            const extrasList = document.getElementById('extras-list');
-            extrasList.innerHTML = '';
-            sampleExtras.forEach(extra => {
-                const div = document.createElement('div');
-                div.className = 'extra-item';
-                div.innerHTML = `
-                    <span>${extra.nombre} (+$${extra.precio})</span>
-                    <div class="extra-controls">
-                        <button class="extra-btn" onclick="changeExtra('${extra.id}', -1)">−</button>
-                        <div class="extra-count" id="extra-${extra.id}">0</div>
-                        <button class="extra-btn" onclick="changeExtra('${extra.id}', 1)">+</button>
-                    </div>
-                `;
-                extrasList.appendChild(div);
-            });
-
-            document.getElementById('add-item-modal').style.display = 'flex';
-        }
-
-        function closeAddModal() {
-            document.getElementById('add-item-modal').style.display = 'none';
-        }
-
-        function changeQuantity(delta) {
-            currentQuantity = Math.max(1, currentQuantity + delta);
-            document.getElementById('quantity').textContent = currentQuantity;
-            updateItemTotalPrice();
-        }
-
-        function changeExtra(extraId, delta) {
-            const current = currentExtras[extraId] || 0;
-            const newCount = Math.max(0, current + delta);
-            if (newCount === 0) delete currentExtras[extraId];
-            else currentExtras[extraId] = newCount;
-
-            document.getElementById(`extra-${extraId}`).textContent = newCount;
-            updateItemTotalPrice();
-        }
-
-        function updateItemTotalPrice() {
-            const baseTotal = currentMenuItem.precio * currentQuantity;
-            const extrasTotal = Object.entries(currentExtras).reduce((sum, [id, qty]) => {
-                const extra = sampleExtras.find(e => e.id === id);
-                return sum + (extra?.precio || 0) * qty;
-            }, 0);
-            const total = baseTotal + extrasTotal;
-            document.getElementById('item-total-price').textContent = `$${total}`;
-        }
-
-        function confirmAddToCart() {
-            const existingIndex = cart.findIndex(item =>
-                item.id_producto === currentMenuItem.id_producto &&
-                item.id_local === currentMenuItem.local_id &&
-                JSON.stringify(item.extras || {}) === JSON.stringify(currentExtras)
-            );
-
-            const extrasTotal = Object.entries(currentExtras).reduce((sum, [id, qty]) => {
-                const extra = sampleExtras.find(e => e.id === id);
-                return sum + (extra?.precio || 0) * qty;
-            }, 0);
-
-            const extrasList = Object.entries(currentExtras).map(([id, qty]) => {
-                const extra = sampleExtras.find(e => e.id === id);
-                return { id, nombre: extra?.nombre, precio: extra?.precio, qty };
-            });
-
-            const variantes = extrasList.length > 0
-                ? extrasList.map(e => `${e.nombre} x${e.qty}`).join(', ')
-                : '';
-
-            if (existingIndex >= 0) {
-                cart[existingIndex].cantidad += currentQuantity;
-            } else {
-                cart.push({
-                    id_producto: currentMenuItem.id_producto || currentMenuItem.id,
-                    nombre_producto: currentMenuItem.nombre,
-                    precio_unitario: currentMenuItem.precio,
-                    cantidad: currentQuantity,
-                    id_local: currentMenuItem.local_id,
-                    nombre_local: currentMenuItem.nombre_local || 'Local',
-                    variantes,
-                    extras: currentExtras,
-                    extrasTotal,
-                    local_shipping: 5,
-                    prep_time: 30
-                });
-            }
-
-            saveCart();
-            closeAddModal();
-            alert(`¡${currentMenuItem.nombre} añadido al carrito!`);
-        }
-
-        // === DISPLAY MENUS (actualizado para usar modal) ===
-        function displayMenus(menus, filter) {
-            const container = document.getElementById('menu-display');
-            container.innerHTML = '';
-
-            const h2 = document.createElement('h2');
-            h2.textContent = `Menús - ${filter}`;
-            container.appendChild(h2);
-
-            const itemsDiv = document.createElement('div');
-            itemsDiv.className = 'menu-items';
-            container.appendChild(itemsDiv);
-
-            if (menus.length === 0) {
-                itemsDiv.innerHTML = '<p class="no-results">No se encontraron menús.</p>';
-            } else {
-                menus.forEach(menu => {
-                    const menuDiv = document.createElement('div');
-                    menuDiv.className = 'menu-item';
-
-                    menuDiv.innerHTML = `
-                        <img src="${menu.imagen_url || 'https://placehold.co/200x200?text=Sin+Imagen'}" 
-                             alt="${menu.nombre}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">
-                        <h3>${menu.nombre}</h3>
-                        <p>${menu.descripcion || 'Sin descripción'}</p>
-                        <p style="font-weight:bold; color:#27ae60;">$${menu.precio}</p>
-                        <button onclick='openAddModal(${JSON.stringify(menu).replace(/'/g, "\\'")})'>
-                            Agregar al carrito
-                        </button>
-                    `;
-                    itemsDiv.appendChild(menuDiv);
-                });
-            }
-            container.style.display = 'block';
-        }
-
-        // === CONFIRMAR PEDIDO ===
-        function confirmOrder() {
-            const address = document.getElementById('address').value.trim();
-            const paymentMethod = document.getElementById('payment-method').value;
-            if (!address || !paymentMethod) {
-                alert('Por favor completa la dirección y método de pago');
-                return;
-            }
-
-            const params = new URLSearchParams({
-                action: 'createOrder',
-                userId: 'user123',
-                address,
-                paymentMethod,
-                observations: document.getElementById('observations').value,
-                cart: JSON.stringify(cart)
-            });
-
-            fetch(`${scriptUrl}?${params}`)
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
-                        alert(`¡Pedido confirmado! ID: ${res.pedidoId}`);
-                        cart = [];
-                        saveCart();
-                        closeCart();
-                    } else {
-                        alert('Error: ' + (res.error || 'Intenta más tarde'));
-                    }
-                })
-                .catch(() => alert('Error de conexión'));
-        }
-        
+    
         // Función para normalizar texto
         function normalizeText(text) {
             return text.toString().trim().toLowerCase()
@@ -761,9 +346,13 @@
             container.innerHTML = `<div class="error-message">¡Ups! ${message}. Intenta de nuevo.</div>`;
         }
     
+        // Carrito local (array de objetos)
+        let cart = [];
+    
         window.addEventListener('load', () => {
             loadFilters();
             setupSearch();
+            setupCart();
         });
     
         // Cargar locales para sugerencias
@@ -889,7 +478,7 @@
                     showError(container, error.message);
                 });
         }
-        
+    
         // Mostrar menús (usado tanto por categorías, locales como búsqueda)
         function displayMenus(menus, filter) {
             const container = document.getElementById('menu-display');
@@ -942,13 +531,128 @@
                     addBtn.style.border = 'none';
                     addBtn.style.borderRadius = '5px';
                     addBtn.style.cursor = 'pointer';
-                    addBtn.onclick = () => alert(`¡Agregado: ${menu.nombre}!`);
+                    addBtn.onclick = () => addToCart(menu);
                     menuDiv.appendChild(addBtn);
                 
                     itemsDiv.appendChild(menuDiv);
                 });
             }
             container.style.display = 'block';
+        }
+
+        // Lógica del carrito
+        function setupCart() {
+            const cartIcon = document.getElementById('cart-icon');
+            const cartSection = document.getElementById('cart-section');
+            const checkoutBtn = document.getElementById('checkout-btn');
+
+            cartIcon.addEventListener('click', () => {
+                cartSection.style.display = cartSection.style.display === 'none' ? 'block' : 'none';
+                updateCartDisplay();
+            });
+
+            checkoutBtn.addEventListener('click', checkout);
+        }
+
+        function addToCart(menu) {
+            // Asumimos que el menú tiene idLocal y nombreLocal; en producción, obtén de la respuesta
+            const item = {
+                idLocal: menu.local_id || 'DEFAULT_LOCAL',  // Placeholder; ajusta según datos reales
+                nombreLocal: menu.nombre_local || 'Local Desconocido',
+                idProducto: menu.id || Date.now().toString(),
+                nombreProducto: menu.nombre,
+                precioUnitario: menu.precio,
+                cantidad: 1,  // Inicial; podría agregar input para cantidad
+                variantes: ''  // Placeholder; agrega UI para variantes si es necesario
+            };
+
+            // Verificar si ya existe en carrito y sumar cantidad
+            const existing = cart.find(c => c.idProducto === item.idProducto);
+            if (existing) {
+                existing.cantidad += 1;
+            } else {
+                cart.push(item);
+            }
+
+            updateCartCount();
+            alert(`¡Agregado: ${menu.nombre}!`);
+        }
+
+        function updateCartCount() {
+            const count = cart.reduce((acc, item) => acc + item.cantidad, 0);
+            document.getElementById('cart-count').textContent = count;
+        }
+
+        function updateCartDisplay() {
+            const cartItems = document.getElementById('cart-items');
+            cartItems.innerHTML = '';
+            let total = 0;
+
+            cart.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <span>${item.nombreProducto} x${item.cantidad}</span>
+                    <span>$${item.precioUnitario * item.cantidad}</span>
+                    <button onclick="removeFromCart(${index})">Eliminar</button>
+                `;
+                cartItems.appendChild(div);
+                total += item.precioUnitario * item.cantidad;
+            });
+
+            document.getElementById('cart-total').textContent = `Total: $${total}`;
+        }
+
+        window.removeFromCart = function(index) {
+            cart.splice(index, 1);
+            updateCartCount();
+            updateCartDisplay();
+        };
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('El carrito está vacío');
+                return;
+            }
+
+            const direccion = document.getElementById('direccion').value;
+            const metodoPago = document.getElementById('metodo-pago').value;
+            const observaciones = document.getElementById('observaciones').value;
+
+            if (!direccion || !metodoPago) {
+                alert('Completa la dirección y método de pago');
+                return;
+            }
+
+            const data = {
+                userId: 'USER1',  // Placeholder; obtén de sesión/auth real
+                fecha: new Date().toISOString().split('T')[0],  // Fecha actual
+                direccion,
+                metodoPago,
+                observaciones,
+                cart
+            };
+
+            fetch(scriptUrl, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'createOrder', data })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert(`Pedido creado con ID: ${result.idPedido}`);
+                    cart = [];  // Limpiar carrito
+                    updateCartCount();
+                    updateCartDisplay();
+                    document.getElementById('cart-section').style.display = 'none';
+                } else {
+                    alert('Error al crear pedido');
+                }
+            })
+            .catch(error => {
+                console.error('Error en checkout:', error);
+                alert('Error al procesar el pedido');
+            });
         }
     </script>
 </body>
