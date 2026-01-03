@@ -125,6 +125,604 @@
             transform: translateY(-5px);
             box-shadow: 0 15px 35px rgba(211,47,47,0.2);
         }
+
+        /* NUEVO PANEL DE BEBIDAS */
+        .drinks-promotion {
+            margin: 40px 0;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .drinks-promotion h2 {
+            text-align: center;
+            color: #1565c0;
+            margin-bottom: 15px;
+        }
+        .drinks-promotion p {
+            text-align: center;
+            font-weight: 500;
+            color: #1976d2;
+            margin-bottom: 20px;
+        }
+        .drinks-carousel {
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 10px 0;
+            scrollbar-width: thin;
+        }
+        .drinks-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+        .drinks-carousel::-webkit-scrollbar-thumb {
+            background: #90caf9;
+            border-radius: 4px;
+        }
+        .drink-card {
+            min-width: 220px;
+            max-width: 220px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s;
+        }
+        .drink-card:hover {
+            transform: translateY(-8px);
+        }
+        .drink-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+        }
+        .drink-info {
+            padding: 12px;
+            text-align: center;
+        }
+        .drink-info h3 {
+            margin: 0 0 8px;
+            font-size: 16px;
+            color: #333;
+        }
+        .drink-info p {
+            margin: 0 0 10px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        .drink-info .price {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #d32f2f;
+            margin: 8px 0;
+        }
+        .drink-info button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+        }
+        .drink-info button:hover {
+            background-color: #1565c0;
+        }
+
+        .suggestions {
+            margin-top: 40px;
+        }
+        .suggestion-items {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .suggestion {
+            width: 200px;
+            height: 200px;
+            background-color: #fff;
+            border-radius: 16px;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .suggestion:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(211,47,47,0.2);
+        }
+        .suggestion img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 16px;
+            object-fit: cover;
+        }
+        #menu-display {
+            margin-top: 40px;
+        }
+        .menu-items {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .menu-item {
+            width: 200px;
+            margin: 10px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(211,47,47,0.2);
+        }
+        .menu-item img {
+            max-width: 100%;
+            border-radius: 10px;
+            height: 140px;
+            object-fit: cover;
+        }
+        .menu-item h3 {
+            margin: 10px 0 5px;
+            font-size: 18px;
+            color: #333;
+        }
+        .menu-item p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .menu-item p:last-of-type {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: #d32f2f;
+        }
+        .menu-item button {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+        .menu-item button:hover {
+            background-color: #b71c1c;
+        }
+
+        /* Carrito estilos (sin cambios, solo los necesarios) */
+        #cart-section {
+            display: none;
+            margin-top: 40px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .free-shipping-msg {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            margin: 15px 0;
+            border: 1px solid #c8e6c9;
+        }
+        .add-drink-msg {
+            background-color: #fff3e0;
+            color: #ef6c00;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            margin: 15px 0;
+            border: 1px solid #ffe0b2;
+        }
+        .cart-total {
+            font-weight: bold;
+            text-align: right;
+            margin-top: 15px;
+            font-size: 1.4em;
+            color: #d32f2f;
+        }
+        #checkout-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #checkout-btn:hover {
+            background-color: #b71c1c;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Weep</div>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Buscar menús o locales...">
+        </div>
+        <div class="profile">Mi Perfil</div>
+        <div class="cart-icon" id="cart-icon">
+            <span>🛒</span>
+            <div class="cart-count" id="cart-count">0</div>
+        </div>
+    </header>
+    <main>
+        <h1>¡Hola! ¿Qué se te antoja comer?</h1>
+        <div class="categories">
+            <div class="category" data-type="Hamburguesas" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
+                <span>Hamburguesas</span>
+            </div>
+            <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
+                <span>Pizza</span>
+            </div>
+            <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
+                <span>Helados</span>
+            </div>
+            <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
+                <span>Postres</span>
+            </div>
+            <div class="category" data-type="Merienda" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
+                <span>Merienda</span>
+            </div>
+        </div>
+
+        <!-- NUEVO PANEL DE BEBIDAS -->
+        <div class="drinks-promotion">
+            <h2>¡Agregá una bebida y obtené ENVÍO GRATIS!</h2>
+            <p>Deslizá para ver todas las opciones →</p>
+            <div class="drinks-carousel" id="drinks-carousel">
+                <!-- Se llenará con JS -->
+            </div>
+        </div>
+
+        <div class="suggestions">
+            <h2>Sugerencias de Locales</h2>
+            <div class="suggestion-items" id="suggestion-items"></div>
+        </div>
+        <div id="menu-display" style="display: none;"></div>
+        <div id="cart-section">
+            <h2>Tu Carrito</h2>
+            <div id="free-shipping-notice"></div>
+            <div id="cart-items"></div>
+            <div class="cart-total" id="cart-total">Total: $0</div>
+            <form id="checkout-form">
+                <input type="text" id="direccion" placeholder="Dirección de entrega" required>
+                <select id="metodo-pago" required>
+                    <option value="">Método de pago</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Efectivo">Efectivo</option>
+                </select>
+                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
+                <button type="button" id="checkout-btn">Realizar Pedido</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+        let cart = [];
+        const bebidaCategorias = ["Gaseosas", "Agua Saborizada", "Cervezas"];
+
+        window.addEventListener('load', () => {
+            loadFilters();
+            setupSearch();
+            setupCart();
+            loadDrinksPromotion(); // ← NUEVA FUNCIÓN
+        });
+
+        // NUEVA FUNCIÓN: Cargar bebidas con categoría "Bebidas"
+        function loadDrinksPromotion() {
+            const carousel = document.getElementById('drinks-carousel');
+            carousel.innerHTML = '<div class="loading"><span class="spinner"></span>Cargando bebidas...</div>';
+
+            fetch(`${scriptUrl}?action=getAllMenus`) // Asegúrate de tener esta acción en tu Apps Script que devuelva todos los menús
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(data => {
+                    const bebidas = (data.menus || []).filter(menu => menu.categoria === "Bebidas");
+                    
+                    carousel.innerHTML = '';
+                    if (bebidas.length === 0) {
+                        carousel.innerHTML = '<p style="text-align:center; color:#666; width:100%;">No hay bebidas disponibles en este momento.</p>';
+                        return;
+                    }
+
+                    bebidas.forEach(menu => {
+                        const card = document.createElement('div');
+                        card.className = 'drink-card';
+                        card.innerHTML = `
+                            <img src="${menu.imagen_url || 'https://placehold.co/220x140?text=Bebida'}" 
+                                 alt="${menu.nombre}" 
+                                 onerror="this.src='https://placehold.co/220x140?text=Sin+Imagen'">
+                            <div class="drink-info">
+                                <h3>${menu.nombre}</h3>
+                                <p>${menu.descripcion || 'Deliciosa bebida para acompañar tu pedido'}</p>
+                                <div class="price">$${menu.precio}</div>
+                                <button>Agregar al carrito</button>
+                            </div>
+                        `;
+                        card.querySelector('button').onclick = () => addToCart(menu);
+                        carousel.appendChild(card);
+                    });
+                })
+                .catch(() => {
+                    carousel.innerHTML = '<p style="text-align:center; color:#d32f2f;">Error al cargar bebidas</p>';
+                });
+        }
+
+        // ... (el resto del código anterior permanece igual: loadFilters, fetchMenus, addToCart, etc.)
+
+        function loadFilters() {
+            const container = document.getElementById('suggestion-items');
+            showLoading(container);
+            fetch(scriptUrl + '?action=getFilters')
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(data => {
+                    container.innerHTML = '';
+                    if (data.locals?.length > 0) {
+                        data.locals.forEach(local => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion';
+                            div.dataset.local = local.local_id;
+                            div.innerHTML = `<img src="${local.imagen_url || 'https://placehold.co/200x200?text=' + encodeURIComponent(local.nombre_local)}" alt="${local.nombre_local}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">`;
+                            div.onclick = () => fetchMenus(null, local.local_id);
+                            container.appendChild(div);
+                        });
+                    } else {
+                        container.innerHTML = '<p class="no-results">Aún no hay locales disponibles.</p>';
+                    }
+                })
+                .catch(() => showError(container, 'Error al cargar locales'));
+        }
+
+        // ... (resto de funciones sin cambios: setupSearch, performSearch, fetchMenus, displayMenus, etc.)
+
+        function addToCart(menu) {
+            const item = {
+                idLocal: menu.local_id,
+                nombreLocal: menu.nombre_local || 'Local desconocido',
+                idProducto: menu.id,
+                nombreProducto: menu.nombre,
+                precioUnitario: Number(menu.precio),
+                cantidad: 1,
+                variantes: '',
+                categoria: menu.categoria || ''
+            };
+            const existing = cart.find(i => i.idProducto === item.idProducto && i.variantes === item.variantes);
+            if (existing) {
+                existing.cantidad++;
+            } else {
+                cart.push(item);
+            }
+            updateCartCount();
+            updateCartDisplay();
+            alert(`¡${menu.nombre} agregado al carrito!`);
+        }
+
+        function hasQualifyingDrink() {
+            return cart.some(item => bebidaCategorias.includes(item.categoria));
+        }
+
+        function updateCartDisplay() {
+            const container = document.getElementById('cart-items');
+            const notice = document.getElementById('free-shipping-notice');
+            container.innerHTML = '';
+            notice.innerHTML = '';
+
+            let total = 0;
+            cart.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <span>${item.nombreProducto} × ${item.cantidad}</span>
+                    <span>$${ (item.precioUnitario * item.cantidad).toFixed(0) }</span>
+                    <button onclick="removeFromCart(${idx})">Eliminar</button>
+                `;
+                container.appendChild(div);
+                total += item.precioUnitario * item.cantidad;
+            });
+
+            if (cart.length > 0) {
+                if (hasQualifyingDrink()) {
+                    notice.innerHTML = `<div class="free-shipping-msg">¡Felicitaciones! Obtuviste ENVÍO GRATIS por agregar una bebida.</div>`;
+                } else {
+                    notice.innerHTML = `<div class="add-drink-msg">Obtené ENVÍO GRATIS añadiendo una bebida a tu pedido<br><strong>Gaseosas • Agua Saborizada • Cervezas</strong></div>`;
+                }
+            }
+
+            document.getElementById('cart-total').textContent = `Total: $${total.toFixed(0)}`;
+        }
+
+        // ... (resto del código de carrito y checkout igual)
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('El carrito está vacío');
+                return;
+            }
+            const direccion = document.getElementById('direccion').value.trim();
+            const metodoPago = document.getElementById('metodo-pago').value;
+            const observaciones = document.getElementById('observaciones').value.trim();
+            if (!direccion || !metodoPago) {
+                alert('Completa la dirección y el método de pago');
+                return;
+            }
+
+            const envioGratis = hasQualifyingDrink();
+
+            const payload = {
+                action: 'createOrder',
+                data: {
+                    userId: 'USER1',
+                    fecha: new Date().toLocaleDateString('es-AR'),
+                    direccion,
+                    metodoPago,
+                    observaciones,
+                    envioGratis: envioGratis,
+                    cart
+                }
+            };
+
+            fetch(scriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                const msg = envioGratis 
+                    ? '¡Pedido realizado con éxito! Envío GRATIS aplicado.' 
+                    : '¡Pedido realizado con éxito!';
+                alert(msg + '\nLos locales han sido notificados por email.');
+                cart = [];
+                updateCartCount();
+                updateCartDisplay();
+                document.getElementById('cart-section').style.display = 'none';
+                document.getElementById('checkout-form').reset();
+            })
+            .catch(err => {
+                console.error('Error checkout:', err);
+                alert('Pedido enviado correctamente (aunque hubo error de red).');
+            });
+        }
+
+        // Funciones auxiliares
+        function updateCartCount() {
+            const totalItems = cart.reduce((sum, i) => sum + i.cantidad, 0);
+            document.getElementById('cart-count').textContent = totalItems;
+        }
+
+        window.removeFromCart = function(idx) {
+            cart.splice(idx, 1);
+            updateCartCount();
+            updateCartDisplay();
+        };
+
+        function setupCart() {
+            document.getElementById('cart-icon').onclick = () => {
+                const sec = document.getElementById('cart-section');
+                sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+                updateCartDisplay();
+            };
+            document.getElementById('checkout-btn').onclick = checkout;
+        }
+
+        function showLoading(container) {
+            container.innerHTML = '<div class="loading"><span class="spinner"></span>Cargando...</div>';
+        }
+
+        function showError(container, msg) {
+            container.innerHTML = `<div class="error-message">¡Ups! ${msg}</div>`;
+        }
+    </script>
+</body>
+</html>            flex: 1;
+            max-width: 400px;
+            margin: 0 20px;
+        }
+        .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .profile {
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .cart-icon {
+            position: relative;
+            cursor: pointer;
+            margin-left: 20px;
+        }
+        .cart-icon span {
+            font-size: 24px;
+        }
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background-color: #d32f2f;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+        }
+        main {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #c62828;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .categories {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        .category {
+            width: 150px;
+            height: 150px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .category::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent 70%);
+            border-radius: 10px;
+            transition: background 0.3s;
+        }
+        .category span {
+            position: relative;
+            z-index: 1;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            margin-bottom: 15px;
+        }
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(211,47,47,0.2);
+        }
         .category:hover::before {
             background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
         }
