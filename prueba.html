@@ -26,20 +26,12 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .logo-img {
+        .logo {
             height: 50px;
-            object-fit: contain;
         }
-        .logo-text {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #d32f2f;
-            font-style: italic;
+        .logo img {
+            height: 100%;
+            object-fit: contain;
         }
         .search-bar {
             flex: 1;
@@ -171,9 +163,10 @@
             height: 100%;
             object-fit: cover;
         }
+        /* Tarjetas de menú más pequeñas */
         .menu-item {
             width: 100%;
-            max-width: 280px; /* Más pequeña */
+            max-width: 260px; /* Más pequeñas que antes */
             background: white;
             border-radius: 18px;
             padding: 12px;
@@ -186,7 +179,7 @@
         }
         .menu-item img {
             width: 100%;
-            height: 160px; /* Más pequeña */
+            height: 150px; /* Imagen más pequeña */
             object-fit: cover;
             border-radius: 12px;
         }
@@ -197,14 +190,14 @@
         }
         .menu-item p {
             color: #666;
-            margin: 5px 0;
+            margin: 4px 0;
             font-size: 0.95rem;
         }
         .menu-item p:last-of-type {
             font-size: 1.4rem;
             font-weight: bold;
             color: #d32f2f;
-            margin: 10px 0;
+            margin: 8px 0;
         }
         .menu-item button {
             width: 100%;
@@ -408,7 +401,6 @@
             padding: 50px 0;
             color: #d32f2f;
             font-weight: 600;
-            font-style: italic;
         }
         .spinner {
             border: 4px solid #f3f3f3;
@@ -419,7 +411,6 @@
             animation: spin 1s linear infinite;
             display: inline-block;
             margin: 0 10px;
-            vertical-align: middle;
         }
         @keyframes spin {
             to { transform: rotate(360deg); }
@@ -446,21 +437,20 @@
                 width: 160px;
                 height: 160px;
             }
-            .menu-item {
-                max-width: 260px;
-            }
-            .menu-item img {
-                height: 150px;
-            }
             h1 { font-size: 1.6rem; }
             h2 { font-size: 1.4rem; }
             .drink-card {
                 flex: 0 0 calc(75% - 12px);
             }
+            .menu-item {
+                max-width: 240px;
+            }
+            .menu-item img {
+                height: 140px;
+            }
         }
         @media (max-width: 480px) {
-            .logo-text { font-size: 1.3rem; }
-            .logo-img { height: 45px; }
+            .logo img { height: 40px; }
             .category {
                 width: 105px;
                 height: 105px;
@@ -472,11 +462,8 @@
                 width: 140px;
                 height: 140px;
             }
-            .menu-item {
-                max-width: 240px;
-            }
             .menu-item img {
-                height: 140px;
+                height: 130px;
             }
             .drink-card {
                 flex: 0 0 calc(85% - 12px);
@@ -491,9 +478,8 @@
 </head>
 <body>
     <header>
-        <div class="logo-container">
-            <img src="https://i.postimg.cc/fyQH1cm3/Chat-GPT-Image-Jan-3-2026-01-27-57-AM.png" alt="Weep Logo" class="logo-img">
-            <div class="logo-text">Weep</div>
+        <div class="logo">
+            <img src="https://i.postimg.cc/7PpF3zRP/Chat-GPT-Image-Jan-3-2026-01-27-57-AM-(1).png" alt="Weep Logo">
         </div>
         <div class="search-bar">
             <input type="text" id="search-input" placeholder="Buscar menús o locales...">
