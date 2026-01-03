@@ -6,6 +6,7 @@
     <title>Weep - Plataforma de Comidas</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -13,332 +14,320 @@
             background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
             min-height: 100vh;
         }
+
+        /* Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             background-color: #fff;
-            padding: 10px 20px;
+            padding: 12px 15px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             border-radius: 0 0 20px 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
+
         .logo {
-            width: 150px;
-            height: 50px;
-            background-color: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #d32f2f;
             font-style: italic;
-            color: #666;
-            font-weight: 600;
         }
+
         .search-bar {
             flex: 1;
-            max-width: 400px;
-            margin: 0 20px;
+            min-width: 200px;
+            max-width: 500px;
+            margin: 0 10px;
         }
+
         .search-bar input {
             width: 100%;
-            padding: 10px;
+            padding: 12px 15px;
             border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
+            border-radius: 30px;
+            font-size: 15px;
+            outline: none;
         }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         .profile {
-            font-size: 16px;
-            color: #333;
-            cursor: pointer;
+            font-size: 15px;
             font-weight: 500;
+            color: #333;
+            white-space: nowrap;
         }
+
         .cart-icon {
             position: relative;
             cursor: pointer;
-            margin-left: 20px;
         }
+
         .cart-icon span {
-            font-size: 24px;
+            font-size: 28px;
         }
+
         .cart-count {
             position: absolute;
-            top: -5px;
+            top: -8px;
             right: -10px;
             background-color: #d32f2f;
             color: white;
             border-radius: 50%;
-            padding: 2px 6px;
+            width: 20px;
+            height: 20px;
             font-size: 12px;
-        }
-        main {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 0 20px;
-        }
-        h1, h2, h3 {
-            text-align: center;
-            color: #c62828;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        .categories {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            margin-bottom: 40px;
-        }
-        .category {
-            width: 150px;
-            height: 150px;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            margin: 10px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-        }
-        .category::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent 70%);
-            border-radius: 10px;
-            transition: background 0.3s;
-        }
-        .category span {
-            position: relative;
-            z-index: 1;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-            margin-bottom: 15px;
-        }
-        .category:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(211,47,47,0.2);
-        }
-        .suggestions {
-            margin-top: 40px;
-        }
-        .suggestion-items {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-        }
-        .suggestion {
-            width: 200px;
-            height: 200px;
-            background-color: #fff;
-            border-radius: 16px;
-            margin: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            overflow: hidden;
+            font-weight: bold;
         }
-        .suggestion:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(211,47,47,0.2);
+
+        main {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
         }
-        .suggestion img {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 16px;
-            object-fit: cover;
-        }
-        #menu-display {
-            margin-top: 40px;
-        }
-        .menu-items {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-        }
-        .menu-item {
-            width: 200px;
-            margin: 10px;
-            padding: 15px;
-            background-color: #fff;
-            border-radius: 16px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+
+        h1 {
             text-align: center;
-            transition: all 0.3s ease;
+            color: #c62828;
+            font-size: 1.8rem;
+            margin: 20px 0;
         }
-        .menu-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(211,47,47,0.2);
+
+        h2 {
+            text-align: center;
+            color: #c62828;
+            font-size: 1.5rem;
+            margin: 30px 0 20px;
         }
-        .menu-item img {
-            max-width: 100%;
-            border-radius: 10px;
+
+        /* Categorías */
+        .categories {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .category {
+            width: 140px;
             height: 140px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .category::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
+            border-radius: 16px;
+        }
+
+        .category span {
+            position: absolute;
+            bottom: 12px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 17px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+            z-index: 1;
+        }
+
+        .category:hover, .category:active {
+            transform: scale(1.05);
+        }
+
+        /* Sugerencias y Menú */
+        .suggestion-items, .menu-items {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .suggestion {
+            width: 180px;
+            height: 180px;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .suggestion:hover, .suggestion:active {
+            transform: scale(1.05);
+        }
+
+        .suggestion img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
         }
+
+        .menu-item {
+            width: 100%;
+            max-width: 320px;
+            background: white;
+            border-radius: 18px;
+            padding: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .menu-item:hover, .menu-item:active {
+            transform: translateY(-8px);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
         .menu-item h3 {
-            margin: 10px 0 5px;
-            font-size: 18px;
+            margin: 12px 0 8px;
+            font-size: 1.2rem;
             color: #333;
         }
+
         .menu-item p {
-            margin: 5px 0;
             color: #666;
+            margin: 5px 0;
         }
+
         .menu-item p:last-of-type {
+            font-size: 1.6rem;
             font-weight: bold;
-            font-size: 1.5rem;
             color: #d32f2f;
+            margin: 10px 0;
         }
+
         .menu-item button {
+            width: 100%;
+            padding: 14px;
             background-color: #d32f2f;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 10px;
+            border-radius: 12px;
+            font-size: 1.1rem;
             font-weight: 600;
-            transition: background-color 0.3s;
-        }
-        .menu-item button:hover {
-            background-color: #b71c1c;
+            cursor: pointer;
+            transition: background 0.3s;
         }
 
-        .loading {
-            text-align: center;
-            font-style: italic;
-            color: #d32f2f;
-            font-weight: 600;
-            padding: 40px 0;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #d32f2f;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            margin: 0 10px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .menu-item button:hover, .menu-item button:active {
+            background-color: #b71c1c;
         }
 
         /* Carrito */
         #cart-section {
             display: none;
-            margin-top: 40px;
-            background: #fff;
+            background: white;
+            border-radius: 18px;
             padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
         }
 
-        .cart-summary-panel {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: #f9f9f9;
+        .delivery-option select {
+            width: 100%;
+            padding: 14px;
             border-radius: 12px;
-            border: 1px solid #eee;
-        }
-
-        .cart-items-list {
+            border: 1px solid #ccc;
+            font-size: 16px;
             margin-bottom: 20px;
         }
 
         .cart-item {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 0;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px 0;
             border-bottom: 1px solid #eee;
-            font-size: 1.05em;
         }
 
         .cart-item-left {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            flex: 1;
-            gap: 12px;
+            width: 100%;
         }
 
         .cart-item-name {
             font-weight: 500;
+            font-size: 1.1rem;
         }
 
         .quantity-controls {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
         }
 
         .quantity-btn {
-            width: 32px;
-            height: 32px;
-            background-color: #d32f2f;
+            width: 40px;
+            height: 40px;
+            background: #d32f2f;
             color: white;
             border: none;
             border-radius: 50%;
-            font-size: 18px;
+            font-size: 20px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .quantity-btn:hover {
-            background-color: #b71c1c;
         }
 
         .quantity {
-            min-width: 40px;
-            text-align: center;
+            font-size: 1.2rem;
             font-weight: bold;
-            font-size: 1.1em;
+            min-width: 50px;
+            text-align: center;
         }
 
         .cart-item-price {
-            min-width: 90px;
-            text-align: right;
             font-weight: bold;
+            font-size: 1.2rem;
         }
 
         .remove-btn {
             background: #ff5252;
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 0.9em;
-        }
-
-        .price-summary {
-            margin-top: 20px;
         }
 
         .price-line {
             display: flex;
             justify-content: space-between;
             padding: 10px 0;
-            font-size: 1.1em;
+            font-size: 1.1rem;
         }
 
         .price-line.total {
+            font-size: 1.6rem;
             font-weight: bold;
-            font-size: 1.5em;
             color: #d32f2f;
             border-top: 2px solid #ddd;
             padding-top: 20px;
@@ -346,166 +335,206 @@
         }
 
         .free-shipping-msg {
-            background-color: #e8f5e8;
+            background: #e8f5e8;
             color: #2e7d32;
-            padding: 14px;
-            border-radius: 10px;
+            padding: 16px;
+            border-radius: 12px;
             text-align: center;
             font-weight: 600;
             margin: 15px 0;
-            border: 1px solid #c8e6c9;
-            font-size: 1.1em;
+            font-size: 1.1rem;
         }
 
-        .delivery-option {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #f0f0f0;
-            border-radius: 10px;
-        }
-        .delivery-option label {
-            font-weight: 600;
-            font-size: 1.1em;
-            display: block;
-            margin-bottom: 10px;
-        }
-        .delivery-option select {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-        }
-
+        /* Carousel de bebidas */
         .drinks-panel {
-            margin: 30px 0 10px 0;
-            padding: 15px;
-            background-color: #f8fafc;
-            border-radius: 12px;
-            border: 1px solid #e0e0e0;
+            margin: 30px 0;
         }
-        .drinks-panel h3 {
-            margin: 0 0 15px 0;
-            color: #d32f2f;
-            font-size: 1.3em;
-        }
+
         .drinks-carousel {
             position: relative;
             overflow: hidden;
-            border-radius: 10px;
+            border-radius: 12px;
         }
+
         .drinks-container {
             display: flex;
             transition: transform 0.4s ease;
-            gap: 15px;
+            gap: 12px;
             padding: 10px 0;
         }
+
         .drink-card {
-            min-width: 180px;
-            max-width: 180px;
+            flex: 0 0 calc(80% - 12px);
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 14px;
             overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
             text-align: center;
-            flex-shrink: 0;
         }
+
         .drink-card img {
             width: 100%;
-            height: 120px;
+            height: 140px;
             object-fit: cover;
         }
+
         .drink-card h4 {
-            margin: 10px 8px 5px;
-            font-size: 15px;
-            color: #333;
+            margin: 12px 10px 6px;
+            font-size: 1rem;
         }
-        .drink-card p {
-            margin: 0 8px 10px;
-            font-size: 13px;
-            color: #666;
-            height: 40px;
-            overflow: hidden;
-        }
+
         .drink-card .price {
+            font-size: 1.5rem;
             font-weight: bold;
             color: #d32f2f;
-            font-size: 1.3em;
-            margin: 8px 0;
+            margin: 10px 0;
         }
+
         .drink-card button {
             width: 90%;
-            margin: 0 auto 12px;
-            padding: 8px;
-            background-color: #d32f2f;
+            margin: 0 auto 15px;
+            padding: 12px;
+            background: #d32f2f;
             color: white;
             border: none;
-            border-radius: 8px;
-            cursor: pointer;
+            border-radius: 10px;
             font-weight: 600;
+            cursor: pointer;
         }
-        .drink-card button:hover {
-            background-color: #b71c1c;
-        }
+
         .carousel-btn {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background-color: rgba(211, 47, 47, 0.8);
+            background: rgba(211,47,47,0.8);
             color: white;
             border: none;
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            font-size: 20px;
+            font-size: 22px;
             cursor: pointer;
             z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .carousel-btn.left { left: 10px; }
-        .carousel-btn.right { right: 10px; }
-        .carousel-btn:disabled {
-            background-color: rgba(0,0,0,0.3);
-            cursor: not-allowed;
         }
 
+        .carousel-btn.left { left: 10px; }
+        .carousel-btn.right { right: 10px; }
+
+        /* Formulario checkout */
         #checkout-form input,
         #checkout-form select,
         #checkout-form textarea {
-            display: block;
-            width: 100%;
-            margin-bottom: 12px;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        #checkout-btn {
             width: 100%;
             padding: 14px;
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        #checkout-btn:hover {
-            background-color: #b71c1c;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            font-size: 16px;
         }
 
+        #checkout-btn {
+            width: 100%;
+            padding: 16px;
+            background: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #checkout-btn:hover, #checkout-btn:active {
+            background: #b71c1c;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 50px 0;
+            color: #d32f2f;
+            font-weight: 600;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #d32f2f;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin: 0 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            .drink-card {
-                min-width: 160px;
-                max-width: 160px;
+            .search-bar {
+                order: 3;
+                width: 100%;
+                margin: 10px 0 0;
+                max-width: none;
             }
-            .cart-item-left {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
+
+            .header-right {
+                gap: 12px;
+            }
+
+            .category {
+                width: 120px;
+                height: 120px;
+            }
+
+            .category span {
+                font-size: 15px;
+            }
+
+            .suggestion {
+                width: 160px;
+                height: 160px;
+            }
+
+            h1 { font-size: 1.6rem; }
+            h2 { font-size: 1.4rem; }
+
+            .drink-card {
+                flex: 0 0 calc(75% - 12px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo { font-size: 1.3rem; }
+
+            .category {
+                width: 105px;
+                height: 105px;
+            }
+
+            .category span {
+                font-size: 14px;
+            }
+
+            .suggestion {
+                width: 140px;
+                height: 140px;
+            }
+
+            .menu-item img {
+                height: 160px;
+            }
+
+            .drink-card {
+                flex: 0 0 calc(85% - 12px);
+            }
+
+            .carousel-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 20px;
             }
         }
     </style>
@@ -516,10 +545,12 @@
         <div class="search-bar">
             <input type="text" id="search-input" placeholder="Buscar menús o locales...">
         </div>
-        <div class="profile">Mi Perfil</div>
-        <div class="cart-icon" id="cart-icon">
-            <span>🛒</span>
-            <div class="cart-count" id="cart-count">0</div>
+        <div class="header-right">
+            <div class="profile">Mi Perfil</div>
+            <div class="cart-icon" id="cart-icon">
+                <span>🛒</span>
+                <div class="cart-count" id="cart-count">0</div>
+            </div>
         </div>
     </header>
 
@@ -549,7 +580,7 @@
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
 
-        <div id="menu-display" style="display: none;"></div>
+        <div id="menu-display" style="display:none;"></div>
 
         <div id="cart-section">
             <h2>Tu Carrito</h2>
@@ -566,18 +597,9 @@
                 <div class="cart-items-list" id="cart-items"></div>
 
                 <div class="price-summary">
-                    <div class="price-line">
-                        <span>Subtotal productos</span>
-                        <span id="subtotal">$0</span>
-                    </div>
-                    <div class="price-line">
-                        <span>Envío</span>
-                        <span id="shipping-cost">$500</span>
-                    </div>
-                    <div class="price-line total">
-                        <span>Total a pagar</span>
-                        <span id="final-total">$500</span>
-                    </div>
+                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$500</span></div>
+                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$500</span></div>
                 </div>
 
                 <div id="free-shipping-notice"></div>
@@ -610,7 +632,6 @@
         let cart = [];
         let allDrinks = [];
         let currentDrinkIndex = 0;
-
         const CATEGORIA_BEBIDAS = "Bebidas";
         const COSTO_ENVIO = 500;
 
@@ -649,7 +670,7 @@
                             container.appendChild(div);
                         });
                     } else {
-                        container.innerHTML = '<p class="no-results">Aún no hay locales disponibles.</p>';
+                        container.innerHTML = '<p style="text-align:center;color:#999;">Aún no hay locales disponibles.</p>';
                     }
                 })
                 .catch(() => showError(container, 'Error al cargar locales'));
@@ -657,7 +678,7 @@
 
         document.querySelector('.categories').addEventListener('click', e => {
             const cat = e.target.closest('.category');
-            if (cat) fetchMenus(cat.dataset.type || cat.querySelector('span').textContent.trim(), null);
+            if (cat) fetchMenus(cat.dataset.type, null);
         });
 
         function setupSearch() {
@@ -667,7 +688,7 @@
                 clearTimeout(timeout);
                 const term = e.target.value.trim();
                 if (term.length >= 3) {
-                    timeout = setTimeout(() => performSearch(term), 500);
+                    timeout = setTimeout(() => performSearch(term), 600);
                 } else if (term === '') {
                     document.getElementById('menu-display').style.display = 'none';
                 }
@@ -700,16 +721,16 @@
             container.innerHTML = `<h2>Menús - ${title}</h2><div class="menu-items"></div>`;
             const itemsDiv = container.querySelector('.menu-items');
             if (menus.length === 0) {
-                itemsDiv.innerHTML = '<p class="no-results">No se encontraron menús.</p>';
+                itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
             } else {
                 menus.forEach(menu => {
                     const div = document.createElement('div');
                     div.className = 'menu-item';
                     div.innerHTML = `
-                        <img src="${menu.imagen_url || 'https://placehold.co/200x200?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">
+                        <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
                         <h3>${menu.nombre}</h3>
                         <p>${menu.descripcion || 'Sin descripción'}</p>
-                        <p style="font-weight:bold;color:#27ae60;">Precio: $${menu.precio}</p>
+                        <p>$${menu.precio}</p>
                         <button>Agregar al carrito</button>
                     `;
                     div.querySelector('button').onclick = () => addToCart(menu);
@@ -720,11 +741,11 @@
         }
 
         function showLoading(container) {
-            container.innerHTML = '<div class="loading"><span class="spinner"></span>Cargando...</div>';
+            container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
         }
 
         function showError(container, msg) {
-            container.innerHTML = `<div class="error-message">¡Ups! ${msg}</div>`;
+            container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
         }
 
         function setupCart() {
@@ -733,7 +754,6 @@
                 sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
                 updateCartDisplay();
             };
-
             document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
             document.getElementById('checkout-btn').onclick = checkout;
         }
@@ -746,55 +766,44 @@
                 nombreProducto: menu.nombre,
                 precioUnitario: Number(menu.precio),
                 cantidad: 1,
-                variantes: '',
                 categoria: menu.categoria || ''
             };
-
-            const existingIndex = cart.findIndex(i => i.idProducto === item.idProducto && i.variantes === item.variantes);
-            if (existingIndex !== -1) {
-                cart[existingIndex].cantidad++;
+            const existing = cart.findIndex(i => i.idProducto === item.idProducto);
+            if (existing !== -1) {
+                cart[existing].cantidad++;
             } else {
                 cart.push(item);
             }
-
             updateCartCount();
             updateCartDisplay();
             alert(`¡${menu.nombre} agregado al carrito!`);
         }
 
         function updateCartCount() {
-            const totalItems = cart.reduce((sum, i) => sum + i.cantidad, 0);
-            document.getElementById('cart-count').textContent = totalItems;
+            const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
+            document.getElementById('cart-count').textContent = total;
         }
 
         function hasDrink() {
-            return cart.some(item => item.categoria && item.categoria.trim() === CATEGORIA_BEBIDAS);
+            return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
         }
 
         function calculatePrices() {
-            const subtotal = cart.reduce((sum, item) => sum + (item.precioUnitario * item.cantidad), 0);
-            const deliveryType = document.getElementById('delivery-type').value;
-
-            let shipping = 0;
-            if (deliveryType === 'envio') {
-                shipping = hasDrink() ? 0 : COSTO_ENVIO;
-            }
-
-            const total = subtotal + shipping;
-
-            return { subtotal, shipping, total, deliveryType };
+            const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
+            const delivery = document.getElementById('delivery-type').value;
+            let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
+            return { subtotal, shipping, total: subtotal + shipping, delivery };
         }
 
         function updateCartDisplay() {
-            const itemsContainer = document.getElementById('cart-items');
+            const list = document.getElementById('cart-items');
             const notice = document.getElementById('free-shipping-notice');
             const drinksPanel = document.getElementById('drinks-panel');
-
-            itemsContainer.innerHTML = '';
+            list.innerHTML = '';
             notice.innerHTML = '';
 
             if (cart.length === 0) {
-                itemsContainer.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">Tu carrito está vacío</p>';
+                list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
             } else {
                 cart.forEach((item, idx) => {
                     const div = document.createElement('div');
@@ -808,40 +817,37 @@
                                 <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
                             </div>
                         </div>
-                        <div class="cart-item-price">$${(item.precioUnitario * item.cantidad).toFixed(0)}</div>
+                        <div class="cart-item-price">$${(item.precioUnitario * item.cantidad)}</div>
                         <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
                     `;
-                    itemsContainer.appendChild(div);
+                    list.appendChild(div);
                 });
             }
 
             const prices = calculatePrices();
-
             document.getElementById('subtotal').textContent = `$${prices.subtotal}`;
             document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping}`;
             document.getElementById('final-total').textContent = `$${prices.total}`;
 
-            if (cart.length > 0 && prices.shipping === 0) {
-                if (prices.deliveryType === 'retiro') {
-                    notice.innerHTML = `<div class="free-shipping-msg">¡Retiro en local seleccionado! Envío gratis.</div>`;
-                } else {
-                    notice.innerHTML = `<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>`;
-                }
+            if (prices.shipping === 0 && cart.length > 0) {
+                notice.innerHTML = prices.delivery === 'retiro' 
+                    ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
+                    : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
                 drinksPanel.style.display = 'none';
-            } else if (cart.length > 0 && prices.deliveryType === 'envio' && !hasDrink()) {
+            } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
                 drinksPanel.style.display = 'block';
                 renderDrinksCarousel();
             } else {
                 drinksPanel.style.display = 'none';
             }
 
-            const direccionInput = document.getElementById('direccion');
-            if (prices.deliveryType === 'retiro') {
-                direccionInput.placeholder = "No requerida (retirás en local)";
-                direccionInput.required = false;
+            const dirInput = document.getElementById('direccion');
+            if (prices.delivery === 'retiro') {
+                dirInput.placeholder = "No requerida (retirás en local)";
+                dirInput.required = false;
             } else {
-                direccionInput.placeholder = "Dirección de entrega";
-                direccionInput.required = true;
+                dirInput.placeholder = "Dirección de entrega (requerida)";
+                dirInput.required = true;
             }
         }
 
@@ -864,58 +870,55 @@
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
-
             if (allDrinks.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#666;width:100%;">No hay bebidas disponibles.</p>';
-                document.getElementById('prev-drink').disabled = true;
-                document.getElementById('next-drink').disabled = true;
+                container.innerHTML = '<p style="text-align:center;color:#666;padding:40px;width:100%;">No hay bebidas disponibles.</p>';
                 return;
             }
-
             allDrinks.forEach(drink => {
                 const card = document.createElement('div');
                 card.className = 'drink-card';
                 card.innerHTML = `
-                    <img src="${drink.imagen_url || 'https://placehold.co/180x120?text=Bebida'}" alt="${drink.nombre}" onerror="this.src='https://placehold.co/180x120?text=Sin+Imagen'">
+                    <img src="${drink.imagen_url || 'https://placehold.co/300x140?text=Bebida'}" alt="${drink.nombre}" onerror="this.src='https://placehold.co/300x140?text=Sin+Imagen'">
                     <h4>${drink.nombre}</h4>
-                    <p>${drink.descripcion || 'Sin descripción'}</p>
                     <div class="price">$${drink.precio}</div>
                     <button>Agregar</button>
                 `;
                 card.querySelector('button').onclick = () => addToCart(drink);
                 container.appendChild(card);
             });
-
+            currentDrinkIndex = 0;
+            scrollCarousel();
             setupCarouselControls();
         }
 
         function setupCarouselControls() {
-            const prev = document.getElementById('prev-drink');
-            const next = document.getElementById('next-drink');
-            const container = document.getElementById('drinks-container');
-
-            prev.onclick = () => {
+            document.getElementById('prev-drink').onclick = () => {
                 if (currentDrinkIndex > 0) {
                     currentDrinkIndex--;
                     scrollCarousel();
                 }
             };
-            next.onclick = () => {
-                const cardWidth = 195;
-                const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
+            document.getElementById('next-drink').onclick = () => {
+                const card = document.querySelector('.drink-card');
+                if (!card) return;
+                const cardWidth = card.offsetWidth + 12;
+                const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
                 if (currentDrinkIndex < allDrinks.length - visible) {
                     currentDrinkIndex++;
                     scrollCarousel();
                 }
             };
-
-            window.addEventListener('resize', scrollCarousel);
-            scrollCarousel();
+            window.addEventListener('resize', () => {
+                currentDrinkIndex = 0;
+                scrollCarousel();
+            });
         }
 
         function scrollCarousel() {
             const container = document.getElementById('drinks-container');
-            const cardWidth = 195;
+            if (!container || container.children.length === 0) return;
+            const card = container.children[0];
+            const cardWidth = card.offsetWidth + 12;
             container.style.transform = `translateX(-${currentDrinkIndex * cardWidth}px)`;
 
             document.getElementById('prev-drink').disabled = currentDrinkIndex === 0;
@@ -926,30 +929,24 @@
         function checkout() {
             if (cart.length === 0) return alert('El carrito está vacío');
 
-            const deliveryType = document.getElementById('delivery-type').value;
+            const delivery = document.getElementById('delivery-type').value;
             const direccion = document.getElementById('direccion').value.trim();
-            const metodoPago = document.getElementById('metodo-pago').value;
+            const pago = document.getElementById('metodo-pago').value;
 
-            if (deliveryType === 'envio' && !direccion) {
-                return alert('Ingresa la dirección de entrega');
-            }
-            if (!metodoPago) {
-                return alert('Selecciona un método de pago');
-            }
+            if (delivery === 'envio' && !direccion) return alert('Ingresa la dirección de entrega');
+            if (!pago) return alert('Selecciona un método de pago');
 
             const prices = calculatePrices();
-            const envioGratis = prices.shipping === 0;
-
             const payload = {
                 action: 'createOrder',
                 data: {
                     userId: 'USER1',
                     fecha: new Date().toLocaleDateString('es-AR'),
-                    direccion: deliveryType === 'retiro' ? 'Retiro en local' : direccion,
-                    metodoPago,
+                    direccion: delivery === 'retiro' ? 'Retiro en local' : direccion,
+                    metodoPago: pago,
                     observaciones: document.getElementById('observaciones').value.trim(),
-                    envioGratis: envioGratis,
-                    tipoEntrega: deliveryType,
+                    envioGratis: prices.shipping === 0,
+                    tipoEntrega: delivery,
                     cart
                 }
             };
@@ -957,19 +954,18 @@
             fetch(scriptUrl, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(payload)
             })
             .then(() => {
-                alert(envioGratis
-                    ? (deliveryType === 'retiro' ? '¡Pedido para retiro confirmado!' : '¡Pedido con envío GRATIS confirmado!')
+                alert(prices.shipping === 0
+                    ? (delivery === 'retiro' ? '¡Pedido para retiro confirmado!' : '¡Pedido con envío GRATIS confirmado!')
                     : '¡Pedido realizado con éxito!');
                 cart = [];
                 updateCartCount();
                 updateCartDisplay();
                 document.getElementById('cart-section').style.display = 'none';
                 document.getElementById('checkout-form').reset();
-                document.getElementById('delivery-type').value = 'envio';
             })
             .catch(() => alert('Pedido enviado (posible error de red).'));
         }
