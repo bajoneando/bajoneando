@@ -737,6 +737,45 @@
         loadAllDrinks();
     });
 
+            if (!name || !email || !password) {
+                alert('Por favor completa: Nombre, Email y Contraseña.');
+                return;
+            }
+    // ==================== MODALES ====================
+    function showModal(modalId) {
+        document.getElementById(modalId).style.display = 'block';
+    }
+
+            const url = `${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&address=${encodeURIComponent(address)}`;
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('¡Registro exitoso! Ahora inicia sesión.');
+                        // Limpiar campos
+                        nameInput.value = '';
+                        emailInput.value = '';
+                        passwordInput.value = '';
+                        if (addressInput) addressInput.value = '';
+                        switchToLogin();
+                    } else {
+                        alert(data.message || 'Error al registrar. Puede que el email ya exista.');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error de conexión. Intenta nuevamente.');
+                });
+        }
+    function switchToRegister() {
+        closeModal('login-modal');
+        showModal('register-modal');
+    }
+        
     // ==================== REGISTRO (AHORA CON POST) ====================
     function registerUser() {
       const nameInput = document.getElementById('register-name');
@@ -869,29 +908,6 @@
       document.getElementById('profile-link').onclick = switchToLogin;
       alert('Sesión cerrada.');
     }
-
-    // ==================== UTILIDADES MODALES ====================
-    function switchToLogin() {
-      closeModal('register-modal');
-      document.getElementById('login-modal').style.display = 'block';
-    }
-
-    function switchToRegister() {
-      closeModal('login-modal');
-      document.getElementById('register-modal').style.display = 'block';
-    }
-
-    function closeModal(modalId) {
-      document.getElementById(modalId).style.display = 'none';
-    }
-
-    // Cerrar modal al hacer clic fuera
-    window.onclick = function(event) {
-      const registerModal = document.getElementById('register-modal');
-      const loginModal = document.getElementById('login-modal');
-      if (event.target === registerModal) closeModal('register-modal');
-      if (event.target === loginModal) closeModal('login-modal');
-    };
 
     // ==================== VERIFICAR SESIÓN AL CARGAR ====================
     window.onload = function() {
