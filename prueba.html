@@ -911,32 +911,18 @@ function loginUser() {
 
 // ==================== LOGOUT ====================
 function logoutUser() {
-    if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-        return;
+        if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+            return;
+        }
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userAddress');
+        isLoggedIn = false;
+        userId = null;
+        userAddress = '';
+
+        alert('Sesión cerrada correctamente.');
+        checkLoginStatus(); // Actualiza el texto y el evento del botón
     }
-
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userAddress');
-
-    isLoggedIn = false;
-    userId = null;
-    userAddress = '';
-
-    // Limpiar carrito si lo deseas (opcional)
-    // cart = [];
-    // updateCartCount();
-    // updateCartDisplay();
-
-    // Restaurar enlace de perfil
-    const profileLink = document.getElementById('profile-link');
-    if (profileLink) {
-        profileLink.textContent = 'Iniciar Sesión';
-        profileLink.onclick = openLoginModal; // o la función que abras el modal
-    }
-
-    alert('Sesión cerrada correctamente.');
-    checkLoginStatus(); // si tienes esta función
-}
         
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
@@ -1035,47 +1021,67 @@ function logoutUser() {
         function showError(container, msg) {
             container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
         }
-        function setupCart() {
-            document.getElementById('cart-icon').onclick = () => {
-                const sec = document.getElementById('cart-section');
-                sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+        // ==================== CARRITO ====================
+    function setupCart() {
+        const cartIcon = document.getElementById('cart-icon');
+        const cartSection = document.getElementById('cart-section');
+
+        cartIcon.onclick = function () {
+            // Toggle simple: si está oculto → mostrar, si está visible → ocultar
+            if (cartSection.style.display === 'none' || cartSection.style.display === '') {
+                cartSection.style.display = 'block';
                 updateCartDisplay();
-            };
-            document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
-            document.getElementById('checkout-btn').onclick = checkout;
-        }
-        function addToCart(menu) {
-    if (!isLoggedIn) {
-        showModal('login-modal');
-        alert('¡Debes iniciar sesión para agregar productos al carrito!');
-        return;
+            } else {
+                cartSection.style.display = 'none';
+            }
+        };
+
+        document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
+        document.getElementById('checkout-btn').onclick = checkout;
     }
 
-    const item = {
-        idLocal: menu.local_id,
-        nombreLocal: menu.nombre_local || 'Local desconocido',
-        idProducto: menu.id,
-        nombreProducto: menu.nombre,
-        precioUnitario: Number(menu.precio),
-        cantidad: 1,
-        categoria: menu.categoria || ''
-    };
-
-    const existing = cart.findIndex(i => i.idProducto === item.idProducto);
-    if (existing !== -1) {
-        cart[existing].cantidad++;
-    } else {
-        cart.push(item);
+    function openCart() {
+        document.getElementById('cart-section').style.display = 'block';
+        updateCartDisplay();
     }
 
-    updateCartCount();
-    updateCartDisplay();
-    alert(`¡${menu.nombre} agregado al carrito!`);
-}
-        function updateCartCount() {
-            const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
-            document.getElementById('cart-count').textContent = total;
+    function addToCart(menu) {
+        if (!isLoggedIn) {
+            showModal('login-modal');
+            alert('¡Debes iniciar sesión para agregar productos al carrito!');
+            return;
         }
+
+        const item = {
+            idLocal: menu.local_id,
+            nombreLocal: menu.nombre_local || 'Local desconocido',
+            idProducto: menu.id,
+            nombreProducto: menu.nombre,
+            precioUnitario: Number(menu.precio),
+            cantidad: 1,
+            categoria: menu.categoria || ''
+        };
+
+        const existing = cart.findIndex(i => i.idProducto === item.idProducto);
+        if (existing !== -1) {
+            cart[existing].cantidad++;
+        } else {
+            cart.push(item);
+        }
+
+        updateCartCount();
+        updateCartDisplay();
+
+        // Mensaje con botón "Ver carrito"
+        if (confirm(`¡${menu.nombre} agregado al carrito!\n\n¿Quieres ver el carrito ahora?`)) {
+            openCart();
+        }
+    }
+
+    function updateCartCount() {
+        const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
+        document.getElementById('cart-count').textContent = total;
+    }
         function hasDrink() {
             return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
         }
