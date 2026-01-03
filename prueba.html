@@ -224,7 +224,6 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
 
-        /* Panel principal con ítems + resumen */
         .cart-summary-panel {
             margin: 20px 0;
             padding: 20px;
@@ -246,7 +245,43 @@
             font-size: 1.05em;
         }
 
-        .cart-item button {
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quantity-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        .quantity-number {
+            min-width: 40px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .cart-item-price {
+            font-weight: bold;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .remove-btn {
             background: #ff5252;
             color: white;
             border: none;
@@ -288,7 +323,6 @@
             font-size: 1.1em;
         }
 
-        /* Selector de entrega */
         .delivery-option {
             margin: 20px 0;
             padding: 15px;
@@ -309,7 +343,6 @@
             font-size: 16px;
         }
 
-        /* Panel de bebidas */
         .drinks-panel {
             margin: 30px 0 10px 0;
             padding: 15px;
@@ -482,7 +515,6 @@
         <div id="cart-section">
             <h2>Tu Carrito</h2>
 
-            <!-- Selector de entrega -->
             <div class="delivery-option">
                 <label for="delivery-type">Tipo de entrega</label>
                 <select id="delivery-type">
@@ -491,7 +523,6 @@
                 </select>
             </div>
 
-            <!-- Panel con ítems + resumen -->
             <div class="cart-summary-panel">
                 <div class="cart-items-list" id="cart-items"></div>
 
@@ -513,7 +544,6 @@
                 <div id="free-shipping-notice"></div>
             </div>
 
-            <!-- Panel de bebidas debajo del resumen -->
             <div id="drinks-panel" class="drinks-panel" style="display:none;">
                 <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
                 <div class="drinks-carousel">
@@ -544,7 +574,7 @@
 
         const bebidaCategoriasCalifican = ["Gaseosas", "Agua Saborizada", "Cervezas"];
         const CATEGORIA_BEBIDAS = "Bebidas";
-        const COSTO_ENVIO = 500; // Cambiar si el costo es diferente
+        const COSTO_ENVIO = 500;
 
         window.addEventListener('load', () => {
             loadFilters();
@@ -681,12 +711,14 @@
                 variantes: '',
                 categoria: menu.categoria || ''
             };
+
             const existing = cart.find(i => i.idProducto === item.idProducto && i.variantes === item.variantes);
             if (existing) {
                 existing.cantidad++;
             } else {
                 cart.push(item);
             }
+
             updateCartCount();
             updateCartDisplay();
             alert(`¡${menu.nombre} agregado al carrito!`);
@@ -731,9 +763,16 @@
                     const div = document.createElement('div');
                     div.className = 'cart-item';
                     div.innerHTML = `
-                        <span>${item.nombreProducto} × ${item.cantidad}</span>
-                        <span>$${ (item.precioUnitario * item.cantidad).toFixed(0) }</span>
-                        <button onclick="removeFromCart(${idx})">Eliminar</button>
+                        <div style="flex:1;">
+                            <div>${item.nombreProducto}</div>
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
+                                <span class="quantity-number">${item.cantidad}</span>
+                                <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="cart-item-price">$${ (item.precioUnitario * item.cantidad).toFixed(0) }</div>
+                        <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
                     `;
                     itemsContainer.appendChild(div);
                 });
@@ -745,7 +784,6 @@
             document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping}`;
             document.getElementById('final-total').textContent = `$${prices.total}`;
 
-            // Mensaje verde solo cuando hay envío gratis
             if (cart.length > 0 && prices.shipping === 0) {
                 if (prices.deliveryType === 'retiro') {
                     notice.innerHTML = `<div class="free-shipping-msg">¡Retiro en local seleccionado! Envío gratis.</div>`;
@@ -760,7 +798,6 @@
                 drinksPanel.style.display = 'none';
             }
 
-            // Dirección
             const direccionInput = document.getElementById('direccion');
             if (prices.deliveryType === 'retiro') {
                 direccionInput.placeholder = "No requerida (retirás en local)";
@@ -770,6 +807,24 @@
                 direccionInput.required = true;
             }
         }
+
+        window.changeQuantity = function(idx, delta) {
+            if (cart[idx].cantidad + delta > 0) {
+                cart[idx].cantidad += delta;
+                updateCartDisplay();
+                updateCartCount();
+            } else {
+                removeFromCart(idx);
+            }
+        };
+
+        window.removeFromCart = function(idx) {
+            cart.splice(idx, 1);
+            updateCartCount();
+            updateCartDisplay();
+        };
+
+        // Resto de funciones (renderDrinksCarousel, carousel, checkout, etc.) permanecen iguales al último código
 
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
@@ -832,12 +887,6 @@
             const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
             document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
         }
-
-        window.removeFromCart = function(idx) {
-            cart.splice(idx, 1);
-            updateCartCount();
-            updateCartDisplay();
-        };
 
         function checkout() {
             if (cart.length === 0) return alert('El carrito está vacío');
