@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -709,10 +708,10 @@
         });
 
         function checkLoginStatus() {
-            const storedUserId = localStorage.getItem('userId');
-            if (storedUserId) {
+            userId = localStorage.getItem('userId');
+            userAddress = localStorage.getItem('userAddress') || '';
+            if (userId) {
                 isLoggedIn = true;
-                userId = storedUserId;
                 document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
             } else {
                 isLoggedIn = false;
@@ -745,60 +744,68 @@
             showModal('login-modal');
         }
 
-        function loginUser() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-            if (!email || !password) {
-                alert('Por favor, completa todos los campos.');
-                return;
-            }
-            fetch(`${scriptUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        localStorage.setItem('userId', data.userId);
-                        isLoggedIn = true;
-                        userId = data.userId;
-                        checkLoginStatus();
-                        closeModal('login-modal');
-                        alert('¡Inicio de sesión exitoso!');
-                    } else {
-                        alert(data.message || 'Error en inicio de sesión.');
-                    }
-                })
-                .catch(() => alert('Error de conexión.'));
-        }
-
         function registerUser() {
             const name = document.getElementById('register-name').value.trim();
             const email = document.getElementById('register-email').value.trim();
             const password = document.getElementById('register-password').value.trim();
+            const address = document.getElementById('register-address').value.trim();
             if (!name || !email || !password) {
-                alert('Por favor, completa todos los campos.');
+                alert('Por favor, completa los campos obligatorios (Nombre, Email, Contraseña).');
                 return;
             }
-            fetch(`${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`)
+            const url = `${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&address=${encodeURIComponent(address)}`;
+            fetch(url)
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
                         alert('¡Registro exitoso! Ahora inicia sesión.');
                         switchToLogin();
                     } else {
-                        alert(data.message || 'Error en registro.');
+                        alert(data.message || 'Error en el registro (posiblemente email ya existe).');
                     }
                 })
-                .catch(() => alert('Error de conexión.'));
+                .catch(() => alert('Error de conexión al registrar.'));
+        }
+
+        function loginUser() {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            if (!email || !password) {
+                alert('Por favor, completa email y contraseña.');
+                return;
+            }
+            const url = `${scriptUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        localStorage.setItem('userId', data.userId);
+                        localStorage.setItem('userAddress', data.address || '');
+                        isLoggedIn = true;
+                        userId = data.userId;
+                        userAddress = data.address || '';
+                        checkLoginStatus();
+                        closeModal('login-modal');
+                        alert('¡Bienvenido de nuevo!');
+                        document.getElementById('direccion').value = userAddress;
+                    } else {
+                        alert(data.message || 'Email o contraseña incorrectos.');
+                    }
+                })
+                .catch(() => alert('Error de conexión al iniciar sesión.'));
         }
 
         function logoutUser() {
             localStorage.removeItem('userId');
+            localStorage.removeItem('userAddress');
             isLoggedIn = false;
             userId = null;
+            userAddress = '';
             cart = [];
             updateCartCount();
             updateCartDisplay();
             checkLoginStatus();
-            alert('Sesión cerrada.');
+            alert('Sesión cerrada correctamente.');
         }
 
         function loadAllDrinks() {
@@ -908,30 +915,33 @@
             document.getElementById('checkout-btn').onclick = checkout;
         }
         function addToCart(menu) {
-            if (!isLoggedIn) {
-                showModal('login-modal');
-                alert('Debes iniciar sesión para agregar al carrito y realizar pedidos.');
-                return;
-            }
-            const item = {
-                idLocal: menu.local_id,
-                nombreLocal: menu.nombre_local || 'Local desconocido',
-                idProducto: menu.id,
-                nombreProducto: menu.nombre,
-                precioUnitario: Number(menu.precio),
-                cantidad: 1,
-                categoria: menu.categoria || ''
-            };
-            const existing = cart.findIndex(i => i.idProducto === item.idProducto);
-            if (existing !== -1) {
-                cart[existing].cantidad++;
-            } else {
-                cart.push(item);
-            }
-            updateCartCount();
-            updateCartDisplay();
-            alert(`¡${menu.nombre} agregado al carrito!`);
-        }
+    if (!isLoggedIn) {
+        showModal('login-modal');
+        alert('¡Debes iniciar sesión para agregar productos al carrito!');
+        return;
+    }
+
+    const item = {
+        idLocal: menu.local_id,
+        nombreLocal: menu.nombre_local || 'Local desconocido',
+        idProducto: menu.id,
+        nombreProducto: menu.nombre,
+        precioUnitario: Number(menu.precio),
+        cantidad: 1,
+        categoria: menu.categoria || ''
+    };
+
+    const existing = cart.findIndex(i => i.idProducto === item.idProducto);
+    if (existing !== -1) {
+        cart[existing].cantidad++;
+    } else {
+        cart.push(item);
+    }
+
+    updateCartCount();
+    updateCartDisplay();
+    alert(`¡${menu.nombre} agregado al carrito!`);
+}
         function updateCartCount() {
             const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
             document.getElementById('cart-count').textContent = total;
@@ -1066,50 +1076,96 @@
             document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
         }
         function checkout() {
-            if (!isLoggedIn) {
-                showModal('login-modal');
-                alert('Debes iniciar sesión para realizar el pedido.');
-                return;
-            }
-            if (cart.length === 0) return alert('El carrito está vacío');
-            const delivery = document.getElementById('delivery-type').value;
-            const direccion = document.getElementById('direccion').value.trim();
-            const pago = document.getElementById('metodo-pago').value;
-            if (delivery === 'envio' && !direccion) return alert('Ingresa la dirección de entrega');
-            if (!pago) return alert('Selecciona un método de pago');
-            const prices = calculatePrices();
-            const payload = {
-                action: 'createOrder',
-                data: {
-                    userId: userId,
-                    fecha: new Date().toLocaleDateString('es-AR'),
-                    direccion: delivery === 'retiro' ? 'Retiro en local' : direccion,
-                    metodoPago: pago,
-                    observaciones: document.getElementById('observaciones').value.trim(),
-                    envioGratis: prices.shipping === 0,
-                    tipoEntrega: delivery,
-                    cart
-                }
-            };
-            fetch(scriptUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify(payload)
-            })
-            .then(() => {
-                alert(prices.shipping === 0
-                    ? (delivery === 'retiro' ? '¡Pedido para retiro confirmado!' : '¡Pedido con envío GRATIS confirmado!')
-                    : '¡Pedido realizado con éxito!');
-                cart = [];
-                updateCartCount();
-                updateCartDisplay();
-                document.getElementById('cart-section').style.display = 'none';
-                document.getElementById('checkout-form').reset();
-            })
-            .catch(() => alert('Pedido enviado (posible error de red).'));
+    if (!isLoggedIn) {
+        showModal('login-modal');
+        alert('¡Debes iniciar sesión para realizar el pedido!');
+        return;
+    }
+
+    if (cart.length === 0) {
+        alert('El carrito está vacío');
+        return;
+    }
+
+    const delivery = document.getElementById('delivery-type').value;
+    const metodoPago = document.getElementById('metodo-pago').value;
+    const observaciones = document.getElementById('observaciones').value.trim();
+
+    if (!metodoPago) {
+        alert('Selecciona un método de pago');
+        return;
+    }
+
+    let direccion = '';
+    if (delivery === 'envio') {
+        direccion = document.getElementById('direccion').value.trim();
+        if (!direccion) {
+            alert('Ingresa la dirección de entrega');
+            return;
         }
+    } else {
+        direccion = 'Retiro en local';
+    }
+
+    const prices = calculatePrices();
+
+    const payload = {
+        action: 'createOrder',
+        data: {
+            userId: userId,
+            fecha: new Date().toLocaleDateString('es-AR'),
+            direccion: direccion,
+            metodoPago: metodoPago,
+            observaciones: observaciones,
+            envioGratis: prices.shipping === 0,
+            tipoEntrega: delivery,
+            cart: cart
+        }
+    };
+
+    // Mostrar loading o deshabilitar botón si quieres (opcional)
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const originalText = checkoutBtn.textContent;
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Procesando...';
+
+    fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        let mensaje = '¡Pedido realizado con éxito!';
+        if (prices.shipping === 0) {
+            mensaje = delivery === 'retiro' 
+                ? '¡Pedido para retiro confirmado!' 
+                : '¡Pedido con envío GRATIS confirmado!';
+        }
+
+        alert(mensaje);
+
+        // Limpiar todo
+        cart = [];
+        updateCartCount();
+        updateCartDisplay();
+        document.getElementById('cart-section').style.display = 'none';
+        document.getElementById('checkout-form').reset();
+
+        // Si hay dirección guardada, la vuelve a poner por si el usuario quiere hacer otro pedido rápido
+        if (userAddress) {
+            document.getElementById('direccion').value = userAddress;
+        }
+    })
+    .catch((error) => {
+        console.error('Error al enviar pedido:', error);
+        alert('Pedido enviado (posible error de red). Revisa tu conexión.');
+    })
+    .finally(() => {
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = originalText;
+    });
+}
     </script>
 </body>
 </html>
-```
