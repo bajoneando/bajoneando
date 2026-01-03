@@ -742,128 +742,127 @@
         document.getElementById(modalId).style.display = 'block';
     }
 
-            const url = `${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&address=${encodeURIComponent(address)}`;
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
     }
 
-            fetch(url)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('¡Registro exitoso! Ahora inicia sesión.');
-                        // Limpiar campos
-                        nameInput.value = '';
-                        emailInput.value = '';
-                        passwordInput.value = '';
-                        if (addressInput) addressInput.value = '';
-                        switchToLogin();
-                    } else {
-                        alert(data.message || 'Error al registrar. Puede que el email ya exista.');
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert('Error de conexión. Intenta nuevamente.');
-                });
-        }
     function switchToRegister() {
         closeModal('login-modal');
         showModal('register-modal');
     }
-        
-    // ==================== REGISTRO ====================
-      function registerUser() {
-          const nameInput = document.getElementById('register-name');
-          const emailInput = document.getElementById('register-email');
-          const passwordInput = document.getElementById('register-password');
-          const addressInput = document.getElementById('register-address');
-          if (!nameInput || !emailInput || !passwordInput) {
-              alert('Error interno: campos no encontrados.');
-              return;
-          }
-          const name = nameInput.value.trim();
-          const email = emailInput.value.trim();
-          const password = passwordInput.value.trim();
-          const address = addressInput ? addressInput.value.trim() : '';
-          if (!name || !email || !password) {
-              alert('Por favor completa: Nombre, Email y Contraseña.');
-              return;
-          }
-          const url = `${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&address=${encodeURIComponent(address)}`;
-          fetch(url)
-              .then(r => r.json())
-              .then(data => {
-                  if (data.success) {
-                      alert('¡Registro exitoso! Ahora inicia sesión.');
-                      nameInput.value = '';
-                      emailInput.value = '';
-                      passwordInput.value = '';
-                      if (addressInput) addressInput.value = '';
-                      switchToLogin();
-                  } else {
-                      alert(data.message || 'Error al registrar. Puede que el email ya exista.');
-                  }
-              })
-              .catch(err => {
-                  console.error(err);
-                  alert('Error de conexión. Intenta nuevamente.');
-              });
-      }
-      // ==================== LOGIN ====================
-      function loginUser() {
-          const emailInput = document.getElementById('login-email');
-          const passwordInput = document.getElementById('login-password');
-          if (!emailInput || !passwordInput) {
-              alert('Error interno: campos no encontrados.');
-              return;
-          }
-          const email = emailInput.value.trim();
-          const password = passwordInput.value.trim();
-          if (!email || !password) {
-              alert('Ingresa email y contraseña.');
-              return;
-          }
-          const url = `${scriptUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-          fetch(url)
-              .then(r => r.json())
-              .then(data => {
-                  if (data.success) {
-                      localStorage.setItem('userId', data.userId);
-                      localStorage.setItem('userAddress', data.address || '');
-                      isLoggedIn = true;
-                      userId = data.userId;
-                      userAddress = data.address || '';
-                      document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
-                      document.getElementById('profile-link').onclick = logoutUser;
-                      closeModal('login-modal');
-                      alert('¡Bienvenido de nuevo!');
-                      const dirInput = document.getElementById('direccion');
-                      if (dirInput && userAddress) {
-                          dirInput.value = userAddress;
-                      }
-                  } else {
-                      alert(data.message || 'Email o contraseña incorrectos.');
-                  }
-              })
-              .catch(err => {
-                  console.error(err);
-                  alert('Error de conexión.');
-              });
-      }
-      function logoutUser() {
-          localStorage.removeItem('userId');
-          localStorage.removeItem('userAddress');
-          isLoggedIn = false;
-          userId = null;
-          userAddress = '';
-          cart = [];
-          updateCartCount();
-          updateCartDisplay();
-          checkLoginStatus();
-          alert('Sesión cerrada.');
-      }
 
+    function switchToLogin() {
+        closeModal('register-modal');
+        showModal('login-modal');
+    }
+
+    // ==================== REGISTRO ====================
+    function registerUser() {
+        const nameInput = document.getElementById('register-name');
+        const emailInput = document.getElementById('register-email');
+        const passwordInput = document.getElementById('register-password');
+        const addressInput = document.getElementById('register-address');
+
+        if (!nameInput || !emailInput || !passwordInput) {
+            alert('Error interno: campos no encontrados.');
+            return;
+        }
+
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+        const address = addressInput ? addressInput.value.trim() : '';
+
+        if (!name || !email || !password) {
+            alert('Por favor completa: Nombre, Email y Contraseña.');
+            return;
+        }
+
+        const url = `${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&address=${encodeURIComponent(address)}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('¡Registro exitoso! Ahora inicia sesión.');
+                    nameInput.value = '';
+                    emailInput.value = '';
+                    passwordInput.value = '';
+                    if (addressInput) addressInput.value = '';
+                    switchToLogin();
+                } else {
+                    alert(data.message || 'Error al registrar. Puede que el email ya exista.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error de conexión. Intenta nuevamente.');
+            });
+    }
+
+    // ==================== LOGIN ====================
+    function loginUser() {
+        const emailInput = document.getElementById('login-email');
+        const passwordInput = document.getElementById('login-password');
+
+        if (!emailInput || !passwordInput) {
+            alert('Error interno: campos no encontrados.');
+            return;
+        }
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (!email || !password) {
+            alert('Ingresa email y contraseña.');
+            return;
+        }
+
+        const url = `${scriptUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('userAddress', data.address || '');
+                    isLoggedIn = true;
+                    userId = data.userId;
+                    userAddress = data.address || '';
+
+                    document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
+                    document.getElementById('profile-link').onclick = logoutUser;
+
+                    closeModal('login-modal');
+                    alert('¡Bienvenido de nuevo!');
+
+                    const dirInput = document.getElementById('direccion');
+                    if (dirInput && userAddress) {
+                        dirInput.value = userAddress;
+                    }
+                } else {
+                    alert(data.message || 'Email o contraseña incorrectos.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error de conexión.');
+            });
+    }
+
+    function logoutUser() {
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userAddress');
+        isLoggedIn = false;
+        userId = null;
+        userAddress = '';
+        cart = [];
+        updateCartCount();
+        updateCartDisplay();
+        checkLoginStatus();
+        alert('Sesión cerrada.');
+    }
+        
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
