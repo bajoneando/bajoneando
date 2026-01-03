@@ -643,133 +643,216 @@
       btn.disabled = false;
     });
 
-    // === MIS PEDIDOS - VERSIÓN COMPLETA CON BOTONES ===
+    // === MIS PEDIDOS - NUEVA LÓGICA CON PESTAÑAS Y FILTROS ===
     async function cargarMisPedidos() {
-      const cont = document.getElementById('pedidos-listado');
-      cont.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p class="mt-3">Cargando pedidos...</p></div>';
+      const contProceso = document.getElementById('pedidos-proceso-listado');
+      const contFinalizados = document.getElementById('pedidos-finalizados-listado');
+
+      contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+      contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
 
       try {
         const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
         const locales = await resLocales.json();
 
         if (!locales || locales.length === 0) {
-          cont.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos aún</h4></div>';
+          contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
+          contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos finalizados</h4></div>';
           return;
         }
 
-        // locales ya viene ordenado por orden de aparición en la hoja (más nuevo arriba)
-        let html = '';
+        pedidosData = []; // Reiniciamos
 
         for (const localPedido of locales) {
           const idPedidoLocal = localPedido[0];
           const idPedido = localPedido[1];
           const estadoActual = localPedido[4] || 'Pendiente';
 
-          // Obtener items
           const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
           const items = await resItems.json();
 
-          // Obtener datos generales
           const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
           const general = await resGeneral.json();
 
-          const direccion = general.direccion || 'No especificada';
-          const observaciones = general.observaciones || 'Ninguna';
-          const metodoPago = general.metodoPago || 'No especificado';
+          const pedidoInfo = {
+            idPedidoLocal,
+            idPedido,
+            estadoActual,
+            items,
+            direccion: general.direccion || 'No especificada',
+            observaciones: general.observaciones || 'Ninguna',
+            metodoPago: general.metodoPago || 'No especificado'
+          };
 
-          let itemsHtml = '<ul class="item-list">';
-          let subtotal = 0;
-          items.forEach(item => {
-            const totalItem = item[7];
-            subtotal += totalItem;
-            itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
-          });
-          itemsHtml += '</ul>';
-
-          // Badge de estado con color
-          let badgeClass = 'bg-warning';
-          if (estadoActual === 'Listo') badgeClass = 'bg-info';
-          if (estadoActual === 'Entregado') badgeClass = 'bg-success';
-          if (estadoActual === 'Rechazado') badgeClass = 'bg-danger';
-
-          html += `
-            <div class="pedido-card">
-              <div class="pedido-header d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>Pedido #${idPedido}</strong> — Parte Local: ${idPedidoLocal}
-                </div>
-                <span class="badge ${badgeClass} estado-badge">${estadoActual}</span>
-              </div>
-              <div class="pedido-body">
-                <p><strong>Dirección:</strong> ${direccion}</p>
-                <p><strong>Método de pago:</strong> ${metodoPago}</p>
-                <p><strong>Observaciones:</strong> ${observaciones}</p>
-                <h6 class="mt-3">Items:</h6>
-                ${itemsHtml}
-                <div class="text-end mt-3">
-                  <strong>Subtotal local: $${subtotal}</strong>
-                </div>
-
-                <!-- BOTONES DE ACCIÓN -->
-                <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
-                  <button class="btn btn-success btn-listos" data-id="${idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(estadoActual) ? 'disabled' : ''}>
-                    <span class="spinner-border spinner-border-sm d-none"></span> Listo
-                  </button>
-                  <button class="btn btn-primary btn-entregado" data-id="${idPedidoLocal}" ${['Entregado','Rechazado'].includes(estadoActual) ? 'disabled' : ''}>
-                    <span class="spinner-border spinner-border-sm d-none"></span> Entregado
-                  </button>
-                  <button class="btn btn-danger btn-rechazar" data-id="${idPedidoLocal}" ${estadoActual === 'Rechazado' ? 'disabled' : ''}>
-                    <span class="spinner-border spinner-border-sm d-none"></span> Rechazar Pedido
-                  </button>
-                </div>
-              </div>
-            </div>`;
+          pedidosData.push(pedidoInfo);
         }
 
-        cont.innerHTML = html;
-
-        // Eventos de los botones
-        document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
-          btn.addEventListener('click', async function() {
-            const idPedidoLocal = this.dataset.id;
-            let nuevoEstado = '';
-            if (this.classList.contains('btn-listos')) nuevoEstado = 'Listo';
-            if (this.classList.contains('btn-entregado')) nuevoEstado = 'Entregado';
-            if (this.classList.contains('btn-rechazar')) nuevoEstado = 'Rechazado';
-
-            const spinner = this.querySelector('.spinner-border');
-            spinner.classList.remove('d-none');
-            this.disabled = true;
-
-            try {
-              const payload = {
-                action: 'updateEstadoLocalOrder',
-                idPedidoLocal: idPedidoLocal,
-                nuevoEstado: nuevoEstado
-              };
-
-              await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload),
-                headers: { 'Content-Type': 'application/json' },
-                mode: 'no-cors'
-              });
-
-              alert(`Pedido marcado como ${nuevoEstado}`);
-              cargarMisPedidos(); // Recargar para actualizar estados
-            } catch (err) {
-              alert('Error al actualizar el estado');
-            } finally {
-              spinner.classList.add('d-none');
-            }
-          });
-        });
+        // Renderizar ambas pestañas
+        renderizarPedidosEnProceso('todos');
+        renderizarPedidosFinalizados();
 
       } catch (err) {
         console.error('Error cargando pedidos:', err);
-        cont.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+        contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+        contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
       }
     }
+
+    function renderizarPedidosEnProceso(filtro = 'todos') {
+      const cont = document.getElementById('pedidos-proceso-listado');
+      const pedidosProceso = pedidosData.filter(p => p.estadoActual === 'Pendiente' || p.estadoActual === 'Listo');
+
+      let filtrados = pedidosProceso;
+      if (filtro === 'pendientes') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Pendiente');
+      if (filtro === 'listos') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Listo');
+
+      if (filtrados.length === 0) {
+        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos en este filtro</h5></div>';
+        return;
+      }
+
+      let html = '';
+      filtrados.forEach(p => {
+        html += generarHtmlPedido(p);
+      });
+      cont.innerHTML = html;
+      agregarEventosBotones();
+    }
+
+    function renderizarPedidosFinalizados() {
+      const cont = document.getElementById('pedidos-finalizados-listado');
+      const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado');
+
+      if (finalizados.length === 0) {
+        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos entregados</h5></div>';
+        return;
+      }
+
+      let html = '';
+      finalizados.forEach(p => {
+        html += generarHtmlPedido(p, true); // true = finalizado, sin botones de acción
+      });
+      cont.innerHTML = html;
+    }
+
+    function generarHtmlPedido(p, esFinalizado = false) {
+      let itemsHtml = '<ul class="item-list">';
+      let subtotal = 0;
+      p.items.forEach(item => {
+        const totalItem = item[7];
+        subtotal += totalItem;
+        itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
+      });
+      itemsHtml += '</ul>';
+
+      let badgeClass = 'bg-warning';
+      if (p.estadoActual === 'Listo') badgeClass = 'bg-info';
+      if (p.estadoActual === 'Entregado') badgeClass = 'bg-success';
+      if (p.estadoActual === 'Rechazado') badgeClass = 'bg-danger';
+
+      const botonesAccion = esFinalizado ? '' : `
+        <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
+          <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+            <span class="spinner-border spinner-border-sm d-none"></span> Listo
+          </button>
+          <button class="btn btn-primary btn-entregado" data-id="${p.idPedidoLocal}" ${['Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+            <span class="spinner-border spinner-border-sm d-none"></span> Entregado
+          </button>
+          <button class="btn btn-danger btn-rechazar" data-id="${p.idPedidoLocal}" ${p.estadoActual === 'Rechazado' ? 'disabled' : ''}>
+            <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
+          </button>
+        </div>`;
+
+      return `
+        <div class="pedido-card">
+          <div class="pedido-header d-flex justify-content-between align-items-center">
+            <div>
+              <strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal}
+            </div>
+            <span class="badge ${badgeClass} estado-badge">${p.estadoActual}</span>
+          </div>
+          <div class="pedido-body">
+            <p><strong>Dirección:</strong> ${p.direccion}</p>
+            <p><strong>Método de pago:</strong> ${p.metodoPago}</p>
+            <p><strong>Observaciones:</strong> ${p.observaciones}</p>
+            <h6 class="mt-3">Items:</h6>
+            ${itemsHtml}
+            <div class="text-end mt-3">
+              <strong>Subtotal local: $${subtotal}</strong>
+            </div>
+            ${botonesAccion}
+          </div>
+        </div>`;
+    }
+
+    function agregarEventosBotones() {
+      document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const idPedidoLocal = this.dataset.id;
+          let nuevoEstado = '';
+          if (this.classList.contains('btn-listos')) nuevoEstado = 'Listo';
+          if (this.classList.contains('btn-entregado')) nuevoEstado = 'Entregado';
+          if (this.classList.contains('btn-rechazar')) nuevoEstado = 'Rechazado';
+
+          const spinner = this.querySelector('.spinner-border');
+          spinner.classList.remove('d-none');
+          this.disabled = true;
+
+          try {
+            const payload = {
+              action: 'updateEstadoLocalOrder',
+              idPedidoLocal: idPedidoLocal,
+              nuevoEstado: nuevoEstado
+            };
+
+            await fetch(API_URL, {
+              method: 'POST',
+              body: JSON.stringify(payload),
+              headers: { 'Content-Type': 'application/json' },
+              mode: 'no-cors'
+            });
+
+            alert(`Pedido marcado como ${nuevoEstado}`);
+            cargarMisPedidos(); // Recarga todo
+          } catch (err) {
+            alert('Error al actualizar estado');
+          } finally {
+            spinner.classList.add('d-none');
+          }
+        });
+      });
+    }
+
+    // Filtros en pestaña "En Proceso"
+    document.getElementById('filtro-pendientes').addEventListener('click', () => {
+      document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('filtro-pendientes').classList.add('active');
+      renderizarPedidosEnProceso('pendientes');
+    });
+    document.getElementById('filtro-listos').addEventListener('click', () => {
+      document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('filtro-listos').classList.add('active');
+      renderizarPedidosEnProceso('listos');
+    });
+    document.getElementById('filtro-todos-proceso').addEventListener('click', () => {
+      document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('filtro-todos-proceso').classList.add('active');
+      renderizarPedidosEnProceso('todos');
+    });
+
+    // Al cambiar de pestaña, recargar datos si es necesario
+    document.querySelectorAll('#pedidosTabs button').forEach(tab => {
+      tab.addEventListener('shown.bs.tab', () => {
+        if (tab.id === 'proceso-tab') {
+          renderizarPedidosEnProceso('todos');
+        } else if (tab.id === 'finalizados-tab') {
+          renderizarPedidosFinalizados();
+        }
+      });
+    });
+
+    // Inicial: mostrar todos en proceso
+    document.getElementById('filtro-todos-proceso')?.click();
   </script>
 </body>
 </html>
