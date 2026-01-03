@@ -756,7 +756,7 @@
         showModal('login-modal');
     }
 
-    // ==================== REGISTRO ====================
+    // ==================== REGISTRO (POST - SOLUCIÓN DEFINITIVA) ====================
 function registerUser() {
     const nameInput = document.getElementById('register-name');
     const emailInput = document.getElementById('register-email');
@@ -764,32 +764,32 @@ function registerUser() {
     const addressInput = document.getElementById('register-address');
 
     if (!nameInput || !emailInput || !passwordInput) {
-        alert('Error interno: campos obligatorios no encontrados.');
+        alert('Error: campos obligatorios no encontrados');
         return;
     }
 
-    const name = nameInput.value.trim();
+    const name = nameInput.value.trim() || 'Usuario sin nombre';
     const email = emailInput.value.trim().toLowerCase();
     const password = passwordInput.value.trim();
     const address = addressInput ? addressInput.value.trim() : '';
 
-    if (!name || !email || !password) {
-        alert('Nombre, email y contraseña son obligatorios.');
+    if (!email || !password) {
+        alert('Email y contraseña son obligatorios');
         return;
     }
 
-    const payload = {
-        action: 'register',
-        name: name,
-        email: email,
-        password: password,
-        address: address
-    };
-
     fetch(scriptUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            action: 'register',
+            name: name,
+            email: email,
+            password: password,
+            address: address
+        })
     })
     .then(r => r.json())
     .then(data => {
@@ -801,43 +801,40 @@ function registerUser() {
             if (addressInput) addressInput.value = '';
             switchToLogin();
         } else {
-            alert(data.message || 'Error al registrar (puede que el email ya exista).');
+            alert(data.message || 'Error al registrar');
         }
     })
     .catch(err => {
         console.error(err);
-        alert('Error de conexión. Intenta nuevamente.');
+        alert('Error de conexión');
     });
 }
 
-// ==================== LOGIN ====================
+// ==================== LOGIN (POST) ====================
 function loginUser() {
     const emailInput = document.getElementById('login-email');
     const passwordInput = document.getElementById('login-password');
 
-    if (!emailInput || !passwordInput) {
-        alert('Error interno: campos de login no encontrados.');
-        return;
-    }
+    if (!emailInput || !passwordInput) return;
 
     const email = emailInput.value.trim().toLowerCase();
     const password = passwordInput.value.trim();
 
     if (!email || !password) {
-        alert('Ingresa email y contraseña.');
+        alert('Ingresa email y contraseña');
         return;
     }
 
-    const payload = {
-        action: 'login',
-        email: email,
-        password: password
-    };
-
     fetch(scriptUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            action: 'login',
+            email: email,
+            password: password
+        })
     })
     .then(r => r.json())
     .then(data => {
@@ -851,17 +848,17 @@ function loginUser() {
             document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
             document.getElementById('profile-link').onclick = logoutUser;
             closeModal('login-modal');
-            alert('¡Bienvenido de nuevo!');
+            alert('¡Bienvenido!');
 
             const dirInput = document.getElementById('direccion');
             if (dirInput && userAddress) dirInput.value = userAddress;
         } else {
-            alert(data.message || 'Email o contraseña incorrectos.');
+            alert(data.message || 'Datos incorrectos');
         }
     })
     .catch(err => {
         console.error(err);
-        alert('Error de conexión.');
+        alert('Error de conexión');
     });
 }
 
