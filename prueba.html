@@ -74,7 +74,7 @@
             margin: 20px auto;
             padding: 0 20px;
         }
-        h1, h2 {
+        h1, h2, h3 {
             text-align: center;
             color: #c62828;
             font-weight: 600;
@@ -125,92 +125,9 @@
             transform: translateY(-5px);
             box-shadow: 0 15px 35px rgba(211,47,47,0.2);
         }
-
-        /* NUEVO PANEL DE BEBIDAS */
-        .drinks-promotion {
-            margin: 40px 0;
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        .category:hover::before {
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
         }
-        .drinks-promotion h2 {
-            text-align: center;
-            color: #1565c0;
-            margin-bottom: 15px;
-        }
-        .drinks-promotion p {
-            text-align: center;
-            font-weight: 500;
-            color: #1976d2;
-            margin-bottom: 20px;
-        }
-        .drinks-carousel {
-            display: flex;
-            overflow-x: auto;
-            gap: 15px;
-            padding: 10px 0;
-            scrollbar-width: thin;
-        }
-        .drinks-carousel::-webkit-scrollbar {
-            height: 8px;
-        }
-        .drinks-carousel::-webkit-scrollbar-thumb {
-            background: #90caf9;
-            border-radius: 4px;
-        }
-        .drink-card {
-            min-width: 220px;
-            max-width: 220px;
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-            transition: transform 0.3s;
-        }
-        .drink-card:hover {
-            transform: translateY(-8px);
-        }
-        .drink-card img {
-            width: 100%;
-            height: 140px;
-            object-fit: cover;
-        }
-        .drink-info {
-            padding: 12px;
-            text-align: center;
-        }
-        .drink-info h3 {
-            margin: 0 0 8px;
-            font-size: 16px;
-            color: #333;
-        }
-        .drink-info p {
-            margin: 0 0 10px;
-            font-size: 14px;
-            color: #666;
-            text-align: center;
-        }
-        .drink-info .price {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #d32f2f;
-            margin: 8px 0;
-        }
-        .drink-info button {
-            background-color: #1976d2;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            width: 100%;
-        }
-        .drink-info button:hover {
-            background-color: #1565c0;
-        }
-
         .suggestions {
             margin-top: 40px;
         }
@@ -294,12 +211,46 @@
             cursor: pointer;
             margin-top: 10px;
             font-weight: 600;
+            transition: background-color 0.3s;
         }
         .menu-item button:hover {
             background-color: #b71c1c;
         }
+        .no-results, .error-message {
+            text-align: center;
+            color: #666;
+            font-size: 16px;
+            padding: 20px;
+        }
+        .error-message {
+            color: #d32f2f;
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-radius: 5px;
+            margin: 20px;
+        }
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #d32f2f;
+            font-weight: 600;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #d32f2f;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin: 0 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-        /* Carrito estilos (sin cambios, solo los necesarios) */
+        /* Carrito */
         #cart-section {
             display: none;
             margin-top: 40px;
@@ -307,6 +258,23 @@
             padding: 20px;
             border-radius: 16px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .cart-item span {
+            flex: 1;
+        }
+        .cart-total {
+            font-weight: bold;
+            text-align: right;
+            margin-top: 15px;
+            font-size: 1.4em;
+            color: #d32f2f;
         }
         .free-shipping-msg {
             background-color: #e8f5e8;
@@ -328,12 +296,112 @@
             margin: 15px 0;
             border: 1px solid #ffe0b2;
         }
-        .cart-total {
-            font-weight: bold;
-            text-align: right;
-            margin-top: 15px;
-            font-size: 1.4em;
+
+        /* Panel de bebidas */
+        .drinks-panel {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        .drinks-panel h3 {
+            margin: 0 0 15px 0;
             color: #d32f2f;
+            font-size: 1.3em;
+        }
+        .drinks-carousel {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+        .drinks-container {
+            display: flex;
+            transition: transform 0.4s ease;
+            gap: 15px;
+            padding: 10px 0;
+        }
+        .drink-card {
+            min-width: 180px;
+            max-width: 180px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .drink-card img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+        .drink-card h4 {
+            margin: 10px 8px 5px;
+            font-size: 15px;
+            color: #333;
+        }
+        .drink-card p {
+            margin: 0 8px 10px;
+            font-size: 13px;
+            color: #666;
+            height: 40px;
+            overflow: hidden;
+        }
+        .drink-card .price {
+            font-weight: bold;
+            color: #d32f2f;
+            font-size: 1.3em;
+            margin: 8px 0;
+        }
+        .drink-card button {
+            width: 90%;
+            margin: 0 auto 12px;
+            padding: 8px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .drink-card button:hover {
+            background-color: #b71c1c;
+        }
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(211, 47, 47, 0.8);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .carousel-btn.left { left: 10px; }
+        .carousel-btn.right { right: 10px; }
+        .carousel-btn:disabled {
+            background-color: rgba(0,0,0,0.3);
+            cursor: not-allowed;
+        }
+
+        #checkout-form input,
+        #checkout-form select,
+        #checkout-form textarea {
+            display: block;
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
         }
         #checkout-btn {
             width: 100%;
@@ -349,6 +417,22 @@
         #checkout-btn:hover {
             background-color: #b71c1c;
         }
+
+        @media (max-width: 768px) {
+            .categories, .suggestion-items, .menu-items {
+                flex-direction: column;
+                align-items: center;
+            }
+            .category, .suggestion, .menu-item {
+                width: 90%;
+                max-width: 300px;
+                height: 180px;
+            }
+            .drink-card {
+                min-width: 160px;
+                max-width: 160px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -363,8 +447,10 @@
             <div class="cart-count" id="cart-count">0</div>
         </div>
     </header>
+
     <main>
         <h1>¡Hola! ¿Qué se te antoja comer?</h1>
+
         <div class="categories">
             <div class="category" data-type="Hamburguesas" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
                 <span>Hamburguesas</span>
@@ -383,25 +469,30 @@
             </div>
         </div>
 
-        <!-- NUEVO PANEL DE BEBIDAS -->
-        <div class="drinks-promotion">
-            <h2>¡Agregá una bebida y obtené ENVÍO GRATIS!</h2>
-            <p>Deslizá para ver todas las opciones →</p>
-            <div class="drinks-carousel" id="drinks-carousel">
-                <!-- Se llenará con JS -->
-            </div>
-        </div>
-
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
+
         <div id="menu-display" style="display: none;"></div>
+
         <div id="cart-section">
             <h2>Tu Carrito</h2>
             <div id="free-shipping-notice"></div>
+
+            <!-- Panel de bebidas sugeridas -->
+            <div id="drinks-panel" class="drinks-panel" style="display:none;">
+                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
+                <div class="drinks-carousel">
+                    <button class="carousel-btn left" id="prev-drink">←</button>
+                    <div class="drinks-container" id="drinks-container"></div>
+                    <button class="carousel-btn right" id="next-drink">→</button>
+                </div>
+            </div>
+
             <div id="cart-items"></div>
             <div class="cart-total" id="cart-total">Total: $0</div>
+
             <form id="checkout-form">
                 <input type="text" id="direccion" placeholder="Dirección de entrega" required>
                 <select id="metodo-pago" required>
@@ -418,55 +509,29 @@
     <script>
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
         let cart = [];
-        const bebidaCategorias = ["Gaseosas", "Agua Saborizada", "Cervezas"];
+        let allDrinks = [];
+        let currentDrinkIndex = 0;
+
+        const bebidaCategoriasCalifican = ["Gaseosas", "Agua Saborizada", "Cervezas"];
+        const CATEGORIA_BEBIDAS = "Bebidas"; // Exacto como en columna C de hoja Menú
 
         window.addEventListener('load', () => {
             loadFilters();
             setupSearch();
             setupCart();
-            loadDrinksPromotion(); // ← NUEVA FUNCIÓN
+            loadAllDrinks();
         });
 
-        // NUEVA FUNCIÓN: Cargar bebidas con categoría "Bebidas"
-        function loadDrinksPromotion() {
-            const carousel = document.getElementById('drinks-carousel');
-            carousel.innerHTML = '<div class="loading"><span class="spinner"></span>Cargando bebidas...</div>';
-
-            fetch(`${scriptUrl}?action=getAllMenus`) // Asegúrate de tener esta acción en tu Apps Script que devuelva todos los menús
+        function loadAllDrinks() {
+            fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then(data => {
-                    const bebidas = (data.menus || []).filter(menu => menu.categoria === "Bebidas");
-                    
-                    carousel.innerHTML = '';
-                    if (bebidas.length === 0) {
-                        carousel.innerHTML = '<p style="text-align:center; color:#666; width:100%;">No hay bebidas disponibles en este momento.</p>';
-                        return;
-                    }
-
-                    bebidas.forEach(menu => {
-                        const card = document.createElement('div');
-                        card.className = 'drink-card';
-                        card.innerHTML = `
-                            <img src="${menu.imagen_url || 'https://placehold.co/220x140?text=Bebida'}" 
-                                 alt="${menu.nombre}" 
-                                 onerror="this.src='https://placehold.co/220x140?text=Sin+Imagen'">
-                            <div class="drink-info">
-                                <h3>${menu.nombre}</h3>
-                                <p>${menu.descripcion || 'Deliciosa bebida para acompañar tu pedido'}</p>
-                                <div class="price">$${menu.precio}</div>
-                                <button>Agregar al carrito</button>
-                            </div>
-                        `;
-                        card.querySelector('button').onclick = () => addToCart(menu);
-                        carousel.appendChild(card);
-                    });
+                    allDrinks = (data.menus || []).filter(menu => 
+                        menu.categoria && menu.categoria.trim() === CATEGORIA_BEBIDAS
+                    );
                 })
-                .catch(() => {
-                    carousel.innerHTML = '<p style="text-align:center; color:#d32f2f;">Error al cargar bebidas</p>';
-                });
+                .catch(() => { allDrinks = []; });
         }
-
-        // ... (el resto del código anterior permanece igual: loadFilters, fetchMenus, addToCart, etc.)
 
         function loadFilters() {
             const container = document.getElementById('suggestion-items');
@@ -491,7 +556,87 @@
                 .catch(() => showError(container, 'Error al cargar locales'));
         }
 
-        // ... (resto de funciones sin cambios: setupSearch, performSearch, fetchMenus, displayMenus, etc.)
+        document.querySelector('.categories').addEventListener('click', e => {
+            const cat = e.target.closest('.category');
+            if (cat) fetchMenus(cat.dataset.type || cat.querySelector('span').textContent.trim(), null);
+        });
+
+        function setupSearch() {
+            const input = document.getElementById('search-input');
+            let timeout;
+            input.addEventListener('input', e => {
+                clearTimeout(timeout);
+                const term = e.target.value.trim();
+                if (term.length >= 3) {
+                    timeout = setTimeout(() => performSearch(term), 500);
+                } else if (term === '') {
+                    document.getElementById('menu-display').style.display = 'none';
+                }
+            });
+        }
+
+        function performSearch(query) {
+            const container = document.getElementById('menu-display');
+            showLoading(container);
+            fetch(`${scriptUrl}?action=search&query=${encodeURIComponent(query)}`)
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
+                .catch(() => showError(container, 'Error en búsqueda'));
+        }
+
+        function fetchMenus(type, local) {
+            const container = document.getElementById('menu-display');
+            showLoading(container);
+            let url = `${scriptUrl}?action=getMenus`;
+            if (type) url += `&type=${encodeURIComponent(type)}`;
+            if (local) url += `&local=${encodeURIComponent(local)}`;
+            fetch(url)
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
+                .catch(() => showError(container, 'Error al cargar menús'));
+        }
+
+        function displayMenus(menus, title) {
+            const container = document.getElementById('menu-display');
+            container.innerHTML = `<h2>Menús - ${title}</h2><div class="menu-items"></div>`;
+            const itemsDiv = container.querySelector('.menu-items');
+            if (menus.length === 0) {
+                itemsDiv.innerHTML = '<p class="no-results">No se encontraron menús.</p>';
+            } else {
+                menus.forEach(menu => {
+                    const div = document.createElement('div');
+                    div.className = 'menu-item';
+                    div.innerHTML = `
+                        <img src="${menu.imagen_url || 'https://placehold.co/200x200?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">
+                        <h3>${menu.nombre}</h3>
+                        <p>${menu.descripcion || 'Sin descripción'}</p>
+                        <p style="font-weight:bold;color:#27ae60;">Precio: $${menu.precio}</p>
+                        <button>Agregar al carrito</button>
+                    `;
+                    div.querySelector('button').onclick = () => addToCart(menu);
+                    itemsDiv.appendChild(div);
+                });
+            }
+            container.style.display = 'block';
+        }
+
+        function showLoading(container) {
+            container.innerHTML = '<div class="loading"><span class="spinner"></span>Cargando...</div>';
+        }
+
+        function showError(container, msg) {
+            container.innerHTML = `<div class="error-message">¡Ups! ${msg}</div>`;
+        }
+
+        // Carrito
+        function setupCart() {
+            document.getElementById('cart-icon').onclick = () => {
+                const sec = document.getElementById('cart-section');
+                sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+                updateCartDisplay();
+            };
+            document.getElementById('checkout-btn').onclick = checkout;
+        }
 
         function addToCart(menu) {
             const item = {
@@ -515,14 +660,20 @@
             alert(`¡${menu.nombre} agregado al carrito!`);
         }
 
+        function updateCartCount() {
+            const totalItems = cart.reduce((sum, i) => sum + i.cantidad, 0);
+            document.getElementById('cart-count').textContent = totalItems;
+        }
+
         function hasQualifyingDrink() {
-            return cart.some(item => bebidaCategorias.includes(item.categoria));
+            return cart.some(item => bebidaCategoriasCalifican.includes(item.categoria));
         }
 
         function updateCartDisplay() {
-            const container = document.getElementById('cart-items');
+            const itemsContainer = document.getElementById('cart-items');
             const notice = document.getElementById('free-shipping-notice');
-            container.innerHTML = '';
+            const drinksPanel = document.getElementById('drinks-panel');
+            itemsContainer.innerHTML = '';
             notice.innerHTML = '';
 
             let total = 0;
@@ -534,37 +685,99 @@
                     <span>$${ (item.precioUnitario * item.cantidad).toFixed(0) }</span>
                     <button onclick="removeFromCart(${idx})">Eliminar</button>
                 `;
-                container.appendChild(div);
+                itemsContainer.appendChild(div);
                 total += item.precioUnitario * item.cantidad;
             });
+
+            document.getElementById('cart-total').textContent = `Total: $${total.toFixed(0)}`;
 
             if (cart.length > 0) {
                 if (hasQualifyingDrink()) {
                     notice.innerHTML = `<div class="free-shipping-msg">¡Felicitaciones! Obtuviste ENVÍO GRATIS por agregar una bebida.</div>`;
+                    drinksPanel.style.display = 'none';
                 } else {
                     notice.innerHTML = `<div class="add-drink-msg">Obtené ENVÍO GRATIS añadiendo una bebida a tu pedido<br><strong>Gaseosas • Agua Saborizada • Cervezas</strong></div>`;
+                    drinksPanel.style.display = 'block';
+                    renderDrinksCarousel();
                 }
+            } else {
+                drinksPanel.style.display = 'none';
             }
-
-            document.getElementById('cart-total').textContent = `Total: $${total.toFixed(0)}`;
         }
 
-        // ... (resto del código de carrito y checkout igual)
+        function renderDrinksCarousel() {
+            const container = document.getElementById('drinks-container');
+            container.innerHTML = '';
+
+            if (allDrinks.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#666;width:100%;">No hay bebidas disponibles.</p>';
+                document.getElementById('prev-drink').disabled = true;
+                document.getElementById('next-drink').disabled = true;
+                return;
+            }
+
+            allDrinks.forEach(drink => {
+                const card = document.createElement('div');
+                card.className = 'drink-card';
+                card.innerHTML = `
+                    <img src="${drink.imagen_url || 'https://placehold.co/180x120?text=Bebida'}" alt="${drink.nombre}" onerror="this.src='https://placehold.co/180x120?text=Sin+Imagen'">
+                    <h4>${drink.nombre}</h4>
+                    <p>${drink.descripcion || 'Sin descripción'}</p>
+                    <div class="price">$${drink.precio}</div>
+                    <button>Agregar</button>
+                `;
+                card.querySelector('button').onclick = () => addToCart(drink);
+                container.appendChild(card);
+            });
+
+            setupCarouselControls();
+        }
+
+        function setupCarouselControls() {
+            const prev = document.getElementById('prev-drink');
+            const next = document.getElementById('next-drink');
+            const container = document.getElementById('drinks-container');
+
+            prev.onclick = () => {
+                if (currentDrinkIndex > 0) {
+                    currentDrinkIndex--;
+                    scrollCarousel();
+                }
+            };
+            next.onclick = () => {
+                const cardWidth = 195;
+                const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
+                if (currentDrinkIndex < allDrinks.length - visible) {
+                    currentDrinkIndex++;
+                    scrollCarousel();
+                }
+            };
+
+            window.addEventListener('resize', scrollCarousel);
+            scrollCarousel();
+        }
+
+        function scrollCarousel() {
+            const container = document.getElementById('drinks-container');
+            const cardWidth = 195;
+            container.style.transform = `translateX(-${currentDrinkIndex * cardWidth}px)`;
+
+            document.getElementById('prev-drink').disabled = currentDrinkIndex === 0;
+            const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
+            document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
+        }
+
+        window.removeFromCart = function(idx) {
+            cart.splice(idx, 1);
+            updateCartCount();
+            updateCartDisplay();
+        };
 
         function checkout() {
-            if (cart.length === 0) {
-                alert('El carrito está vacío');
-                return;
-            }
+            if (cart.length === 0) return alert('El carrito está vacío');
             const direccion = document.getElementById('direccion').value.trim();
             const metodoPago = document.getElementById('metodo-pago').value;
-            const observaciones = document.getElementById('observaciones').value.trim();
-            if (!direccion || !metodoPago) {
-                alert('Completa la dirección y el método de pago');
-                return;
-            }
-
-            const envioGratis = hasQualifyingDrink();
+            if (!direccion || !metodoPago) return alert('Completa dirección y método de pago');
 
             const payload = {
                 action: 'createOrder',
@@ -573,8 +786,8 @@
                     fecha: new Date().toLocaleDateString('es-AR'),
                     direccion,
                     metodoPago,
-                    observaciones,
-                    envioGratis: envioGratis,
+                    observaciones: document.getElementById('observaciones').value.trim(),
+                    envioGratis: hasQualifyingDrink(),
                     cart
                 }
             };
@@ -586,49 +799,16 @@
                 body: JSON.stringify(payload)
             })
             .then(() => {
-                const msg = envioGratis 
-                    ? '¡Pedido realizado con éxito! Envío GRATIS aplicado.' 
-                    : '¡Pedido realizado con éxito!';
-                alert(msg + '\nLos locales han sido notificados por email.');
+                alert(hasQualifyingDrink() 
+                    ? '¡Pedido realizado! Envío GRATIS aplicado.' 
+                    : '¡Pedido realizado con éxito!');
                 cart = [];
                 updateCartCount();
                 updateCartDisplay();
                 document.getElementById('cart-section').style.display = 'none';
                 document.getElementById('checkout-form').reset();
             })
-            .catch(err => {
-                console.error('Error checkout:', err);
-                alert('Pedido enviado correctamente (aunque hubo error de red).');
-            });
-        }
-
-        // Funciones auxiliares
-        function updateCartCount() {
-            const totalItems = cart.reduce((sum, i) => sum + i.cantidad, 0);
-            document.getElementById('cart-count').textContent = totalItems;
-        }
-
-        window.removeFromCart = function(idx) {
-            cart.splice(idx, 1);
-            updateCartCount();
-            updateCartDisplay();
-        };
-
-        function setupCart() {
-            document.getElementById('cart-icon').onclick = () => {
-                const sec = document.getElementById('cart-section');
-                sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
-                updateCartDisplay();
-            };
-            document.getElementById('checkout-btn').onclick = checkout;
-        }
-
-        function showLoading(container) {
-            container.innerHTML = '<div class="loading"><span class="spinner"></span>Cargando...</div>';
-        }
-
-        function showError(container, msg) {
-            container.innerHTML = `<div class="error-message">¡Ups! ${msg}</div>`;
+            .catch(() => alert('Pedido enviado (error de red, pero probablemente llegó).'));
         }
     </script>
 </body>
