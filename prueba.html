@@ -708,76 +708,73 @@
             loadAllDrinks();
         });
 
-        // ==================== FUNCIÓN CLAVE: checkLoginStatus (moverla al inicio) ====================
-    function checkLoginStatus() {
-        userId = localStorage.getItem('userId');
-        userAddress = localStorage.getItem('userAddress') || '';
-        if (userId) {
-            isLoggedIn = true;
-            document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
+        // ==================== FUNCIÓN CLAVE: checkLoginStatus ====================
+function checkLoginStatus() {
+    userId = localStorage.getItem('userId');
+    userAddress = localStorage.getItem('userAddress') || '';
+    const profileLink = document.getElementById('profile-link');
+    if (!profileLink) return;
+
+    if (userId) {
+        isLoggedIn = true;
+        profileLink.textContent = 'Mi Perfil (Cerrar Sesión)';
+    } else {
+        isLoggedIn = false;
+        profileLink.textContent = 'Iniciar Sesión';
+    }
+    profileLink.onclick = () => {
+        if (isLoggedIn) {
+            logoutUser();
         } else {
-            isLoggedIn = false;
-            document.getElementById('profile-link').textContent = 'Iniciar Sesión';
+            showModal('login-modal');
         }
-        document.getElementById('profile-link').onclick = () => {
-            if (isLoggedIn) {
-                logoutUser();
-            } else {
-                showModal('login-modal');
-            }
-        };
-    }
+    };
+}
 
-    // ==================== CARGA INICIAL ====================
-    window.addEventListener('load', () => {
-        checkLoginStatus();   // Ahora sí existe cuando se llama
-        loadFilters();
-        setupSearch();
-        setupCart();
-        loadAllDrinks();
-    });
+// ==================== CARGA INICIAL ====================
+window.addEventListener('load', () => {
+    checkLoginStatus();
+    loadFilters();
+    setupSearch();
+    setupCart();
+    loadAllDrinks();
+});
 
-    // ==================== MODALES ====================
-    function showModal(modalId) {
-        document.getElementById(modalId).style.display = 'block';
-    }
+// ==================== MODALES ====================
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'block';
+}
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+}
+function switchToRegister() {
+    closeModal('login-modal');
+    showModal('register-modal');
+}
+function switchToLogin() {
+    closeModal('register-modal');
+    showModal('login-modal');
+}
 
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-
-    function switchToRegister() {
-        closeModal('login-modal');
-        showModal('register-modal');
-    }
-
-    function switchToLogin() {
-        closeModal('register-modal');
-        showModal('login-modal');
-    }
-
-    // ==================== REGISTRO ====================
+// ==================== REGISTRO (AHORA CON POST + JSON) ====================
 function registerUser() {
-    // Obtener los campos del formulario de registro
     const nameInput = document.getElementById('register-name');
     const emailInput = document.getElementById('register-email');
     const passwordInput = document.getElementById('register-password');
-    const addressInput = document.getElementById('register-address'); // Puede no existir si es opcional
+    const addressInput = document.getElementById('register-address');
 
-    // Validar que los campos obligatorios existan
     if (!nameInput || !emailInput || !passwordInput) {
-        alert('Error interno: No se encontraron los campos obligatorios del registro.');
-        console.error('Campos faltantes: name, email o password');
+        alert('Error interno: campos obligatorios no encontrados.');
         return;
     }
 
-    // Obtener y limpiar valores
     const name = nameInput.value.trim();
     const email = emailInput.value.trim().toLowerCase();
     const password = passwordInput.value.trim();
     const address = addressInput ? addressInput.value.trim() : '';
 
-    // Validación básica frontend
     if (!name) {
         alert('Por favor ingresa tu nombre completo.');
         nameInput.focus();
@@ -788,65 +785,61 @@ function registerUser() {
         emailInput.focus();
         return;
     }
-    if (!password) {
-        alert('Por favor ingresa una contraseña.');
-        passwordInput.focus();
-        return;
-    }
-    if (password.length < 6) {
+    if (!password || password.length < 6) {
         alert('La contraseña debe tener al menos 6 caracteres.');
         passwordInput.focus();
         return;
     }
 
-    // Construir URL con todos los parámetros (siempre incluimos address, aunque vacío)
-    const url = `${scriptUrl}?action=register`
-        + `&name=${encodeURIComponent(name)}`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`
-        + `&address=${encodeURIComponent(address)}`;
+    // === ENVÍO CON POST + JSON (MUCHO MÁS FIABLE) ===
+    const payload = {
+        action: 'register',
+        name: name,
+        email: email,
+        password: password,
+        address: address
+    };
 
-    // Mostrar feedback visual (opcional: podrías agregar un spinner)
-    const registerBtn = document.querySelector('#register-modal button[type="submit"]') || 
+    const registerBtn = document.querySelector('#register-modal button[type="submit"]') ||
                         document.querySelector('#register-modal .btn-register');
     if (registerBtn) registerBtn.disabled = true;
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
-                
-                // Limpiar todos los campos
-                nameInput.value = '';
-                emailInput.value = '';
-                passwordInput.value = '';
-                if (addressInput) addressInput.value = '';
-
-                // Cambiar a la vista de login
-                switchToLogin();
-            } else {
-                alert(data.message || 'Error al registrar. Intenta con otro email.');
-            }
-        })
-        .catch(err => {
-            console.error('Error en registro:', err);
-            alert('Error de conexión. Revisa tu internet e intenta de nuevo.');
-        })
-        .finally(() => {
-            // Reactivar botón
-            if (registerBtn) registerBtn.disabled = false;
-        });
+    fetch(scriptUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('¡Registro exitoso! Ahora inicia sesión.');
+            nameInput.value = '';
+            emailInput.value = '';
+            passwordInput.value = '';
+            if (addressInput) addressInput.value = '';
+            switchToLogin();
+        } else {
+            alert(data.message || 'Error al registrar. Puede que el email ya exista.');
+        }
+    })
+    .catch(err => {
+        console.error('Error en registro:', err);
+        alert('Error de conexión. Intenta nuevamente.');
+    })
+    .finally(() => {
+        if (registerBtn) registerBtn.disabled = false;
+    });
 }
 
-// ==================== LOGIN ====================
+// ==================== LOGIN (AHORA TAMBIÉN CON POST + JSON) ====================
 function loginUser() {
     const emailInput = document.getElementById('login-email');
     const passwordInput = document.getElementById('login-password');
 
     if (!emailInput || !passwordInput) {
-        alert('Error interno: Campos de login no encontrados.');
-        console.error('Faltan login-email o login-password en el DOM');
+        alert('Error interno: campos de login no encontrados.');
         return;
     }
 
@@ -854,66 +847,68 @@ function loginUser() {
     const password = passwordInput.value.trim();
 
     if (!email || !password) {
-        alert('Por favor ingresa tu email y contraseña.');
+        alert('Ingresa email y contraseña.');
         return;
     }
 
-    const url = `${scriptUrl}?action=login`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`;
+    const payload = {
+        action: 'login',
+        email: email,
+        password: password
+    };
 
-    const loginBtn = document.querySelector('#login-modal button[type="submit"]') || 
+    const loginBtn = document.querySelector('#login-modal button[type="submit"]') ||
                      document.querySelector('#login-modal .btn-login');
     if (loginBtn) loginBtn.disabled = true;
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Guardar datos del usuario
-                localStorage.setItem('userId', data.userId);
-                localStorage.setItem('userAddress', data.address || '');
+    fetch(scriptUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            localStorage.setItem('userId', data.userId);
+            localStorage.setItem('userAddress', data.address || '');
 
-                // Actualizar estado global
-                isLoggedIn = true;
-                userId = data.userId;
-                userAddress = data.address || '';
+            isLoggedIn = true;
+            userId = data.userId;
+            userAddress = data.address || '';
 
-                // Actualizar UI
-                const profileLink = document.getElementById('profile-link');
-                if (profileLink) {
-                    profileLink.textContent = 'Mi Perfil (Cerrar Sesión)';
-                    profileLink.onclick = logoutUser;
-                }
-
-                // Cerrar modal
-                closeModal('login-modal');
-
-                alert('¡Bienvenido de nuevo!');
-
-                // Rellenar dirección en formulario de pedido si existe
-                const dirInput = document.getElementById('direccion');
-                if (dirInput && userAddress) {
-                    dirInput.value = userAddress;
-                }
-            } else {
-                alert(data.message || 'Email o contraseña incorrectos.');
+            const profileLink = document.getElementById('profile-link');
+            if (profileLink) {
+                profileLink.textContent = 'Mi Perfil (Cerrar Sesión)';
+                profileLink.onclick = logoutUser;
             }
-        })
-        .catch(err => {
-            console.error('Error en login:', err);
-            alert('Error de conexión. Intenta nuevamente.');
-        })
-        .finally(() => {
-            if (loginBtn) loginBtn.disabled = false;
-        });
+
+            closeModal('login-modal');
+            alert('¡Bienvenido de nuevo!');
+
+            const dirInput = document.getElementById('direccion');
+            if (dirInput && userAddress) {
+                dirInput.value = userAddress;
+            }
+
+            checkLoginStatus(); // Actualiza UI por si acaso
+        } else {
+            alert(data.message || 'Email o contraseña incorrectos.');
+        }
+    })
+    .catch(err => {
+        console.error('Error en login:', err);
+        alert('Error de conexión.');
+    })
+    .finally(() => {
+        if (loginBtn) loginBtn.disabled = false;
+    });
 }
 
 // ==================== LOGOUT ====================
 function logoutUser() {
-    if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-        return;
-    }
+    if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) return;
 
     localStorage.removeItem('userId');
     localStorage.removeItem('userAddress');
@@ -922,20 +917,14 @@ function logoutUser() {
     userId = null;
     userAddress = '';
 
-    // Limpiar carrito si lo deseas (opcional)
-    // cart = [];
-    // updateCartCount();
-    // updateCartDisplay();
-
-    // Restaurar enlace de perfil
     const profileLink = document.getElementById('profile-link');
     if (profileLink) {
         profileLink.textContent = 'Iniciar Sesión';
-        profileLink.onclick = openLoginModal; // o la función que abras el modal
+        profileLink.onclick = () => showModal('login-modal');
     }
 
-    alert('Sesión cerrada correctamente.');
-    checkLoginStatus(); // si tienes esta función
+    alert('Sesión cerrada.');
+    checkLoginStatus();
 }
         
         function loadAllDrinks() {
