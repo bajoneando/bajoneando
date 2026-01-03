@@ -13,6 +13,8 @@
             padding: 0;
             background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
         /* Header */
         header {
@@ -27,7 +29,7 @@
             gap: 10px;
         }
         .logo {
-            height: 50px;
+            height: 65px; /* Logo más grande */
         }
         .logo img {
             height: 100%;
@@ -81,6 +83,7 @@
             font-weight: bold;
         }
         main {
+            flex: 1;
             max-width: 1200px;
             margin: 20px auto;
             padding: 0 15px;
@@ -166,7 +169,7 @@
         /* Tarjetas de menú más pequeñas */
         .menu-item {
             width: 100%;
-            max-width: 260px; /* Más pequeñas que antes */
+            max-width: 260px;
             background: white;
             border-radius: 18px;
             padding: 12px;
@@ -179,7 +182,7 @@
         }
         .menu-item img {
             width: 100%;
-            height: 150px; /* Imagen más pequeña */
+            height: 150px;
             object-fit: cover;
             border-radius: 12px;
         }
@@ -415,6 +418,31 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Footer */
+        footer {
+            background-color: #fff;
+            padding: 30px 20px;
+            text-align: center;
+            margin-top: auto;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        }
+        footer p {
+            margin: 8px 0;
+            color: #666;
+        }
+        footer p strong {
+            color: #d32f2f;
+        }
+        footer a {
+            color: #d32f2f;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .search-bar {
@@ -448,9 +476,14 @@
             .menu-item img {
                 height: 140px;
             }
+            .logo {
+                height: 55px;
+            }
         }
         @media (max-width: 480px) {
-            .logo img { height: 40px; }
+            .logo {
+                height: 50px;
+            }
             .category {
                 width: 105px;
                 height: 105px;
@@ -492,8 +525,10 @@
             </div>
         </div>
     </header>
+
     <main>
         <h1>¡Hola! ¿Qué se te antoja comer?</h1>
+
         <div class="categories">
             <div class="category" data-type="Hamburguesas" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
                 <span>Hamburguesas</span>
@@ -511,13 +546,17 @@
                 <span>Merienda</span>
             </div>
         </div>
+
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
+
         <div id="menu-display" style="display:none;"></div>
+
         <div id="cart-section">
             <h2>Tu Carrito</h2>
+
             <div class="delivery-option">
                 <label for="delivery-type">Tipo de entrega</label>
                 <select id="delivery-type">
@@ -525,15 +564,19 @@
                     <option value="retiro">Retirar en local</option>
                 </select>
             </div>
+
             <div class="cart-summary-panel">
                 <div class="cart-items-list" id="cart-items"></div>
+
                 <div class="price-summary">
                     <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
                     <div class="price-line"><span>Envío</span><span id="shipping-cost">$500</span></div>
                     <div class="price-line total"><span>Total a pagar</span><span id="final-total">$500</span></div>
                 </div>
+
                 <div id="free-shipping-notice"></div>
             </div>
+
             <div id="drinks-panel" class="drinks-panel" style="display:none;">
                 <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
                 <div class="drinks-carousel">
@@ -542,6 +585,7 @@
                     <button class="carousel-btn right" id="next-drink">→</button>
                 </div>
             </div>
+
             <form id="checkout-form">
                 <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
                 <select id="metodo-pago" required>
@@ -554,29 +598,44 @@
             </form>
         </div>
     </main>
+
+    <!-- Footer -->
+    <footer class="text-center">
+        <div class="container">
+            <p class="mb-2">© 2025 <strong>Antojate</strong> - Panel de Administración</p>
+            <p class="small mb-0">
+                <a href="#">Términos</a> • <a href="#">Privacidad</a> • <a href="#">Soporte</a>
+            </p>
+        </div>
+    </footer>
+
     <script>
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
         let cart = [];
         let allDrinks = [];
         let currentDrinkIndex = 0;
+
         const CATEGORIA_BEBIDAS = "Bebidas";
         const COSTO_ENVIO = 500;
+
         window.addEventListener('load', () => {
             loadFilters();
             setupSearch();
             setupCart();
             loadAllDrinks();
         });
+
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then(data => {
-                    allDrinks = (data.menus || []).filter(menu =>
+                    allDrinks = (data.menus || []).filter(menu => 
                         menu.categoria && menu.categoria.trim() === CATEGORIA_BEBIDAS
                     );
                 })
                 .catch(() => { allDrinks = []; });
         }
+
         function loadFilters() {
             const container = document.getElementById('suggestion-items');
             showLoading(container);
@@ -599,10 +658,12 @@
                 })
                 .catch(() => showError(container, 'Error al cargar locales'));
         }
+
         document.querySelector('.categories').addEventListener('click', e => {
             const cat = e.target.closest('.category');
             if (cat) fetchMenus(cat.dataset.type, null);
         });
+
         function setupSearch() {
             const input = document.getElementById('search-input');
             let timeout;
@@ -616,6 +677,7 @@
                 }
             });
         }
+
         function performSearch(query) {
             const container = document.getElementById('menu-display');
             showLoading(container);
@@ -624,6 +686,7 @@
                 .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
                 .catch(() => showError(container, 'Error en búsqueda'));
         }
+
         function fetchMenus(type, local) {
             const container = document.getElementById('menu-display');
             showLoading(container);
@@ -635,6 +698,7 @@
                 .then(menus => displayMenus(menus, type || 'Local seleccionado'))
                 .catch(() => showError(container, 'Error al cargar menús'));
         }
+
         function displayMenus(menus, title) {
             const container = document.getElementById('menu-display');
             container.innerHTML = `<h2>Menús - ${title}</h2><div class="menu-items"></div>`;
@@ -658,12 +722,15 @@
             }
             container.style.display = 'block';
         }
+
         function showLoading(container) {
             container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
         }
+
         function showError(container, msg) {
             container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
         }
+
         function setupCart() {
             document.getElementById('cart-icon').onclick = () => {
                 const sec = document.getElementById('cart-section');
@@ -673,6 +740,7 @@
             document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
             document.getElementById('checkout-btn').onclick = checkout;
         }
+
         function addToCart(menu) {
             const item = {
                 idLocal: menu.local_id,
@@ -693,19 +761,23 @@
             updateCartDisplay();
             alert(`¡${menu.nombre} agregado al carrito!`);
         }
+
         function updateCartCount() {
             const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
             document.getElementById('cart-count').textContent = total;
         }
+
         function hasDrink() {
             return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
         }
+
         function calculatePrices() {
             const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
             const delivery = document.getElementById('delivery-type').value;
             let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
             return { subtotal, shipping, total: subtotal + shipping, delivery };
         }
+
         function updateCartDisplay() {
             const list = document.getElementById('cart-items');
             const notice = document.getElementById('free-shipping-notice');
@@ -757,6 +829,7 @@
                 dirInput.required = true;
             }
         }
+
         window.changeQuantity = function(idx, delta) {
             if (cart[idx].cantidad + delta > 0) {
                 cart[idx].cantidad += delta;
@@ -766,11 +839,13 @@
             updateCartCount();
             updateCartDisplay();
         };
+
         window.removeFromCart = function(idx) {
             cart.splice(idx, 1);
             updateCartCount();
             updateCartDisplay();
         };
+
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
@@ -794,6 +869,7 @@
             scrollCarousel();
             setupCarouselControls();
         }
+
         function setupCarouselControls() {
             document.getElementById('prev-drink').onclick = () => {
                 if (currentDrinkIndex > 0) {
@@ -816,6 +892,7 @@
                 scrollCarousel();
             });
         }
+
         function scrollCarousel() {
             const container = document.getElementById('drinks-container');
             if (!container || container.children.length === 0) return;
@@ -826,6 +903,7 @@
             const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
             document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
         }
+
         function checkout() {
             if (cart.length === 0) return alert('El carrito está vacío');
             const delivery = document.getElementById('delivery-type').value;
