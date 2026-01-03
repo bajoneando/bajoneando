@@ -681,12 +681,72 @@
       btn.disabled = false;
     });
 
-    // === MIS PEDIDOS (opcional, puedes expandirlo más) ===
+    // === CARGAR MIS PEDIDOS ===
     async function cargarMisPedidos() {
       const cont = document.getElementById('pedidos-listado');
-      cont.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
-      // Implementación básica - puedes mejorarla con los datos reales
-      cont.innerHTML = '<div class="text-center py-5"><h4>Pronto verás tus pedidos aquí</h4></div>';
+      cont.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p class="mt-3">Cargando pedidos...</p></div>';
+
+      try {
+        // Primero obtener todos los pedidos locales del local
+        const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
+        const locales = await resLocales.json();
+
+        if (!locales || locales.length === 0) {
+          cont.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos aún</h4></div>';
+          return;
+        }
+
+        let html = '';
+        for (const localPedido of locales) {
+          const idPedido = localPedido[1]; // Columna B = ID_PEDIDO
+          const idPedidoLocal = localPedido[0];
+          const estadoLocal = localPedido[4];
+
+          // Obtener items del pedido local
+          const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
+          const items = await resItems.json();
+
+          // Obtener datos generales del pedido
+          const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
+          const general = await resGeneral.json();
+          const direccion = general.direccion || 'No especificada';
+          const observaciones = general.observaciones || 'Ninguna';
+          const metodoPago = general.metodoPago || 'No especificado';
+
+          let itemsHtml = '<ul class="item-list">';
+          let subtotal = 0;
+          items.forEach(item => {
+            const totalItem = item[7]; // Total Item
+            subtotal += totalItem;
+            itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
+          });
+          itemsHtml += '</ul>';
+
+          html += `
+            <div class="pedido-card">
+              <div class="pedido-header d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>Pedido #${idPedido}</strong> — Parte Local: ${idPedidoLocal}
+                </div>
+                <span class="badge bg-light text-dark fs-6">${estadoLocal}</span>
+              </div>
+              <div class="pedido-body">
+                <p><strong>Dirección:</strong> ${direccion}</p>
+                <p><strong>Método de pago:</strong> ${metodoPago}</p>
+                <p><strong>Observaciones:</strong> ${observaciones}</p>
+                <h6 class="mt-3">Items:</h6>
+                ${itemsHtml}
+                <div class="text-end mt-3">
+                  <strong>Subtotal local: $${subtotal}</strong>
+                </div>
+              </div>
+            </div>`;
+        }
+        cont.innerHTML = html || '<div class="text-center py-5"><h4>No se encontraron pedidos</h4></div>';
+      } catch (err) {
+        console.error('Error cargando pedidos:', err);
+        cont.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+      }
     }
   </script>
 </body>
