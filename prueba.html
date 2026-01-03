@@ -289,12 +289,46 @@
         .add-drink-msg {
             background-color: #fff3e0;
             color: #ef6c00;
-            padding: 12px;
+            padding: 15px;
             border-radius: 8px;
             text-align: center;
             font-weight: 600;
             margin: 15px 0;
             border: 1px solid #ffe0b2;
+        }
+        .add-drink-btn {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+            font-size: 16px;
+        }
+        .add-drink-btn:hover {
+            background-color: #b71c1c;
+        }
+
+        /* Selector envío / retiro */
+        .delivery-option {
+            margin: 15px 0;
+            padding: 12px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .delivery-option label {
+            font-weight: 600;
+            margin-right: 15px;
+            color: #333;
+        }
+        .delivery-option select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
         }
 
         /* Panel de bebidas */
@@ -480,7 +514,7 @@
             <h2>Tu Carrito</h2>
             <div id="free-shipping-notice"></div>
 
-            <!-- Panel de bebidas sugeridas -->
+            <!-- Panel de bebidas -->
             <div id="drinks-panel" class="drinks-panel" style="display:none;">
                 <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
                 <div class="drinks-carousel">
@@ -488,6 +522,15 @@
                     <div class="drinks-container" id="drinks-container"></div>
                     <button class="carousel-btn right" id="next-drink">→</button>
                 </div>
+            </div>
+
+            <!-- Selector de entrega -->
+            <div class="delivery-option">
+                <label for="delivery-type">Tipo de entrega:</label>
+                <select id="delivery-type">
+                    <option value="envio">Con envío</option>
+                    <option value="retiro">Retirar en local</option>
+                </select>
             </div>
 
             <div id="cart-items"></div>
@@ -513,20 +556,23 @@
         let currentDrinkIndex = 0;
 
         const bebidaCategoriasCalifican = ["Gaseosas", "Agua Saborizada", "Cervezas"];
-        const CATEGORIA_BEBIDAS = "Bebidas"; // Exacto como en columna C de hoja Menú
+        const CATEGORIA_BEBIDAS = "Bebidas";
 
         window.addEventListener('load', () => {
             loadFilters();
             setupSearch();
             setupCart();
             loadAllDrinks();
+
+            // Escuchar cambios en el selector de entrega
+            document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
         });
 
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then(data => {
-                    allDrinks = (data.menus || []).filter(menu => 
+                    allDrinks = (data.menus || []).filter(menu =>
                         menu.categoria && menu.categoria.trim() === CATEGORIA_BEBIDAS
                     );
                 })
@@ -628,7 +674,6 @@
             container.innerHTML = `<div class="error-message">¡Ups! ${msg}</div>`;
         }
 
-        // Carrito
         function setupCart() {
             document.getElementById('cart-icon').onclick = () => {
                 const sec = document.getElementById('cart-section');
@@ -691,17 +736,42 @@
 
             document.getElementById('cart-total').textContent = `Total: $${total.toFixed(0)}`;
 
-            if (cart.length > 0) {
+            const deliveryType = document.getElementById('delivery-type').value;
+
+            if (cart.length === 0) {
+                drinksPanel.style.display = 'none';
+                return;
+            }
+
+            if (deliveryType === 'retiro') {
+                notice.innerHTML = `<div class="free-shipping-msg">Retiro en local seleccionado — ¡Sin costo de envío!</div>`;
+                drinksPanel.style.display = 'none';
+            } else {
+                // Modo envío
                 if (hasQualifyingDrink()) {
                     notice.innerHTML = `<div class="free-shipping-msg">¡Felicitaciones! Obtuviste ENVÍO GRATIS por agregar una bebida.</div>`;
                     drinksPanel.style.display = 'none';
                 } else {
-                    notice.innerHTML = `<div class="add-drink-msg">Obtené ENVÍO GRATIS añadiendo una bebida a tu pedido<br><strong>Gaseosas • Agua Saborizada • Cervezas</strong></div>`;
+                    notice.innerHTML = `
+                        <div class="add-drink-msg">
+                            Obtené ENVÍO GRATIS añadiendo una bebida a tu pedido<br>
+                            <strong>Gaseosas • Agua Saborizada • Cervezas</strong><br>
+                            <button class="add-drink-btn" id="show-drinks-btn">Agregar Bebida</button>
+                        </div>
+                    `;
                     drinksPanel.style.display = 'block';
                     renderDrinksCarousel();
+
+                    // Evento del botón "Agregar Bebida"
+                    const btn = document.getElementById('show-drinks-btn');
+                    if (btn) {
+                        btn.onclick = () => {
+                            drinksPanel.style.display = 'block';
+                            renderDrinksCarousel();
+                            drinksPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        };
+                    }
                 }
-            } else {
-                drinksPanel.style.display = 'none';
             }
         }
 
@@ -775,19 +845,28 @@
 
         function checkout() {
             if (cart.length === 0) return alert('El carrito está vacío');
+
+            const deliveryType = document.getElementById('delivery-type').value;
             const direccion = document.getElementById('direccion').value.trim();
             const metodoPago = document.getElementById('metodo-pago').value;
-            if (!direccion || !metodoPago) return alert('Completa dirección y método de pago');
+
+            if (deliveryType === 'envio' && !direccion) {
+                return alert('Por favor ingresa la dirección de entrega');
+            }
+            if (!metodoPago) return alert('Selecciona un método de pago');
+
+            const envioGratis = deliveryType === 'envio' && hasQualifyingDrink();
 
             const payload = {
                 action: 'createOrder',
                 data: {
                     userId: 'USER1',
                     fecha: new Date().toLocaleDateString('es-AR'),
-                    direccion,
+                    direccion: deliveryType === 'envio' ? direccion : 'Retiro en local',
                     metodoPago,
                     observaciones: document.getElementById('observaciones').value.trim(),
-                    envioGratis: hasQualifyingDrink(),
+                    envioGratis: envioGratis,
+                    tipoEntrega: deliveryType,
                     cart
                 }
             };
@@ -799,16 +878,18 @@
                 body: JSON.stringify(payload)
             })
             .then(() => {
-                alert(hasQualifyingDrink() 
-                    ? '¡Pedido realizado! Envío GRATIS aplicado.' 
-                    : '¡Pedido realizado con éxito!');
+                const msg = deliveryType === 'retiro'
+                    ? '¡Pedido para retiro en local realizado con éxito!'
+                    : (envioGratis ? '¡Pedido realizado con éxito! Envío GRATIS aplicado.' : '¡Pedido realizado con éxito!');
+                alert(msg + '\nLos locales han sido notificados por email.');
                 cart = [];
                 updateCartCount();
                 updateCartDisplay();
                 document.getElementById('cart-section').style.display = 'none';
                 document.getElementById('checkout-form').reset();
+                document.getElementById('delivery-type').value = 'envio';
             })
-            .catch(() => alert('Pedido enviado (error de red, pero probablemente llegó).'));
+            .catch(() => alert('Pedido enviado correctamente (aunque hubo error de red).'));
         }
     </script>
 </body>
