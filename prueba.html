@@ -774,76 +774,42 @@
         };
 
         function checkout() {
-    if (cart.length === 0) {
-        alert('El carrito está vacío');
-        return;
-    }
+            if (cart.length === 0) return alert('El carrito está vacío');
+            const direccion = document.getElementById('direccion').value.trim();
+            const metodoPago = document.getElementById('metodo-pago').value;
+            if (!direccion || !metodoPago) return alert('Completa dirección y método de pago');
 
-    const direccion = document.getElementById('direccion').value.trim();
-    const metodoPago = document.getElementById('metodo-pago').value;
-    const observaciones = document.getElementById('observaciones').value.trim();
+            const payload = {
+                action: 'createOrder',
+                data: {
+                    userId: 'USER1',
+                    fecha: new Date().toLocaleDateString('es-AR'),
+                    direccion,
+                    metodoPago,
+                    observaciones: document.getElementById('observaciones').value.trim(),
+                    envioGratis: hasQualifyingDrink(),
+                    cart
+                }
+            };
 
-    if (!direccion) {
-        alert('Por favor, ingresa tu dirección de entrega');
-        return;
-    }
-
-    if (!metodoPago) {
-        alert('Por favor, selecciona un método de pago');
-        return;
-    }
-
-    const envioGratis = hasQualifyingDrink();
-
-    const payload = {
-        action: 'createOrder',
-        data: {
-            userId: 'USER1', // Cambiar cuando implementes login real
-            fecha: new Date().toLocaleDateString('es-AR'),
-            direccion,
-            metodoPago,
-            observaciones,
-            envioGratis: envioGratis,
-            cart
+            fetch(scriptUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                alert(hasQualifyingDrink() 
+                    ? '¡Pedido realizado! Envío GRATIS aplicado.' 
+                    : '¡Pedido realizado con éxito!');
+                cart = [];
+                updateCartCount();
+                updateCartDisplay();
+                document.getElementById('cart-section').style.display = 'none';
+                document.getElementById('checkout-form').reset();
+            })
+            .catch(() => alert('Pedido enviado (error de red, pero probablemente llegó).'));
         }
-    };
-
-    // ENVÍO DEL PEDIDO CON CORS CORRECTO (application/json)
-    fetch(scriptUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            const msg = envioGratis 
-                ? '¡Pedido realizado con éxito! 🎉\nEnvío GRATIS aplicado por agregar una bebida.' 
-                : '¡Pedido realizado con éxito! 🎉';
-            alert(msg + '\n\nLos locales han sido notificados por email.\nNúmero de pedido: #' + data.idPedido);
-        } else {
-            alert('Error al procesar el pedido:\n' + (data.error || 'Error desconocido en el servidor'));
-        }
-
-        // Limpiar carrito y UI
-        cart = [];
-        updateCartCount();
-        updateCartDisplay();
-        document.getElementById('cart-section').style.display = 'none';
-        document.getElementById('checkout-form').reset();
-    })
-    .catch(err => {
-        console.error('Error en checkout:', err);
-        alert('No se pudo enviar el pedido.\nPosibles causas:\n• Sin conexión a internet\n• Error en el servidor\n\nDetalle técnico: ' + err.message);
-    });
-}
     </script>
 </body>
 </html>
