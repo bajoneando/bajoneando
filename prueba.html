@@ -676,14 +676,15 @@
         </div>
     </div>
 
-    <!-- Register Modal -->
+    <!-- Register Modal - CORREGIDO: ahora incluye el campo dirección -->
     <div id="register-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal('register-modal')">&times;</span>
             <h2>Registro</h2>
-            <input type="text" id="register-name" placeholder="Nombre" required>
+            <input type="text" id="register-name" placeholder="Nombre completo" required>
             <input type="email" id="register-email" placeholder="Correo electrónico" required>
             <input type="password" id="register-password" placeholder="Contraseña" required>
+            <input type="text" id="register-address" placeholder="Dirección (opcional)">
             <button onclick="registerUser()">Registrarse</button>
             <p>¿Ya tienes cuenta? <a onclick="switchToLogin()">Inicia sesión</a></p>
         </div>
@@ -707,142 +708,101 @@
             loadAllDrinks();
         });
 
-        function checkLoginStatus() {
-            userId = localStorage.getItem('userId');
-            userAddress = localStorage.getItem('userAddress') || '';
-            if (userId) {
-                isLoggedIn = true;
-                document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
-            } else {
-                isLoggedIn = false;
-                document.getElementById('profile-link').textContent = 'Iniciar Sesión';
-            }
-            document.getElementById('profile-link').onclick = () => {
-                if (isLoggedIn) {
-                    logoutUser();
-                } else {
-                    showModal('login-modal');
-                }
-            };
-        }
-
-        function showModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        function switchToRegister() {
-            closeModal('login-modal');
-            showModal('register-modal');
-        }
-
-        function switchToLogin() {
-            closeModal('register-modal');
-            showModal('login-modal');
-        }
-
+        // ==================== REGISTRO CORREGIDO ====================
         function registerUser() {
-    // Obtener elementos de forma segura
-    const nameInput = document.getElementById('register-name');
-    const emailInput = document.getElementById('register-email');
-    const passwordInput = document.getElementById('register-password');
-    const addressInput = document.getElementById('register-address');
+            const nameInput = document.getElementById('register-name');
+            const emailInput = document.getElementById('register-email');
+            const passwordInput = document.getElementById('register-password');
+            const addressInput = document.getElementById('register-address'); // Ahora existe
 
-    // Verificar que todos los elementos existan
-    if (!nameInput || !emailInput || !passwordInput) {
-        alert('Error: No se encontraron los campos del formulario de registro.');
-        console.error('Uno o más elementos del registro no existen en el DOM');
-        return;
-    }
-
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-    const address = addressInput ? addressInput.value.trim() : '';
-
-    if (!name || !email || !password) {
-        alert('Por favor, completa los campos obligatorios: Nombre, Email y Contraseña.');
-        return;
-    }
-
-    // Llamada al backend usando GET (action=register)
-    const url = `${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&address=${encodeURIComponent(address)}`;
-
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
-                switchToLogin();
-                // Opcional: limpiar campos
-                nameInput.value = '';
-                emailInput.value = '';
-                passwordInput.value = '';
-                if (addressInput) addressInput.value = '';
-            } else {
-                alert(data.message || 'Error en el registro. Intenta con otro email.');
+            if (!nameInput || !emailInput || !passwordInput) {
+                alert('Error interno: campos no encontrados.');
+                return;
             }
-        })
-        .catch(err => {
-            console.error('Error de red:', err);
-            alert('Error de conexión. Revisa tu internet e intenta de nuevo.');
-        });
-}
 
-function loginUser() {
-    const emailInput = document.getElementById('login-email');
-    const passwordInput = document.getElementById('login-password');
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            const address = addressInput ? addressInput.value.trim() : '';
 
-    if (!emailInput || !passwordInput) {
-        alert('Error: No se encontraron los campos del formulario de login.');
-        console.error('Elementos de login no encontrados');
-        return;
-    }
-
-    const email = emailInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!email || !password) {
-        alert('Por favor, ingresa email y contraseña.');
-        return;
-    }
-
-    const url = `${scriptUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                localStorage.setItem('userId', data.userId);
-                localStorage.setItem('userAddress', data.address || '');
-                isLoggedIn = true;
-                userId = data.userId;
-                userAddress = data.address || '';
-
-                // Actualizar UI
-                document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
-                document.getElementById('profile-link').onclick = logoutUser;
-
-                closeModal('login-modal');
-                alert('¡Bienvenido de nuevo!');
-
-                // Prellenar dirección en checkout si existe
-                const direccionInput = document.getElementById('direccion');
-                if (direccionInput && userAddress) {
-                    direccionInput.value = userAddress;
-                }
-            } else {
-                alert(data.message || 'Email o contraseña incorrectos.');
+            if (!name || !email || !password) {
+                alert('Por favor completa: Nombre, Email y Contraseña.');
+                return;
             }
-        })
-        .catch(err => {
-            console.error('Error de red:', err);
-            alert('Error de conexión. Revisa tu internet.');
-        });
-}
+
+            const url = `${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&address=${encodeURIComponent(address)}`;
+
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('¡Registro exitoso! Ahora inicia sesión.');
+                        // Limpiar campos
+                        nameInput.value = '';
+                        emailInput.value = '';
+                        passwordInput.value = '';
+                        if (addressInput) addressInput.value = '';
+                        switchToLogin();
+                    } else {
+                        alert(data.message || 'Error al registrar. Puede que el email ya exista.');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error de conexión. Intenta nuevamente.');
+                });
+        }
+
+        // ==================== LOGIN ====================
+        function loginUser() {
+            const emailInput = document.getElementById('login-email');
+            const passwordInput = document.getElementById('login-password');
+
+            if (!emailInput || !passwordInput) {
+                alert('Error interno: campos no encontrados.');
+                return;
+            }
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!email || !password) {
+                alert('Ingresa email y contraseña.');
+                return;
+            }
+
+            const url = `${scriptUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        localStorage.setItem('userId', data.userId);
+                        localStorage.setItem('userAddress', data.address || '');
+                        isLoggedIn = true;
+                        userId = data.userId;
+                        userAddress = data.address || '';
+
+                        document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
+                        document.getElementById('profile-link').onclick = logoutUser;
+
+                        closeModal('login-modal');
+                        alert('¡Bienvenido de nuevo!');
+
+                        // Prellenar dirección guardada
+                        const dirInput = document.getElementById('direccion');
+                        if (dirInput && userAddress) {
+                            dirInput.value = userAddress;
+                        }
+                    } else {
+                        alert(data.message || 'Email o contraseña incorrectos.');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error de conexión.');
+                });
+        }
 
         function logoutUser() {
             localStorage.removeItem('userId');
@@ -854,7 +814,7 @@ function loginUser() {
             updateCartCount();
             updateCartDisplay();
             checkLoginStatus();
-            alert('Sesión cerrada correctamente.');
+            alert('Sesión cerrada.');
         }
 
         function loadAllDrinks() {
