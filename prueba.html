@@ -745,55 +745,104 @@
         }
 
         function registerUser() {
-            const name = document.getElementById('register-name').value.trim();
-            const email = document.getElementById('register-email').value.trim();
-            const password = document.getElementById('register-password').value.trim();
-            const address = document.getElementById('register-address').value.trim();
-            if (!name || !email || !password) {
-                alert('Por favor, completa los campos obligatorios (Nombre, Email, Contraseña).');
-                return;
-            }
-            const url = `${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&address=${encodeURIComponent(address)}`;
-            fetch(url)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('¡Registro exitoso! Ahora inicia sesión.');
-                        switchToLogin();
-                    } else {
-                        alert(data.message || 'Error en el registro (posiblemente email ya existe).');
-                    }
-                })
-                .catch(() => alert('Error de conexión al registrar.'));
-        }
+    // Obtener elementos de forma segura
+    const nameInput = document.getElementById('register-name');
+    const emailInput = document.getElementById('register-email');
+    const passwordInput = document.getElementById('register-password');
+    const addressInput = document.getElementById('register-address');
 
-        function loginUser() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-            if (!email || !password) {
-                alert('Por favor, completa email y contraseña.');
-                return;
+    // Verificar que todos los elementos existan
+    if (!nameInput || !emailInput || !passwordInput) {
+        alert('Error: No se encontraron los campos del formulario de registro.');
+        console.error('Uno o más elementos del registro no existen en el DOM');
+        return;
+    }
+
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    const address = addressInput ? addressInput.value.trim() : '';
+
+    if (!name || !email || !password) {
+        alert('Por favor, completa los campos obligatorios: Nombre, Email y Contraseña.');
+        return;
+    }
+
+    // Llamada al backend usando GET (action=register)
+    const url = `${scriptUrl}?action=register&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&address=${encodeURIComponent(address)}`;
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
+                switchToLogin();
+                // Opcional: limpiar campos
+                nameInput.value = '';
+                emailInput.value = '';
+                passwordInput.value = '';
+                if (addressInput) addressInput.value = '';
+            } else {
+                alert(data.message || 'Error en el registro. Intenta con otro email.');
             }
-            const url = `${scriptUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
-            fetch(url)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        localStorage.setItem('userId', data.userId);
-                        localStorage.setItem('userAddress', data.address || '');
-                        isLoggedIn = true;
-                        userId = data.userId;
-                        userAddress = data.address || '';
-                        checkLoginStatus();
-                        closeModal('login-modal');
-                        alert('¡Bienvenido de nuevo!');
-                        document.getElementById('direccion').value = userAddress;
-                    } else {
-                        alert(data.message || 'Email o contraseña incorrectos.');
-                    }
-                })
-                .catch(() => alert('Error de conexión al iniciar sesión.'));
-        }
+        })
+        .catch(err => {
+            console.error('Error de red:', err);
+            alert('Error de conexión. Revisa tu internet e intenta de nuevo.');
+        });
+}
+
+function loginUser() {
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
+
+    if (!emailInput || !passwordInput) {
+        alert('Error: No se encontraron los campos del formulario de login.');
+        console.error('Elementos de login no encontrados');
+        return;
+    }
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    if (!email || !password) {
+        alert('Por favor, ingresa email y contraseña.');
+        return;
+    }
+
+    const url = `${scriptUrl}?action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                localStorage.setItem('userId', data.userId);
+                localStorage.setItem('userAddress', data.address || '');
+                isLoggedIn = true;
+                userId = data.userId;
+                userAddress = data.address || '';
+
+                // Actualizar UI
+                document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
+                document.getElementById('profile-link').onclick = logoutUser;
+
+                closeModal('login-modal');
+                alert('¡Bienvenido de nuevo!');
+
+                // Prellenar dirección en checkout si existe
+                const direccionInput = document.getElementById('direccion');
+                if (direccionInput && userAddress) {
+                    direccionInput.value = userAddress;
+                }
+            } else {
+                alert(data.message || 'Email o contraseña incorrectos.');
+            }
+        })
+        .catch(err => {
+            console.error('Error de red:', err);
+            alert('Error de conexión. Revisa tu internet.');
+        });
+}
 
         function logoutUser() {
             localStorage.removeItem('userId');
