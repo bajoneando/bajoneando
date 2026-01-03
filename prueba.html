@@ -269,12 +269,28 @@
         .cart-item span {
             flex: 1;
         }
-        .cart-total {
+
+        /* Nuevos estilos para resumen de precios */
+        .price-summary {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+        .price-line {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 1.1em;
+        }
+        .price-line.total {
             font-weight: bold;
-            text-align: right;
-            margin-top: 15px;
             font-size: 1.4em;
             color: #d32f2f;
+            border-top: 2px solid #ddd;
+            padding-top: 15px;
+            margin-top: 10px;
         }
         .free-shipping-msg {
             background-color: #e8f5e8;
@@ -289,51 +305,38 @@
         .add-drink-msg {
             background-color: #fff3e0;
             color: #ef6c00;
-            padding: 15px;
+            padding: 12px;
             border-radius: 8px;
             text-align: center;
             font-weight: 600;
             margin: 15px 0;
             border: 1px solid #ffe0b2;
         }
-        .add-drink-btn {
-            background-color: #d32f2f;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 12px;
-            font-size: 16px;
-        }
-        .add-drink-btn:hover {
-            background-color: #b71c1c;
-        }
 
-        /* Selector envío / retiro */
+        /* Selector de envío */
         .delivery-option {
-            margin: 15px 0;
-            padding: 12px;
+            margin: 20px 0;
+            padding: 15px;
             background-color: #f0f0f0;
-            border-radius: 8px;
-            text-align: center;
+            border-radius: 10px;
         }
         .delivery-option label {
             font-weight: 600;
-            margin-right: 15px;
-            color: #333;
+            font-size: 1.1em;
+            display: block;
+            margin-bottom: 10px;
         }
         .delivery-option select {
-            padding: 10px;
-            font-size: 16px;
+            width: 100%;
+            padding: 12px;
             border-radius: 8px;
             border: 1px solid #ccc;
+            font-size: 16px;
         }
 
-        /* Panel de bebidas */
+        /* Panel de bebidas - ahora debajo del total */
         .drinks-panel {
-            margin: 20px 0;
+            margin: 30px 0 10px 0;
             padding: 15px;
             background-color: #f8fafc;
             border-radius: 12px;
@@ -514,7 +517,34 @@
             <h2>Tu Carrito</h2>
             <div id="free-shipping-notice"></div>
 
-            <!-- Panel de bebidas -->
+            <div id="cart-items"></div>
+
+            <!-- Selector de envío -->
+            <div class="delivery-option">
+                <label for="delivery-type">Tipo de entrega</label>
+                <select id="delivery-type">
+                    <option value="envio">Con envío a domicilio</option>
+                    <option value="retiro">Retirar en local</option>
+                </select>
+            </div>
+
+            <!-- Resumen de precios -->
+            <div class="price-summary">
+                <div class="price-line">
+                    <span>Subtotal productos</span>
+                    <span id="subtotal">$0</span>
+                </div>
+                <div class="price-line">
+                    <span>Envío</span>
+                    <span id="shipping-cost">$500</span>
+                </div>
+                <div class="price-line total">
+                    <span>Total a pagar</span>
+                    <span id="final-total">$500</span>
+                </div>
+            </div>
+
+            <!-- Panel de bebidas debajo del total -->
             <div id="drinks-panel" class="drinks-panel" style="display:none;">
                 <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
                 <div class="drinks-carousel">
@@ -524,20 +554,8 @@
                 </div>
             </div>
 
-            <!-- Selector de entrega -->
-            <div class="delivery-option">
-                <label for="delivery-type">Tipo de entrega:</label>
-                <select id="delivery-type">
-                    <option value="envio">Con envío</option>
-                    <option value="retiro">Retirar en local</option>
-                </select>
-            </div>
-
-            <div id="cart-items"></div>
-            <div class="cart-total" id="cart-total">Total: $0</div>
-
             <form id="checkout-form">
-                <input type="text" id="direccion" placeholder="Dirección de entrega" required>
+                <input type="text" id="direccion" placeholder="Dirección de entrega (solo si eliges envío)" required>
                 <select id="metodo-pago" required>
                     <option value="">Método de pago</option>
                     <option value="Tarjeta">Tarjeta</option>
@@ -557,22 +575,20 @@
 
         const bebidaCategoriasCalifican = ["Gaseosas", "Agua Saborizada", "Cervezas"];
         const CATEGORIA_BEBIDAS = "Bebidas";
+        const COSTO_ENVIO = 500; // Cambia este valor si el envío cuesta otro monto
 
         window.addEventListener('load', () => {
             loadFilters();
             setupSearch();
             setupCart();
             loadAllDrinks();
-
-            // Escuchar cambios en el selector de entrega
-            document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
         });
 
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
                 .then(data => {
-                    allDrinks = (data.menus || []).filter(menu =>
+                    allDrinks = (data.menus || []).filter(menu => 
                         menu.categoria && menu.categoria.trim() === CATEGORIA_BEBIDAS
                     );
                 })
@@ -674,12 +690,17 @@
             container.innerHTML = `<div class="error-message">¡Ups! ${msg}</div>`;
         }
 
+        // Carrito
         function setupCart() {
             document.getElementById('cart-icon').onclick = () => {
                 const sec = document.getElementById('cart-section');
                 sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
                 updateCartDisplay();
             };
+
+            // Escuchar cambio en tipo de entrega
+            document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
+
             document.getElementById('checkout-btn').onclick = checkout;
         }
 
@@ -714,14 +735,32 @@
             return cart.some(item => bebidaCategoriasCalifican.includes(item.categoria));
         }
 
+        function calculatePrices() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.precioUnitario * item.cantidad), 0);
+            const deliveryType = document.getElementById('delivery-type').value;
+            const hasDrink = hasQualifyingDrink();
+
+            let shipping = 0;
+            if (deliveryType === 'envio') {
+                shipping = hasDrink ? 0 : COSTO_ENVIO;
+            } else {
+                shipping = 0; // Retiro en local
+            }
+
+            const total = subtotal + shipping;
+
+            return { subtotal, shipping, total, hasDrink, deliveryType };
+        }
+
         function updateCartDisplay() {
             const itemsContainer = document.getElementById('cart-items');
             const notice = document.getElementById('free-shipping-notice');
             const drinksPanel = document.getElementById('drinks-panel');
+
             itemsContainer.innerHTML = '';
             notice.innerHTML = '';
 
-            let total = 0;
+            let subtotal = 0;
             cart.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = 'cart-item';
@@ -731,47 +770,45 @@
                     <button onclick="removeFromCart(${idx})">Eliminar</button>
                 `;
                 itemsContainer.appendChild(div);
-                total += item.precioUnitario * item.cantidad;
+                subtotal += item.precioUnitario * item.cantidad;
             });
 
-            document.getElementById('cart-total').textContent = `Total: $${total.toFixed(0)}`;
+            const prices = calculatePrices();
 
-            const deliveryType = document.getElementById('delivery-type').value;
+            document.getElementById('subtotal').textContent = `$${prices.subtotal}`;
+            document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping}`;
+            document.getElementById('final-total').textContent = `$${prices.total}`;
 
-            if (cart.length === 0) {
-                drinksPanel.style.display = 'none';
-                return;
-            }
-
-            if (deliveryType === 'retiro') {
-                notice.innerHTML = `<div class="free-shipping-msg">Retiro en local seleccionado — ¡Sin costo de envío!</div>`;
-                drinksPanel.style.display = 'none';
-            } else {
-                // Modo envío
-                if (hasQualifyingDrink()) {
-                    notice.innerHTML = `<div class="free-shipping-msg">¡Felicitaciones! Obtuviste ENVÍO GRATIS por agregar una bebida.</div>`;
+            // Mensajes y panel de bebidas
+            if (cart.length > 0) {
+                if (prices.shipping === 0) {
+                    if (prices.deliveryType === 'retiro') {
+                        notice.innerHTML = `<div class="free-shipping-msg">¡Retiro en local seleccionado! Sin costo de envío.</div>`;
+                    } else {
+                        notice.innerHTML = `<div class="free-shipping-msg">¡Felicitaciones! Obtuviste ENVÍO GRATIS por agregar una bebida.</div>`;
+                    }
                     drinksPanel.style.display = 'none';
                 } else {
-                    notice.innerHTML = `
-                        <div class="add-drink-msg">
-                            Obtené ENVÍO GRATIS añadiendo una bebida a tu pedido<br>
-                            <strong>Gaseosas • Agua Saborizada • Cervezas</strong><br>
-                            <button class="add-drink-btn" id="show-drinks-btn">Agregar Bebida</button>
-                        </div>
-                    `;
+                    notice.innerHTML = `<div class="add-drink-msg">Obtené ENVÍO GRATIS añadiendo una bebida a tu pedido<br><strong>Gaseosas • Agua Saborizada • Cervezas</strong></div>`;
                     drinksPanel.style.display = 'block';
                     renderDrinksCarousel();
-
-                    // Evento del botón "Agregar Bebida"
-                    const btn = document.getElementById('show-drinks-btn');
-                    if (btn) {
-                        btn.onclick = () => {
-                            drinksPanel.style.display = 'block';
-                            renderDrinksCarousel();
-                            drinksPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        };
-                    }
                 }
+            } else {
+                drinksPanel.style.display = 'none';
+                document.getElementById('subtotal').textContent = '$0';
+                document.getElementById('shipping-cost').textContent = '$0';
+                document.getElementById('final-total').textContent = '$0';
+            }
+
+            // Ocultar dirección si es retiro
+            const direccionInput = document.getElementById('direccion');
+            if (prices.deliveryType === 'retiro') {
+                direccionInput.placeholder = "No es necesario (retirás en local)";
+                direccionInput.required = false;
+                direccionInput.value = "";
+            } else {
+                direccionInput.placeholder = "Dirección de entrega";
+                direccionInput.required = true;
             }
         }
 
@@ -853,16 +890,19 @@
             if (deliveryType === 'envio' && !direccion) {
                 return alert('Por favor ingresa la dirección de entrega');
             }
-            if (!metodoPago) return alert('Selecciona un método de pago');
+            if (!metodoPago) {
+                return alert('Selecciona un método de pago');
+            }
 
-            const envioGratis = deliveryType === 'envio' && hasQualifyingDrink();
+            const prices = calculatePrices();
+            const envioGratis = prices.shipping === 0;
 
             const payload = {
                 action: 'createOrder',
                 data: {
                     userId: 'USER1',
                     fecha: new Date().toLocaleDateString('es-AR'),
-                    direccion: deliveryType === 'envio' ? direccion : 'Retiro en local',
+                    direccion: deliveryType === 'retiro' ? 'Retiro en local' : direccion,
                     metodoPago,
                     observaciones: document.getElementById('observaciones').value.trim(),
                     envioGratis: envioGratis,
@@ -878,10 +918,10 @@
                 body: JSON.stringify(payload)
             })
             .then(() => {
-                const msg = deliveryType === 'retiro'
-                    ? '¡Pedido para retiro en local realizado con éxito!'
-                    : (envioGratis ? '¡Pedido realizado con éxito! Envío GRATIS aplicado.' : '¡Pedido realizado con éxito!');
-                alert(msg + '\nLos locales han sido notificados por email.');
+                const msg = envioGratis
+                    ? (deliveryType === 'retiro' ? '¡Pedido para retiro en local confirmado!' : '¡Pedido con ENVÍO GRATIS confirmado!')
+                    : '¡Pedido realizado con éxito!';
+                alert(msg);
                 cart = [];
                 updateCartCount();
                 updateCartDisplay();
@@ -889,7 +929,7 @@
                 document.getElementById('checkout-form').reset();
                 document.getElementById('delivery-type').value = 'envio';
             })
-            .catch(() => alert('Pedido enviado correctamente (aunque hubo error de red).'));
+            .catch(() => alert('Pedido enviado correctamente (posible error de red).'));
         }
     </script>
 </body>
