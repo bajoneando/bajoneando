@@ -664,31 +664,34 @@
         </div>
     </footer>
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('login-modal')">&times;</span>
-            <h2>Iniciar Sesión</h2>
-            <input type="email" id="login-email" placeholder="Correo electrónico" required>
-            <input type="password" id="login-password" placeholder="Contraseña" required>
-            <button onclick="loginUser()">Entrar</button>
-            <p>¿No tienes cuenta? <a onclick="switchToRegister()">Regístrate</a></p>
-        </div>
+    <!-- ==================== MODAL REGISTRO ==================== -->
+  <div id="register-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('register-modal')">&times;</span>
+      <h2>Crear cuenta</h2>
+      <input type="text" id="register-name" placeholder="Nombre completo" required />
+      <input type="email" id="register-email" placeholder="Email" required />
+      <input type="password" id="register-password" placeholder="Contraseña" required />
+      <input type="text" id="register-address" placeholder="Dirección de entrega (opcional)" />
+      <button onclick="registerUser()">Registrarme</button>
+      <p>¿Ya tienes cuenta? <a href="#" onclick="switchToLogin()">Inicia sesión</a></p>
     </div>
+  </div>
 
-    <!-- Register Modal - CORREGIDO: ahora incluye el campo dirección -->
-    <div id="register-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('register-modal')">&times;</span>
-            <h2>Registro</h2>
-            <input type="text" id="register-name" placeholder="Nombre completo" required>
-            <input type="email" id="register-email" placeholder="Correo electrónico" required>
-            <input type="password" id="register-password" placeholder="Contraseña" required>
-            <input type="text" id="register-address" placeholder="Dirección (opcional)">
-            <button onclick="registerUser()">Registrarse</button>
-            <p>¿Ya tienes cuenta? <a onclick="switchToLogin()">Inicia sesión</a></p>
-        </div>
+  <!-- ==================== MODAL LOGIN ==================== -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('login-modal')">&times;</span>
+      <h2>Iniciar sesión</h2>
+      <input type="email" id="login-email" placeholder="Email" required />
+      <input type="password" id="login-password" placeholder="Contraseña" required />
+      <button onclick="loginUser()">Entrar</button>
+      <p>¿No tienes cuenta? <a href="#" onclick="switchToRegister()">Regístrate</a></p>
     </div>
+  </div>
+
+  <!-- Enlace de perfil (ejemplo) -->
+  <a href="#" id="profile-link" onclick="switchToLogin()">Iniciar sesión</a>
 
     <script>
         const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
