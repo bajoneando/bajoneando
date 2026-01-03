@@ -283,13 +283,40 @@
         </div>
       </div>
 
-      <!-- MIS PEDIDOS -->
+      <!-- MIS PEDIDOS - CON PESTAÑAS -->
       <div id="pedidos-panel" class="d-none">
         <h2 class="mb-4 text-rojo text-center">Mis Pedidos</h2>
-        <div id="pedidos-listado">
-          <div class="text-center py-5 loading">
-            <div class="spinner-border text-danger" role="status"></div>
-            <p class="mt-3">Cargando pedidos...</p>
+
+        <!-- Pestañas -->
+        <ul class="nav nav-tabs mb-4" id="pedidosTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="proceso-tab" data-bs-toggle="tab" data-bs-target="#proceso" type="button" role="tab">
+              Pedidos en Proceso
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="finalizados-tab" data-bs-toggle="tab" data-bs-target="#finalizados" type="button" role="tab">
+              Pedidos Finalizados
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+          <!-- Pestaña En Proceso -->
+          <div class="tab-pane fade show active" id="proceso" role="tabpanel">
+            <div class="mb-3 text-center">
+              <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" id="filtro-pendientes">Pendientes</button>
+                <button type="button" class="btn btn-outline-primary" id="filtro-listos">Listos</button>
+                <button type="button" class="btn btn-outline-primary" id="filtro-todos-proceso">Todos</button>
+              </div>
+            </div>
+            <div id="pedidos-proceso-listado"></div>
+          </div>
+
+          <!-- Pestaña Finalizados -->
+          <div class="tab-pane fade" id="finalizados" role="tabpanel">
+            <div id="pedidos-finalizados-listado"></div>
           </div>
         </div>
       </div>
