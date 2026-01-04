@@ -1,1362 +1,903 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weep - Plataforma de Comidas</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-    * { box-sizing: border-box; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weep - Panel de Gestión</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
     body {
-        font-family: 'Poppins', sans-serif;
-        margin: 0;
-        padding: 0;
-        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
-    /* Header */
-    header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #fff;
-        padding: 12px 15px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        border-radius: 0 0 20px 20px;
-        flex-wrap: wrap;
-        gap: 10px;
+    .container { max-width: 1200px; flex: 1; }
+    h1, h2, h3, h5 { font-weight: 600; color: #c62828; }
+    .text-rojo { color: #d32f2f; }
+    .btn-rojo { background-color: #d32f2f; border: none; }
+    .btn-rojo:hover { background-color: #b71c1c; }
+    .header {
+      background: white;
+      padding: 2rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      border-radius: 0 0 20px 20px;
+      margin-bottom: 3rem;
     }
-    .logo {
-        height: 65px;
+    .logo-plataforma {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
     }
-    .logo img {
-        height: 100%;
-        object-fit: contain;
+    .logo-perfil-sm {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 3px solid #d32f2f;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     }
-    .search-bar {
-        flex: 1;
-        min-width: 200px;
-        max-width: 500px;
-        margin: 0 10px;
+    .logo-perfil-placeholder {
+      width: 50px;
+      height: 50px;
+      background: #f5f5f5;
+      border: 3px dashed #d32f2f;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: #999;
     }
-    .search-bar input {
-        width: 100%;
-        padding: 12px 15px;
-        border: 1px solid #ccc;
-        border-radius: 30px;
-        font-size: 15px;
-        outline: none;
+    .status-toggle-sm {
+      width: 70px; height: 36px; position: relative; display: inline-block;
     }
-    .header-right {
-        display: flex;
-        align-items: center;
-        gap: 15px;
+    .status-toggle-sm input { opacity: 0; width: 0; height: 0; }
+    .status-slider-sm {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s; border-radius: 34px;
     }
-    .profile {
-        font-size: 15px;
-        font-weight: 500;
-        color: #333;
-        white-space: nowrap;
-        cursor: pointer;
+    .status-slider-sm:before {
+      position: absolute; content: ""; height: 28px; width: 28px;
+      left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
     }
-    .cart-icon {
-        position: relative;
-        cursor: pointer;
+    input:checked + .status-slider-sm { background-color: #27ae60; }
+    input:checked + .status-slider-sm:before { transform: translateX(34px); }
+    .menu-card-horizontal {
+      display: flex; align-items: center; background: white; border-radius: 16px;
+      overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s ease;
+      margin-bottom: 1rem;
     }
-    .cart-icon span {
-        font-size: 28px;
+    .menu-card-horizontal:hover {
+      transform: translateY(-5px); box-shadow: 0 15px 35px rgba(211,47,47,0.2);
     }
-    .cart-count {
-        position: absolute;
-        top: -8px;
-        right: -10px;
-        background-color: #d32f2f;
-        color: white;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
+    .menu-card-horizontal img {
+      width: 120px; height: 120px; object-fit: cover;
     }
-    main {
-        flex: 1;
-        max-width: 1200px;
-        margin: 20px auto;
-        padding: 0 15px;
+    .card-body-horizontal { padding: 1.5rem; flex: 1; }
+    .precio { font-size: 1.8rem; font-weight: 700; color: #d32f2f; }
+    .loading { color: #d32f2f; font-weight: 600; }
+    .pedido-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
     }
-    h1 {
-        text-align: center;
-        color: #c62828;
-        font-size: 1.8rem;
-        margin: 20px 0;
+    .pedido-header {
+      background: #d32f2f;
+      color: white;
+      padding: 1rem 1.5rem;
     }
-    h2 {
-        text-align: center;
-        color: #c62828;
-        font-size: 1.5rem;
-        margin: 30px 0 20px;
+    .pedido-body {
+      padding: 1.5rem;
     }
-    /* Categorías */
-    .categories {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-bottom: 40px;
+    .item-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
-    .category {
-        width: 140px;
-        height: 140px;
-        background-size: cover;
-        background-position: center;
-        border-radius: 16px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        cursor: pointer;
-        transition: transform 0.3s ease;
+    .item-list li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
     }
-    .category::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
-        border-radius: 16px;
+    .item-list li:last-child { border-bottom: none; }
+    .estado-badge {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
     }
-    .category span {
-        position: absolute;
-        bottom: 12px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        color: white;
-        font-weight: bold;
-        font-size: 17px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.7);
-        z-index: 1;
-    }
-    .category:hover, .category:active {
-        transform: scale(1.05);
-    }
-    /* Sugerencias y Menú */
-    .suggestion-items, .menu-items {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 18px;
-    }
-    /* === SUGERENCIAS DE LOCALES MÁS PEQUEÑAS === */
-    .suggestion {
-        width: 150px;
-        height: 150px;
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        cursor: pointer;
-        transition: transform 0.3s ease;
-    }
-    .suggestion:hover, .suggestion:active {
-        transform: scale(1.05);
-    }
-    .suggestion img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    /* Tarjetas de menú - versión desktop */
-    .menu-item {
-        width: 100%;
-        max-width: 260px;
-        background: white;
-        border-radius: 18px;
-        padding: 12px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        text-align: center;
-        transition: transform 0.3s ease;
-    }
-    .menu-item:hover, .menu-item:active {
-        transform: translateY(-8px);
-    }
-    .menu-item img {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-        border-radius: 12px;
-    }
-    .menu-item h3 {
-        margin: 10px 0 6px;
-        font-size: 1.1rem;
-        color: #333;
-    }
-    .menu-item p {
-        color: #666;
-        margin: 4px 0;
-        font-size: 0.95rem;
-    }
-    .menu-item p:last-of-type {
-        font-size: 1.4rem;
-        font-weight: bold;
-        color: #d32f2f;
-        margin: 8px 0;
-    }
-    .menu-item button {
-        width: 100%;
-        padding: 12px;
-        background-color: #d32f2f;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.3s;
-    }
-    .menu-item button:hover, .menu-item button:active {
-        background-color: #b71c1c;
-    }
-    /* Carrito */
-    #cart-section {
-        display: none;
-        background: white;
-        border-radius: 18px;
-        padding: 20px;
-        margin-top: 30px;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    }
-    .delivery-option select {
-        width: 100%;
-        padding: 14px;
-        border-radius: 12px;
-        border: 1px solid #ccc;
-        font-size: 16px;
-        margin-bottom: 20px;
-    }
-    .cart-item {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        padding: 16px 0;
-        border-bottom: 1px solid #eee;
-    }
-    .cart-item-left {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-    }
-    .cart-item-name {
-        font-weight: 500;
-        font-size: 1.1rem;
-    }
-    .quantity-controls {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-    .quantity-btn {
-        width: 40px;
-        height: 40px;
-        background: #d32f2f;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        font-size: 20px;
-        cursor: pointer;
-    }
-    .quantity {
-        font-size: 1.2rem;
-        font-weight: bold;
-        min-width: 50px;
-        text-align: center;
-    }
-    .cart-item-price {
-        font-weight: bold;
-        font-size: 1.2rem;
-    }
-    .remove-btn {
-        background: #ff5252;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 8px;
-        cursor: pointer;
-    }
-    .price-line {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 0;
-        font-size: 1.1rem;
-    }
-    .price-line.total {
-        font-size: 1.6rem;
-        font-weight: bold;
-        color: #d32f2f;
-        border-top: 2px solid #ddd;
-        padding-top: 20px;
-        margin-top: 15px;
-    }
-    .free-shipping-msg {
-        background: #e8f5e8;
-        color: #2e7d32;
-        padding: 16px;
-        border-radius: 12px;
-        text-align: center;
-        font-weight: 600;
-        margin: 15px 0;
-        font-size: 1.1rem;
-    }
-    /* Carousel de bebidas */
-    .drinks-panel {
-        margin: 30px 0;
-    }
-    .drinks-carousel {
-        position: relative;
-        overflow: hidden;
-        border-radius: 12px;
-    }
-    .drinks-container {
-        display: flex;
-        transition: transform 0.4s ease;
-        gap: 12px;
-        padding: 10px 0;
-    }
-    .drink-card {
-        flex: 0 0 calc(80% - 12px);
-        background: white;
-        border-radius: 14px;
-        overflow: hidden;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-        text-align: center;
-    }
-    .drink-card img {
-        width: 100%;
-        height: 140px;
-        object-fit: cover;
-    }
-    .drink-card h4 {
-        margin: 12px 10px 6px;
-        font-size: 1rem;
-    }
-    .drink-card .price {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #d32f2f;
-        margin: 10px 0;
-    }
-    .drink-card button {
-        width: 90%;
-        margin: 0 auto 15px;
-        padding: 12px;
-        background: #d32f2f;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-    .carousel-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(211,47,47,0.8);
-        color: white;
-        border: none;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        font-size: 22px;
-        cursor: pointer;
-        z-index: 10;
-    }
-    .carousel-btn.left { left: 10px; }
-    .carousel-btn.right { right: 10px; }
-    /* Formulario checkout */
-    #checkout-form input,
-    #checkout-form select,
-    #checkout-form textarea {
-        width: 100%;
-        padding: 14px;
-        margin-bottom: 15px;
-        border: 1px solid #ccc;
-        border-radius: 12px;
-        font-size: 16px;
-    }
-    #checkout-btn {
-        width: 100%;
-        padding: 16px;
-        background: #d32f2f;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 1.2rem;
-        font-weight: 600;
-        cursor: pointer;
-    }
-    #checkout-btn:hover, #checkout-btn:active {
-        background: #b71c1c;
-    }
-    /* Loading */
-    .loading {
-        text-align: center;
-        padding: 50px 0;
-        color: #d32f2f;
-        font-weight: 600;
-    }
-    .spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #d32f2f;
-        border-radius: 50%;
-        width: 24px;
-        height: 24px;
-        animation: spin 1s linear infinite;
-        display: inline-block;
-        margin: 0 10px;
-    }
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-    /* Footer */
     footer {
-        background-color: #c62828;
-        padding: 30px 20px;
-        text-align: center;
-        margin-top: auto;
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+      background: #c62828; color: white; padding: 2rem 0; margin-top: auto;
     }
-    footer p {
-        margin: 8px 0;
-        color: #ffffff;
-    }
-    footer p strong {
-        color: #ffffff;
-    }
-    footer a {
-        color: #ffffff;
-        text-decoration: none;
-        margin: 0 10px;
-    }
-    footer a:hover {
-        text-decoration: underline;
-    }
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-    /* ====================== RESPONSIVE ====================== */
-    @media (max-width: 768px) {
-        .search-bar {
-            order: 3;
-            width: 100%;
-            margin: 10px 0 0;
-            max-width: none;
-        }
-        .header-right {
-            gap: 12px;
-        }
-        .category {
-            width: 120px;
-            height: 120px;
-        }
-        .category span {
-            font-size: 15px;
-        }
-        /* Sugerencias de locales más pequeñas en tablet/móvil */
-        .suggestion {
-            width: 130px;
-            height: 130px;
-        }
-        .suggestion-items {
-            gap: 14px;
-        }
-        h1 { font-size: 1.6rem; }
-        h2 { font-size: 1.4rem; }
-        .drink-card {
-            flex: 0 0 calc(75% - 12px);
-        }
-        .logo {
-            height: 55px;
-        }
-
-        /* Menú en 2 columnas (ya aplicado antes) */
-        .menu-items {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            padding: 0 10px;
-            justify-content: center;
-        }
-        .menu-item {
-            max-width: none;
-            padding: 10px;
-        }
-        .menu-item img {
-            height: 120px;
-            border-radius: 10px;
-        }
-        .menu-item h3 {
-            font-size: 1rem;
-            margin: 8px 0 4px;
-        }
-        .menu-item p {
-            font-size: 0.9rem;
-            margin: 3px 0;
-        }
-        .menu-item p:last-of-type {
-            font-size: 1.25rem;
-            margin: 6px 0;
-        }
-        .menu-item button {
-            padding: 10px;
-            font-size: 0.95rem;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .logo {
-            height: 50px;
-        }
-        .category {
-            width: 105px;
-            height: 105px;
-        }
-        .category span {
-            font-size: 14px;
-        }
-        /* Aún más pequeñas en celulares pequeños */
-        .suggestion {
-            width: 120px;
-            height: 120px;
-        }
-        .suggestion-items {
-            gap: 12px;
-        }
-        .menu-item img {
-            height: 110px;
-        }
-        .drink-card {
-            flex: 0 0 calc(85% - 12px);
-        }
-        .carousel-btn {
-            width: 36px;
-            height: 36px;
-            font-size: 20px;
-        }
-        .menu-items {
-            gap: 12px;
-            padding: 0 8px;
-        }
-        .menu-item {
-            padding: 8px;
-        }
-    }
-
-    /* En pantallas grandes volvemos al flex centrado para menú */
-    @media (min-width: 769px) {
-        .menu-items {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-    }
-
-    /* Modal Styles */
-    .modal {
-        display: none;
-        position: fixed;
-        z-index: 1000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0,0,0,0.5);
-    }
-    .modal-content {
-        background-color: #fff;
-        margin: 15% auto;
-        padding: 20px;
-        border-radius: 12px;
-        width: 80%;
-        max-width: 400px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    .modal-content h2 {
-        text-align: center;
-        color: #c62828;
-    }
-    .modal-content input {
-        width: 100%;
-        padding: 12px;
-        margin: 10px 0;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-    }
-    .modal-content button {
-        width: 100%;
-        padding: 12px;
-        background: #d32f2f;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-    }
-    .modal-content button:hover {
-        background: #b71c1c;
-    }
-    .modal-content p {
-        text-align: center;
-        margin-top: 10px;
-    }
-    .modal-content a {
-        color: #d32f2f;
-        cursor: pointer;
-    }
-    .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-    }
-    .close:hover,
-    .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-    }
-</style>
+    footer a { color: #ffcdd2; text-decoration: none; }
+    footer a:hover { color: white; }
+  </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <img src="https://i.postimg.cc/7PpF3zRP/Chat-GPT-Image-Jan-3-2026-01-27-57-AM-(1).png" alt="Weep Logo">
-        </div>
-        <div class="search-bar">
-            <input type="text" id="search-input" placeholder="Buscar menús o locales...">
-        </div>
-        <div class="header-right">
-            <div class="profile" id="profile-link">Mi Perfil</div>
-            <div class="cart-icon" id="cart-icon">
-                <span>🛒</span>
-                <div class="cart-count" id="cart-count">0</div>
-            </div>
-        </div>
-    </header>
-    <main>
-        <h1>¡Hola! ¿Qué se te antoja comer?</h1>
-        <div class="categories">
-            <div class="category" data-type="Hamburguesas" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
-                <span>Hamburguesas</span>
-            </div>
-            <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
-                <span>Pizza</span>
-            </div>
-            <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
-                <span>Helados</span>
-            </div>
-            <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
-                <span>Postres</span>
-            </div>
-            <div class="category" data-type="Merienda" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
-                <span>Merienda</span>
-            </div>
-        </div>
-        <div class="suggestions">
-            <h2>Sugerencias de Locales</h2>
-            <div class="suggestion-items" id="suggestion-items"></div>
-        </div>
-        <div id="menu-display" style="display:none;"></div>
-        <div id="cart-section">
-            <h2>Tu Carrito</h2>
-            <div class="delivery-option">
-                <label for="delivery-type">Tipo de entrega</label>
-                <select id="delivery-type">
-                    <option value="envio">Con envío a domicilio</option>
-                    <option value="retiro">Retirar en local</option>
-                </select>
-            </div>
-            <div class="cart-summary-panel">
-                <div class="cart-items-list" id="cart-items"></div>
-                <div class="price-summary">
-                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$500</span></div>
-                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$500</span></div>
-                </div>
-                <div id="free-shipping-notice"></div>
-            </div>
-            <div id="drinks-panel" class="drinks-panel" style="display:none;">
-                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
-                <div class="drinks-carousel">
-                    <button class="carousel-btn left" id="prev-drink">←</button>
-                    <div class="drinks-container" id="drinks-container"></div>
-                    <button class="carousel-btn right" id="next-drink">→</button>
-                </div>
-            </div>
-            <form id="checkout-form">
-                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
-                <select id="metodo-pago" required>
-                    <option value="">Método de pago</option>
-                    <option value="Tarjeta">Tarjeta</option>
-                    <option value="Efectivo">Efectivo</option>
-                </select>
-                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
-                <button type="button" id="checkout-btn">Realizar Pedido</button>
-            </form>
-        </div>
-    </main>
-    <!-- Footer -->
-    <footer class="text-center">
-        <div class="container">
-            <p class="mb-2">© 2026 <strong>Weep</strong> - Plataforma de Pedidos</p>
-            <p class="small mb-0">
-                <a href="#">Términos</a> • <a href="#">Privacidad</a> • <a href="#">Soporte</a>
-            </p>
-        </div>
-    </footer>
-
-    <!-- Login Modal -->
-    <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('login-modal')">&times;</span>
-            <h2>Iniciar Sesión</h2>
-            <input type="email" id="login-email" placeholder="Correo electrónico" required>
-            <input type="password" id="login-password" placeholder="Contraseña" required>
-            <button onclick="loginUser()">Entrar</button>
-            <p>¿No tienes cuenta? <a onclick="switchToRegister()">Regístrate</a></p>
-        </div>
+  <header class="header">
+    <div class="container text-center">
+      <img src="https://i.postimg.cc/7PpF3zRP/Chat-GPT-Image-Jan-3-2026-01-27-57-AM-(1).png" alt="Logo Weep" class="logo-plataforma mb-3">
+      <h1 class="display-5 fw-bold text-rojo">Panel de Gestión</h1>
+    </div>
+  </header>
+  <div class="container pb-5">
+    <!-- SECCIÓN DE AUTENTICACIÓN -->
+    <div id="auth-section" class="card shadow-lg p-5 mb-5 bg-white rounded-4">
+      <h2 class="text-center mb-4 text-rojo">Acceso Local</h2>
+      <div class="text-center mb-4">
+        <button id="show-register" class="btn btn-outline-danger btn-lg me-3">Registrar Local</button>
+        <button id="show-login" class="btn btn-rojo btn-lg">Iniciar Sesión</button>
+      </div>
+      <form id="local-register-form" class="mt-4 d-none">
+        <input type="text" id="reg-local-name" placeholder="Nombre del Local" class="form-control form-control-lg mb-3" required>
+        <input type="email" id="reg-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
+        <input type="password" id="reg-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
+        <button type="submit" class="btn btn-success btn-lg w-100">
+          <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+          Registrar Local
+        </button>
+      </form>
+      <form id="local-login-form" class="mt-4">
+        <input type="email" id="login-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
+        <input type="password" id="login-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
+        <button type="submit" class="btn btn-rojo btn-lg w-100">
+          <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+          Iniciar Sesión
+        </button>
+      </form>
+      <div id="auth-status" class="mt-3"></div>
     </div>
 
-    <!-- Register Modal - CORREGIDO: ahora incluye el campo dirección -->
-    <div id="register-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal('register-modal')">&times;</span>
-            <h2>Registro</h2>
-            <input type="text" id="register-name" placeholder="Nombre completo" required>
-            <input type="email" id="register-email" placeholder="Correo electrónico" required>
-            <input type="password" id="register-password" placeholder="Contraseña" required>
-            <input type="text" id="register-address" placeholder="Dirección (opcional)">
-            <button onclick="registerUser()">Registrarse</button>
-            <p>¿Ya tienes cuenta? <a onclick="switchToLogin()">Inicia sesión</a></p>
+    <!-- PANEL PRINCIPAL -->
+    <div id="panel-principal" class="d-none">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="text-center">
+            <label class="status-toggle-sm">
+              <input type="checkbox" id="estado-local-toggle">
+              <span class="status-slider-sm"></span>
+            </label>
+            <small class="d-block mt-1 text-rojo fw-bold" id="estado-texto">Cerrado</small>
+          </div>
+          <span class="fw-medium">Estado del Local</span>
         </div>
+        <div class="d-flex align-items-center gap-3">
+          <div id="perfil-foto-container">
+            <div class="logo-perfil-placeholder">Foto</div>
+          </div>
+          <div class="dropdown">
+            <button class="btn btn-outline-danger btn-lg dropdown-toggle" data-bs-toggle="dropdown">Mi Perfil</button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="#" id="editar-perfil-btn">Editar Perfil</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" href="#" id="logout">Cerrar sesión</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mb-5">
+        <button id="btn-mi-menu" class="btn btn-success btn-lg px-5 me-4">Mi Menú</button>
+        <button id="btn-agregar-item" class="btn btn-rojo btn-lg px-5 me-3">Agregar Plato</button>
+        <button id="btn-mis-pedidos" class="btn btn-primary btn-lg px-5">Mis Pedidos</button>
+      </div>
+
+      <div id="filtros-menu" class="card p-4 mb-4 d-none">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-6">
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+              <input type="text" id="buscador-plato" class="form-control" placeholder="Buscar plato...">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <select id="filtro-categoria" class="form-select form-select-lg">
+              <option value="">Todas las categorías</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORMULARIO PLATO -->
+      <form id="menu-form" class="card shadow-lg p-4 mb-5 d-none">
+        <h3 class="mb-4 text-rojo" id="form-titulo">Nuevo Plato</h3>
+        <input type="hidden" id="edit-item-id">
+        <div class="row g-3">
+          <div class="col-md-6"><input type="text" id="nombre" class="form-control form-control-lg" placeholder="Nombre del plato" required></div>
+          <div class="col-md-6">
+            <select id="categoria" class="form-select form-select-lg" required>
+              <option value="">Seleccionar categoría</option>
+              <option value="Hamburguesas">Hamburguesas</option>
+              <option value="Pizza">Pizza</option>
+              <option value="Helados">Helados</option>
+              <option value="Postres">Postres</option>
+              <option value="Merienda">Merienda</option>
+              <option value="Bebidas">Bebidas</option>
+              <option value="Platos principales">Platos principales</option>
+            </select>
+          </div>
+          <div class="col-12"><textarea id="descripcion" class="form-control" rows="2" placeholder="Descripción breve" required></textarea></div>
+          <div class="col-md-4"><input type="number" id="precio" class="form-control form-control-lg" placeholder="Precio" step="0.01" required></div>
+          <div class="col-md-4">
+            <select id="disponibilidad" class="form-select form-select-lg">
+              <option value="Sí">Disponible</option>
+              <option value="No">No disponible</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <select id="tamano_porcion" class="form-select form-select-lg">
+              <option value="">Tamaño/Porción</option>
+              <option value="1 persona">1 persona</option>
+              <option value="2 personas">2 personas</option>
+              <option value="3 personas">3 personas</option>
+              <option value="4+ personas">4+ personas</option>
+            </select>
+          </div>
+          <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes (ej: con cheddar)"></div>
+          <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo preparación (min)"></div>
+          <div class="col-12"><input type="file" id="foto" class="form-control form-control-lg" accept="image/*"></div>
+        </div>
+        <div class="mt-4 text-end">
+          <button type="button" id="cancelar-form" class="btn btn-secondary btn-lg me-3">Cancelar</button>
+          <button type="submit" class="btn btn-success btn-lg px-5" id="guardar-btn">
+            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+            Guardar Plato
+          </button>
+        </div>
+      </form>
+
+      <!-- FORMULARIO EDITAR PERFIL -->
+      <div id="perfil-form" class="card shadow-lg p-4 mb-5 d-none">
+        <h3 class="mb-4 text-rojo">Editar Perfil del Local</h3>
+        <div class="text-center mb-4">
+          <img id="perfil-foto-preview" src="" alt="Foto del local" class="img-fluid rounded" style="max-width:200px; display:none;">
+          <div id="perfil-foto-placeholder" class="logo-perfil-placeholder mx-auto">Sin foto</div>
+          <div class="mt-3">
+            <input type="file" id="perfil-foto" class="form-control form-control-lg" accept="image/*">
+            <small class="text-muted">Sube una nueva foto (opcional)</small>
+          </div>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6"><input type="text" id="perfil-nombre" class="form-control form-control-lg" placeholder="Nombre del local" required></div>
+          <div class="col-md-6"><input type="email" id="perfil-email" class="form-control form-control-lg" placeholder="Email" required></div>
+          <div class="col-12"><input type="password" id="perfil-password" class="form-control form-control-lg" placeholder="Nueva contraseña (dejar vacío para no cambiar)"></div>
+        </div>
+        <div class="mt-4 text-end">
+          <button type="button" id="cancelar-perfil" class="btn btn-secondary btn-lg me-3">Cancelar</button>
+          <button type="button" id="guardar-perfil" class="btn btn-success btn-lg px-5">
+            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+            Guardar Cambios
+          </button>
+        </div>
+        <div id="perfil-status" class="mt-3"></div>
+      </div>
+
+      <!-- LISTADO MENÚ -->
+      <div id="menu-listado">
+        <div class="text-center py-5 loading">
+          <div class="spinner-border text-danger" role="status"></div>
+          <p class="mt-3">Cargando menú...</p>
+        </div>
+      </div>
+
+      <!-- MIS PEDIDOS - CON PESTAÑAS -->
+      <div id="pedidos-panel" class="d-none">
+        <h2 class="mb-4 text-rojo text-center">Mis Pedidos</h2>
+
+        <!-- Pestañas -->
+        <ul class="nav nav-tabs mb-4" id="pedidosTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="proceso-tab" data-bs-toggle="tab" data-bs-target="#proceso" type="button" role="tab">
+              Pedidos en Proceso
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="finalizados-tab" data-bs-toggle="tab" data-bs-target="#finalizados" type="button" role="tab">
+              Pedidos Finalizados
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content">
+          <!-- Pestaña En Proceso -->
+          <div class="tab-pane fade show active" id="proceso" role="tabpanel">
+            <div class="mb-3 text-center">
+              <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary active" id="filtro-pendientes">Pendientes</button>
+                <button type="button" class="btn btn-outline-primary" id="filtro-listos">Listos</button>
+                <button type="button" class="btn btn-outline-primary" id="filtro-todos-proceso">Todos</button>
+              </div>
+            </div>
+            <div id="pedidos-proceso-listado"></div>
+          </div>
+
+          <!-- Pestaña Finalizados -->
+          <div class="tab-pane fade" id="finalizados" role="tabpanel">
+            <div id="pedidos-finalizados-listado"></div>
+          </div>
+        </div>
+      </div>
     </div>
-    
-    <script>
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
-        let cart = [];
-        let allDrinks = [];
-        let currentDrinkIndex = 0;
-        const CATEGORIA_BEBIDAS = "Bebidas";
-        const COSTO_ENVIO = 500;
-        let isLoggedIn = false;
-        let userId = null;
+  </div>
 
-        window.addEventListener('load', () => {
-            checkLoginStatus();
-            loadFilters();
-            setupSearch();
-            setupCart();
-            loadAllDrinks();
-        });
+  <footer class="text-center">
+    <div class="container">
+      <p class="mb-2">© 2026 <strong>Weep</strong> - Panel de Gestión</p>
+      <p class="small mb-0">
+        <a href="#">Términos</a> • <a href="#">Privacidad</a> • <a href="#">Soporte</a>
+      </p>
+    </div>
+  </footer>
 
-        // ==================== FUNCIÓN CLAVE: checkLoginStatus (moverla al inicio) ====================
-    function checkLoginStatus() {
-        userId = localStorage.getItem('userId');
-        userAddress = localStorage.getItem('userAddress') || '';
-        if (userId) {
-            isLoggedIn = true;
-            document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
-        } else {
-            isLoggedIn = false;
-            document.getElementById('profile-link').textContent = 'Iniciar Sesión';
-        }
-        document.getElementById('profile-link').onclick = () => {
-            if (isLoggedIn) {
-                logoutUser();
-            } else {
-                showModal('login-modal');
-            }
-        };
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // === CONFIGURACIÓN ===
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec'; // ← CAMBIA POR TU URL
+    const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
+    const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
+
+    let localToken = localStorage.getItem('localToken');
+    let menuItems = [];
+
+    if (localToken) mostrarPanelPrincipal();
+
+    function mostrarPanelPrincipal() {
+      document.getElementById('auth-section').classList.add('d-none');
+      document.getElementById('panel-principal').classList.remove('d-none');
+      cargarEstadoLocal();
+      cargarMenuCompleto();
+      cargarFotoPerfilHeader();
     }
 
-    // ==================== CARGA INICIAL ====================
-    window.addEventListener('load', () => {
-        checkLoginStatus();   // Ahora sí existe cuando se llama
-        loadFilters();
-        setupSearch();
-        setupCart();
-        loadAllDrinks();
+    function ocultarTodo() {
+      document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('perfil-form').classList.add('d-none');
+      document.getElementById('menu-listado').classList.add('d-none');
+      document.getElementById('pedidos-panel').classList.add('d-none');
+      document.getElementById('filtros-menu').classList.add('d-none');
+    }
+
+    // === AUTENTICACIÓN (sin cambios) ===
+    document.getElementById('show-register').addEventListener('click', () => {
+      document.getElementById('local-register-form').classList.remove('d-none');
+      document.getElementById('local-login-form').classList.add('d-none');
+    });
+    document.getElementById('show-login').addEventListener('click', () => {
+      document.getElementById('local-login-form').classList.remove('d-none');
+      document.getElementById('local-register-form').classList.add('d-none');
+    });
+    document.getElementById('local-register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nombre = document.getElementById('reg-local-name').value.trim();
+      const email = document.getElementById('reg-local-email').value.trim();
+      const password = document.getElementById('reg-local-password').value;
+      if (!nombre || !email || !password) return alert('Completa todos los campos');
+      await fetch(`${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+      alert('Local registrado con éxito. Ahora inicia sesión.');
+      document.getElementById('show-login').click();
+      document.getElementById('local-register-form').reset();
+    });
+    document.getElementById('local-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-local-email').value.trim();
+      const password = document.getElementById('login-local-password').value;
+      const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
+      window.loginCallback = function(data) {
+        if (data.success && data.localId) {
+          localStorage.setItem('localToken', data.localId);
+          localToken = data.localId;
+          mostrarPanelPrincipal();
+        } else {
+          alert('Credenciales incorrectas');
+        }
+        delete window.loginCallback;
+        const script = document.getElementById('loginScript');
+        if (script) script.remove();
+      };
+      const script = document.createElement('script');
+      script.id = 'loginScript';
+      script.src = url;
+      document.head.appendChild(script);
+    });
+    document.getElementById('logout').addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('localToken');
+      localToken = null;
+      location.reload();
     });
 
-    // ==================== MODALES ====================
-    function showModal(modalId) {
-        document.getElementById(modalId).style.display = 'block';
+    // === NAVEGACIÓN ===
+    document.getElementById('btn-mi-menu').addEventListener('click', () => {
+      ocultarTodo();
+      document.getElementById('filtros-menu').classList.remove('d-none');
+      document.getElementById('menu-listado').classList.remove('d-none');
+      cargarMenuCompleto();
+    });
+    document.getElementById('btn-agregar-item').addEventListener('click', () => {
+      ocultarTodo();
+      document.getElementById('menu-form').classList.remove('d-none');
+      document.getElementById('form-titulo').textContent = 'Nuevo Plato';
+      document.getElementById('menu-form').reset();
+      document.getElementById('edit-item-id').value = '';
+    });
+    document.getElementById('btn-mis-pedidos').addEventListener('click', () => {
+      ocultarTodo();
+      document.getElementById('pedidos-panel').classList.remove('d-none');
+      cargarMisPedidos();
+    });
+    document.getElementById('cancelar-form').addEventListener('click', () => {
+      document.getElementById('menu-form').classList.add('d-none');
+      cargarMenuCompleto();
+    });
+
+    // === SUBIR IMAGEN ===
+    async function subirImagen(file) {
+      if (!file) return '';
+      const MAX_SIZE = 10 * 1024 * 1024;
+      if (file.size > MAX_SIZE) { alert('Imagen muy grande (máx 10MB)'); return ''; }
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      try {
+        const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+        const data = await res.json();
+        return data.secure_url || '';
+      } catch (e) {
+        alert('Error al subir imagen');
+        return '';
+      }
     }
 
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-
-    function switchToRegister() {
-        closeModal('login-modal');
-        showModal('register-modal');
-    }
-
-    function switchToLogin() {
-        closeModal('register-modal');
-        showModal('login-modal');
-    }
-
-    // ==================== REGISTRO ====================
-function registerUser() {
-    // Obtener los campos del formulario de registro
-    const nameInput = document.getElementById('register-name');
-    const emailInput = document.getElementById('register-email');
-    const passwordInput = document.getElementById('register-password');
-    const addressInput = document.getElementById('register-address'); // Puede no existir si es opcional
-
-    // Validar que los campos obligatorios existan
-    if (!nameInput || !emailInput || !passwordInput) {
-        alert('Error interno: No se encontraron los campos obligatorios del registro.');
-        console.error('Campos faltantes: name, email o password');
-        return;
-    }
-
-    // Obtener y limpiar valores
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-    const address = addressInput ? addressInput.value.trim() : '';
-
-    // Validación básica frontend
-    if (!name) {
-        alert('Por favor ingresa tu nombre completo.');
-        nameInput.focus();
-        return;
-    }
-    if (!email) {
-        alert('Por favor ingresa tu email.');
-        emailInput.focus();
-        return;
-    }
-    if (!password) {
-        alert('Por favor ingresa una contraseña.');
-        passwordInput.focus();
-        return;
-    }
-    if (password.length < 6) {
-        alert('La contraseña debe tener al menos 6 caracteres.');
-        passwordInput.focus();
-        return;
-    }
-
-    // Construir URL con todos los parámetros (siempre incluimos address, aunque vacío)
-    const url = `${scriptUrl}?action=register`
-        + `&name=${encodeURIComponent(name)}`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`
-        + `&address=${encodeURIComponent(address)}`;
-
-    // Mostrar feedback visual (opcional: podrías agregar un spinner)
-    const registerBtn = document.querySelector('#register-modal button[type="submit"]') || 
-                        document.querySelector('#register-modal .btn-register');
-    if (registerBtn) registerBtn.disabled = true;
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
-                
-                // Limpiar todos los campos
-                nameInput.value = '';
-                emailInput.value = '';
-                passwordInput.value = '';
-                if (addressInput) addressInput.value = '';
-
-                // Cambiar a la vista de login
-                switchToLogin();
-            } else {
-                alert(data.message || 'Error al registrar. Intenta con otro email.');
-            }
-        })
-        .catch(err => {
-            console.error('Error en registro:', err);
-            alert('Error de conexión. Revisa tu internet e intenta de nuevo.');
-        })
-        .finally(() => {
-            // Reactivar botón
-            if (registerBtn) registerBtn.disabled = false;
+    // === GUARDAR PLATO ===
+    document.getElementById('menu-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('guardar-btn');
+      const spinner = btn.querySelector('.spinner-border');
+      spinner.classList.remove('d-none');
+      btn.disabled = true;
+      try {
+        let imagenUrl = '';
+        const file = document.getElementById('foto').files[0];
+        if (file) imagenUrl = await subirImagen(file);
+        const payload = {
+          action: document.getElementById('edit-item-id').value ? 'updateMenuItem' : 'addMenuItem',
+          localId: localToken,
+          nombre: document.getElementById('nombre').value.trim(),
+          categoria: document.getElementById('categoria').value,
+          descripcion: document.getElementById('descripcion').value.trim(),
+          precio: parseFloat(document.getElementById('precio').value),
+          disponibilidad: document.getElementById('disponibilidad').value,
+          tamano_porcion: document.getElementById('tamano_porcion').value || '',
+          variantes: document.getElementById('variantes').value.trim(),
+          tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0
+        };
+        if (imagenUrl) payload.imagen_url = imagenUrl;
+        if (document.getElementById('edit-item-id').value) payload.itemId = document.getElementById('edit-item-id').value;
+        if (!payload.nombre || !payload.categoria || payload.precio <= 0) {
+          alert('Faltan datos obligatorios');
+          return;
+        }
+        await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors'
         });
-}
+        alert(payload.action === 'addMenuItem' ? 'Plato agregado' : 'Plato actualizado');
+        document.getElementById('menu-form').classList.add('d-none');
+        cargarMenuCompleto();
+      } catch (err) {
+        console.error(err);
+        alert('Error al guardar. Revisa la consola.');
+      } finally {
+        spinner.classList.add('d-none');
+        btn.disabled = false;
+      }
+    });
 
-// ==================== LOGIN ====================
-function loginUser() {
-    const emailInput = document.getElementById('login-email');
-    const passwordInput = document.getElementById('login-password');
-
-    if (!emailInput || !passwordInput) {
-        alert('Error interno: Campos de login no encontrados.');
-        console.error('Faltan login-email o login-password en el DOM');
-        return;
-    }
-
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-
-    if (!email || !password) {
-        alert('Por favor ingresa tu email y contraseña.');
-        return;
-    }
-
-    const url = `${scriptUrl}?action=login`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`;
-
-    const loginBtn = document.querySelector('#login-modal button[type="submit"]') || 
-                     document.querySelector('#login-modal .btn-login');
-    if (loginBtn) loginBtn.disabled = true;
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Guardar datos del usuario
-                localStorage.setItem('userId', data.userId);
-                localStorage.setItem('userAddress', data.address || '');
-
-                // Actualizar estado global
-                isLoggedIn = true;
-                userId = data.userId;
-                userAddress = data.address || '';
-
-                // Actualizar UI
-                const profileLink = document.getElementById('profile-link');
-                if (profileLink) {
-                    profileLink.textContent = 'Mi Perfil (Cerrar Sesión)';
-                    profileLink.onclick = logoutUser;
-                }
-
-                // Cerrar modal
-                closeModal('login-modal');
-
-                alert('¡Bienvenido de nuevo!');
-
-                // Rellenar dirección en formulario de pedido si existe
-                const dirInput = document.getElementById('direccion');
-                if (dirInput && userAddress) {
-                    dirInput.value = userAddress;
-                }
-            } else {
-                alert(data.message || 'Email o contraseña incorrectos.');
-            }
-        })
-        .catch(err => {
-            console.error('Error en login:', err);
-            alert('Error de conexión. Intenta nuevamente.');
-        })
-        .finally(() => {
-            if (loginBtn) loginBtn.disabled = false;
+    // === MENÚ (sin cambios importantes) ===
+    async function cargarMenuCompleto() {
+      const cont = document.getElementById('menu-listado');
+      cont.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando menú...</p></div>';
+      try {
+        const res = await fetch(`${API_URL}?action=getMenuByLocalIdColK&localId=${localToken}`);
+        menuItems = await res.json();
+        const select = document.getElementById('filtro-categoria');
+        select.innerHTML = '<option value="">Todas las categorías</option>';
+        const categorias = [...new Set(menuItems.map(i => i.categoria).filter(Boolean))].sort();
+        categorias.forEach(cat => {
+          const opt = document.createElement('option');
+          opt.value = cat;
+          opt.textContent = cat;
+          select.appendChild(opt);
         });
-}
-
-// ==================== LOGOUT ====================
-function logoutUser() {
-        if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-            return;
-        }
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userAddress');
-        isLoggedIn = false;
-        userId = null;
-        userAddress = '';
-
-        alert('Sesión cerrada correctamente.');
-        checkLoginStatus(); // Actualiza el texto y el evento del botón
+        renderizarMenu(menuItems);
+      } catch (err) {
+        cont.innerHTML = '<div class="alert alert-danger">Error al cargar el menú</div>';
+      }
     }
-        
-        function loadAllDrinks() {
-            fetch(`${scriptUrl}?action=getAllMenus`)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(data => {
-                    allDrinks = (data.menus || []).filter(menu =>
-                        menu.categoria && menu.categoria.trim() === CATEGORIA_BEBIDAS
-                    );
-                })
-                .catch(() => { allDrinks = []; });
-        }
-        function loadFilters() {
-            const container = document.getElementById('suggestion-items');
-            showLoading(container);
-            fetch(scriptUrl + '?action=getFilters')
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(data => {
-                    container.innerHTML = '';
-                    if (data.locals?.length > 0) {
-                        data.locals.forEach(local => {
-                            const div = document.createElement('div');
-                            div.className = 'suggestion';
-                            div.dataset.local = local.local_id;
-                            div.innerHTML = `<img src="${local.imagen_url || 'https://placehold.co/200x200?text=' + encodeURIComponent(local.nombre_local)}" alt="${local.nombre_local}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">`;
-                            div.onclick = () => fetchMenus(null, local.local_id);
-                            container.appendChild(div);
-                        });
-                    } else {
-                        container.innerHTML = '<p style="text-align:center;color:#999;">Aún no hay locales disponibles.</p>';
-                    }
-                })
-                .catch(() => showError(container, 'Error al cargar locales'));
-        }
-        document.querySelector('.categories').addEventListener('click', e => {
-            const cat = e.target.closest('.category');
-            if (cat) fetchMenus(cat.dataset.type, null);
+
+    function renderizarMenu(items) {
+      const cont = document.getElementById('menu-listado');
+      if (items.length === 0) {
+        cont.innerHTML = '<div class="text-center py-5"><h4>No hay platos aún</h4><p>¡Agrega tu primer plato!</p></div>';
+        return;
+      }
+      let html = '';
+      items.forEach(item => {
+        const disponible = item.disponibilidad === "Sí";
+        html += `
+          <div class="menu-card-horizontal">
+            ${item.imagen_url ? `<img src="${item.imagen_url}" alt="${item.nombre}">` : '<div style="width:120px;height:120px;background:#eee;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.9rem;">Sin foto</div>'}
+            <div class="card-body-horizontal">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h5 class="fw-bold mb-1">${item.nombre}</h5>
+                  <p class="text-muted small mb-2">${item.descripcion || ''}</p>
+                  <span class="badge bg-secondary mb-2">${item.categoria || 'Sin categoría'}</span>
+                </div>
+                <span class="precio">$${parseFloat(item.precio).toFixed(2)}</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="form-check form-switch">
+                  <input class="form-check-input toggle-disponibilidad" type="checkbox" id="disp-${item.id}" ${disponible ? 'checked' : ''} data-id="${item.id}">
+                  <label class="form-check-label" for="disp-${item.id}">${disponible ? 'Disponible' : 'No disponible'}</label>
+                </div>
+                <div>
+                  <button class="btn btn-warning btn-sm me-2 editar-plato" data-id="${item.id}">Editar</button>
+                  <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">Eliminar</button>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      });
+      cont.innerHTML = html;
+
+      document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
+        el.addEventListener('change', async () => {
+          await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
         });
-        function setupSearch() {
-            const input = document.getElementById('search-input');
-            let timeout;
-            input.addEventListener('input', e => {
-                clearTimeout(timeout);
-                const term = e.target.value.trim();
-                if (term.length >= 3) {
-                    timeout = setTimeout(() => performSearch(term), 600);
-                } else if (term === '') {
-                    document.getElementById('menu-display').style.display = 'none';
-                }
-            });
-        }
-        function performSearch(query) {
-            const container = document.getElementById('menu-display');
-            showLoading(container);
-            fetch(`${scriptUrl}?action=search&query=${encodeURIComponent(query)}`)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
-                .catch(() => showError(container, 'Error en búsqueda'));
-        }
-        function fetchMenus(type, local) {
-            const container = document.getElementById('menu-display');
-            showLoading(container);
-            let url = `${scriptUrl}?action=getMenus`;
-            if (type) url += `&type=${encodeURIComponent(type)}`;
-            if (local) url += `&local=${encodeURIComponent(local)}`;
-            fetch(url)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
-                .catch(() => showError(container, 'Error al cargar menús'));
-        }
-        function displayMenus(menus, title) {
-            const container = document.getElementById('menu-display');
-            container.innerHTML = `<h2>Menús - ${title}</h2><div class="menu-items"></div>`;
-            const itemsDiv = container.querySelector('.menu-items');
-            if (menus.length === 0) {
-                itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
-            } else {
-                menus.forEach(menu => {
-                    const div = document.createElement('div');
-                    div.className = 'menu-item';
-                    div.innerHTML = `
-                        <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
-                        <h3>${menu.nombre}</h3>
-                        <p>${menu.descripcion || 'Sin descripción'}</p>
-                        <p>$${menu.precio}</p>
-                        <button>Agregar al carrito</button>
-                    `;
-                    div.querySelector('button').onclick = () => addToCart(menu);
-                    itemsDiv.appendChild(div);
-                });
-            }
-            container.style.display = 'block';
-        }
-        function showLoading(container) {
-            container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
-        }
-        function showError(container, msg) {
-            container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
-        }
-        // ==================== CARRITO ====================
-    function setupCart() {
-        const cartIcon = document.getElementById('cart-icon');
-        const cartSection = document.getElementById('cart-section');
-
-        cartIcon.onclick = function () {
-            // Toggle simple: si está oculto → mostrar, si está visible → ocultar
-            if (cartSection.style.display === 'none' || cartSection.style.display === '') {
-                cartSection.style.display = 'block';
-                updateCartDisplay();
-            } else {
-                cartSection.style.display = 'none';
-            }
-        };
-
-        document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
-        document.getElementById('checkout-btn').onclick = checkout;
+      });
+      document.querySelectorAll('.eliminar-item').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('¿Eliminar este plato permanentemente?')) return;
+          await fetch(`${API_URL}?action=deleteMenuItem&itemId=${btn.dataset.id}`);
+          cargarMenuCompleto();
+        });
+      });
+      document.querySelectorAll('.editar-plato').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const item = menuItems.find(i => i.id === btn.dataset.id);
+          if (!item) return;
+          ocultarTodo();
+          document.getElementById('menu-form').classList.remove('d-none');
+          document.getElementById('form-titulo').textContent = 'Editar Plato';
+          document.getElementById('edit-item-id').value = item.id;
+          document.getElementById('nombre').value = item.nombre;
+          document.getElementById('categoria').value = item.categoria || '';
+          document.getElementById('descripcion').value = item.descripcion || '';
+          document.getElementById('precio').value = item.precio;
+          document.getElementById('disponibilidad').value = item.disponibilidad;
+          document.getElementById('tamano_porcion').value = item.tamano_porcion || '';
+          document.getElementById('variantes').value = item.variantes || '';
+          document.getElementById('tiempo_preparacion').value = item.tiempo_preparacion || '';
+        });
+      });
     }
 
-    function openCart() {
-        document.getElementById('cart-section').style.display = 'block';
-        updateCartDisplay();
+    document.getElementById('buscador-plato').addEventListener('input', filtrarMenu);
+    document.getElementById('filtro-categoria').addEventListener('change', filtrarMenu);
+    function filtrarMenu() {
+      const texto = document.getElementById('buscador-plato').value.toLowerCase();
+      const cat = document.getElementById('filtro-categoria').value;
+      const filtrados = menuItems.filter(item => {
+        const nombreOk = item.nombre.toLowerCase().includes(texto);
+        const catOk = !cat || item.categoria === cat;
+        return nombreOk && catOk;
+      });
+      renderizarMenu(filtrados);
     }
 
-    function addToCart(menu) {
-        if (!isLoggedIn) {
-            showModal('login-modal');
-            alert('¡Debes iniciar sesión para agregar productos al carrito!');
-            return;
-        }
-
-        const item = {
-            idLocal: menu.local_id,
-            nombreLocal: menu.nombre_local || 'Local desconocido',
-            idProducto: menu.id,
-            nombreProducto: menu.nombre,
-            precioUnitario: Number(menu.precio),
-            cantidad: 1,
-            categoria: menu.categoria || ''
-        };
-
-        const existing = cart.findIndex(i => i.idProducto === item.idProducto);
-        if (existing !== -1) {
-            cart[existing].cantidad++;
-        } else {
-            cart.push(item);
-        }
-
-        updateCartCount();
-        updateCartDisplay();
-
-        // Mensaje con botón "Ver carrito"
-        if (confirm(`¡${menu.nombre} agregado al carrito!\n\n¿Quieres ver el carrito ahora?`)) {
-            openCart();
-        }
+    // === ESTADO LOCAL ===
+    async function cargarEstadoLocal() {
+      const res = await fetch(`${API_URL}?action=getLocalEstado&localId=${localToken}`);
+      const data = await res.json();
+      const activo = data.estado === "Activo";
+      document.getElementById('estado-local-toggle').checked = activo;
+      document.getElementById('estado-texto').textContent = activo ? "Abierto" : "Cerrado";
     }
+    document.getElementById('estado-local-toggle').addEventListener('change', async function() {
+      const estado = this.checked ? "Activo" : "Inactivo";
+      document.getElementById('estado-texto').textContent = this.checked ? "Abierto" : "Cerrado";
+      await fetch(`${API_URL}?action=updateLocalEstado&localId=${localToken}&estado=${estado}`);
+    });
 
-    function updateCartCount() {
-        const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
-        document.getElementById('cart-count').textContent = total;
+    // === PERFIL ===
+    async function cargarFotoPerfilHeader() {
+      try {
+        const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
+        const data = await res.json();
+        if (data.success && data.foto_url) {
+          document.getElementById('perfil-foto-container').innerHTML = `<img src="${data.foto_url}" class="logo-perfil-sm" alt="Perfil">`;
+        }
+      } catch (e) {}
     }
-        function hasDrink() {
-            return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
+    document.getElementById('editar-perfil-btn').addEventListener('click', async () => {
+      ocultarTodo();
+      document.getElementById('perfil-form').classList.remove('d-none');
+      const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('perfil-nombre').value = data.nombre || '';
+        document.getElementById('perfil-email').value = data.email || '';
+        if (data.foto_url) {
+          document.getElementById('perfil-foto-preview').src = data.foto_url;
+          document.getElementById('perfil-foto-preview').style.display = 'block';
+          document.getElementById('perfil-foto-placeholder').style.display = 'none';
         }
-        function calculatePrices() {
-            const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
-            const delivery = document.getElementById('delivery-type').value;
-            let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
-            return { subtotal, shipping, total: subtotal + shipping, delivery };
-        }
-        function updateCartDisplay() {
-            const list = document.getElementById('cart-items');
-            const notice = document.getElementById('free-shipping-notice');
-            const drinksPanel = document.getElementById('drinks-panel');
-            list.innerHTML = '';
-            notice.innerHTML = '';
-            if (cart.length === 0) {
-                list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
-            } else {
-                cart.forEach((item, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'cart-item';
-                    div.innerHTML = `
-                        <div class="cart-item-left">
-                            <div class="cart-item-name">${item.nombreProducto}</div>
-                            <div class="quantity-controls">
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
-                                <span class="quantity">${item.cantidad}</span>
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
-                            </div>
-                        </div>
-                        <div class="cart-item-price">$${(item.precioUnitario * item.cantidad)}</div>
-                        <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
-                    `;
-                    list.appendChild(div);
-                });
-            }
-            const prices = calculatePrices();
-            document.getElementById('subtotal').textContent = `$${prices.subtotal}`;
-            document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping}`;
-            document.getElementById('final-total').textContent = `$${prices.total}`;
-            if (prices.shipping === 0 && cart.length > 0) {
-                notice.innerHTML = prices.delivery === 'retiro'
-                    ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
-                    : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
-                drinksPanel.style.display = 'none';
-            } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
-                drinksPanel.style.display = 'block';
-                renderDrinksCarousel();
-            } else {
-                drinksPanel.style.display = 'none';
-            }
-            const dirInput = document.getElementById('direccion');
-            if (prices.delivery === 'retiro') {
-                dirInput.placeholder = "No requerida (retirás en local)";
-                dirInput.required = false;
-            } else {
-                dirInput.placeholder = "Dirección de entrega (requerida)";
-                dirInput.required = true;
-            }
-        }
-        window.changeQuantity = function(idx, delta) {
-            if (cart[idx].cantidad + delta > 0) {
-                cart[idx].cantidad += delta;
-            } else {
-                cart.splice(idx, 1);
-            }
-            updateCartCount();
-            updateCartDisplay();
-        };
-        window.removeFromCart = function(idx) {
-            cart.splice(idx, 1);
-            updateCartCount();
-            updateCartDisplay();
-        };
-        function renderDrinksCarousel() {
-            const container = document.getElementById('drinks-container');
-            container.innerHTML = '';
-            if (allDrinks.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#666;padding:40px;width:100%;">No hay bebidas disponibles.</p>';
-                return;
-            }
-            allDrinks.forEach(drink => {
-                const card = document.createElement('div');
-                card.className = 'drink-card';
-                card.innerHTML = `
-                    <img src="${drink.imagen_url || 'https://placehold.co/300x140?text=Bebida'}" alt="${drink.nombre}" onerror="this.src='https://placehold.co/300x140?text=Sin+Imagen'">
-                    <h4>${drink.nombre}</h4>
-                    <div class="price">$${drink.precio}</div>
-                    <button>Agregar</button>
-                `;
-                card.querySelector('button').onclick = () => addToCart(drink);
-                container.appendChild(card);
-            });
-            currentDrinkIndex = 0;
-            scrollCarousel();
-            setupCarouselControls();
-        }
-        function setupCarouselControls() {
-            document.getElementById('prev-drink').onclick = () => {
-                if (currentDrinkIndex > 0) {
-                    currentDrinkIndex--;
-                    scrollCarousel();
-                }
-            };
-            document.getElementById('next-drink').onclick = () => {
-                const card = document.querySelector('.drink-card');
-                if (!card) return;
-                const cardWidth = card.offsetWidth + 12;
-                const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
-                if (currentDrinkIndex < allDrinks.length - visible) {
-                    currentDrinkIndex++;
-                    scrollCarousel();
-                }
-            };
-            window.addEventListener('resize', () => {
-                currentDrinkIndex = 0;
-                scrollCarousel();
-            });
-        }
-        function scrollCarousel() {
-            const container = document.getElementById('drinks-container');
-            if (!container || container.children.length === 0) return;
-            const card = container.children[0];
-            const cardWidth = card.offsetWidth + 12;
-            container.style.transform = `translateX(-${currentDrinkIndex * cardWidth}px)`;
-            document.getElementById('prev-drink').disabled = currentDrinkIndex === 0;
-            const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
-            document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
-        }
-        function checkout() {
-    if (!isLoggedIn) {
-        showModal('login-modal');
-        alert('¡Debes iniciar sesión para realizar el pedido!');
-        return;
-    }
-
-    if (cart.length === 0) {
-        alert('El carrito está vacío');
-        return;
-    }
-
-    const delivery = document.getElementById('delivery-type').value;
-    const metodoPago = document.getElementById('metodo-pago').value;
-    const observaciones = document.getElementById('observaciones').value.trim();
-
-    if (!metodoPago) {
-        alert('Selecciona un método de pago');
-        return;
-    }
-
-    let direccion = '';
-    if (delivery === 'envio') {
-        direccion = document.getElementById('direccion').value.trim();
-        if (!direccion) {
-            alert('Ingresa la dirección de entrega');
-            return;
-        }
-    } else {
-        direccion = 'Retiro en local';
-    }
-
-    const prices = calculatePrices();
-
-    const payload = {
-        action: 'createOrder',
-        data: {
-            userId: userId,
-            fecha: new Date().toLocaleDateString('es-AR'),
-            direccion: direccion,
-            metodoPago: metodoPago,
-            observaciones: observaciones,
-            envioGratis: prices.shipping === 0,
-            tipoEntrega: delivery,
-            cart: cart
-        }
-    };
-
-    // Mostrar loading o deshabilitar botón si quieres (opcional)
-    const checkoutBtn = document.getElementById('checkout-btn');
-    const originalText = checkoutBtn.textContent;
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Procesando...';
-
-    fetch(scriptUrl, {
+      }
+    });
+    document.getElementById('cancelar-perfil').addEventListener('click', () => {
+      document.getElementById('perfil-form').classList.add('d-none');
+      cargarMenuCompleto();
+    });
+    document.getElementById('guardar-perfil').addEventListener('click', async () => {
+      const btn = document.getElementById('guardar-perfil');
+      btn.disabled = true;
+      let fotoUrl = '';
+      const file = document.getElementById('perfil-foto').files[0];
+      if (file) fotoUrl = await subirImagen(file);
+      const payload = {
+        action: 'updatePerfilLocal',
+        localId: localToken,
+        nombre: document.getElementById('perfil-nombre').value.trim(),
+        email: document.getElementById('perfil-email').value.trim()
+      };
+      if (document.getElementById('perfil-password').value) payload.password = document.getElementById('perfil-password').value;
+      if (fotoUrl) payload.foto_url = fotoUrl;
+      await fetch(API_URL, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        let mensaje = '¡Pedido realizado con éxito!';
-        if (prices.shipping === 0) {
-            mensaje = delivery === 'retiro' 
-                ? '¡Pedido para retiro confirmado!' 
-                : '¡Pedido con envío GRATIS confirmado!';
-        }
-
-        alert(mensaje);
-
-        // Limpiar todo
-        cart = [];
-        updateCartCount();
-        updateCartDisplay();
-        document.getElementById('cart-section').style.display = 'none';
-        document.getElementById('checkout-form').reset();
-
-        // Si hay dirección guardada, la vuelve a poner por si el usuario quiere hacer otro pedido rápido
-        if (userAddress) {
-            document.getElementById('direccion').value = userAddress;
-        }
-    })
-    .catch((error) => {
-        console.error('Error al enviar pedido:', error);
-        alert('Pedido enviado (posible error de red). Revisa tu conexión.');
-    })
-    .finally(() => {
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = originalText;
+        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'no-cors'
+      });
+      alert('Perfil actualizado');
+      cargarFotoPerfilHeader();
+      document.getElementById('perfil-form').classList.add('d-none');
+      btn.disabled = false;
     });
-}
-    </script>
+
+    // === FUNCIÓN PARA ENVIAR NOTIFICACIONES ===
+    async function enviarNotificacionEmail(tipo, pedido) {
+      const payload = {
+        action: 'enviarNotificacionPedido',
+        tipoNotificacion: tipo,
+        idPedido: pedido.idPedido,
+        idPedidoLocal: pedido.idPedidoLocal,
+        emailDestino: tipo === 'motomandado' ? 'bajoneando.st@gmail.com' : pedido.emailCliente,
+        tipoEntrega: pedido.tipoEntrega
+      };
+
+      try {
+        await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors'
+        });
+      } catch (err) {
+        console.error('Error enviando email:', err);
+      }
+    }
+
+    // === MIS PEDIDOS ===
+    async function cargarMisPedidos() {
+      const contProceso = document.getElementById('pedidos-proceso-listado');
+      const contFinalizados = document.getElementById('pedidos-finalizados-listado');
+      contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+      contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+
+      try {
+        const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
+        const locales = await resLocales.json();
+
+        if (!locales || locales.length === 0) {
+          contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
+          contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos finalizados</h4></div>';
+          return;
+        }
+
+        pedidosData = [];
+
+        for (const localPedido of locales) {
+          const idPedidoLocal = localPedido[0];
+          const idPedido = localPedido[1];
+          const estadoActual = localPedido[4] || 'Pendiente';
+
+          const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
+          const items = await resItems.json();
+
+          const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
+          const general = await resGeneral.json();
+
+          const pedidoInfo = {
+            idPedidoLocal,
+            idPedido,
+            estadoActual,
+            items,
+            direccion: general.direccion || 'Retiro en local',
+            observaciones: general.observaciones || 'Ninguna',
+            metodoPago: general.metodoPago || 'No especificado',
+            tipoEntrega: general.tipoEntrega || 'Para Retirar',
+            emailCliente: general.emailCliente || ''
+          };
+
+          pedidosData.push(pedidoInfo);
+        }
+
+        renderizarPedidosEnProceso('todos');
+        renderizarPedidosFinalizados();
+
+      } catch (err) {
+        console.error(err);
+        contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+        contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+      }
+    }
+
+    function generarHtmlPedido(p, esFinalizado = false) {
+      let itemsHtml = '<ul class="item-list">';
+      let subtotal = 0;
+      p.items.forEach(item => {
+        const totalItem = item[7];
+        subtotal += totalItem;
+        itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem.toFixed(2)}</li>`;
+      });
+      itemsHtml += '</ul>';
+
+      let badgeClass = p.estadoActual === 'Listo' ? 'bg-info' : p.estadoActual === 'Entregado' ? 'bg-success' : p.estadoActual === 'Rechazado' ? 'bg-danger' : 'bg-warning';
+
+      const botonesAccion = esFinalizado ? '' : `
+        <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
+          <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+            <span class="spinner-border spinner-border-sm d-none"></span> Listo
+          </button>
+          <button class="btn btn-primary btn-entregado" data-id="${p.idPedidoLocal}" ${['Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+            <span class="spinner-border spinner-border-sm d-none"></span> Entregado
+          </button>
+          <button class="btn btn-danger btn-rechazar" data-id="${p.idPedidoLocal}" ${p.estadoActual === 'Rechazado' ? 'disabled' : ''}>
+            <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
+          </button>
+        </div>`;
+
+      return `
+        <div class="pedido-card">
+          <div class="pedido-header d-flex justify-content-between align-items-center">
+            <div><strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal}</div>
+            <span class="badge ${badgeClass} estado-badge">${p.estadoActual}</span>
+          </div>
+          <div class="pedido-body">
+            <p><strong>Tipo:</strong> ${p.tipoEntrega}</p>
+            <p><strong>Dirección:</strong> ${p.direccion}</p>
+            <p><strong>Método de pago:</strong> ${p.metodoPago}</p>
+            <p><strong>Observaciones:</strong> ${p.observaciones}</p>
+            <h6 class="mt-3">Items:</h6>
+            ${itemsHtml}
+            <div class="text-end mt-3"><strong>Subtotal local: $${subtotal.toFixed(2)}</strong></div>
+            ${botonesAccion}
+          </div>
+        </div>`;
+    }
+
+    function renderizarPedidosEnProceso(filtro = 'todos') {
+      const cont = document.getElementById('pedidos-proceso-listado');
+      const enProceso = pedidosData.filter(p => ['Pendiente', 'Listo'].includes(p.estadoActual));
+      let filtrados = enProceso;
+      if (filtro === 'pendientes') filtrados = enProceso.filter(p => p.estadoActual === 'Pendiente');
+      if (filtro === 'listos') filtrados = enProceso.filter(p => p.estadoActual === 'Listo');
+
+      if (filtrados.length === 0) {
+        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos en este filtro</h5></div>';
+        return;
+      }
+      cont.innerHTML = filtrados.map(p => generarHtmlPedido(p)).join('');
+      agregarEventosBotones();
+    }
+
+    function renderizarPedidosFinalizados() {
+      const cont = document.getElementById('pedidos-finalizados-listado');
+      const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado' || p.estadoActual === 'Rechazado');
+      if (finalizados.length === 0) {
+        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos finalizados</h5></div>';
+        return;
+      }
+      cont.innerHTML = finalizados.map(p => generarHtmlPedido(p, true)).join('');
+    }
+
+    function agregarEventosBotones() {
+      document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
+        btn.addEventListener('click', async function() {
+          const idPedidoLocal = this.dataset.id;
+          const pedido = pedidosData.find(p => p.idPedidoLocal == idPedidoLocal);
+          if (!pedido) return;
+
+          let nuevoEstado = '';
+          let tipoNotificacion = null;
+
+          if (this.classList.contains('btn-listos')) {
+            nuevoEstado = 'Listo';
+            tipoNotificacion = pedido.tipoEntrega === 'Con Envío' ? 'motomandado' : 'listoRetiro';
+          } else if (this.classList.contains('btn-entregado')) {
+            nuevoEstado = 'Entregado';
+            tipoNotificacion = 'entregado';
+          } else if (this.classList.contains('btn-rechazar')) {
+            nuevoEstado = 'Rechazado';
+            tipoNotificacion = 'rechazado';
+          }
+
+          const spinner = this.querySelector('.spinner-border');
+          spinner.classList.remove('d-none');
+          this.disabled = true;
+
+          try {
+            // Actualizar estado
+            await fetch(API_URL, {
+              method: 'POST',
+              body: JSON.stringify({
+                action: 'updateEstadoLocalOrder',
+                idPedidoLocal: idPedidoLocal,
+                nuevoEstado: nuevoEstado
+              }),
+              headers: { 'Content-Type': 'application/json' },
+              mode: 'no-cors'
+            });
+
+            // Enviar notificación
+            if (tipoNotificacion) {
+              await enviarNotificacionEmail(tipoNotificacion, pedido);
+            }
+
+            alert(`Pedido marcado como ${nuevoEstado}`);
+            cargarMisPedidos();
+          } catch (err) {
+            alert('Error al procesar el pedido');
+          } finally {
+            spinner.classList.add('d-none');
+          }
+        });
+      });
+    }
+
+    // Filtros y pestañas
+    document.getElementById('filtro-pendientes').addEventListener('click', () => {
+      document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('filtro-pendientes').classList.add('active');
+      renderizarPedidosEnProceso('pendientes');
+    });
+    document.getElementById('filtro-listos').addEventListener('click', () => {
+      document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('filtro-listos').classList.add('active');
+      renderizarPedidosEnProceso('listos');
+    });
+    document.getElementById('filtro-todos-proceso').addEventListener('click', () => {
+      document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('filtro-todos-proceso').classList.add('active');
+      renderizarPedidosEnProceso('todos');
+    });
+
+    // Al cambiar pestaña
+    document.querySelectorAll('#pedidosTabs button').forEach(tab => {
+      tab.addEventListener('shown.bs.tab', () => {
+        if (tab.id === 'proceso-tab') renderizarPedidosEnProceso('todos');
+        if (tab.id === 'finalizados-tab') renderizarPedidosFinalizados();
+      });
+    });
+
+    // Inicial
+    document.getElementById('filtro-todos-proceso')?.click();
+  </script>
 </body>
 </html>
