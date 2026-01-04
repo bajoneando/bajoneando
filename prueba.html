@@ -150,7 +150,6 @@
       </form>
       <div id="auth-status" class="mt-3"></div>
     </div>
-
     <!-- PANEL PRINCIPAL -->
     <div id="panel-principal" class="d-none">
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
@@ -178,13 +177,11 @@
           </div>
         </div>
       </div>
-
       <div class="text-center mb-5">
         <button id="btn-mi-menu" class="btn btn-success btn-lg px-5 me-4">Mi Menú</button>
         <button id="btn-agregar-item" class="btn btn-rojo btn-lg px-5 me-3">Agregar Plato</button>
         <button id="btn-mis-pedidos" class="btn btn-primary btn-lg px-5">Mis Pedidos</button>
       </div>
-
       <div id="filtros-menu" class="card p-4 mb-4 d-none">
         <div class="row g-3 align-items-center">
           <div class="col-md-6">
@@ -200,7 +197,6 @@
           </div>
         </div>
       </div>
-
       <!-- FORMULARIO PLATO -->
       <form id="menu-form" class="card shadow-lg p-4 mb-5 d-none">
         <h3 class="mb-4 text-rojo" id="form-titulo">Nuevo Plato</h3>
@@ -248,7 +244,6 @@
           </button>
         </div>
       </form>
-
       <!-- FORMULARIO EDITAR PERFIL -->
       <div id="perfil-form" class="card shadow-lg p-4 mb-5 d-none">
         <h3 class="mb-4 text-rojo">Editar Perfil del Local</h3>
@@ -274,7 +269,6 @@
         </div>
         <div id="perfil-status" class="mt-3"></div>
       </div>
-
       <!-- LISTADO MENÚ -->
       <div id="menu-listado">
         <div class="text-center py-5 loading">
@@ -282,11 +276,9 @@
           <p class="mt-3">Cargando menú...</p>
         </div>
       </div>
-
       <!-- MIS PEDIDOS - CON PESTAÑAS -->
       <div id="pedidos-panel" class="d-none">
         <h2 class="mb-4 text-rojo text-center">Mis Pedidos</h2>
-
         <!-- Pestañas -->
         <ul class="nav nav-tabs mb-4" id="pedidosTabs" role="tablist">
           <li class="nav-item" role="presentation">
@@ -300,7 +292,6 @@
             </button>
           </li>
         </ul>
-
         <div class="tab-content">
           <!-- Pestaña En Proceso -->
           <div class="tab-pane fade show active" id="proceso" role="tabpanel">
@@ -313,7 +304,6 @@
             </div>
             <div id="pedidos-proceso-listado"></div>
           </div>
-
           <!-- Pestaña Finalizados -->
           <div class="tab-pane fade" id="finalizados" role="tabpanel">
             <div id="pedidos-finalizados-listado"></div>
@@ -322,7 +312,6 @@
       </div>
     </div>
   </div>
-
   <footer class="text-center">
     <div class="container">
       <p class="mb-2">© 2026 <strong>Weep</strong> - Panel de Gestión</p>
@@ -331,19 +320,15 @@
       </p>
     </div>
   </footer>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     // === CONFIGURACIÓN ===
     const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec'; // ← CAMBIA POR TU URL
     const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
     const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
-
     let localToken = localStorage.getItem('localToken');
     let menuItems = [];
-
     if (localToken) mostrarPanelPrincipal();
-
     function mostrarPanelPrincipal() {
       document.getElementById('auth-section').classList.add('d-none');
       document.getElementById('panel-principal').classList.remove('d-none');
@@ -351,7 +336,6 @@
       cargarMenuCompleto();
       cargarFotoPerfilHeader();
     }
-
     function ocultarTodo() {
       document.getElementById('menu-form').classList.add('d-none');
       document.getElementById('perfil-form').classList.add('d-none');
@@ -359,7 +343,6 @@
       document.getElementById('pedidos-panel').classList.add('d-none');
       document.getElementById('filtros-menu').classList.add('d-none');
     }
-
     // === AUTENTICACIÓN (sin cambios) ===
     document.getElementById('show-register').addEventListener('click', () => {
       document.getElementById('local-register-form').classList.remove('d-none');
@@ -408,7 +391,6 @@
       localToken = null;
       location.reload();
     });
-
     // === NAVEGACIÓN ===
     document.getElementById('btn-mi-menu').addEventListener('click', () => {
       ocultarTodo();
@@ -432,7 +414,6 @@
       document.getElementById('menu-form').classList.add('d-none');
       cargarMenuCompleto();
     });
-
     // === SUBIR IMAGEN ===
     async function subirImagen(file) {
       if (!file) return '';
@@ -450,7 +431,6 @@
         return '';
       }
     }
-
     // === GUARDAR PLATO ===
     document.getElementById('menu-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -497,7 +477,6 @@
         btn.disabled = false;
       }
     });
-
     // === MENÚ (sin cambios importantes) ===
     async function cargarMenuCompleto() {
       const cont = document.getElementById('menu-listado');
@@ -519,7 +498,6 @@
         cont.innerHTML = '<div class="alert alert-danger">Error al cargar el menú</div>';
       }
     }
-
     function renderizarMenu(items) {
       const cont = document.getElementById('menu-listado');
       if (items.length === 0) {
@@ -555,7 +533,6 @@
           </div>`;
       });
       cont.innerHTML = html;
-
       document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
         el.addEventListener('change', async () => {
           await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
@@ -587,7 +564,6 @@
         });
       });
     }
-
     document.getElementById('buscador-plato').addEventListener('input', filtrarMenu);
     document.getElementById('filtro-categoria').addEventListener('change', filtrarMenu);
     function filtrarMenu() {
@@ -600,7 +576,6 @@
       });
       renderizarMenu(filtrados);
     }
-
     // === ESTADO LOCAL ===
     async function cargarEstadoLocal() {
       const res = await fetch(`${API_URL}?action=getLocalEstado&localId=${localToken}`);
@@ -614,7 +589,6 @@
       document.getElementById('estado-texto').textContent = this.checked ? "Abierto" : "Cerrado";
       await fetch(`${API_URL}?action=updateLocalEstado&localId=${localToken}&estado=${estado}`);
     });
-
     // === PERFIL ===
     async function cargarFotoPerfilHeader() {
       try {
@@ -669,30 +643,7 @@
       document.getElementById('perfil-form').classList.add('d-none');
       btn.disabled = false;
     });
-
-    // === FUNCIÓN PARA ENVIAR NOTIFICACIONES ===
-    async function enviarNotificacionEmail(tipo, pedido) {
-      const payload = {
-        action: 'enviarNotificacionPedido',
-        tipoNotificacion: tipo,
-        idPedido: pedido.idPedido,
-        idPedidoLocal: pedido.idPedidoLocal,
-        emailDestino: tipo === 'motomandado' ? 'bajoneando.st@gmail.com' : pedido.emailCliente,
-        tipoEntrega: pedido.tipoEntrega
-      };
-
-      try {
-        await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'no-cors'
-        });
-      } catch (err) {
-        console.error('Error enviando email:', err);
-      }
-    }
-
+    
     // === MIS PEDIDOS ===
     async function cargarMisPedidos() {
       const contProceso = document.getElementById('pedidos-proceso-listado');
@@ -710,7 +661,7 @@
           return;
         }
 
-        pedidosData = [];
+        pedidosData = []; // Reiniciamos
 
         for (const localPedido of locales) {
           const idPedidoLocal = localPedido[0];
@@ -723,18 +674,21 @@
           const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
           const general = await resGeneral.json();
 
+          // Necesitamos también el email del cliente y el tipo de entrega
+          const tipoEntrega = general.tipoEntrega || 'Para Retirar'; // asumiendo que el backend lo devuelve
+          const emailCliente = general.emailCliente || '';
+
           const pedidoInfo = {
             idPedidoLocal,
             idPedido,
             estadoActual,
             items,
-            direccion: general.direccion || 'Retiro en local',
+            direccion: general.direccion || 'No especificada',
             observaciones: general.observaciones || 'Ninguna',
             metodoPago: general.metodoPago || 'No especificado',
-            tipoEntrega: general.tipoEntrega || 'Para Retirar',
-            emailCliente: general.emailCliente || ''
+            tipoEntrega,
+            emailCliente
           };
-
           pedidosData.push(pedidoInfo);
         }
 
@@ -742,24 +696,55 @@
         renderizarPedidosFinalizados();
 
       } catch (err) {
-        console.error(err);
+        console.error('Error cargando pedidos:', err);
         contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
         contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
       }
     }
-
+    
+    function renderizarPedidosEnProceso(filtro = 'todos') {
+      const cont = document.getElementById('pedidos-proceso-listado');
+      const pedidosProceso = pedidosData.filter(p => p.estadoActual === 'Pendiente' || p.estadoActual === 'Listo');
+      let filtrados = pedidosProceso;
+      if (filtro === 'pendientes') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Pendiente');
+      if (filtro === 'listos') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Listo');
+      if (filtrados.length === 0) {
+        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos en este filtro</h5></div>';
+        return;
+      }
+      let html = '';
+      filtrados.forEach(p => {
+        html += generarHtmlPedido(p);
+      });
+      cont.innerHTML = html;
+      agregarEventosBotones();
+    }
+    function renderizarPedidosFinalizados() {
+      const cont = document.getElementById('pedidos-finalizados-listado');
+      const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado');
+      if (finalizados.length === 0) {
+        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos entregados</h5></div>';
+        return;
+      }
+      let html = '';
+      finalizados.forEach(p => {
+        html += generarHtmlPedido(p, true); // true = finalizado, sin botones de acción
+      });
+      cont.innerHTML = html;
+    }
     function generarHtmlPedido(p, esFinalizado = false) {
       let itemsHtml = '<ul class="item-list">';
       let subtotal = 0;
       p.items.forEach(item => {
         const totalItem = item[7];
         subtotal += totalItem;
-        itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem.toFixed(2)}</li>`;
+        itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
       });
       itemsHtml += '</ul>';
-
-      let badgeClass = p.estadoActual === 'Listo' ? 'bg-info' : p.estadoActual === 'Entregado' ? 'bg-success' : p.estadoActual === 'Rechazado' ? 'bg-danger' : 'bg-warning';
-
+      let badgeClass = 'bg-warning';
+      if (p.estadoActual === 'Listo') badgeClass = 'bg-info';
+      if (p.estadoActual === 'Entregado') badgeClass = 'bg-success';
+      if (p.estadoActual === 'Rechazado') badgeClass = 'bg-danger';
       const botonesAccion = esFinalizado ? '' : `
         <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
           <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
@@ -772,51 +757,28 @@
             <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
           </button>
         </div>`;
-
       return `
         <div class="pedido-card">
           <div class="pedido-header d-flex justify-content-between align-items-center">
-            <div><strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal}</div>
+            <div>
+              <strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal}
+            </div>
             <span class="badge ${badgeClass} estado-badge">${p.estadoActual}</span>
           </div>
           <div class="pedido-body">
-            <p><strong>Tipo:</strong> ${p.tipoEntrega}</p>
             <p><strong>Dirección:</strong> ${p.direccion}</p>
             <p><strong>Método de pago:</strong> ${p.metodoPago}</p>
             <p><strong>Observaciones:</strong> ${p.observaciones}</p>
             <h6 class="mt-3">Items:</h6>
             ${itemsHtml}
-            <div class="text-end mt-3"><strong>Subtotal local: $${subtotal.toFixed(2)}</strong></div>
+            <div class="text-end mt-3">
+              <strong>Subtotal local: $${subtotal}</strong>
+            </div>
             ${botonesAccion}
           </div>
         </div>`;
     }
-
-    function renderizarPedidosEnProceso(filtro = 'todos') {
-      const cont = document.getElementById('pedidos-proceso-listado');
-      const enProceso = pedidosData.filter(p => ['Pendiente', 'Listo'].includes(p.estadoActual));
-      let filtrados = enProceso;
-      if (filtro === 'pendientes') filtrados = enProceso.filter(p => p.estadoActual === 'Pendiente');
-      if (filtro === 'listos') filtrados = enProceso.filter(p => p.estadoActual === 'Listo');
-
-      if (filtrados.length === 0) {
-        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos en este filtro</h5></div>';
-        return;
-      }
-      cont.innerHTML = filtrados.map(p => generarHtmlPedido(p)).join('');
-      agregarEventosBotones();
-    }
-
-    function renderizarPedidosFinalizados() {
-      const cont = document.getElementById('pedidos-finalizados-listado');
-      const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado' || p.estadoActual === 'Rechazado');
-      if (finalizados.length === 0) {
-        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos finalizados</h5></div>';
-        return;
-      }
-      cont.innerHTML = finalizados.map(p => generarHtmlPedido(p, true)).join('');
-    }
-
+    
     function agregarEventosBotones() {
       document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
         btn.addEventListener('click', async function() {
@@ -825,79 +787,94 @@
           if (!pedido) return;
 
           let nuevoEstado = '';
-          let tipoNotificacion = null;
-
-          if (this.classList.contains('btn-listos')) {
-            nuevoEstado = 'Listo';
-            tipoNotificacion = pedido.tipoEntrega === 'Con Envío' ? 'motomandado' : 'listoRetiro';
-          } else if (this.classList.contains('btn-entregado')) {
-            nuevoEstado = 'Entregado';
-            tipoNotificacion = 'entregado';
-          } else if (this.classList.contains('btn-rechazar')) {
-            nuevoEstado = 'Rechazado';
-            tipoNotificacion = 'rechazado';
-          }
+          if (this.classList.contains('btn-listos')) nuevoEstado = 'Listo';
+          if (this.classList.contains('btn-entregado')) nuevoEstado = 'Entregado';
+          if (this.classList.contains('btn-rechazar')) nuevoEstado = 'Rechazado';
 
           const spinner = this.querySelector('.spinner-border');
           spinner.classList.remove('d-none');
           this.disabled = true;
 
           try {
-            // Actualizar estado
+            // 1. Actualizar estado en la base
+            const payloadEstado = {
+              action: 'updateEstadoLocalOrder',
+              idPedidoLocal: idPedidoLocal,
+              nuevoEstado: nuevoEstado
+            };
             await fetch(API_URL, {
               method: 'POST',
-              body: JSON.stringify({
-                action: 'updateEstadoLocalOrder',
-                idPedidoLocal: idPedidoLocal,
-                nuevoEstado: nuevoEstado
-              }),
+              body: JSON.stringify(payloadEstado),
               headers: { 'Content-Type': 'application/json' },
               mode: 'no-cors'
             });
 
-            // Enviar notificación
-            if (tipoNotificacion) {
-              await enviarNotificacionEmail(tipoNotificacion, pedido);
+            // 2. Enviar notificación por email según el caso
+            let destinatario = '';
+            let asunto = '';
+            let mensaje = '';
+
+            if (nuevoEstado === 'Listo') {
+              if (pedido.tipoEntrega === 'Con Envío') {
+                destinatario = 'bajoneando.st@gmail.com'; // motomandado
+                asunto = `Pedido #${pedido.idPedido} listo para envío - Weep`;
+                mensaje = `El local ha marcado el pedido #${pedido.idPedido} como Listo. Por favor pasar a retirarlo para entrega.`;
+              } else {
+                // Para Retirar
+                destinatario = pedido.emailCliente;
+                asunto = `Tu pedido #${pedido.idPedido} está listo - Weep`;
+                mensaje = `¡Buenas noticias! Tu pedido en el local ya está listo para retirar. ¡Gracias por elegirnos!`;
+              }
             }
 
-            alert(`Pedido marcado como ${nuevoEstado}`);
-            cargarMisPedidos();
+            else if (nuevoEstado === 'Entregado') {
+              destinatario = pedido.emailCliente;
+              asunto = `¡Tu pedido #${pedido.idPedido} ha sido entregado! - Weep`;
+              mensaje = `
+                ¡Gracias por tu compra!<br><br>
+                Tu pedido ha sido entregado correctamente.<br><br>
+                Nos encantaría conocer tu opinión. ¿Podrías dedicarnos 10 segundos para puntuar tu experiencia?<br><br>
+                <a href="https://forms.gle/TU_ENLACE_AQUI" style="background:#d32f2f;color:white;padding:10px 20px;text-decoration:none;border-radius:8px;font-weight:bold;">⭐ Calificar con 5 estrellas</a><br><br>
+                ¡Gracias por confiar en Weep!
+              `;
+            }
+
+            else if (nuevoEstado === 'Rechazado') {
+              destinatario = pedido.emailCliente;
+              asunto = `Pedido #${pedido.idPedido} rechazado - Weep`;
+              mensaje = `Lamentamos informarte que el local no pudo aceptar tu pedido #${pedido.idPedido}.<br>Por favor contacta al local o realiza un nuevo pedido.<br>Gracias por entender.`;
+            }
+
+            // Si hay que enviar email
+            if (destinatario && asunto && mensaje) {
+              const payloadNotif = {
+                action: 'sendNotification',
+                from: 'weep.notificaciones@gmail.com',
+                to: destinatario,
+                subject: asunto,
+                html: mensaje
+              };
+
+              await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payloadNotif),
+                headers: { 'Content-Type': 'application/json' },
+                mode: 'no-cors'
+              });
+            }
+
+            alert(`Pedido marcado como ${nuevoEstado}${destinatario ? ' y notificación enviada' : ''}`);
+            cargarMisPedidos(); // Recargar todo
+
           } catch (err) {
-            alert('Error al procesar el pedido');
+            console.error(err);
+            alert('Error al actualizar o enviar notificación');
           } finally {
             spinner.classList.add('d-none');
           }
         });
       });
     }
-
-    // Filtros y pestañas
-    document.getElementById('filtro-pendientes').addEventListener('click', () => {
-      document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('filtro-pendientes').classList.add('active');
-      renderizarPedidosEnProceso('pendientes');
-    });
-    document.getElementById('filtro-listos').addEventListener('click', () => {
-      document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('filtro-listos').classList.add('active');
-      renderizarPedidosEnProceso('listos');
-    });
-    document.getElementById('filtro-todos-proceso').addEventListener('click', () => {
-      document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('filtro-todos-proceso').classList.add('active');
-      renderizarPedidosEnProceso('todos');
-    });
-
-    // Al cambiar pestaña
-    document.querySelectorAll('#pedidosTabs button').forEach(tab => {
-      tab.addEventListener('shown.bs.tab', () => {
-        if (tab.id === 'proceso-tab') renderizarPedidosEnProceso('todos');
-        if (tab.id === 'finalizados-tab') renderizarPedidosFinalizados();
-      });
-    });
-
-    // Inicial
-    document.getElementById('filtro-todos-proceso')?.click();
   </script>
 </body>
 </html>
