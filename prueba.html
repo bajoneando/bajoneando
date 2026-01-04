@@ -150,9 +150,10 @@
         flex-wrap: wrap;
         gap: 18px;
     }
+    /* === SUGERENCIAS DE LOCALES MÁS PEQUEÑAS === */
     .suggestion {
-        width: 180px;
-        height: 180px;
+        width: 150px;
+        height: 150px;
         border-radius: 18px;
         overflow: hidden;
         box-shadow: 0 8px 25px rgba(0,0,0,0.15);
@@ -465,9 +466,13 @@
         .category span {
             font-size: 15px;
         }
+        /* Sugerencias de locales más pequeñas en tablet/móvil */
         .suggestion {
-            width: 160px;
-            height: 160px;
+            width: 130px;
+            height: 130px;
+        }
+        .suggestion-items {
+            gap: 14px;
         }
         h1 { font-size: 1.6rem; }
         h2 { font-size: 1.4rem; }
@@ -478,7 +483,7 @@
             height: 55px;
         }
 
-        /* Tarjetas de menú más pequeñas y en 2 columnas */
+        /* Menú en 2 columnas (ya aplicado antes) */
         .menu-items {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -523,9 +528,13 @@
         .category span {
             font-size: 14px;
         }
+        /* Aún más pequeñas en celulares pequeños */
         .suggestion {
-            width: 140px;
-            height: 140px;
+            width: 120px;
+            height: 120px;
+        }
+        .suggestion-items {
+            gap: 12px;
         }
         .menu-item img {
             height: 110px;
@@ -547,7 +556,7 @@
         }
     }
 
-    /* En pantallas grandes volvemos al diseño flex centrado */
+    /* En pantallas grandes volvemos al flex centrado para menú */
     @media (min-width: 769px) {
         .menu-items {
             display: flex;
