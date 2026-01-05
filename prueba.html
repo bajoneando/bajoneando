@@ -648,30 +648,50 @@
       document.getElementById('perfil-form').classList.add('d-none');
       btn.disabled = false;
     });
-    // === MIS PEDIDOS - LÓGICA MEJORADA CON NOTIFICACIONES ===
-    async function cargarMisPedidos() {
+    
+        async function cargarMisPedidos() {
       const contProceso = document.getElementById('pedidos-proceso-listado');
       const contFinalizados = document.getElementById('pedidos-finalizados-listado');
-      contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+      
+      // Mostrar cargando
+      contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
       contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+
       try {
         const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
+        
+        // Verificar si la respuesta es válida
+        if (!resLocales.ok) {
+          throw new Error(`Error HTTP: ${resLocales.status}`);
+        }
+        
         const locales = await resLocales.json();
+        
+        pedidosData = []; // Limpiar siempre
+
         if (!locales || locales.length === 0) {
           contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
           contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos finalizados</h4></div>';
           return;
         }
-        pedidosData = []; // Reiniciamos
+
+        // Cargar datos de cada pedido
         for (const localPedido of locales) {
           const idPedidoLocal = localPedido[0];
           const idPedido = localPedido[1];
           const estadoActual = localPedido[4] || 'Pendiente';
-          const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
+
+          const [resItems, resGeneral] = await Promise.all([
+            fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`),
+            fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`)
+          ]);
+
+          if (!resItems.ok || !resGeneral.ok) continue; // Saltar si falla uno
+
           const items = await resItems.json();
-          const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
           const general = await resGeneral.json();
-          const pedidoInfo = {
+
+          pedidosData.push({
             idPedidoLocal,
             idPedido,
             estadoActual,
@@ -679,18 +699,48 @@
             direccion: general.direccion || 'Retiro en local',
             observaciones: general.observaciones || 'Ninguna',
             metodoPago: general.metodoPago || 'No especificado',
-            tipoEntrega: general.tipoEntrega || 'Para Retirar', // Nuevo campo clave
-            emailCliente: general.emailCliente || '', // Asegúrate de que tu backend lo devuelva
+            tipoEntrega: general.tipoEntrega || 'Para Retirar',
+            emailCliente: general.emailCliente || '',
             nombreCliente: general.nombreCliente || 'Cliente'
-          };
-          pedidosData.push(pedidoInfo);
+          });
         }
+
+        // Renderizar
         renderizarPedidosEnProceso('todos');
         renderizarPedidosFinalizados();
+
+        // === AQUÍ ASIGNAMOS LOS FILTROS (una sola vez, cuando se cargan los pedidos) ===
+        const btnPendientes = document.getElementById('filtro-pendientes');
+        const btnListos = document.getElementById('filtro-listos');
+        const btnTodosProceso = document.getElementById('filtro-todos-proceso');
+
+        // Remover listeners anteriores por si se vuelve a cargar
+        btnPendientes?.replaceWith(btnPendientes.cloneNode(true));
+        btnListos?.replaceWith(btnListos.cloneNode(true));
+        btnTodosProceso?.replaceWith(btnTodosProceso.cloneNode(true));
+
+        document.getElementById('filtro-pendientes').addEventListener('click', () => {
+          document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+          document.getElementById('filtro-pendientes').classList.add('active');
+          renderizarPedidosEnProceso('pendientes');
+        });
+
+        document.getElementById('filtro-listos').addEventListener('click', () => {
+          document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+          document.getElementById('filtro-listos').classList.add('active');
+          renderizarPedidosEnProceso('listos');
+        });
+
+        document.getElementById('filtro-todos-proceso').addEventListener('click', () => {
+          document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+          document.getElementById('filtro-todos-proceso').classList.add('active');
+          renderizarPedidosEnProceso('todos');
+        });
+
       } catch (err) {
         console.error('Error cargando pedidos:', err);
-        contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
-        contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+        contProceso.innerHTML = '<div class="alert alert-danger text-center">Error al cargar los pedidos.<br>Revisa la conexión o intenta más tarde.</div>';
+        contFinalizados.innerHTML = '<div class="alert alert-warning text-center">No se pudieron cargar los pedidos.</div>';
       }
     }
     function generarHtmlPedido(p, esFinalizado = false) {
