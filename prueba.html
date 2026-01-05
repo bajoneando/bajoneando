@@ -8,113 +8,179 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .container { max-width: 1200px; flex: 1; }
-    h1, h2, h3, h5 { font-weight: 600; color: #c62828; }
-    .text-rojo { color: #d32f2f; }
-    .btn-rojo { background-color: #d32f2f; border: none; }
-    .btn-rojo:hover { background-color: #b71c1c; }
-    .header {
-      background: white;
-      padding: 2rem 0;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      border-radius: 0 0 20px 20px;
-      margin-bottom: 3rem;
-    }
-    .logo-plataforma {
-      width: 100px;
-      height: 100px;
-      object-fit: contain;
-    }
-    .logo-perfil-sm {
-      width: 50px;
-      height: 50px;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 3px solid #d32f2f;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-    .logo-perfil-placeholder {
-      width: 50px;
-      height: 50px;
-      background: #f5f5f5;
-      border: 3px dashed #d32f2f;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      color: #999;
-    }
-    .status-toggle-sm {
-      width: 70px; height: 36px; position: relative; display: inline-block;
-    }
-    .status-toggle-sm input { opacity: 0; width: 0; height: 0; }
-    .status-slider-sm {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc; transition: .4s; border-radius: 34px;
-    }
-    .status-slider-sm:before {
-      position: absolute; content: ""; height: 28px; width: 28px;
-      left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;
-    }
-    input:checked + .status-slider-sm { background-color: #27ae60; }
-    input:checked + .status-slider-sm:before { transform: translateX(34px); }
-    .menu-card-horizontal {
-      display: flex; align-items: center; background: white; border-radius: 16px;
-      overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: all 0.3s ease;
-      margin-bottom: 1rem;
-    }
-    .menu-card-horizontal:hover {
-      transform: translateY(-5px); box-shadow: 0 15px 35px rgba(211,47,47,0.2);
-    }
-    .menu-card-horizontal img {
-      width: 120px; height: 120px; object-fit: cover;
-    }
-    .card-body-horizontal { padding: 1.5rem; flex: 1; }
-    .precio { font-size: 1.8rem; font-weight: 700; color: #d32f2f; }
-    .loading { color: #d32f2f; font-weight: 600; }
-    .pedido-card {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-      margin-bottom: 1.5rem;
-      overflow: hidden;
-    }
-    .pedido-header {
-      background: #d32f2f;
-      color: white;
-      padding: 1rem 1.5rem;
-    }
-    .pedido-body {
-      padding: 1.5rem;
-    }
-    .item-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .item-list li {
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #eee;
-    }
-    .item-list li:last-child { border-bottom: none; }
-    .estado-badge {
-      font-size: 1rem;
-      padding: 0.5rem 1rem;
-    }
-    footer {
-      background: #c62828; color: white; padding: 2rem 0; margin-top: auto;
-    }
-    footer a { color: #ffcdd2; text-decoration: none; }
-    footer a:hover { color: white; }
-  </style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .container { 
+    max-width: 1200px; 
+    flex: 1; 
+  }
+  h1, h2, h3, h5 { 
+    font-weight: 600; 
+    color: #c62828; 
+  }
+  .text-rojo { 
+    color: #d32f2f; 
+  }
+  .btn-rojo { 
+    background-color: #d32f2f; 
+    border: none; 
+  }
+  .btn-rojo:hover { 
+    background-color: #b71c1c; 
+  }
+  .header {
+    background: white;
+    padding: 2rem 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border-radius: 0 0 20px 20px;
+    margin-bottom: 3rem;
+  }
+  .logo-plataforma {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+  }
+  .logo-perfil-sm {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #d32f2f;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  .logo-perfil-placeholder {
+    width: 50px;
+    height: 50px;
+    background: #f5f5f5;
+    border: 3px dashed #d32f2f;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: #999;
+  }
+  .status-toggle-sm {
+    width: 70px; 
+    height: 36px; 
+    position: relative; 
+    display: inline-block;
+  }
+  .status-toggle-sm input { 
+    opacity: 0; 
+    width: 0; 
+    height: 0; 
+  }
+  .status-slider-sm {
+    position: absolute; 
+    cursor: pointer; 
+    top: 0; 
+    left: 0; 
+    right: 0; 
+    bottom: 0;
+    background-color: #ccc; 
+    transition: .4s; 
+    border-radius: 34px;
+  }
+  .status-slider-sm:before {
+    position: absolute; 
+    content: ""; 
+    height: 28px; 
+    width: 28px;
+    left: 4px; 
+    bottom: 4px; 
+    background-color: white; 
+    transition: .4s; 
+    border-radius: 50%;
+  }
+  input:checked + .status-slider-sm { 
+    background-color: #27ae60; 
+  }
+  input:checked + .status-slider-sm:before { 
+    transform: translateX(34px); 
+  }
+  .menu-card-horizontal {
+    display: flex; 
+    align-items: center; 
+    background: white; 
+    border-radius: 16px;
+    overflow: hidden; 
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+  }
+  .menu-card-horizontal:hover {
+    transform: translateY(-5px); 
+    box-shadow: 0 15px 35px rgba(211,47,47,0.2);
+  }
+  .menu-card-horizontal img {
+    width: 120px; 
+    height: 120px; 
+    object-fit: cover;
+  }
+  .card-body-horizontal { 
+    padding: 1.5rem; 
+    flex: 1; 
+  }
+  .precio { 
+    font-size: 1.8rem; 
+    font-weight: 700; 
+    color: #d32f2f; 
+  }
+  .loading { 
+    color: #d32f2f; 
+    font-weight: 600; 
+  }
+  .pedido-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .pedido-header {
+    background: #d32f2f;
+    color: white;
+    padding: 1rem 1.5rem;
+  }
+  .pedido-body {
+    padding: 1.5rem;
+  }
+  .item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .item-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+  }
+  .item-list li:last-child { 
+    border-bottom: none; 
+  }
+  .estado-badge {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+  }
+  footer {
+    background: #c62828; 
+    color: white; 
+    padding: 2rem 0; 
+    margin-top: auto;
+  }
+  footer a { 
+    color: #ffcdd2; 
+    text-decoration: none; 
+  }
+  footer a:hover { 
+    color: white; 
+  }
+</style>
 </head>
 <body>
   <header class="header">
@@ -124,194 +190,208 @@
     </div>
   </header>
   <div class="container pb-5">
-    <!-- SECCIÓN DE AUTENTICACIÓN -->
-    <div id="auth-section" class="card shadow-lg p-5 mb-5 bg-white rounded-4">
-      <h2 class="text-center mb-4 text-rojo">Acceso Local</h2>
-      <div class="text-center mb-4">
-        <button id="show-register" class="btn btn-outline-danger btn-lg me-3">Registrar Local</button>
-        <button id="show-login" class="btn btn-rojo btn-lg">Iniciar Sesión</button>
-      </div>
-      <form id="local-register-form" class="mt-4 d-none">
-        <input type="text" id="reg-local-name" placeholder="Nombre del Local" class="form-control form-control-lg mb-3" required>
-        <input type="email" id="reg-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
-        <input type="password" id="reg-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
-        <button type="submit" class="btn btn-success btn-lg w-100">
-          <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-          Registrar Local
-        </button>
-      </form>
-      <form id="local-login-form" class="mt-4">
-        <input type="email" id="login-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
-        <input type="password" id="login-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
-        <button type="submit" class="btn btn-rojo btn-lg w-100">
-          <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-          Iniciar Sesión
-        </button>
-      </form>
-      <div id="auth-status" class="mt-3"></div>
+  <!-- SECCIÓN DE AUTENTICACIÓN -->
+  <div id="auth-section" class="card shadow-lg p-5 mb-5 bg-white rounded-4">
+    <h2 class="text-center mb-4 text-rojo">Acceso Local</h2>
+    <div class="text-center mb-4">
+      <button id="show-register" class="btn btn-outline-danger btn-lg me-3">Registrar Local</button>
+      <button id="show-login" class="btn btn-rojo btn-lg">Iniciar Sesión</button>
     </div>
-    <!-- PANEL PRINCIPAL -->
-    <div id="panel-principal" class="d-none">
-      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-        <div class="d-flex align-items-center gap-3">
-          <div class="text-center">
-            <label class="status-toggle-sm">
-              <input type="checkbox" id="estado-local-toggle">
-              <span class="status-slider-sm"></span>
-            </label>
-            <small class="d-block mt-1 text-rojo fw-bold" id="estado-texto">Cerrado</small>
-          </div>
-          <span class="fw-medium">Estado del Local</span>
+    <form id="local-register-form" class="mt-4 d-none">
+      <input type="text" id="reg-local-name" placeholder="Nombre del Local" class="form-control form-control-lg mb-3" required>
+      <input type="text" id="reg-local-direccion" placeholder="Dirección del local (calle, número, barrio)" class="form-control form-control-lg mb-3" required>
+      <input type="email" id="reg-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
+      <input type="password" id="reg-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
+      <button type="submit" class="btn btn-success btn-lg w-100">
+        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+        Registrar Local
+      </button>
+    </form>
+    <form id="local-login-form" class="mt-4">
+      <input type="email" id="login-local-email" placeholder="Email" class="form-control form-control-lg mb-3" required>
+      <input type="password" id="login-local-password" placeholder="Contraseña" class="form-control form-control-lg mb-3" required>
+      <button type="submit" class="btn btn-rojo btn-lg w-100">
+        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+        Iniciar Sesión
+      </button>
+    </form>
+    <div id="auth-status" class="mt-3"></div>
+  </div>
+
+  <!-- PANEL PRINCIPAL -->
+  <div id="panel-principal" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="text-center">
+          <label class="status-toggle-sm">
+            <input type="checkbox" id="estado-local-toggle">
+            <span class="status-slider-sm"></span>
+          </label>
+          <small class="d-block mt-1 text-rojo fw-bold" id="estado-texto">Cerrado</small>
         </div>
-        <div class="d-flex align-items-center gap-3">
-          <div id="perfil-foto-container">
-            <div class="logo-perfil-placeholder">Foto</div>
-          </div>
-          <div class="dropdown">
-            <button class="btn btn-outline-danger btn-lg dropdown-toggle" data-bs-toggle="dropdown">Mi Perfil</button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="#" id="editar-perfil-btn">Editar Perfil</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item text-danger" href="#" id="logout">Cerrar sesión</a></li>
-            </ul>
-          </div>
+        <span class="fw-medium">Estado del Local</span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div id="perfil-foto-container">
+          <div class="logo-perfil-placeholder">Foto</div>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-outline-danger btn-lg dropdown-toggle" data-bs-toggle="dropdown">Mi Perfil</button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#" id="editar-perfil-btn">Editar Perfil</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" href="#" id="logout">Cerrar sesión</a></li>
+          </ul>
         </div>
       </div>
-      <div class="text-center mb-5">
-        <button id="btn-mi-menu" class="btn btn-success btn-lg px-5 me-4">Mi Menú</button>
-        <button id="btn-agregar-item" class="btn btn-rojo btn-lg px-5 me-3">Agregar Plato</button>
-        <button id="btn-mis-pedidos" class="btn btn-primary btn-lg px-5">Mis Pedidos</button>
+    </div>
+
+    <div class="text-center mb-5">
+      <button id="btn-mi-menu" class="btn btn-success btn-lg px-5 me-4">Mi Menú</button>
+      <button id="btn-agregar-item" class="btn btn-rojo btn-lg px-5 me-3">Agregar Plato</button>
+      <button id="btn-mis-pedidos" class="btn btn-primary btn-lg px-5">Mis Pedidos</button>
+    </div>
+
+    <div id="filtros-menu" class="card p-4 mb-4 d-none">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <div class="input-group input-group-lg">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input type="text" id="buscador-plato" class="form-control" placeholder="Buscar plato...">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <select id="filtro-categoria" class="form-select form-select-lg">
+            <option value="">Todas las categorías</option>
+          </select>
+        </div>
       </div>
-      <div id="filtros-menu" class="card p-4 mb-4 d-none">
-        <div class="row g-3 align-items-center">
-          <div class="col-md-6">
-            <div class="input-group input-group-lg">
-              <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-              <input type="text" id="buscador-plato" class="form-control" placeholder="Buscar plato...">
+    </div>
+
+    <!-- FORMULARIO PLATO -->
+    <form id="menu-form" class="card shadow-lg p-4 mb-5 d-none">
+      <h3 class="mb-4 text-rojo" id="form-titulo">Nuevo Plato</h3>
+      <input type="hidden" id="edit-item-id">
+      <div class="row g-3">
+        <div class="col-md-6"><input type="text" id="nombre" class="form-control form-control-lg" placeholder="Nombre del plato" required></div>
+        <div class="col-md-6">
+          <select id="categoria" class="form-select form-select-lg" required>
+            <option value="">Seleccionar categoría</option>
+            <option value="Hamburguesas">Hamburguesas</option>
+            <option value="Pizza">Pizza</option>
+            <option value="Helados">Helados</option>
+            <option value="Postres">Postres</option>
+            <option value="Merienda">Merienda</option>
+            <option value="Bebidas">Bebidas</option>
+            <option value="Platos principales">Platos principales</option>
+          </select>
+        </div>
+        <div class="col-12"><textarea id="descripcion" class="form-control" rows="2" placeholder="Descripción breve" required></textarea></div>
+        <div class="col-md-4"><input type="number" id="precio" class="form-control form-control-lg" placeholder="Precio" step="0.01" required></div>
+        <div class="col-md-4">
+          <select id="disponibilidad" class="form-select form-select-lg">
+            <option value="Sí">Disponible</option>
+            <option value="No">No disponible</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select id="tamano_porcion" class="form-select form-select-lg">
+            <option value="">Tamaño/Porción</option>
+            <option value="1 persona">1 persona</option>
+            <option value="2 personas">2 personas</option>
+            <option value="3 personas">3 personas</option>
+            <option value="4+ personas">4+ personas</option>
+          </select>
+        </div>
+        <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes (ej: con cheddar)"></div>
+        <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo preparación (min)"></div>
+        <div class="col-12"><input type="file" id="foto" class="form-control form-control-lg" accept="image/*"></div>
+      </div>
+      <div class="mt-4 text-end">
+        <button type="button" id="cancelar-form" class="btn btn-secondary btn-lg me-3">Cancelar</button>
+        <button type="submit" class="btn btn-success btn-lg px-5" id="guardar-btn">
+          <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+          Guardar Plato
+        </button>
+      </div>
+    </form>
+
+    <!-- FORMULARIO EDITAR PERFIL (con dirección) -->
+    <div id="perfil-form" class="card shadow-lg p-4 mb-5 d-none">
+      <h3 class="mb-4 text-rojo">Editar Perfil del Local</h3>
+      <div class="text-center mb-4">
+        <img id="perfil-foto-preview" src="" alt="Foto del local" class="img-fluid rounded" style="max-width:200px; display:none;">
+        <div id="perfil-foto-placeholder" class="logo-perfil-placeholder mx-auto">Sin foto</div>
+        <div class="mt-3">
+          <input type="file" id="perfil-foto" class="form-control form-control-lg" accept="image/*">
+          <small class="text-muted">Sube una nueva foto (opcional)</small>
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <input type="text" id="perfil-nombre" class="form-control form-control-lg" placeholder="Nombre del local" required>
+        </div>
+        <div class="col-md-6">
+          <input type="text" id="perfil-direccion" class="form-control form-control-lg" placeholder="Dirección del local" required>
+        </div>
+        <div class="col-md-6">
+          <input type="email" id="perfil-email" class="form-control form-control-lg" placeholder="Email" required>
+        </div>
+        <div class="col-12">
+          <input type="password" id="perfil-password" class="form-control form-control-lg" placeholder="Nueva contraseña (dejar vacío para no cambiar)">
+        </div>
+      </div>
+      <div class="mt-4 text-end">
+        <button type="button" id="cancelar-perfil" class="btn btn-secondary btn-lg me-3">Cancelar</button>
+        <button type="button" id="guardar-perfil" class="btn btn-success btn-lg px-5">
+          <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+          Guardar Cambios
+        </button>
+      </div>
+      <div id="perfil-status" class="mt-3"></div>
+    </div>
+
+    <!-- LISTADO MENÚ -->
+    <div id="menu-listado">
+      <div class="text-center py-5 loading">
+        <div class="spinner-border text-danger" role="status"></div>
+        <p class="mt-3">Cargando menú...</p>
+      </div>
+    </div>
+
+    <!-- MIS PEDIDOS - CON PESTAÑAS -->
+    <div id="pedidos-panel" class="d-none">
+      <h2 class="mb-4 text-rojo text-center">Mis Pedidos</h2>
+      <ul class="nav nav-tabs mb-4" id="pedidosTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="proceso-tab" data-bs-toggle="tab" data-bs-target="#proceso" type="button" role="tab">
+            Pedidos en Proceso
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="finalizados-tab" data-bs-toggle="tab" data-bs-target="#finalizados" type="button" role="tab">
+            Pedidos Finalizados
+          </button>
+        </li>
+      </ul>
+      <div class="tab-content">
+        <div class="tab-pane fade show active" id="proceso" role="tabpanel">
+          <div class="mb-3 text-center">
+            <div class="btn-group" role="group">
+              <button type="button" class="btn btn-outline-primary active" id="filtro-pendientes">Pendientes</button>
+              <button type="button" class="btn btn-outline-primary" id="filtro-listos">Listos</button>
+              <button type="button" class="btn btn-outline-primary" id="filtro-todos-proceso">Todos</button>
             </div>
           </div>
-          <div class="col-md-6">
-            <select id="filtro-categoria" class="form-select form-select-lg">
-              <option value="">Todas las categorías</option>
-            </select>
-          </div>
+          <div id="pedidos-proceso-listado"></div>
         </div>
-      </div>
-      <!-- FORMULARIO PLATO -->
-      <form id="menu-form" class="card shadow-lg p-4 mb-5 d-none">
-        <h3 class="mb-4 text-rojo" id="form-titulo">Nuevo Plato</h3>
-        <input type="hidden" id="edit-item-id">
-        <div class="row g-3">
-          <div class="col-md-6"><input type="text" id="nombre" class="form-control form-control-lg" placeholder="Nombre del plato" required></div>
-          <div class="col-md-6">
-            <select id="categoria" class="form-select form-select-lg" required>
-              <option value="">Seleccionar categoría</option>
-              <option value="Hamburguesas">Hamburguesas</option>
-              <option value="Pizza">Pizza</option>
-              <option value="Helados">Helados</option>
-              <option value="Postres">Postres</option>
-              <option value="Merienda">Merienda</option>
-              <option value="Bebidas">Bebidas</option>
-              <option value="Platos principales">Platos principales</option>
-            </select>
-          </div>
-          <div class="col-12"><textarea id="descripcion" class="form-control" rows="2" placeholder="Descripción breve" required></textarea></div>
-          <div class="col-md-4"><input type="number" id="precio" class="form-control form-control-lg" placeholder="Precio" step="0.01" required></div>
-          <div class="col-md-4">
-            <select id="disponibilidad" class="form-select form-select-lg">
-              <option value="Sí">Disponible</option>
-              <option value="No">No disponible</option>
-            </select>
-          </div>
-          <div class="col-md-4">
-            <select id="tamano_porcion" class="form-select form-select-lg">
-              <option value="">Tamaño/Porción</option>
-              <option value="1 persona">1 persona</option>
-              <option value="2 personas">2 personas</option>
-              <option value="3 personas">3 personas</option>
-              <option value="4+ personas">4+ personas</option>
-            </select>
-          </div>
-          <div class="col-md-6"><input type="text" id="variantes" class="form-control form-control-lg" placeholder="Variantes (ej: con cheddar)"></div>
-          <div class="col-md-6"><input type="number" id="tiempo_preparacion" class="form-control form-control-lg" placeholder="Tiempo preparación (min)"></div>
-          <div class="col-12"><input type="file" id="foto" class="form-control form-control-lg" accept="image/*"></div>
-        </div>
-        <div class="mt-4 text-end">
-          <button type="button" id="cancelar-form" class="btn btn-secondary btn-lg me-3">Cancelar</button>
-          <button type="submit" class="btn btn-success btn-lg px-5" id="guardar-btn">
-            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-            Guardar Plato
-          </button>
-        </div>
-      </form>
-      <!-- FORMULARIO EDITAR PERFIL -->
-      <div id="perfil-form" class="card shadow-lg p-4 mb-5 d-none">
-        <h3 class="mb-4 text-rojo">Editar Perfil del Local</h3>
-        <div class="text-center mb-4">
-          <img id="perfil-foto-preview" src="" alt="Foto del local" class="img-fluid rounded" style="max-width:200px; display:none;">
-          <div id="perfil-foto-placeholder" class="logo-perfil-placeholder mx-auto">Sin foto</div>
-          <div class="mt-3">
-            <input type="file" id="perfil-foto" class="form-control form-control-lg" accept="image/*">
-            <small class="text-muted">Sube una nueva foto (opcional)</small>
-          </div>
-        </div>
-        <div class="row g-3">
-          <div class="col-md-6"><input type="text" id="perfil-nombre" class="form-control form-control-lg" placeholder="Nombre del local" required></div>
-          <div class="col-md-6"><input type="email" id="perfil-email" class="form-control form-control-lg" placeholder="Email" required></div>
-          <div class="col-12"><input type="password" id="perfil-password" class="form-control form-control-lg" placeholder="Nueva contraseña (dejar vacío para no cambiar)"></div>
-        </div>
-        <div class="mt-4 text-end">
-          <button type="button" id="cancelar-perfil" class="btn btn-secondary btn-lg me-3">Cancelar</button>
-          <button type="button" id="guardar-perfil" class="btn btn-success btn-lg px-5">
-            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-            Guardar Cambios
-          </button>
-        </div>
-        <div id="perfil-status" class="mt-3"></div>
-      </div>
-      <!-- LISTADO MENÚ -->
-      <div id="menu-listado">
-        <div class="text-center py-5 loading">
-          <div class="spinner-border text-danger" role="status"></div>
-          <p class="mt-3">Cargando menú...</p>
-        </div>
-      </div>
-      <!-- MIS PEDIDOS - CON PESTAÑAS -->
-      <div id="pedidos-panel" class="d-none">
-        <h2 class="mb-4 text-rojo text-center">Mis Pedidos</h2>
-        <!-- Pestañas -->
-        <ul class="nav nav-tabs mb-4" id="pedidosTabs" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="proceso-tab" data-bs-toggle="tab" data-bs-target="#proceso" type="button" role="tab">
-              Pedidos en Proceso
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link" id="finalizados-tab" data-bs-toggle="tab" data-bs-target="#finalizados" type="button" role="tab">
-              Pedidos Finalizados
-            </button>
-          </li>
-        </ul>
-        <div class="tab-content">
-          <!-- Pestaña En Proceso -->
-          <div class="tab-pane fade show active" id="proceso" role="tabpanel">
-            <div class="mb-3 text-center">
-              <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-primary active" id="filtro-pendientes">Pendientes</button>
-                <button type="button" class="btn btn-outline-primary" id="filtro-listos">Listos</button>
-                <button type="button" class="btn btn-outline-primary" id="filtro-todos-proceso">Todos</button>
-              </div>
-            </div>
-            <div id="pedidos-proceso-listado"></div>
-          </div>
-          <!-- Pestaña Finalizados -->
-          <div class="tab-pane fade" id="finalizados" role="tabpanel">
-            <div id="pedidos-finalizados-listado"></div>
-          </div>
+        <div class="tab-pane fade" id="finalizados" role="tabpanel">
+          <div id="pedidos-finalizados-listado"></div>
         </div>
       </div>
     </div>
   </div>
+</div>
   <footer class="text-center">
     <div class="container">
       <p class="mb-2">© 2026 <strong>Weep</strong> - Panel de Gestión</p>
@@ -321,624 +401,696 @@
     </div>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // === CONFIGURACIÓN ===
-    const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
-    const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
-    const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
-    // Emails fijos para notificaciones
-    const EMAIL_NOTIFICACIONES = 'weep.notificaciones@gmail.com';
-    const EMAIL_MOTOMANDADO = 'bajoneando.st@gmail.com';
-    let localToken = localStorage.getItem('localToken');
-    let menuItems = [];
-    let pedidosData = []; // Ahora global para usar en notificaciones
-    if (localToken) mostrarPanelPrincipal();
-  
-    function mostrarPanelPrincipal() {
-      document.getElementById('auth-section').classList.add('d-none');
-      document.getElementById('panel-principal').classList.remove('d-none');
-      cargarEstadoLocal();
-      cargarMenuCompleto();
-      cargarFotoPerfilHeader();
-    }
-    function ocultarTodo() {
-      document.getElementById('menu-form').classList.add('d-none');
-      document.getElementById('perfil-form').classList.add('d-none');
-      document.getElementById('menu-listado').classList.add('d-none');
-      document.getElementById('pedidos-panel').classList.add('d-none');
-      document.getElementById('filtros-menu').classList.add('d-none');
-    }
-    // === AUTENTICACIÓN (sin cambios) ===
-    document.getElementById('show-register').addEventListener('click', () => {
-      document.getElementById('local-register-form').classList.remove('d-none');
-      document.getElementById('local-login-form').classList.add('d-none');
-    });
-    document.getElementById('show-login').addEventListener('click', () => {
-      document.getElementById('local-login-form').classList.remove('d-none');
-      document.getElementById('local-register-form').classList.add('d-none');
-    });
-    document.getElementById('local-register-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nombre = document.getElementById('reg-local-name').value.trim();
-      const email = document.getElementById('reg-local-email').value.trim();
-      const password = document.getElementById('reg-local-password').value;
-      if (!nombre || !email || !password) return alert('Completa todos los campos');
-      await fetch(`${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
-      alert('Local registrado con éxito. Ahora inicia sesión.');
-      document.getElementById('show-login').click();
-      document.getElementById('local-register-form').reset();
-    });
-    document.getElementById('local-login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-local-email').value.trim();
-      const password = document.getElementById('login-local-password').value;
-      const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
-      window.loginCallback = function(data) {
-        if (data.success && data.localId) {
-          localStorage.setItem('localToken', data.localId);
-          localToken = data.localId;
-          mostrarPanelPrincipal();
-        } else {
-          alert('Credenciales incorrectas');
-        }
-        delete window.loginCallback;
-        const script = document.getElementById('loginScript');
-        if (script) script.remove();
-      };
-      const script = document.createElement('script');
-      script.id = 'loginScript';
-      script.src = url;
-      document.head.appendChild(script);
-    });
-    document.getElementById('logout').addEventListener('click', (e) => {
-      e.preventDefault();
-      localStorage.removeItem('localToken');
-      localToken = null;
-      location.reload();
-    });
-    // === NAVEGACIÓN ===
-    document.getElementById('btn-mi-menu').addEventListener('click', () => {
-      ocultarTodo();
-      document.getElementById('filtros-menu').classList.remove('d-none');
-      document.getElementById('menu-listado').classList.remove('d-none');
-      cargarMenuCompleto();
-    });
-    document.getElementById('btn-agregar-item').addEventListener('click', () => {
-      ocultarTodo();
-      document.getElementById('menu-form').classList.remove('d-none');
-      document.getElementById('form-titulo').textContent = 'Nuevo Plato';
-      document.getElementById('menu-form').reset();
-      document.getElementById('edit-item-id').value = '';
-    });
-    document.getElementById('btn-mis-pedidos').addEventListener('click', () => {
-      ocultarTodo();
-      document.getElementById('pedidos-panel').classList.remove('d-none');
-      cargarMisPedidos();
-    });
-    document.getElementById('cancelar-form').addEventListener('click', () => {
-      document.getElementById('menu-form').classList.add('d-none');
-      cargarMenuCompleto();
-    });
-    // === SUBIR IMAGEN ===
-    async function subirImagen(file) {
-      if (!file) return '';
-      const MAX_SIZE = 10 * 1024 * 1024;
-      if (file.size > MAX_SIZE) { alert('Imagen muy grande (máx 10MB)'); return ''; }
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      try {
-        const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
-        const data = await res.json();
-        return data.secure_url || '';
-      } catch (e) {
-        alert('Error al subir imagen');
-        return '';
-      }
-    }
-    // === GUARDAR PLATO ===
-    document.getElementById('menu-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('guardar-btn');
-      const spinner = btn.querySelector('.spinner-border');
-      spinner.classList.remove('d-none');
-      btn.disabled = true;
-      try {
-        let imagenUrl = '';
-        const file = document.getElementById('foto').files[0];
-        if (file) imagenUrl = await subirImagen(file);
-        const payload = {
-          action: document.getElementById('edit-item-id').value ? 'updateMenuItem' : 'addMenuItem',
-          localId: localToken,
-          nombre: document.getElementById('nombre').value.trim(),
-          categoria: document.getElementById('categoria').value,
-          descripcion: document.getElementById('descripcion').value.trim(),
-          precio: parseFloat(document.getElementById('precio').value),
-          disponibilidad: document.getElementById('disponibilidad').value,
-          tamano_porcion: document.getElementById('tamano_porcion').value || '',
-          variantes: document.getElementById('variantes').value.trim(),
-          tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0
-        };
-        if (imagenUrl) payload.imagen_url = imagenUrl;
-        if (document.getElementById('edit-item-id').value) payload.itemId = document.getElementById('edit-item-id').value;
-        if (!payload.nombre || !payload.categoria || payload.precio <= 0) {
-          alert('Faltan datos obligatorios');
-          return;
-        }
-        await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'no-cors'
-        });
-        alert(payload.action === 'addMenuItem' ? 'Plato agregado' : 'Plato actualizado');
-        document.getElementById('menu-form').classList.add('d-none');
-        cargarMenuCompleto();
-      } catch (err) {
-        console.error(err);
-        alert('Error al guardar. Revisa la consola.');
-      } finally {
-        spinner.classList.add('d-none');
-        btn.disabled = false;
-      }
-    });
-    // === MENÚ (sin cambios importantes) ===
-    async function cargarMenuCompleto() {
-      const cont = document.getElementById('menu-listado');
-      cont.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando menú...</p></div>';
-      try {
-        const res = await fetch(`${API_URL}?action=getMenuByLocalIdColK&localId=${localToken}`);
-        menuItems = await res.json();
-        const select = document.getElementById('filtro-categoria');
-        select.innerHTML = '<option value="">Todas las categorías</option>';
-        const categorias = [...new Set(menuItems.map(i => i.categoria).filter(Boolean))].sort();
-        categorias.forEach(cat => {
-          const opt = document.createElement('option');
-          opt.value = cat;
-          opt.textContent = cat;
-          select.appendChild(opt);
-        });
-        renderizarMenu(menuItems);
-      } catch (err) {
-        cont.innerHTML = '<div class="alert alert-danger">Error al cargar el menú</div>';
-      }
-    }
-    function renderizarMenu(items) {
-      const cont = document.getElementById('menu-listado');
-      if (items.length === 0) {
-        cont.innerHTML = '<div class="text-center py-5"><h4>No hay platos aún</h4><p>¡Agrega tu primer plato!</p></div>';
-        return;
-      }
-      let html = '';
-      items.forEach(item => {
-        const disponible = item.disponibilidad === "Sí";
-        html += `
-          <div class="menu-card-horizontal">
-            ${item.imagen_url ? `<img src="${item.imagen_url}" alt="${item.nombre}">` : '<div style="width:120px;height:120px;background:#eee;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.9rem;">Sin foto</div>'}
-            <div class="card-body-horizontal">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <h5 class="fw-bold mb-1">${item.nombre}</h5>
-                  <p class="text-muted small mb-2">${item.descripcion || ''}</p>
-                  <span class="badge bg-secondary mb-2">${item.categoria || 'Sin categoría'}</span>
-                </div>
-                <span class="precio">$${parseFloat(item.precio).toFixed(2)}</span>
-              </div>
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <div class="form-check form-switch">
-                  <input class="form-check-input toggle-disponibilidad" type="checkbox" id="disp-${item.id}" ${disponible ? 'checked' : ''} data-id="${item.id}">
-                  <label class="form-check-label" for="disp-${item.id}">${disponible ? 'Disponible' : 'No disponible'}</label>
-                </div>
-                <div>
-                  <button class="btn btn-warning btn-sm me-2 editar-plato" data-id="${item.id}">Editar</button>
-                  <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">Eliminar</button>
-                </div>
-              </div>
-            </div>
-          </div>`;
-      });
-      cont.innerHTML = html;
-      document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
-        el.addEventListener('change', async () => {
-          await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
-        });
-      });
-      document.querySelectorAll('.eliminar-item').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (!confirm('¿Eliminar este plato permanentemente?')) return;
-          await fetch(`${API_URL}?action=deleteMenuItem&itemId=${btn.dataset.id}`);
-          cargarMenuCompleto();
-        });
-      });
-      document.querySelectorAll('.editar-plato').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const item = menuItems.find(i => i.id === btn.dataset.id);
-          if (!item) return;
-          ocultarTodo();
-          document.getElementById('menu-form').classList.remove('d-none');
-          document.getElementById('form-titulo').textContent = 'Editar Plato';
-          document.getElementById('edit-item-id').value = item.id;
-          document.getElementById('nombre').value = item.nombre;
-          document.getElementById('categoria').value = item.categoria || '';
-          document.getElementById('descripcion').value = item.descripcion || '';
-          document.getElementById('precio').value = item.precio;
-          document.getElementById('disponibilidad').value = item.disponibilidad;
-          document.getElementById('tamano_porcion').value = item.tamano_porcion || '';
-          document.getElementById('variantes').value = item.variantes || '';
-          document.getElementById('tiempo_preparacion').value = item.tiempo_preparacion || '';
-        });
-      });
-    }
-    document.getElementById('buscador-plato').addEventListener('input', filtrarMenu);
-    document.getElementById('filtro-categoria').addEventListener('change', filtrarMenu);
-    function filtrarMenu() {
-      const texto = document.getElementById('buscador-plato').value.toLowerCase();
-      const cat = document.getElementById('filtro-categoria').value;
-      const filtrados = menuItems.filter(item => {
-        const nombreOk = item.nombre.toLowerCase().includes(texto);
-        const catOk = !cat || item.categoria === cat;
-        return nombreOk && catOk;
-      });
-      renderizarMenu(filtrados);
-    }
-    // === ESTADO LOCAL ===
-    async function cargarEstadoLocal() {
-      const res = await fetch(`${API_URL}?action=getLocalEstado&localId=${localToken}`);
-      const data = await res.json();
-      const activo = data.estado === "Activo";
-      document.getElementById('estado-local-toggle').checked = activo;
-      document.getElementById('estado-texto').textContent = activo ? "Abierto" : "Cerrado";
-    }
-    document.getElementById('estado-local-toggle').addEventListener('change', async function() {
-      const estado = this.checked ? "Activo" : "Inactivo";
-      document.getElementById('estado-texto').textContent = this.checked ? "Abierto" : "Cerrado";
-      await fetch(`${API_URL}?action=updateLocalEstado&localId=${localToken}&estado=${estado}`);
-    });
-    // === PERFIL ===
-    async function cargarFotoPerfilHeader() {
-      try {
-        const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
-        const data = await res.json();
-        if (data.success && data.foto_url) {
-          document.getElementById('perfil-foto-container').innerHTML = `<img src="${data.foto_url}" class="logo-perfil-sm" alt="Perfil">`;
-        }
-      } catch (e) {}
-    }
-    document.getElementById('editar-perfil-btn').addEventListener('click', async () => {
-      ocultarTodo();
-      document.getElementById('perfil-form').classList.remove('d-none');
+<script>
+  // === CONFIGURACIÓN ===
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+  const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
+  const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
+  // Emails fijos para notificaciones
+  const EMAIL_NOTIFICACIONES = 'weep.notificaciones@gmail.com';
+  const EMAIL_MOTOMANDADO = 'bajoneando.st@gmail.com';
+
+  let localToken = localStorage.getItem('localToken');
+  let menuItems = [];
+  let pedidosData = [];
+  let direccionLocal = ''; // Variable global para la dirección del local (usada en notificaciones)
+
+  if (localToken) mostrarPanelPrincipal();
+
+  function mostrarPanelPrincipal() {
+    document.getElementById('auth-section').classList.add('d-none');
+    document.getElementById('panel-principal').classList.remove('d-none');
+    cargarEstadoLocal();
+    cargarMenuCompleto();
+    cargarFotoPerfilHeader();
+    cargarDireccionLocal(); // Cargamos la dirección al iniciar
+  }
+
+  async function cargarDireccionLocal() {
+    try {
       const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
       const data = await res.json();
-      if (data.success) {
-        document.getElementById('perfil-nombre').value = data.nombre || '';
-        document.getElementById('perfil-email').value = data.email || '';
-        if (data.foto_url) {
-          document.getElementById('perfil-foto-preview').src = data.foto_url;
-          document.getElementById('perfil-foto-preview').style.display = 'block';
-          document.getElementById('perfil-foto-placeholder').style.display = 'none';
-        }
+      if (data.success && data.direccion) {
+        direccionLocal = data.direccion.trim();
+      } else {
+        direccionLocal = 'Dirección no configurada';
       }
-    });
-    document.getElementById('cancelar-perfil').addEventListener('click', () => {
-      document.getElementById('perfil-form').classList.add('d-none');
-      cargarMenuCompleto();
-    });
-    document.getElementById('guardar-perfil').addEventListener('click', async () => {
-      const btn = document.getElementById('guardar-perfil');
-      btn.disabled = true;
-      let fotoUrl = '';
-      const file = document.getElementById('perfil-foto').files[0];
-      if (file) fotoUrl = await subirImagen(file);
+    } catch (e) {
+      direccionLocal = 'Dirección no disponible';
+    }
+  }
+
+  function ocultarTodo() {
+    document.getElementById('menu-form').classList.add('d-none');
+    document.getElementById('perfil-form').classList.add('d-none');
+    document.getElementById('menu-listado').classList.add('d-none');
+    document.getElementById('pedidos-panel').classList.add('d-none');
+    document.getElementById('filtros-menu').classList.add('d-none');
+  }
+
+  // === AUTENTICACIÓN ===
+  document.getElementById('show-register').addEventListener('click', () => {
+    document.getElementById('local-register-form').classList.remove('d-none');
+    document.getElementById('local-login-form').classList.add('d-none');
+  });
+
+  document.getElementById('show-login').addEventListener('click', () => {
+    document.getElementById('local-login-form').classList.remove('d-none');
+    document.getElementById('local-register-form').classList.add('d-none');
+  });
+
+  // Registro con dirección
+  document.getElementById('local-register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nombre = document.getElementById('reg-local-name').value.trim();
+    const direccion = document.getElementById('reg-local-direccion').value.trim();
+    const email = document.getElementById('reg-local-email').value.trim();
+    const password = document.getElementById('reg-local-password').value;
+    if (!nombre || !direccion || !email || !password) return alert('Completa todos los campos');
+    await fetch(`${API_URL}?action=registerLocal&nombre=${encodeURIComponent(nombre)}&direccion=${encodeURIComponent(direccion)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`);
+    alert('Local registrado con éxito. Ahora inicia sesión.');
+    document.getElementById('show-login').click();
+    document.getElementById('local-register-form').reset();
+  });
+
+  // Login
+  document.getElementById('local-login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-local-email').value.trim();
+    const password = document.getElementById('login-local-password').value;
+    const url = `${API_URL}?action=loginLocal&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&callback=loginCallback`;
+    window.loginCallback = function(data) {
+      if (data.success && data.localId) {
+        localStorage.setItem('localToken', data.localId);
+        localToken = data.localId;
+        mostrarPanelPrincipal();
+      } else {
+        alert('Credenciales incorrectas');
+      }
+      delete window.loginCallback;
+      const script = document.getElementById('loginScript');
+      if (script) script.remove();
+    };
+    const script = document.createElement('script');
+    script.id = 'loginScript';
+    script.src = url;
+    document.head.appendChild(script);
+  });
+
+  document.getElementById('logout').addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('localToken');
+    localToken = null;
+    location.reload();
+  });
+
+  // === NAVEGACIÓN ===
+  document.getElementById('btn-mi-menu').addEventListener('click', () => {
+    ocultarTodo();
+    document.getElementById('filtros-menu').classList.remove('d-none');
+    document.getElementById('menu-listado').classList.remove('d-none');
+    cargarMenuCompleto();
+  });
+
+  document.getElementById('btn-agregar-item').addEventListener('click', () => {
+    ocultarTodo();
+    document.getElementById('menu-form').classList.remove('d-none');
+    document.getElementById('form-titulo').textContent = 'Nuevo Plato';
+    document.getElementById('menu-form').reset();
+    document.getElementById('edit-item-id').value = '';
+  });
+
+  document.getElementById('btn-mis-pedidos').addEventListener('click', () => {
+    ocultarTodo();
+    document.getElementById('pedidos-panel').classList.remove('d-none');
+    cargarMisPedidos();
+  });
+
+  document.getElementById('cancelar-form').addEventListener('click', () => {
+    document.getElementById('menu-form').classList.add('d-none');
+    cargarMenuCompleto();
+  });
+
+  // === SUBIR IMAGEN ===
+  async function subirImagen(file) {
+    if (!file) return '';
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) { alert('Imagen muy grande (máx 10MB)'); return ''; }
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    try {
+      const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: formData });
+      const data = await res.json();
+      return data.secure_url || '';
+    } catch (e) {
+      alert('Error al subir imagen');
+      return '';
+    }
+  }
+
+  // === GUARDAR PLATO ===
+  document.getElementById('menu-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('guardar-btn');
+    const spinner = btn.querySelector('.spinner-border');
+    spinner.classList.remove('d-none');
+    btn.disabled = true;
+    try {
+      let imagenUrl = '';
+      const file = document.getElementById('foto').files[0];
+      if (file) imagenUrl = await subirImagen(file);
       const payload = {
-        action: 'updatePerfilLocal',
+        action: document.getElementById('edit-item-id').value ? 'updateMenuItem' : 'addMenuItem',
         localId: localToken,
-        nombre: document.getElementById('perfil-nombre').value.trim(),
-        email: document.getElementById('perfil-email').value.trim()
+        nombre: document.getElementById('nombre').value.trim(),
+        categoria: document.getElementById('categoria').value,
+        descripcion: document.getElementById('descripcion').value.trim(),
+        precio: parseFloat(document.getElementById('precio').value),
+        disponibilidad: document.getElementById('disponibilidad').value,
+        tamano_porcion: document.getElementById('tamano_porcion').value || '',
+        variantes: document.getElementById('variantes').value.trim(),
+        tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0
       };
-      if (document.getElementById('perfil-password').value) payload.password = document.getElementById('perfil-password').value;
-      if (fotoUrl) payload.foto_url = fotoUrl;
+      if (imagenUrl) payload.imagen_url = imagenUrl;
+      if (document.getElementById('edit-item-id').value) payload.itemId = document.getElementById('edit-item-id').value;
+      if (!payload.nombre || !payload.categoria || payload.precio <= 0) {
+        alert('Faltan datos obligatorios');
+        return;
+      }
       await fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: { 'Content-Type': 'application/json' },
         mode: 'no-cors'
       });
-      alert('Perfil actualizado');
-      cargarFotoPerfilHeader();
-      document.getElementById('perfil-form').classList.add('d-none');
+      alert(payload.action === 'addMenuItem' ? 'Plato agregado' : 'Plato actualizado');
+      document.getElementById('menu-form').classList.add('d-none');
+      cargarMenuCompleto();
+    } catch (err) {
+      console.error(err);
+      alert('Error al guardar. Revisa la consola.');
+    } finally {
+      spinner.classList.add('d-none');
       btn.disabled = false;
-    });
-    
-    async function cargarMisPedidos() {
-  const contProceso = document.getElementById('pedidos-proceso-listado');
-  const contFinalizados = document.getElementById('pedidos-finalizados-listado');
-  
-  contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
-  contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+    }
+  });
 
-  try {
-    const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
-    const locales = await resLocales.json();
+  // === MENÚ ===
+  async function cargarMenuCompleto() {
+    const cont = document.getElementById('menu-listado');
+    cont.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando menú...</p></div>';
+    try {
+      const res = await fetch(`${API_URL}?action=getMenuByLocalIdColK&localId=${localToken}`);
+      menuItems = await res.json();
+      const select = document.getElementById('filtro-categoria');
+      select.innerHTML = '<option value="">Todas las categorías</option>';
+      const categorias = [...new Set(menuItems.map(i => i.categoria).filter(Boolean))].sort();
+      categorias.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+      renderizarMenu(menuItems);
+    } catch (err) {
+      cont.innerHTML = '<div class="alert alert-danger">Error al cargar el menú</div>';
+    }
+  }
 
-    if (!locales || locales.length === 0) {
-      contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
-      contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos finalizados</h4></div>';
+  function renderizarMenu(items) {
+    const cont = document.getElementById('menu-listado');
+    if (items.length === 0) {
+      cont.innerHTML = '<div class="text-center py-5"><h4>No hay platos aún</h4><p>¡Agrega tu primer plato!</p></div>';
       return;
     }
+    let html = '';
+    items.forEach(item => {
+      const disponible = item.disponibilidad === "Sí";
+      html += `
+        <div class="menu-card-horizontal">
+          ${item.imagen_url ? `<img src="${item.imagen_url}" alt="${item.nombre}">` : '<div style="width:120px;height:120px;background:#eee;display:flex;align-items:center;justify-content:center;color:#999;font-size:0.9rem;">Sin foto</div>'}
+          <div class="card-body-horizontal">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="fw-bold mb-1">${item.nombre}</h5>
+                <p class="text-muted small mb-2">${item.descripcion || ''}</p>
+                <span class="badge bg-secondary mb-2">${item.categoria || 'Sin categoría'}</span>
+              </div>
+              <span class="precio">$${parseFloat(item.precio).toFixed(2)}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <div class="form-check form-switch">
+                <input class="form-check-input toggle-disponibilidad" type="checkbox" id="disp-${item.id}" ${disponible ? 'checked' : ''} data-id="${item.id}">
+                <label class="form-check-label" for="disp-${item.id}">${disponible ? 'Disponible' : 'No disponible'}</label>
+              </div>
+              <div>
+                <button class="btn btn-warning btn-sm me-2 editar-plato" data-id="${item.id}">Editar</button>
+                <button class="btn btn-danger btn-sm eliminar-item" data-id="${item.id}">Eliminar</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    });
+    cont.innerHTML = html;
 
-    pedidosData = []; // Reiniciamos
-
-    for (const localPedido of locales) {
-      const idPedidoLocal = localPedido[0];  // ← Este es "1007LOC...", "1008LOC...", etc.
-      const idPedido = localPedido[1];
-      const estadoActual = localPedido[4] || 'Pendiente';
-
-      const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
-      const items = await resItems.json();
-
-      const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
-      const general = await resGeneral.json();
-
-      const pedidoInfo = {
-        idPedidoLocal,  // ← Cadena completa, clave para el orden
-        idPedido,
-        estadoActual,
-        items,
-        direccion: general.direccion || 'Retiro en local',
-        observaciones: general.observaciones || 'Ninguna',
-        metodoPago: general.metodoPago || 'No especificado',
-        tipoEntrega: general.tipoEntrega || 'Para Retirar',
-        emailCliente: general.emailCliente || '',
-        nombreCliente: general.nombreCliente || 'Cliente'
-      };
-
-      pedidosData.push(pedidoInfo);
-    }
-
-    // === ESTA LÍNEA ORDENA CORRECTAMENTE: del más antiguo arriba al más nuevo abajo ===
-    pedidosData.sort((a, b) => a.idPedidoLocal.localeCompare(b.idPedidoLocal));
-
-    // Renderizar
-    renderizarPedidosEnProceso('todos');
-    renderizarPedidosFinalizados();
-
-  } catch (err) {
-    console.error('Error cargando pedidos:', err);
-    contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
-    contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
-  }
-}
-    function generarHtmlPedido(p, esFinalizado = false) {
-      let itemsHtml = '<ul class="item-list">';
-      let subtotal = 0;
-      p.items.forEach(item => {
-        const totalItem = item[7];
-        subtotal += totalItem;
-        itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
+    // Eventos dinámicos
+    document.querySelectorAll('.toggle-disponibilidad').forEach(el => {
+      el.addEventListener('change', async () => {
+        await fetch(`${API_URL}?action=updateDisponibilidad&itemId=${el.dataset.id}&disponibilidad=${el.checked ? "Sí" : "No"}`);
       });
-      itemsHtml += '</ul>';
-      let badgeClass = 'bg-warning';
-      if (p.estadoActual === 'Listo') badgeClass = 'bg-info';
-      if (p.estadoActual === 'Entregado') badgeClass = 'bg-success';
-      if (p.estadoActual === 'Rechazado') badgeClass = 'bg-danger';
-      const tipoBadge = p.tipoEntrega === 'Con Envío'
-        ? '<span class="badge bg-primary ms-2">Con Envío</span>'
-        : '<span class="badge bg-secondary ms-2">Retiro</span>';
-      const botonesAccion = esFinalizado ? '' : `
-        <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
-          <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
-            <span class="spinner-border spinner-border-sm d-none"></span> Listo
-          </button>
-          <button class="btn btn-primary btn-entregado" data-id="${p.idPedidoLocal}" ${['Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
-            <span class="spinner-border spinner-border-sm d-none"></span> Entregado
-          </button>
-          <button class="btn btn-danger btn-rechazar" data-id="${p.idPedidoLocal}" ${p.estadoActual === 'Rechazado' ? 'disabled' : ''}>
-            <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
-          </button>
-        </div>`;
-      return `
-        <div class="pedido-card">
-          <div class="pedido-header d-flex justify-content-between align-items-center">
-            <div>
-              <strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal} ${tipoBadge}
-            </div>
-            <span class="badge ${badgeClass} estado-badge">${p.estadoActual}</span>
-          </div>
-          <div class="pedido-body">
-            <p><strong>Cliente:</strong> ${p.nombreCliente} (${p.emailCliente})</p>
-            <p><strong>Dirección/Retiro:</strong> ${p.direccion}</p>
-            <p><strong>Método de pago:</strong> ${p.metodoPago}</p>
-            <p><strong>Observaciones:</strong> ${p.observaciones}</p>
-            <h6 class="mt-3">Items:</h6>
-            ${itemsHtml}
-            <div class="text-end mt-3">
-              <strong>Subtotal local: $${subtotal.toFixed(2)}</strong>
-            </div>
-            ${botonesAccion}
-          </div>
-        </div>`;
-    }
-    function agregarEventosBotones() {
-  document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
-    btn.addEventListener('click', async function() {
-      const idPedidoLocal = this.dataset.id;
-      const pedido = pedidosData.find(p => p.idPedidoLocal == idPedidoLocal);
-      if (!pedido) return;
-      let nuevoEstado = '';
-      let accionNotificacion = '';
-      if (this.classList.contains('btn-listos')) {
-        nuevoEstado = 'Listo';
-        accionNotificacion = 'listo';
-      } else if (this.classList.contains('btn-entregado')) {
-        nuevoEstado = 'Entregado';
-        accionNotificacion = 'entregado';
-      } else if (this.classList.contains('btn-rechazar')) {
-        nuevoEstado = 'Rechazado';
-        accionNotificacion = 'rechazado';
+    });
+
+    document.querySelectorAll('.eliminar-item').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('¿Eliminar este plato permanentemente?')) return;
+        await fetch(`${API_URL}?action=deleteMenuItem&itemId=${btn.dataset.id}`);
+        cargarMenuCompleto();
+      });
+    });
+
+    document.querySelectorAll('.editar-plato').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = menuItems.find(i => i.id === btn.dataset.id);
+        if (!item) return;
+        ocultarTodo();
+        document.getElementById('menu-form').classList.remove('d-none');
+        document.getElementById('form-titulo').textContent = 'Editar Plato';
+        document.getElementById('edit-item-id').value = item.id;
+        document.getElementById('nombre').value = item.nombre;
+        document.getElementById('categoria').value = item.categoria || '';
+        document.getElementById('descripcion').value = item.descripcion || '';
+        document.getElementById('precio').value = item.precio;
+        document.getElementById('disponibilidad').value = item.disponibilidad;
+        document.getElementById('tamano_porcion').value = item.tamano_porcion || '';
+        document.getElementById('variantes').value = item.variantes || '';
+        document.getElementById('tiempo_preparacion').value = item.tiempo_preparacion || '';
+      });
+    });
+  }
+
+  document.getElementById('buscador-plato').addEventListener('input', filtrarMenu);
+  document.getElementById('filtro-categoria').addEventListener('change', filtrarMenu);
+
+  function filtrarMenu() {
+    const texto = document.getElementById('buscador-plato').value.toLowerCase();
+    const cat = document.getElementById('filtro-categoria').value;
+    const filtrados = menuItems.filter(item => {
+      const nombreOk = item.nombre.toLowerCase().includes(texto);
+      const catOk = !cat || item.categoria === cat;
+      return nombreOk && catOk;
+    });
+    renderizarMenu(filtrados);
+  }
+
+  // === ESTADO LOCAL ===
+  async function cargarEstadoLocal() {
+    const res = await fetch(`${API_URL}?action=getLocalEstado&localId=${localToken}`);
+    const data = await res.json();
+    const activo = data.estado === "Activo";
+    document.getElementById('estado-local-toggle').checked = activo;
+    document.getElementById('estado-texto').textContent = activo ? "Abierto" : "Cerrado";
+  }
+
+  document.getElementById('estado-local-toggle').addEventListener('change', async function() {
+    const estado = this.checked ? "Activo" : "Inactivo";
+    document.getElementById('estado-texto').textContent = this.checked ? "Abierto" : "Cerrado";
+    await fetch(`${API_URL}?action=updateLocalEstado&localId=${localToken}&estado=${estado}`);
+  });
+
+  // === PERFIL ===
+  async function cargarFotoPerfilHeader() {
+    try {
+      const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
+      const data = await res.json();
+      if (data.success && data.foto_url) {
+        document.getElementById('perfil-foto-container').innerHTML = `<img src="${data.foto_url}" class="logo-perfil-sm" alt="Perfil">`;
       }
-      const spinner = this.querySelector('.spinner-border');
-      spinner.classList.remove('d-none');
-      this.disabled = true;
-      try {
-        // 1. Actualizar estado en backend
-        const payloadEstado = {
-          action: 'updateEstadoLocalOrder',
-          idPedidoLocal: idPedidoLocal,
-          nuevoEstado: nuevoEstado
+    } catch (e) {}
+  }
+
+  document.getElementById('editar-perfil-btn').addEventListener('click', async () => {
+    ocultarTodo();
+    document.getElementById('perfil-form').classList.remove('d-none');
+    const res = await fetch(`${API_URL}?action=getPerfilLocal&localId=${localToken}`);
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('perfil-nombre').value = data.nombre || '';
+      document.getElementById('perfil-direccion').value = data.direccion || '';
+      document.getElementById('perfil-email').value = data.email || '';
+      if (data.foto_url) {
+        document.getElementById('perfil-foto-preview').src = data.foto_url;
+        document.getElementById('perfil-foto-preview').style.display = 'block';
+        document.getElementById('perfil-foto-placeholder').style.display = 'none';
+      } else {
+        document.getElementById('perfil-foto-preview').style.display = 'none';
+        document.getElementById('perfil-foto-placeholder').style.display = 'flex';
+      }
+      // Actualizamos dirección global
+      direccionLocal = data.direccion || 'Dirección no configurada';
+    }
+  });
+
+  document.getElementById('cancelar-perfil').addEventListener('click', () => {
+    document.getElementById('perfil-form').classList.add('d-none');
+    cargarMenuCompleto();
+  });
+
+  document.getElementById('guardar-perfil').addEventListener('click', async () => {
+    const btn = document.getElementById('guardar-perfil');
+    btn.disabled = true;
+    let fotoUrl = '';
+    const file = document.getElementById('perfil-foto').files[0];
+    if (file) fotoUrl = await subirImagen(file);
+    const payload = {
+      action: 'updatePerfilLocal',
+      localId: localToken,
+      nombre: document.getElementById('perfil-nombre').value.trim(),
+      direccion: document.getElementById('perfil-direccion').value.trim(),
+      email: document.getElementById('perfil-email').value.trim()
+    };
+    if (document.getElementById('perfil-password').value) payload.password = document.getElementById('perfil-password').value;
+    if (fotoUrl) payload.foto_url = fotoUrl;
+
+    await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+      mode: 'no-cors'
+    });
+    alert('Perfil actualizado');
+    direccionLocal = payload.direccion;
+    cargarFotoPerfilHeader();
+    document.getElementById('perfil-form').classList.add('d-none');
+    btn.disabled = false;
+  });
+
+  // === PEDIDOS ===
+  async function cargarMisPedidos() {
+    const contProceso = document.getElementById('pedidos-proceso-listado');
+    const contFinalizados = document.getElementById('pedidos-finalizados-listado');
+    
+    contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+    contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+
+    try {
+      const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
+      const locales = await resLocales.json();
+
+      if (!locales || locales.length === 0) {
+        contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
+        contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No hay pedidos finalizados</h4></div>';
+        return;
+      }
+
+      pedidosData = [];
+
+      for (const localPedido of locales) {
+        const idPedidoLocal = localPedido[0];
+        const idPedido = localPedido[1];
+        const estadoActual = localPedido[4] || 'Pendiente';
+
+        const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
+        const items = await resItems.json();
+
+        const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
+        const general = await resGeneral.json();
+
+        const pedidoInfo = {
+          idPedidoLocal,
+          idPedido,
+          estadoActual,
+          items,
+          direccion: general.direccion || 'Retiro en local',
+          observaciones: general.observaciones || 'Ninguna',
+          metodoPago: general.metodoPago || 'No especificado',
+          tipoEntrega: general.tipoEntrega || 'Para Retirar',
+          emailCliente: general.emailCliente || '',
+          nombreCliente: general.nombreCliente || 'Cliente'
         };
-        await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify(payloadEstado),
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'no-cors'
-        });
-        // 2. Enviar notificación por email según la acción
-        let destinatario = '';
-        let asunto = '';
-        let mensaje = '';
-        // Logo centrado al inicio de todos los emails
-        const logoHtml = `
-          <div style="text-align: center; margin: 20px 0 30px 0;">
-            <img src="https://i.postimg.cc/HW8j3XBr/Chat-GPT-Image-Jan-3-2026-01-27-57-AM.png"
-                 alt="Weep"
-                 width="120"
-                 style="max-width: 120px; height: auto; border-radius: 12px;">
+
+        pedidosData.push(pedidoInfo);
+      }
+
+      pedidosData.sort((a, b) => a.idPedidoLocal.localeCompare(b.idPedidoLocal));
+
+      renderizarPedidosEnProceso('todos');
+      renderizarPedidosFinalizados();
+
+    } catch (err) {
+      console.error('Error cargando pedidos:', err);
+      contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+      contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+    }
+  }
+
+  function generarHtmlPedido(p, esFinalizado = false) {
+    let itemsHtml = '<ul class="item-list">';
+    let subtotal = 0;
+    p.items.forEach(item => {
+      const totalItem = item[7];
+      subtotal += totalItem;
+      itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
+    });
+    itemsHtml += '</ul>';
+
+    let badgeClass = 'bg-warning';
+    if (p.estadoActual === 'Listo') badgeClass = 'bg-info';
+    if (p.estadoActual === 'Entregado') badgeClass = 'bg-success';
+    if (p.estadoActual === 'Rechazado') badgeClass = 'bg-danger';
+
+    const tipoBadge = p.tipoEntrega === 'Con Envío'
+      ? '<span class="badge bg-primary ms-2">Con Envío</span>'
+      : '<span class="badge bg-secondary ms-2">Retiro</span>';
+
+    const botonesAccion = esFinalizado ? '' : `
+      <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
+        <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+          <span class="spinner-border spinner-border-sm d-none"></span> Listo
+        </button>
+        <button class="btn btn-primary btn-entregado" data-id="${p.idPedidoLocal}" ${['Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+          <span class="spinner-border spinner-border-sm d-none"></span> Entregado
+        </button>
+        <button class="btn btn-danger btn-rechazar" data-id="${p.idPedidoLocal}" ${p.estadoActual === 'Rechazado' ? 'disabled' : ''}>
+          <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
+        </button>
+      </div>`;
+
+    return `
+      <div class="pedido-card">
+        <div class="pedido-header d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal} ${tipoBadge}
           </div>
-          <hr style="border: 0; border-top: 2px solid #d32f2f; margin: 30px 0;">
-        `;
-        if (accionNotificacion === 'listo') {
-          if (pedido.tipoEntrega === 'Con Envío') {
-            destinatario = EMAIL_MOTOMANDADO;
-            asunto = `¡Nuevo pedido listo para envío! - Pedido #${pedido.idPedido}`;
-            mensaje = `
-              ${logoHtml}
-              <h2 style="color: #d32f2f; text-align: center;">Pedido listo para retiro por motomandado</h2>
-              <p><strong>Cliente:</strong> ${pedido.nombreCliente}</p>
-              <p><strong>Dirección de entrega:</strong> ${pedido.direccion}</p>
-              <p><strong>Observaciones:</strong> ${pedido.observaciones || 'Ninguna'}</p>
-              <p style="font-weight: bold; color: #d32f2f;">
-                Por favor coordinar retiro en el local lo antes posible.
-              </p>
-            `;
-          } else {
-            destinatario = pedido.emailCliente;
-            asunto = `¡Tu pedido está listo para retirar! - Pedido #${pedido.idPedido}`;
-            mensaje = `
-              ${logoHtml}
-              <h2 style="color: #d32f2f; text-align: center;">¡Tu pedido está listo!</h2>
-              <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
-              <p>Tu pedido ya está preparado y listo para que pases a retirarlo por el local.</p>
-              <p><strong>Dirección del local:</strong> [Aquí va la dirección del local]</p>
-              <p>¡Gracias por elegirnos! Te esperamos</p>
-            `;
-          }
-        } else if (accionNotificacion === 'entregado') {
-          destinatario = pedido.emailCliente;
-          asunto = `¡Tu pedido ha sido entregado! - Pedido #${pedido.idPedido}`;
-          mensaje = `
-            ${logoHtml}
-            <h2 style="color: #d32f2f; text-align: center;">¡Gracias por tu compra!</h2>
-            <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
-            <p>Tu pedido <strong>#${pedido.idPedido}</strong> ha sido entregado con éxito.</p>
-            <p>¿Cómo fue tu experiencia? Ayúdanos a mejorar:</p>
-            <div style="text-align:center; margin:30px 0;">
-              <a href="https://forms.gle/TU_ENLACE_DE_VALORACION_AQUI"
-                 style="display:inline-block; font-size:18px; padding:14px 28px; background:#d32f2f; color:white; text-decoration:none; border-radius:12px; font-weight:bold;">
-                ⭐ Calificar con 5 estrellas
-              </a>
-            </div>
-            <p>¡Gracias por confiar en Weep!</p>
-          `;
-        } else if (accionNotificacion === 'rechazado') {
-          destinatario = pedido.emailCliente;
-          asunto = `Pedido rechazado - Pedido #${pedido.idPedido}`;
-          mensaje = `
-            ${logoHtml}
-            <h2 style="color: #d32f2f; text-align: center;">Lo sentimos</h2>
-            <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
-            <p>Lamentamos informarte que tu pedido <strong>#${pedido.idPedido}</strong> no pudo ser procesado en este momento.</p>
-            <p><strong>Motivo:</strong> [Indicar motivo si aplica]</p>
-            <p>Te devolveremos el dinero en los próximos días si corresponde.</p>
-            <p>Disculpa las molestias. Estamos aquí para ayudarte.</p>
-          `;
+          <span class="badge ${badgeClass} estado-badge">${p.estadoActual}</span>
+        </div>
+        <div class="pedido-body">
+          <p><strong>Cliente:</strong> ${p.nombreCliente} (${p.emailCliente})</p>
+          <p><strong>Dirección/Retiro:</strong> ${p.direccion}</p>
+          <p><strong>Método de pago:</strong> ${p.metodoPago}</p>
+          <p><strong>Observaciones:</strong> ${p.observaciones}</p>
+          <h6 class="mt-3">Items:</h6>
+          ${itemsHtml}
+          <div class="text-end mt-3">
+            <strong>Subtotal local: $${subtotal.toFixed(2)}</strong>
+          </div>
+          ${botonesAccion}
+        </div>
+      </div>`;
+  }
+
+  function agregarEventosBotones() {
+    document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
+      btn.addEventListener('click', async function() {
+        const idPedidoLocal = this.dataset.id;
+        const pedido = pedidosData.find(p => p.idPedidoLocal == idPedidoLocal);
+        if (!pedido) return;
+
+        let nuevoEstado = '';
+        let accionNotificacion = '';
+        if (this.classList.contains('btn-listos')) {
+          nuevoEstado = 'Listo';
+          accionNotificacion = 'listo';
+        } else if (this.classList.contains('btn-entregado')) {
+          nuevoEstado = 'Entregado';
+          accionNotificacion = 'entregado';
+        } else if (this.classList.contains('btn-rechazar')) {
+          nuevoEstado = 'Rechazado';
+          accionNotificacion = 'rechazado';
         }
-        if (destinatario && asunto && mensaje) {
-          const payloadEmail = {
-            action: 'enviarNotificacionEmail',
-            fromEmail: EMAIL_NOTIFICACIONES,
-            toEmail: destinatario,
-            subject: asunto,
-            htmlBody: mensaje
+
+        const spinner = this.querySelector('.spinner-border');
+        spinner.classList.remove('d-none');
+        this.disabled = true;
+
+        try {
+          // Actualizar estado
+          const payloadEstado = {
+            action: 'updateEstadoLocalOrder',
+            idPedidoLocal: idPedidoLocal,
+            nuevoEstado: nuevoEstado
           };
           await fetch(API_URL, {
             method: 'POST',
-            body: JSON.stringify(payloadEmail),
+            body: JSON.stringify(payloadEstado),
             headers: { 'Content-Type': 'application/json' },
             mode: 'no-cors'
           });
+
+          // Logo para emails
+          const logoHtml = `
+            <div style="text-align: center; margin: 20px 0 30px 0;">
+              <img src="https://i.postimg.cc/HW8j3XBr/Chat-GPT-Image-Jan-3-2026-01-27-57-AM.png"
+                   alt="Weep"
+                   width="120"
+                   style="max-width: 120px; height: auto; border-radius: 12px;">
+            </div>
+            <hr style="border: 0; border-top: 2px solid #d32f2f; margin: 30px 0;">
+          `;
+
+          let destinatario = '';
+          let asunto = '';
+          let mensaje = '';
+
+          if (accionNotificacion === 'listo') {
+            if (pedido.tipoEntrega === 'Con Envío') {
+              destinatario = EMAIL_MOTOMANDADO;
+              asunto = `¡Nuevo pedido listo para envío! - Pedido #${pedido.idPedido}`;
+              mensaje = `
+                ${logoHtml}
+                <h2 style="color: #d32f2f; text-align: center;">Pedido listo para retiro por motomandado</h2>
+                <p><strong>Cliente:</strong> ${pedido.nombreCliente}</p>
+                <p><strong>Dirección de entrega:</strong> ${pedido.direccion}</p>
+                <p><strong>Observaciones:</strong> ${pedido.observaciones || 'Ninguna'}</p>
+                <p><strong>Dirección del local:</strong> ${direccionLocal}</p>
+                <p style="font-weight: bold; color: #d32f2f;">
+                  Por favor coordinar retiro en el local lo antes posible.
+                </p>
+              `;
+            } else {
+              destinatario = pedido.emailCliente;
+              asunto = `¡Tu pedido está listo para retirar! - Pedido #${pedido.idPedido}`;
+              mensaje = `
+                ${logoHtml}
+                <h2 style="color: #d32f2f; text-align: center;">¡Tu pedido está listo!</h2>
+                <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
+                <p>Tu pedido ya está preparado y listo para que pases a retirarlo.</p>
+                <p><strong>Dirección del local:</strong> ${direccionLocal}</p>
+                <p>¡Gracias por elegirnos! Te esperamos</p>
+              `;
+            }
+          } else if (accionNotificacion === 'entregado') {
+            destinatario = pedido.emailCliente;
+            asunto = `¡Tu pedido ha sido entregado! - Pedido #${pedido.idPedido}`;
+            mensaje = `
+              ${logoHtml}
+              <h2 style="color: #d32f2f; text-align: center;">¡Gracias por tu compra!</h2>
+              <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
+              <p>Tu pedido <strong>#${pedido.idPedido}</strong> ha sido entregado con éxito.</p>
+              <p>¿Cómo fue tu experiencia? Ayúdanos a mejorar:</p>
+              <div style="text-align:center; margin:30px 0;">
+                <a href="https://forms.gle/TU_ENLACE_DE_VALORACION_AQUI"
+                   style="display:inline-block; font-size:18px; padding:14px 28px; background:#d32f2f; color:white; text-decoration:none; border-radius:12px; font-weight:bold;">
+                  ⭐ Calificar con 5 estrellas
+                </a>
+              </div>
+              <p>¡Gracias por confiar en Weep!</p>
+            `;
+          } else if (accionNotificacion === 'rechazado') {
+            destinatario = pedido.emailCliente;
+            asunto = `Pedido rechazado - Pedido #${pedido.idPedido}`;
+            mensaje = `
+              ${logoHtml}
+              <h2 style="color: #d32f2f; text-align: center;">Lo sentimos</h2>
+              <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
+              <p>Lamentamos informarte que tu pedido <strong>#${pedido.idPedido}</strong> no pudo ser procesado en este momento.</p>
+              <p><strong>Motivo:</strong> [Indicar motivo si aplica]</p>
+              <p>Te devolveremos el dinero en los próximos días si corresponde.</p>
+              <p>Disculpa las molestias. Estamos aquí para ayudarte.</p>
+            `;
+          }
+
+          if (destinatario && asunto && mensaje) {
+            const payloadEmail = {
+              action: 'enviarNotificacionEmail',
+              fromEmail: EMAIL_NOTIFICACIONES,
+              toEmail: destinatario,
+              subject: asunto,
+              htmlBody: mensaje
+            };
+            await fetch(API_URL, {
+              method: 'POST',
+              body: JSON.stringify(payloadEmail),
+              headers: { 'Content-Type': 'application/json' },
+              mode: 'no-cors'
+            });
+          }
+
+          alert(`Pedido marcado como ${nuevoEstado}${accionNotificacion !== 'rechazado' ? ' y notificación enviada' : ''}`);
+          cargarMisPedidos();
+        } catch (err) {
+          console.error(err);
+          alert('Error al procesar el pedido o enviar notificación');
+        } finally {
+          spinner.classList.add('d-none');
+          this.disabled = false;
         }
-        alert(`Pedido marcado como ${nuevoEstado}${accionNotificacion !== 'rechazado' ? ' y notificación enviada' : ''}`);
-        cargarMisPedidos();
-      } catch (err) {
-        console.error(err);
-        alert('Error al procesar el pedido o enviar notificación');
-      } finally {
-        spinner.classList.add('d-none');
-      }
+      });
     });
+  }
+
+  function renderizarPedidosEnProceso(filtro = 'todos') {
+    const cont = document.getElementById('pedidos-proceso-listado');
+    const pedidosProceso = pedidosData.filter(p => p.estadoActual === 'Pendiente' || p.estadoActual === 'Listo');
+    let filtrados = pedidosProceso;
+    if (filtro === 'pendientes') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Pendiente');
+    if (filtro === 'listos') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Listo');
+
+    if (filtrados.length === 0) {
+      cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos en este filtro</h5></div>';
+      return;
+    }
+
+    let html = '';
+    filtrados.forEach(p => {
+      html += generarHtmlPedido(p);
+    });
+    cont.innerHTML = html;
+    agregarEventosBotones();
+  }
+
+  function renderizarPedidosFinalizados() {
+    const cont = document.getElementById('pedidos-finalizados-listado');
+    const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado' || p.estadoActual === 'Rechazado');
+    if (finalizados.length === 0) {
+      cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos finalizados</h5></div>';
+      return;
+    }
+    let html = '';
+    finalizados.forEach(p => {
+      html += generarHtmlPedido(p, true);
+    });
+    cont.innerHTML = html;
+  }
+
+  // Filtros de pedidos
+  document.getElementById('filtro-pendientes').addEventListener('click', () => {
+    document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('filtro-pendientes').classList.add('active');
+    renderizarPedidosEnProceso('pendientes');
   });
-}
-    function renderizarPedidosEnProceso(filtro = 'todos') {
-      const cont = document.getElementById('pedidos-proceso-listado');
-      const pedidosProceso = pedidosData.filter(p => p.estadoActual === 'Pendiente' || p.estadoActual === 'Listo');
-      let filtrados = pedidosProceso;
-      if (filtro === 'pendientes') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Pendiente');
-      if (filtro === 'listos') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Listo');
-      if (filtrados.length === 0) {
-        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos en este filtro</h5></div>';
-        return;
-      }
-      let html = '';
-      filtrados.forEach(p => {
-        html += generarHtmlPedido(p);
-      });
-      cont.innerHTML = html;
-      agregarEventosBotones(); // ← Importante: volver a asignar eventos
-    }
-    function renderizarPedidosFinalizados() {
-      const cont = document.getElementById('pedidos-finalizados-listado');
-      const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado' || p.estadoActual === 'Rechazado');
-      if (finalizados.length === 0) {
-        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos finalizados</h5></div>';
-        return;
-      }
-      let html = '';
-      finalizados.forEach(p => {
-        html += generarHtmlPedido(p, true);
-      });
-      cont.innerHTML = html;
-    }
-        // Filtros de pedidos en proceso
-    const btnPendientes = document.getElementById('filtro-pendientes');
-    const btnListos = document.getElementById('filtro-listos');
-    const btnTodosProceso = document.getElementById('filtro-todos-proceso');
-    if (btnPendientes && btnListos && btnTodosProceso) {
-      btnPendientes.addEventListener('click', () => {
-        document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
-        btnPendientes.classList.add('active');
-        renderizarPedidosEnProceso('pendientes');
-      });
-      btnListos.addEventListener('click', () => {
-        document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
-        btnListos.classList.add('active');
-        renderizarPedidosEnProceso('listos');
-      });
-      btnTodosProceso.addEventListener('click', () => {
-        document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
-        btnTodosProceso.classList.add('active');
-        renderizarPedidosEnProceso('todos');
-      });
-    }
-  </script>
+
+  document.getElementById('filtro-listos').addEventListener('click', () => {
+    document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('filtro-listos').classList.add('active');
+    renderizarPedidosEnProceso('listos');
+  });
+
+  document.getElementById('filtro-todos-proceso').addEventListener('click', () => {
+    document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('filtro-todos-proceso').classList.add('active');
+    renderizarPedidosEnProceso('todos');
+  });
+</script>
 </body>
 </html>
