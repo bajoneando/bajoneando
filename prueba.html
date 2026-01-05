@@ -666,23 +666,21 @@
       return;
     }
 
-    pedidosData = []; // Reiniciamos el array global
+    pedidosData = []; // Reiniciamos
 
     for (const localPedido of locales) {
-      const idPedidoLocal = localPedido[0];
+      const idPedidoLocal = localPedido[0];  // ← Este es "1007LOC...", "1008LOC...", etc.
       const idPedido = localPedido[1];
       const estadoActual = localPedido[4] || 'Pendiente';
 
-      // Obtener items del pedido local
       const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
       const items = await resItems.json();
 
-      // Obtener datos generales del pedido
       const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
       const general = await resGeneral.json();
 
       const pedidoInfo = {
-        idPedidoLocal,
+        idPedidoLocal,  // ← Cadena completa, clave para el orden
         idPedido,
         estadoActual,
         items,
@@ -697,11 +695,10 @@
       pedidosData.push(pedidoInfo);
     }
 
-    // === CLAVE: Ordenar por idPedidoLocal ascendente ===
-    // Esto reproduce exactamente el orden físico de la hoja de cálculo (de arriba hacia abajo)
-    pedidosData.sort((a, b) => a.idPedidoLocal - b.idPedidoLocal);
+    // === ESTA LÍNEA ORDENA CORRECTAMENTE: del más antiguo arriba al más nuevo abajo ===
+    pedidosData.sort((a, b) => a.idPedidoLocal.localeCompare(b.idPedidoLocal));
 
-    // Renderizar ambas pestañas con el orden correcto
+    // Renderizar
     renderizarPedidosEnProceso('todos');
     renderizarPedidosFinalizados();
 
