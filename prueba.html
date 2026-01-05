@@ -326,17 +326,14 @@
     const API_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
     const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dw10wkbac/image/upload';
     const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
-
     // Emails fijos para notificaciones
     const EMAIL_NOTIFICACIONES = 'weep.notificaciones@gmail.com';
     const EMAIL_MOTOMANDADO = 'bajoneando.st@gmail.com';
-
     let localToken = localStorage.getItem('localToken');
     let menuItems = [];
     let pedidosData = []; // Ahora global para usar en notificaciones
-
     if (localToken) mostrarPanelPrincipal();
-    
+   
     function mostrarPanelPrincipal() {
       document.getElementById('auth-section').classList.add('d-none');
       document.getElementById('panel-principal').classList.remove('d-none');
@@ -657,7 +654,6 @@
       const contFinalizados = document.getElementById('pedidos-finalizados-listado');
       contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
       contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
-
       try {
         const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
         const locales = await resLocales.json();
@@ -666,20 +662,15 @@
           contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos finalizados</h4></div>';
           return;
         }
-
         pedidosData = []; // Reiniciamos
-
         for (const localPedido of locales) {
           const idPedidoLocal = localPedido[0];
           const idPedido = localPedido[1];
           const estadoActual = localPedido[4] || 'Pendiente';
-
           const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
           const items = await resItems.json();
-
           const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
           const general = await resGeneral.json();
-
           const pedidoInfo = {
             idPedidoLocal,
             idPedido,
@@ -694,7 +685,6 @@
           };
           pedidosData.push(pedidoInfo);
         }
-
         renderizarPedidosEnProceso('todos');
         renderizarPedidosFinalizados();
       } catch (err) {
@@ -703,7 +693,6 @@
         contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
       }
     }
-
     function generarHtmlPedido(p, esFinalizado = false) {
       let itemsHtml = '<ul class="item-list">';
       let subtotal = 0;
@@ -713,16 +702,13 @@
         itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
       });
       itemsHtml += '</ul>';
-
       let badgeClass = 'bg-warning';
       if (p.estadoActual === 'Listo') badgeClass = 'bg-info';
       if (p.estadoActual === 'Entregado') badgeClass = 'bg-success';
       if (p.estadoActual === 'Rechazado') badgeClass = 'bg-danger';
-
-      const tipoBadge = p.tipoEntrega === 'Con Envío' 
-        ? '<span class="badge bg-primary ms-2">Con Envío</span>' 
+      const tipoBadge = p.tipoEntrega === 'Con Envío'
+        ? '<span class="badge bg-primary ms-2">Con Envío</span>'
         : '<span class="badge bg-secondary ms-2">Retiro</span>';
-
       const botonesAccion = esFinalizado ? '' : `
         <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
           <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
@@ -735,7 +721,6 @@
             <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
           </button>
         </div>`;
-
       return `
         <div class="pedido-card">
           <div class="pedido-header d-flex justify-content-between align-items-center">
@@ -758,17 +743,14 @@
           </div>
         </div>`;
     }
-
     function agregarEventosBotones() {
   document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
     btn.addEventListener('click', async function() {
       const idPedidoLocal = this.dataset.id;
       const pedido = pedidosData.find(p => p.idPedidoLocal == idPedidoLocal);
       if (!pedido) return;
-
       let nuevoEstado = '';
       let accionNotificacion = '';
-
       if (this.classList.contains('btn-listos')) {
         nuevoEstado = 'Listo';
         accionNotificacion = 'listo';
@@ -779,11 +761,9 @@
         nuevoEstado = 'Rechazado';
         accionNotificacion = 'rechazado';
       }
-
       const spinner = this.querySelector('.spinner-border');
       spinner.classList.remove('d-none');
       this.disabled = true;
-
       try {
         // 1. Actualizar estado en backend
         const payloadEstado = {
@@ -797,23 +777,20 @@
           headers: { 'Content-Type': 'application/json' },
           mode: 'no-cors'
         });
-
         // 2. Enviar notificación por email según la acción
         let destinatario = '';
         let asunto = '';
         let mensaje = '';
-
         // Logo centrado al inicio de todos los emails
         const logoHtml = `
           <div style="text-align: center; margin: 20px 0 30px 0;">
-            <img src="https://i.postimg.cc/HW8j3XBr/Chat-GPT-Image-Jan-3-2026-01-27-57-AM.png" 
-                 alt="Weep" 
-                 width="120" 
+            <img src="https://i.postimg.cc/HW8j3XBr/Chat-GPT-Image-Jan-3-2026-01-27-57-AM.png"
+                 alt="Weep"
+                 width="120"
                  style="max-width: 120px; height: auto; border-radius: 12px;">
           </div>
           <hr style="border: 0; border-top: 2px solid #d32f2f; margin: 30px 0;">
         `;
-
         if (accionNotificacion === 'listo') {
           if (pedido.tipoEntrega === 'Con Envío') {
             destinatario = EMAIL_MOTOMANDADO;
@@ -850,7 +827,7 @@
             <p>Tu pedido <strong>#${pedido.idPedido}</strong> ha sido entregado con éxito.</p>
             <p>¿Cómo fue tu experiencia? Ayúdanos a mejorar:</p>
             <div style="text-align:center; margin:30px 0;">
-              <a href="https://forms.gle/TU_ENLACE_DE_VALORACION_AQUI" 
+              <a href="https://forms.gle/TU_ENLACE_DE_VALORACION_AQUI"
                  style="display:inline-block; font-size:18px; padding:14px 28px; background:#d32f2f; color:white; text-decoration:none; border-radius:12px; font-weight:bold;">
                 ⭐ Calificar con 5 estrellas
               </a>
@@ -870,7 +847,6 @@
             <p>Disculpa las molestias. Estamos aquí para ayudarte.</p>
           `;
         }
-
         if (destinatario && asunto && mensaje) {
           const payloadEmail = {
             action: 'enviarNotificacionEmail',
@@ -879,7 +855,6 @@
             subject: asunto,
             htmlBody: mensaje
           };
-
           await fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify(payloadEmail),
@@ -887,10 +862,8 @@
             mode: 'no-cors'
           });
         }
-
         alert(`Pedido marcado como ${nuevoEstado}${accionNotificacion !== 'rechazado' ? ' y notificación enviada' : ''}`);
         cargarMisPedidos();
-
       } catch (err) {
         console.error(err);
         alert('Error al procesar el pedido o enviar notificación');
@@ -903,88 +876,56 @@
     function renderizarPedidosEnProceso(filtro = 'todos') {
       const cont = document.getElementById('pedidos-proceso-listado');
       const pedidosProceso = pedidosData.filter(p => p.estadoActual === 'Pendiente' || p.estadoActual === 'Listo');
-
       let filtrados = pedidosProceso;
       if (filtro === 'pendientes') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Pendiente');
       if (filtro === 'listos') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Listo');
-
       if (filtrados.length === 0) {
         cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos en este filtro</h5></div>';
         return;
       }
-
       let html = '';
       filtrados.forEach(p => {
         html += generarHtmlPedido(p);
       });
       cont.innerHTML = html;
-      agregarEventosBotones();
+      agregarEventosBotones(); // ← Importante: volver a asignar eventos
     }
-
     function renderizarPedidosFinalizados() {
       const cont = document.getElementById('pedidos-finalizados-listado');
-      const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado');
-
+      const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado' || p.estadoActual === 'Rechazado');
       if (finalizados.length === 0) {
-        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos entregados</h5></div>';
+        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos finalizados</h5></div>';
         return;
       }
-
       let html = '';
       finalizados.forEach(p => {
-        html += generarHtmlPedido(p, true); // true = finalizado, sin botones de acción
+        html += generarHtmlPedido(p, true);
       });
       cont.innerHTML = html;
     }
+        // Filtros de pedidos en proceso
+    const btnPendientes = document.getElementById('filtro-pendientes');
+    const btnListos = document.getElementById('filtro-listos');
+    const btnTodosProceso = document.getElementById('filtro-todos-proceso');
 
-    function generarHtmlPedido(p, esFinalizado = false) {
-      let itemsHtml = '<ul class="item-list">';
-      let subtotal = 0;
-      p.items.forEach(item => {
-        const totalItem = item[7];
-        subtotal += totalItem;
-        itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
+    if (btnPendientes && btnListos && btnTodosProceso) {
+      btnPendientes.addEventListener('click', () => {
+        document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+        btnPendientes.classList.add('active');
+        renderizarPedidosEnProceso('pendientes');
       });
-      itemsHtml += '</ul>';
 
-      let badgeClass = 'bg-warning';
-      if (p.estadoActual === 'Listo') badgeClass = 'bg-info';
-      if (p.estadoActual === 'Entregado') badgeClass = 'bg-success';
-      if (p.estadoActual === 'Rechazado') badgeClass = 'bg-danger';
+      btnListos.addEventListener('click', () => {
+        document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+        btnListos.classList.add('active');
+        renderizarPedidosEnProceso('listos');
+      });
 
-      const botonesAccion = esFinalizado ? '' : `
-        <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
-          <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
-            <span class="spinner-border spinner-border-sm d-none"></span> Listo
-          </button>
-          <button class="btn btn-primary btn-entregado" data-id="${p.idPedidoLocal}" ${['Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
-            <span class="spinner-border spinner-border-sm d-none"></span> Entregado
-          </button>
-          <button class="btn btn-danger btn-rechazar" data-id="${p.idPedidoLocal}" ${p.estadoActual === 'Rechazado' ? 'disabled' : ''}>
-            <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
-          </button>
-        </div>`;
-
-      return `
-        <div class="pedido-card">
-          <div class="pedido-header d-flex justify-content-between align-items-center">
-            <div>
-              <strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal}
-            </div>
-            <span class="badge ${badgeClass} estado-badge">${p.estadoActual}</span>
-          </div>
-          <div class="pedido-body">
-            <p><strong>Dirección:</strong> ${p.direccion}</p>
-            <p><strong>Método de pago:</strong> ${p.metodoPago}</p>
-            <p><strong>Observaciones:</strong> ${p.observaciones}</p>
-            <h6 class="mt-3">Items:</h6>
-            ${itemsHtml}
-            <div class="text-end mt-3">
-              <strong>Subtotal local: $${subtotal}</strong>
-            </div>
-            ${botonesAccion}
-          </div>
-        </div>`;
+      btnTodosProceso.addEventListener('click', () => {
+        document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+        btnTodosProceso.classList.add('active');
+        renderizarPedidosEnProceso('todos');
+      });
     }
   </script>
 </body>
