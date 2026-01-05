@@ -903,6 +903,7 @@
     function renderizarPedidosEnProceso(filtro = 'todos') {
       const cont = document.getElementById('pedidos-proceso-listado');
       const pedidosProceso = pedidosData.filter(p => p.estadoActual === 'Pendiente' || p.estadoActual === 'Listo');
+
       let filtrados = pedidosProceso;
       if (filtro === 'pendientes') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Pendiente');
       if (filtro === 'listos') filtrados = pedidosProceso.filter(p => p.estadoActual === 'Listo');
@@ -911,46 +912,80 @@
         cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos en este filtro</h5></div>';
         return;
       }
+
       let html = '';
       filtrados.forEach(p => {
         html += generarHtmlPedido(p);
       });
       cont.innerHTML = html;
-      agregarEventosBotones(); // ← Importante: volver a asignar eventos
+      agregarEventosBotones();
     }
 
     function renderizarPedidosFinalizados() {
       const cont = document.getElementById('pedidos-finalizados-listado');
-      const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado' || p.estadoActual === 'Rechazado');
+      const finalizados = pedidosData.filter(p => p.estadoActual === 'Entregado');
+
       if (finalizados.length === 0) {
-        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos finalizados</h5></div>';
+        cont.innerHTML = '<div class="text-center py-5"><h5>No hay pedidos entregados</h5></div>';
         return;
       }
+
       let html = '';
       finalizados.forEach(p => {
-        html += generarHtmlPedido(p, true);
+        html += generarHtmlPedido(p, true); // true = finalizado, sin botones de acción
       });
       cont.innerHTML = html;
     }
-    
-  // === FILTROS DE PEDIDOS EN PROCESO ===
-document.getElementById('filtro-pendientes').addEventListener('click', function() {
-  document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
-  this.classList.add('active');
-  renderizarPedidosEnProceso('pendientes');
-});
 
-document.getElementById('filtro-listos').addEventListener('click', function() {
-  document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
-  this.classList.add('active');
-  renderizarPedidosEnProceso('listos');
-});
+    function generarHtmlPedido(p, esFinalizado = false) {
+      let itemsHtml = '<ul class="item-list">';
+      let subtotal = 0;
+      p.items.forEach(item => {
+        const totalItem = item[7];
+        subtotal += totalItem;
+        itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
+      });
+      itemsHtml += '</ul>';
 
-document.getElementById('filtro-todos-proceso').addEventListener('click', function() {
-  document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
-  this.classList.add('active');
-  renderizarPedidosEnProceso('todos');
-});
+      let badgeClass = 'bg-warning';
+      if (p.estadoActual === 'Listo') badgeClass = 'bg-info';
+      if (p.estadoActual === 'Entregado') badgeClass = 'bg-success';
+      if (p.estadoActual === 'Rechazado') badgeClass = 'bg-danger';
+
+      const botonesAccion = esFinalizado ? '' : `
+        <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
+          <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+            <span class="spinner-border spinner-border-sm d-none"></span> Listo
+          </button>
+          <button class="btn btn-primary btn-entregado" data-id="${p.idPedidoLocal}" ${['Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+            <span class="spinner-border spinner-border-sm d-none"></span> Entregado
+          </button>
+          <button class="btn btn-danger btn-rechazar" data-id="${p.idPedidoLocal}" ${p.estadoActual === 'Rechazado' ? 'disabled' : ''}>
+            <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
+          </button>
+        </div>`;
+
+      return `
+        <div class="pedido-card">
+          <div class="pedido-header d-flex justify-content-between align-items-center">
+            <div>
+              <strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal}
+            </div>
+            <span class="badge ${badgeClass} estado-badge">${p.estadoActual}</span>
+          </div>
+          <div class="pedido-body">
+            <p><strong>Dirección:</strong> ${p.direccion}</p>
+            <p><strong>Método de pago:</strong> ${p.metodoPago}</p>
+            <p><strong>Observaciones:</strong> ${p.observaciones}</p>
+            <h6 class="mt-3">Items:</h6>
+            ${itemsHtml}
+            <div class="text-end mt-3">
+              <strong>Subtotal local: $${subtotal}</strong>
+            </div>
+            ${botonesAccion}
+          </div>
+        </div>`;
+    }
   </script>
 </body>
 </html>
