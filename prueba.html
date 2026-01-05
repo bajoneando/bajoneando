@@ -778,6 +778,60 @@
           </div>
         </div>`;
     }
+
+    function getPedidoGeneral(e) {
+  const idPedido = e.parameter.idPedido;
+  if (!idPedido) return {};
+
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const generalSheet = ss.getSheetByName('Pedidos GENERAL');
+    const usuariosSheet = ss.getSheetByName('Usuarios');
+
+    if (!generalSheet) return {};
+
+    const generalData = generalSheet.getDataRange().getValues();
+    let pedidoInfo = {};
+
+    // Buscar en Pedidos GENERAL
+    for (let i = 1; i < generalData.length; i++) {
+      if (generalData[i][0] == idPedido) {
+        const userId = generalData[i][1];
+        const envioGratis = (generalData[i][8] || 'no').toString().toLowerCase() === 'si';
+
+        pedidoInfo = {
+          idPedido: generalData[i][0],
+          userId: userId,
+          fecha: generalData[i][2],
+          direccion: generalData[i][3] || 'No especificada',
+          estado: generalData[i][4] || 'Pendiente',
+          total: generalData[i][5] || 0,
+          metodoPago: generalData[i][6] || 'No especificado',
+          observaciones: generalData[i][7] || 'Ninguna',
+          tipoEntrega: envioGratis ? 'Para Retirar' : 'Con Envío', // clave para el frontend
+          emailCliente: ''
+        };
+
+        // Buscar email del cliente en hoja Usuarios
+        if (usuariosSheet && userId) {
+          const usuariosData = usuariosSheet.getDataRange().getValues();
+          for (let j = 1; j < usuariosData.length; j++) {
+            if (usuariosData[j][0] === userId) {
+              pedidoInfo.emailCliente = (usuariosData[j][2] || '').toString().trim(); // Columna C = email
+              break;
+            }
+          }
+        }
+
+        return pedidoInfo;
+      }
+    }
+    return {};
+  } catch (err) {
+    Logger.log('Error en getPedidoGeneral: ' + err.toString());
+    return {};
+  }
+} 
     
     function agregarEventosBotones() {
       document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
