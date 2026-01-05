@@ -934,31 +934,23 @@
     }
     
   // === FILTROS DE PEDIDOS EN PROCESO ===
-  document.getElementById('filtro-pendientes').addEventListener('click', function() {
-    document.querySelectorAll('#pedidos-proceso-listado .btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    renderizarPedidosEnProceso('pendientes');
-  });
+document.getElementById('filtro-pendientes').addEventListener('click', function() {
+  document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+  this.classList.add('active');
+  renderizarPedidosEnProceso('pendientes');
+});
 
-  document.getElementById('filtro-listos').addEventListener('click', function() {
-    document.querySelectorAll('#pedidos-proceso-listado .btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    renderizarPedidosEnProceso('listos');
-  });
+document.getElementById('filtro-listos').addEventListener('click', function() {
+  document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+  this.classList.add('active');
+  renderizarPedidosEnProceso('listos');
+});
 
-  document.getElementById('filtro-todos-proceso').addEventListener('click', function() {
-    document.querySelectorAll('#pedidos-proceso-listado .btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    renderizarPedidosEnProceso('todos');
-  });
-
-  // Opcional: al cambiar de pestaña, asegurarnos de que "Todos" esté activo si corresponde
-  document.getElementById('proceso-tab').addEventListener('shown.bs.tab', function () {
-    if (!document.querySelector('#pedidos-proceso-listado .btn.active')) {
-      document.getElementById('filtro-todos-proceso').classList.add('active');
-    }
-    renderizarPedidosEnProceso('todos'); // o el filtro que quieras por defecto
-  });
+document.getElementById('filtro-todos-proceso').addEventListener('click', function() {
+  document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+  this.classList.add('active');
+  renderizarPedidosEnProceso('todos');
+});
   </script>
 </body>
 </html>
