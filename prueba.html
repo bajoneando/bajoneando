@@ -848,9 +848,9 @@
     let itemsHtml = '<ul class="item-list">';
     let subtotal = 0;
     p.items.forEach(item => {
-      const totalItem = item[7];
-      subtotal += totalItem;
-      itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
+        const totalItem = item[7];
+        subtotal += totalItem;
+        itemsHtml += `<li><strong>${item[4]}</strong> × ${item[6]} ${item[8] ? '(' + item[8] + ')' : ''} — $${totalItem}</li>`;
     });
     itemsHtml += '</ul>';
 
@@ -859,47 +859,47 @@
     if (p.estadoActual === 'Entregado') badgeClass = 'bg-success';
     if (p.estadoActual === 'Rechazado') badgeClass = 'bg-danger';
 
-    const tipoBadge = p.tipoEntrega === 'Con Envío'
-      ? '<span class="badge bg-primary ms-2">Con Envío</span>'
-      : '<span class="badge bg-secondary ms-2">Retiro</span>';
+    const tipoBadge = p.tipoEntrega === 'Con Envío' 
+        ? '<span class="badge bg-primary ms-2">Con Envío</span>' 
+        : '<span class="badge bg-secondary ms-2">Retiro</span>';
 
     const botonesAccion = esFinalizado ? '' : `
-      <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
-        <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
-          <span class="spinner-border spinner-border-sm d-none"></span> Listo
-        </button>
-        <button class="btn btn-primary btn-entregado" data-id="${p.idPedidoLocal}" ${['Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
-          <span class="spinner-border spinner-border-sm d-none"></span> Entregado
-        </button>
-        <button class="btn btn-danger btn-rechazar" data-id="${p.idPedidoLocal}" ${p.estadoActual === 'Rechazado' ? 'disabled' : ''}>
-          <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
-        </button>
-      </div>`;
+        <div class="mt-4 d-flex flex-wrap gap-2 justify-content-end">
+            <button class="btn btn-success btn-listos" data-id="${p.idPedidoLocal}" ${['Listo','Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+                <span class="spinner-border spinner-border-sm d-none"></span> Listo
+            </button>
+            <button class="btn btn-primary btn-entregado" data-id="${p.idPedidoLocal}" ${['Entregado','Rechazado'].includes(p.estadoActual) ? 'disabled' : ''}>
+                <span class="spinner-border spinner-border-sm d-none"></span> Entregado
+            </button>
+            <button class="btn btn-danger btn-rechazar" data-id="${p.idPedidoLocal}" ${p.estadoActual === 'Rechazado' ? 'disabled' : ''}>
+                <span class="spinner-border spinner-border-sm d-none"></span> Rechazar
+            </button>
+        </div>`;
 
     return `
-      <div class="pedido-card">
-        <div class="pedido-header d-flex justify-content-between align-items-center">
-          <div>
-            <strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal} ${tipoBadge}
-          </div>
-          <span class="badge ${badgeClass} estado-badge">${p.estadoActual}</span>
-        </div>
-        <div class="pedido-body">
-          <p><strong>Cliente:</strong> ${p.nombreCliente} (${p.emailCliente})</p>
-          <p><strong>Dirección/Retiro:</strong> ${p.direccion}</p>
-          <p><strong>Método de pago:</strong> ${p.metodoPago}</p>
-          <p><strong>Observaciones:</strong> ${p.observaciones}</p>
-          <h6 class="mt-3">Items:</h6>
-          ${itemsHtml}
-          <div class="text-end mt-3">
-            <strong>Subtotal local: $${subtotal.toFixed(2)}</strong>
-          </div>
-          ${botonesAccion}
-        </div>
-      </div>`;
-  }
+        <div class="pedido-card">
+            <div class="pedido-header d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>Pedido #${p.idPedido}</strong> — Parte Local: ${p.idPedidoLocal} ${tipoBadge}
+                </div>
+                <span class="badge ${badgeClass} estado-badge">${p.estadoActual}</span>
+            </div>
+            <div class="pedido-body">
+                <p><strong>Cliente:</strong> ${p.nombreCliente}</p>
+                <p><strong>Dirección/Retiro:</strong> ${p.direccion}</p>
+                <p><strong>Método de pago:</strong> ${p.metodoPago}</p>
+                <p><strong>Observaciones:</strong> ${p.observaciones}</p>
+                <h6 class="mt-3">Items:</h6>
+                ${itemsHtml}
+                <div class="text-end mt-3">
+                    <strong>Subtotal local: $${subtotal.toFixed(2)}</strong>
+                </div>
+                ${botonesAccion}
+            </div>
+        </div>`;
+}
 
-    function agregarEventosBotones() {
+  function agregarEventosBotones() {
     document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
       btn.addEventListener('click', async function() {
         const idPedidoLocal = this.dataset.id;
@@ -908,7 +908,6 @@
 
         let nuevoEstado = '';
         let accionNotificacion = '';
-
         if (this.classList.contains('btn-listos')) {
           nuevoEstado = 'Listo';
           accionNotificacion = 'listo';
@@ -925,7 +924,7 @@
         this.disabled = true;
 
         try {
-          // Actualizar estado en el backend
+          // Actualizar estado
           const payloadEstado = {
             action: 'updateEstadoLocalOrder',
             idPedidoLocal: idPedidoLocal,
@@ -938,7 +937,7 @@
             mode: 'no-cors'
           });
 
-          // Logo para todos los emails
+          // Logo para emails
           const logoHtml = `
             <div style="text-align: center; margin: 20px 0 30px 0;">
               <img src="https://i.postimg.cc/HW8j3XBr/Chat-GPT-Image-Jan-3-2026-01-27-57-AM.png"
@@ -956,63 +955,61 @@
           if (accionNotificacion === 'listo') {
             if (pedido.tipoEntrega === 'Con Envío') {
               destinatario = EMAIL_MOTOMANDADO;
-              asunto = `¡Nuevo pedido listo para retiro! - Pedido #${pedido.idPedido}`;
+              asunto = `¡Nuevo pedido listo para envío! - Pedido #${pedido.idPedido}`;
               mensaje = `
                 ${logoHtml}
-                <h2 style="color: #d32f2f; text-align: center;">Hay un pedido listo para envío</h2>
-                <p><strong>Pedido:</strong> #${pedido.idPedido}</p>
+                <h2 style="color: #d32f2f; text-align: center;">Pedido listo para retiro por motomandado</h2>
+                <p><strong>Cliente:</strong> ${pedido.nombreCliente}</p>
+                <p><strong>Dirección de entrega:</strong> ${pedido.direccion}</p>
+                <p><strong>Observaciones:</strong> ${pedido.observaciones || 'Ninguna'}</p>
                 <p><strong>Dirección del local:</strong> ${direccionLocal}</p>
                 <p style="font-weight: bold; color: #d32f2f;">
-                  Por favor, coordinar el retiro en el local lo antes posible.
+                  Por favor coordinar retiro en el local lo antes posible.
                 </p>
-                <p>Gracias por tu colaboración.</p>
               `;
             } else {
               destinatario = pedido.emailCliente;
-              asunto = `¡Tu pedido está listo para retirar! - #${pedido.idPedido}`;
+              asunto = `¡Tu pedido está listo para retirar! - Pedido #${pedido.idPedido}`;
               mensaje = `
                 ${logoHtml}
                 <h2 style="color: #d32f2f; text-align: center;">¡Tu pedido está listo!</h2>
                 <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
-                <p>Tu pedido <strong>#${pedido.idPedido}</strong> ya está preparado y listo para retirar.</p>
+                <p>Tu pedido ya está preparado y listo para que pases a retirarlo.</p>
                 <p><strong>Dirección del local:</strong> ${direccionLocal}</p>
-                <p>¡Te esperamos pronto!</p>
-                <p>Gracias por elegirnos.</p>
+                <p>¡Gracias por elegirnos! Te esperamos</p>
               `;
             }
           } else if (accionNotificacion === 'entregado') {
             destinatario = pedido.emailCliente;
-            asunto = `¡Tu pedido ha sido entregado! - #${pedido.idPedido}`;
+            asunto = `¡Tu pedido ha sido entregado! - Pedido #${pedido.idPedido}`;
             mensaje = `
               ${logoHtml}
               <h2 style="color: #d32f2f; text-align: center;">¡Gracias por tu compra!</h2>
               <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
               <p>Tu pedido <strong>#${pedido.idPedido}</strong> ha sido entregado con éxito.</p>
-              <p>Esperamos que disfrutes tu comida.</p>
               <p>¿Cómo fue tu experiencia? Ayúdanos a mejorar:</p>
               <div style="text-align:center; margin:30px 0;">
                 <a href="https://forms.gle/TU_ENLACE_DE_VALORACION_AQUI"
                    style="display:inline-block; font-size:18px; padding:14px 28px; background:#d32f2f; color:white; text-decoration:none; border-radius:12px; font-weight:bold;">
-                  ⭐ Calificar experiencia
+                  ⭐ Calificar con 5 estrellas
                 </a>
               </div>
               <p>¡Gracias por confiar en Weep!</p>
             `;
           } else if (accionNotificacion === 'rechazado') {
             destinatario = pedido.emailCliente;
-            asunto = `Pedido no procesado - #${pedido.idPedido}`;
+            asunto = `Pedido rechazado - Pedido #${pedido.idPedido}`;
             mensaje = `
               ${logoHtml}
               <h2 style="color: #d32f2f; text-align: center;">Lo sentimos</h2>
               <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
               <p>Lamentamos informarte que tu pedido <strong>#${pedido.idPedido}</strong> no pudo ser procesado en este momento.</p>
-              <p>Se realizará la devolución correspondiente en los próximos días.</p>
-              <p>Disculpa las molestias ocasionadas.</p>
-              <p>Estamos aquí para ayudarte.</p>
+              <p><strong>Motivo:</strong> [Indicar motivo si aplica]</p>
+              <p>Te devolveremos el dinero en los próximos días si corresponde.</p>
+              <p>Disculpa las molestias. Estamos aquí para ayudarte.</p>
             `;
           }
 
-          // Enviar email solo si hay destinatario
           if (destinatario && asunto && mensaje) {
             const payloadEmail = {
               action: 'enviarNotificacionEmail',
@@ -1029,9 +1026,8 @@
             });
           }
 
-          alert(`Pedido marcado como ${nuevoEstado}. Notificación enviada.`);
-          cargarMisPedidos(); // Refrescar lista
-
+          alert(`Pedido marcado como ${nuevoEstado}${accionNotificacion !== 'rechazado' ? ' y notificación enviada' : ''}`);
+          cargarMisPedidos();
         } catch (err) {
           console.error(err);
           alert('Error al procesar el pedido o enviar notificación');
