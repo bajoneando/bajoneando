@@ -333,7 +333,7 @@
     let menuItems = [];
     let pedidosData = []; // Ahora global para usar en notificaciones
     if (localToken) mostrarPanelPrincipal();
-   
+  
     function mostrarPanelPrincipal() {
       document.getElementById('auth-section').classList.add('d-none');
       document.getElementById('panel-principal').classList.remove('d-none');
@@ -648,51 +648,51 @@
       document.getElementById('perfil-form').classList.add('d-none');
       btn.disabled = false;
     });
-    // === MIS PEDIDOS - VERSIÓN OPTIMIZADA (una sola petición + orden correcto) ===
-async function cargarMisPedidos() {
-  const contProceso = document.getElementById('pedidos-proceso-listado');
-  const contFinalizados = document.getElementById('pedidos-finalizados-listado');
-
-  contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
-  contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
-
-  try {
-    // NUEVA PETICIÓN ÚNICA que trae TODO lo necesario
-    const res = await fetch(`${API_URL}?action=getPedidosCompletosByLocal&localId=${localToken}`);
-    const data = await res.json();
-
-    if (!data || data.length === 0) {
-      contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
-      contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos finalizados</h4></div>';
-      pedidosData = [];
-      return;
+    // === MIS PEDIDOS - LÓGICA MEJORADA CON NOTIFICACIONES ===
+    async function cargarMisPedidos() {
+      const contProceso = document.getElementById('pedidos-proceso-listado');
+      const contFinalizados = document.getElementById('pedidos-finalizados-listado');
+      contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+      contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+      try {
+        const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
+        const locales = await resLocales.json();
+        if (!locales || locales.length === 0) {
+          contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
+          contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos finalizados</h4></div>';
+          return;
+        }
+        pedidosData = []; // Reiniciamos
+        for (const localPedido of locales) {
+          const idPedidoLocal = localPedido[0];
+          const idPedido = localPedido[1];
+          const estadoActual = localPedido[4] || 'Pendiente';
+          const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
+          const items = await resItems.json();
+          const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
+          const general = await resGeneral.json();
+          const pedidoInfo = {
+            idPedidoLocal,
+            idPedido,
+            estadoActual,
+            items,
+            direccion: general.direccion || 'Retiro en local',
+            observaciones: general.observaciones || 'Ninguna',
+            metodoPago: general.metodoPago || 'No especificado',
+            tipoEntrega: general.tipoEntrega || 'Para Retirar', // Nuevo campo clave
+            emailCliente: general.emailCliente || '', // Asegúrate de que tu backend lo devuelva
+            nombreCliente: general.nombreCliente || 'Cliente'
+          };
+          pedidosData.push(pedidoInfo);
+        }
+        renderizarPedidosEnProceso('todos');
+        renderizarPedidosFinalizados();
+      } catch (err) {
+        console.error('Error cargando pedidos:', err);
+        contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+        contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+      }
     }
-
-    // Convertimos a formato fácil de usar y mantenemos el orden de la hoja (más nuevo arriba)
-    pedidosData = data.map(row => ({
-      idPedidoLocal: row[0],        // Col A
-      idPedido: row[1],             // Col B
-      estadoActual: row[4] || 'Pendiente', // Col E
-      items: JSON.parse(row[5] || '[]'),   // Col F - asumiendo que guardas items como JSON string
-      direccion: row[6] || 'Retiro en local',
-      observaciones: row[7] || 'Ninguna',
-      metodoPago: row[8] || 'No especificado',
-      tipoEntrega: row[9] || 'Para Retirar',
-      emailCliente: row[10] || '',
-      nombreCliente: row[11] || 'Cliente'
-    }));
-
-    // El orden ya viene de la hoja: más nuevo arriba → perfecto, no tocamos nada
-
-    renderizarPedidosEnProceso('todos');
-    renderizarPedidosFinalizados();
-
-  } catch (err) {
-    console.error('Error cargando pedidos:', err);
-    contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
-    contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
-  }
-}
     function generarHtmlPedido(p, esFinalizado = false) {
       let itemsHtml = '<ul class="item-list">';
       let subtotal = 0;
@@ -907,20 +907,17 @@ async function cargarMisPedidos() {
     const btnPendientes = document.getElementById('filtro-pendientes');
     const btnListos = document.getElementById('filtro-listos');
     const btnTodosProceso = document.getElementById('filtro-todos-proceso');
-
     if (btnPendientes && btnListos && btnTodosProceso) {
       btnPendientes.addEventListener('click', () => {
         document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
         btnPendientes.classList.add('active');
         renderizarPedidosEnProceso('pendientes');
       });
-
       btnListos.addEventListener('click', () => {
         document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
         btnListos.classList.add('active');
         renderizarPedidosEnProceso('listos');
       });
-
       btnTodosProceso.addEventListener('click', () => {
         document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
         btnTodosProceso.classList.add('active');
