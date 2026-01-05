@@ -773,121 +773,89 @@ function agregarEventosBotones() {
     btn.addEventListener('click', async function() {
       const idPedidoLocal = this.dataset.id;
       const pedido = pedidosData.find(p => p.idPedidoLocal == idPedidoLocal);
-      if (!pedido) {
-        alert('Error: Pedido no encontrado. Recarga la página.');
-        return;
-      }
+      if (!pedido) return alert('Error: pedido no encontrado');
 
-      let nuevoEstado = '';
-      let accionTexto = '';
-      if (this.classList.contains('btn-listos')) {
-        nuevoEstado = 'Listo';
-        accionTexto = 'Listo';
-      } else if (this.classList.contains('btn-entregado')) {
-        nuevoEstado = 'Entregado';
-        accionTexto = 'Entregado';
-      } else if (this.classList.contains('btn-rechazar')) {
-        nuevoEstado = 'Rechazado';
-        accionTexto = 'Rechazado';
-      }
+      let nuevoEstado = this.classList.contains('btn-listos') ? 'Listo' :
+                       this.classList.contains('btn-entregado') ? 'Entregado' : 'Rechazado';
 
       const spinner = this.querySelector('.spinner-border');
-      const textoOriginal = this.innerHTML;
-
       spinner.classList.remove('d-none');
       this.disabled = true;
-      this.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Procesando...`;
+      this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Procesando...';
 
       let estadoOk = false;
       let emailOk = false;
-      let errorMsg = '';
 
       try {
-        const payloadEstado = {
-          action: 'updateEstadoLocalOrder',
-          idPedidoLocal: idPedidoLocal,
-          nuevoEstado: nuevoEstado
-        };
-
-        await fetch(API_URL, {
+        // 1. Actualizar estado
+        const resEstado = await fetch(API_URL, {
           method: 'POST',
-          body: JSON.stringify(payloadEstado),
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'no-cors'
+          body: JSON.stringify({
+            action: 'updateEstadoLocalOrder',
+            idPedidoLocal,
+            nuevoEstado
+          }),
+          headers: { 'Content-Type': 'application/json' }
         });
 
-        estadoOk = true;
-        console.log(`✅ Estado actualizado: ${nuevoEstado}`);
-
+        const dataEstado = await resEstado.json();
+        if (dataEstado.success) {
+          estadoOk = true;
+          console.log('✅ Estado actualizado');
+        } else {
+          throw new Error(dataEstado.error || 'Respuesta inválida');
+        }
       } catch (err) {
-        console.error('❌ Falló actualización de estado:', err);
-        errorMsg = 'No se pudo actualizar el estado del pedido.';
+        console.error('❌ Error al actualizar estado:', err);
+        alert('❌ Falló la actualización del estado: ' + err.message);
+        this.innerHTML = this.textContent.trim();
+        this.disabled = false;
+        spinner.classList.add('d-none');
+        return;
       }
 
-      if (estadoOk) {
-        try {
-          let destinatario = '';
-          let asunto = '';
-          let mensaje = '';
+      // 2. Enviar email
+      try {
+        let destinatario = nuevoEstado === 'Listo' && pedido.tipoEntrega === 'Con Envío'
+          ? EMAIL_MOTOMANDADO
+          : pedido.emailCliente;
 
-          if (nuevoEstado === 'Listo') {
-            if (pedido.tipoEntrega === 'Con Envío') {
-              destinatario = EMAIL_MOTOMANDADO;
-              asunto = `¡Pedido listo para envío! #${pedido.idPedido}`;
-              mensaje = `<h2>Pedido listo para retiro por motomandado</h2><p>Cliente: ${pedido.nombreCliente}<br>Dirección: ${pedido.direccion}</p>`;
-            } else {
-              destinatario = pedido.emailCliente;
-              asunto = `¡Tu pedido está listo! #${pedido.idPedido}`;
-              mensaje = `<h2>¡Tu pedido está listo para retirar!</h2><p>Hola ${pedido.nombreCliente}, pasá cuando quieras.</p>`;
-            }
-          } else if (nuevoEstado === 'Entregado') {
-            destinatario = pedido.emailCliente;
-            asunto = `¡Pedido entregado! #${pedido.idPedido}`;
-            mensaje = `<h2>¡Gracias por tu compra!</h2><p>Tu pedido fue entregado. ¡Calificanos!</p>`;
-          } else if (nuevoEstado === 'Rechazado') {
-            destinatario = pedido.emailCliente;
-            asunto = `Pedido rechazado #${pedido.idPedido}`;
-            mensaje = `<h2>Lo sentimos</h2><p>No pudimos procesar tu pedido.</p>`;
-          }
-
-          if (destinatario && destinatario.trim() !== '') {
-            const payloadEmail = {
-              action: 'enviarNotificacionEmail',
-              fromEmail: EMAIL_NOTIFICACIONES,
-              toEmail: destinatario,
-              subject: asunto,
-              htmlBody: mensaje
-            };
-
-            await fetch(API_URL, {
-              method: 'POST',
-              body: JSON.stringify(payloadEmail),
-              headers: { 'Content-Type': 'application/json' },
-              mode: 'no-cors'
-            });
-
-            emailOk = true;
-            console.log(`✅ Email enviado a: ${destinatario}`);
-          }
-
-        } catch (err) {
-          console.error('❌ Falló envío de email:', err);
-          errorMsg = errorMsg ? errorMsg + '\n' : '';
-          errorMsg += 'Estado actualizado, pero no se envió la notificación.';
+        if (!destinatario || destinatario.trim() === '') {
+          throw new Error('No hay email del destinatario');
         }
+
+        const resEmail = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'enviarNotificacionEmail',
+            fromEmail: EMAIL_NOTIFICACIONES,
+            toEmail: destinatario,
+            subject: `Pedido #${pedido.idPedido} - ${nuevoEstado}`,
+            htmlBody: `<h2>Pedido ${nuevoEstado.toLowerCase()}!</h2><p>Cliente: ${pedido.nombreCliente}</p><p>ID: ${pedido.idPedido}</p>`
+          }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const dataEmail = await resEmail.json();
+        if (dataEmail.success) {
+          emailOk = true;
+          console.log('✅ Email enviado a:', destinatario);
+        } else {
+          throw new Error(dataEmail.error || 'Error desconocido');
+        }
+      } catch (err) {
+        console.error('❌ Error al enviar email:', err);
+        emailOk = false;
       }
 
       // Feedback final
       if (estadoOk && emailOk) {
-        alert(`✅ ¡Pedido marcado como ${accionTexto} y notificación enviada!`);
+        alert('✅ ¡Todo correcto! Pedido actualizado y notificación enviada.');
       } else if (estadoOk) {
-        alert(`⚠️ Pedido marcado como ${accionTexto}, pero no se envió la notificación.\n${errorMsg}`);
-      } else {
-        alert(`❌ Error grave: ${errorMsg || 'No se pudo procesar la acción.'}`);
+        alert('⚠️ Pedido actualizado, pero NO se envió la notificación.');
       }
 
-      // Recargar pedidos
-      cargarMisPedidos();
+      cargarMisPedidos(); // Recarga para reflejar cambios
     });
   });
 }
