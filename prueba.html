@@ -903,6 +903,30 @@
       });
       cont.innerHTML = html;
     }
+        // Filtros de pedidos en proceso
+    const btnPendientes = document.getElementById('filtro-pendientes');
+    const btnListos = document.getElementById('filtro-listos');
+    const btnTodosProceso = document.getElementById('filtro-todos-proceso');
+
+    if (btnPendientes && btnListos && btnTodosProceso) {
+      btnPendientes.addEventListener('click', () => {
+        document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+        btnPendientes.classList.add('active');
+        renderizarPedidosEnProceso('pendientes');
+      });
+
+      btnListos.addEventListener('click', () => {
+        document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+        btnListos.classList.add('active');
+        renderizarPedidosEnProceso('listos');
+      });
+
+      btnTodosProceso.addEventListener('click', () => {
+        document.querySelectorAll('#proceso .btn-group .btn').forEach(b => b.classList.remove('active'));
+        btnTodosProceso.classList.add('active');
+        renderizarPedidosEnProceso('todos');
+      });
+    }
   </script>
 </body>
 </html>
