@@ -446,7 +446,7 @@
         max-width: 1200px;
         margin: 0 auto;
     }
-    /* ====================== RESPONSIVE ====================== */
+        /* ====================== RESPONSIVE ====================== */
     @media (max-width: 768px) {
         .search-bar {
             order: 3;
@@ -479,6 +479,7 @@
         .drink-card {
             flex: 0 0 calc(75% - 12px);
         }
+        /* Menú en 2 columnas */
         .menu-items {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -491,26 +492,27 @@
             padding: 10px;
         }
         .menu-item img {
-            height: 120px;
+            height: 110px;          /* Más pequeña que antes (era 120px) */
             border-radius: 10px;
         }
         .menu-item h3 {
-            font-size: 1rem;
+            font-size: 0.95rem;
             margin: 8px 0 4px;
         }
         .menu-item p {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             margin: 3px 0;
         }
         .menu-item p:last-of-type {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             margin: 6px 0;
         }
         .menu-item button {
-            padding: 10px;
-            font-size: 0.95rem;
+            padding: 9px;
+            font-size: 0.9rem;
         }
     }
+
     @media (max-width: 480px) {
         .logo {
             height: 65px;
@@ -530,7 +532,7 @@
             gap: 12px;
         }
         .menu-item img {
-            height: 110px;
+            height: 100px;          /* Aún más compacta en móviles pequeños */
         }
         .drink-card {
             flex: 0 0 calc(85% - 12px);
@@ -547,12 +549,50 @@
         .menu-item {
             padding: 8px;
         }
+        .menu-item h3 {
+            font-size: 0.9rem;
+        }
+        .menu-item p {
+            font-size: 0.8rem;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.15rem;
+        }
+        .menu-item button {
+            padding: 8px;
+            font-size: 0.85rem;
+        }
     }
+
     @media (min-width: 769px) {
         .menu-items {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
+            gap: 18px;
+        }
+        /* Tarjetas de platos más pequeñas en desktop */
+        .menu-item {
+            max-width: 230px;        /* Antes era 260px → ahora más compactas */
+            padding: 10px;
+        }
+        .menu-item img {
+            height: 130px;           /* Antes 150px → más pequeña */
+            border-radius: 12px;
+        }
+        .menu-item h3 {
+            font-size: 1.05rem;
+            margin: 10px 0 6px;
+        }
+        .menu-item p {
+            font-size: 0.9rem;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.35rem;
+        }
+        .menu-item button {
+            padding: 11px;
+            font-size: 0.95rem;
         }
     }
     /* Modal Styles */
