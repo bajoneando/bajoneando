@@ -648,51 +648,69 @@
       document.getElementById('perfil-form').classList.add('d-none');
       btn.disabled = false;
     });
-    // === MIS PEDIDOS - LÓGICA MEJORADA CON NOTIFICACIONES ===
+    
     async function cargarMisPedidos() {
-      const contProceso = document.getElementById('pedidos-proceso-listado');
-      const contFinalizados = document.getElementById('pedidos-finalizados-listado');
-      contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
-      contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
-      try {
-        const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
-        const locales = await resLocales.json();
-        if (!locales || locales.length === 0) {
-          contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
-          contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos finalizados</h4></div>';
-          return;
-        }
-        pedidosData = []; // Reiniciamos
-        for (const localPedido of locales) {
-          const idPedidoLocal = localPedido[0];
-          const idPedido = localPedido[1];
-          const estadoActual = localPedido[4] || 'Pendiente';
-          const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
-          const items = await resItems.json();
-          const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
-          const general = await resGeneral.json();
-          const pedidoInfo = {
-            idPedidoLocal,
-            idPedido,
-            estadoActual,
-            items,
-            direccion: general.direccion || 'Retiro en local',
-            observaciones: general.observaciones || 'Ninguna',
-            metodoPago: general.metodoPago || 'No especificado',
-            tipoEntrega: general.tipoEntrega || 'Para Retirar', // Nuevo campo clave
-            emailCliente: general.emailCliente || '', // Asegúrate de que tu backend lo devuelva
-            nombreCliente: general.nombreCliente || 'Cliente'
-          };
-          pedidosData.push(pedidoInfo);
-        }
-        renderizarPedidosEnProceso('todos');
-        renderizarPedidosFinalizados();
-      } catch (err) {
-        console.error('Error cargando pedidos:', err);
-        contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
-        contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
-      }
+  const contProceso = document.getElementById('pedidos-proceso-listado');
+  const contFinalizados = document.getElementById('pedidos-finalizados-listado');
+  
+  contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+  contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando...</p></div>';
+
+  try {
+    const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
+    const locales = await resLocales.json();
+
+    if (!locales || locales.length === 0) {
+      contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
+      contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos finalizados</h4></div>';
+      return;
     }
+
+    pedidosData = []; // Reiniciamos el array global
+
+    for (const localPedido of locales) {
+      const idPedidoLocal = localPedido[0];
+      const idPedido = localPedido[1];
+      const estadoActual = localPedido[4] || 'Pendiente';
+
+      // Obtener items del pedido local
+      const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
+      const items = await resItems.json();
+
+      // Obtener datos generales del pedido
+      const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
+      const general = await resGeneral.json();
+
+      const pedidoInfo = {
+        idPedidoLocal,
+        idPedido,
+        estadoActual,
+        items,
+        direccion: general.direccion || 'Retiro en local',
+        observaciones: general.observaciones || 'Ninguna',
+        metodoPago: general.metodoPago || 'No especificado',
+        tipoEntrega: general.tipoEntrega || 'Para Retirar',
+        emailCliente: general.emailCliente || '',
+        nombreCliente: general.nombreCliente || 'Cliente'
+      };
+
+      pedidosData.push(pedidoInfo);
+    }
+
+    // === CLAVE: Ordenar por idPedidoLocal ascendente ===
+    // Esto reproduce exactamente el orden físico de la hoja de cálculo (de arriba hacia abajo)
+    pedidosData.sort((a, b) => a.idPedidoLocal - b.idPedidoLocal);
+
+    // Renderizar ambas pestañas con el orden correcto
+    renderizarPedidosEnProceso('todos');
+    renderizarPedidosFinalizados();
+
+  } catch (err) {
+    console.error('Error cargando pedidos:', err);
+    contProceso.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+    contFinalizados.innerHTML = '<div class="alert alert-danger">Error al cargar pedidos</div>';
+  }
+}
     function generarHtmlPedido(p, esFinalizado = false) {
       let itemsHtml = '<ul class="item-list">';
       let subtotal = 0;
