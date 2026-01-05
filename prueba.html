@@ -760,126 +760,152 @@
     }
 
     function agregarEventosBotones() {
-      document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
-        btn.addEventListener('click', async function() {
-          const idPedidoLocal = this.dataset.id;
-          const pedido = pedidosData.find(p => p.idPedidoLocal == idPedidoLocal);
-          if (!pedido) return;
+  document.querySelectorAll('.btn-listos, .btn-entregado, .btn-rechazar').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      const idPedidoLocal = this.dataset.id;
+      const pedido = pedidosData.find(p => p.idPedidoLocal == idPedidoLocal);
+      if (!pedido) {
+        alert('Error: No se encontró el pedido. Recarga la página.');
+        return;
+      }
 
-          let nuevoEstado = '';
-          let accionNotificacion = '';
+      let nuevoEstado = '';
+      let accionTexto = '';
+      if (this.classList.contains('btn-listos')) {
+        nuevoEstado = 'Listo';
+        accionTexto = 'Listo';
+      } else if (this.classList.contains('btn-entregado')) {
+        nuevoEstado = 'Entregado';
+        accionTexto = 'Entregado';
+      } else if (this.classList.contains('btn-rechazar')) {
+        nuevoEstado = 'Rechazado';
+        accionTexto = 'Rechazado';
+      }
 
-          if (this.classList.contains('btn-listos')) {
-            nuevoEstado = 'Listo';
-            accionNotificacion = 'listo';
-          } else if (this.classList.contains('btn-entregado')) {
-            nuevoEstado = 'Entregado';
-            accionNotificacion = 'entregado';
-          } else if (this.classList.contains('btn-rechazar')) {
-            nuevoEstado = 'Rechazado';
-            accionNotificacion = 'rechazado';
+      const spinner = this.querySelector('.spinner-border');
+      const textoOriginal = this.innerHTML;
+
+      // Estado inicial: cargando
+      spinner.classList.remove('d-none');
+      this.disabled = true;
+      this.classList.remove('btn-success', 'btn-primary', 'btn-danger');
+      this.classList.add('btn-secondary');
+      this.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Procesando...`;
+
+      let estadoActualizado = false;
+      let notificacionEnviada = false;
+      let errorMsg = '';
+
+      try {
+        // Paso 1: Actualizar estado en backend
+        const payloadEstado = {
+          action: 'updateEstadoLocalOrder',
+          idPedidoLocal: idPedidoLocal,
+          nuevoEstado: nuevoEstado
+        };
+
+        const resEstado = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payloadEstado),
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'no-cors'
+        });
+
+        // Con no-cors no podemos leer respuesta, asumimos éxito si no lanza error
+        estadoActualizado = true;
+        console.log(`✅ Estado actualizado a "${nuevoEstado}" para pedido local ${idPedidoLocal}`);
+
+      } catch (err) {
+        console.error('❌ Error al actualizar estado:', err);
+        errorMsg = 'No se pudo actualizar el estado del pedido.';
+      }
+
+      // Paso 2: Enviar notificación (solo si el estado se actualizó)
+      if (estadoActualizado) {
+        try {
+          let destinatario = '';
+          let asunto = '';
+          let mensaje = '';
+
+          if (nuevoEstado === 'Listo') {
+            if (pedido.tipoEntrega === 'Con Envío') {
+              destinatario = EMAIL_MOTOMANDADO;
+              asunto = `¡Nuevo pedido listo para envío! - Pedido #${pedido.idPedido}`;
+              mensaje = `<h2>Pedido listo para retiro por motomandado</h2>
+                         <p><strong>Cliente:</strong> ${pedido.nombreCliente}</p>
+                         <p><strong>Dirección:</strong> ${pedido.direccion}</p>
+                         <p><strong>Observaciones:</strong> ${pedido.observaciones}</p>`;
+            } else {
+              destinatario = pedido.emailCliente;
+              asunto = `¡Tu pedido está listo para retirar! - Pedido #${pedido.idPedido}`;
+              mensaje = `<h2>¡Tu pedido está listo!</h2>
+                         <p>Hola ${pedido.nombreCliente},</p>
+                         <p>Tu pedido ya está preparado. ¡Pasá a retirarlo cuando quieras!</p>
+                         <p><strong>Dirección del local:</strong> [Tu dirección]</p>`;
+            }
+          } else if (nuevoEstado === 'Entregado') {
+            destinatario = pedido.emailCliente;
+            asunto = `¡Tu pedido ha sido entregado! - Pedido #${pedido.idPedido}`;
+            mensaje = `<h2>¡Gracias por tu compra!</h2>
+                       <p>Hola ${pedido.nombreCliente},</p>
+                       <p>Tu pedido ha sido entregado con éxito.</p>
+                       <p>¿Cómo fue tu experiencia? Ayúdanos a mejorar:</p>
+                       <div style="text-align:center;margin:20px 0;">
+                         <a href="https://forms.gle/TU_ENLACE_AQUI" style="padding:12px 24px;background:#d32f2f;color:white;text-decoration:none;border-radius:8px;font-size:18px;">⭐ Calificar</a>
+                       </div>`;
+          } else if (nuevoEstado === 'Rechazado') {
+            destinatario = pedido.emailCliente;
+            asunto = `Pedido rechazado - Pedido #${pedido.idPedido}`;
+            mensaje = `<h2>Lo sentimos</h2>
+                       <p>Hola ${pedido.nombreCliente},</p>
+                       <p>Lamentamos informarte que no pudimos procesar tu pedido en este momento.</p>
+                       <p>Te contactaremos para más detalles.</p>`;
           }
 
-          const spinner = this.querySelector('.spinner-border');
-          spinner.classList.remove('d-none');
-          this.disabled = true;
-
-          try {
-            // 1. Actualizar estado en backend
-            const payloadEstado = {
-              action: 'updateEstadoLocalOrder',
-              idPedidoLocal: idPedidoLocal,
-              nuevoEstado: nuevoEstado
+          if (destinatario && destinatario.trim() !== '') {
+            const payloadEmail = {
+              action: 'enviarNotificacionEmail',
+              fromEmail: EMAIL_NOTIFICACIONES,
+              toEmail: destinatario,
+              subject: asunto,
+              htmlBody: mensaje
             };
+
             await fetch(API_URL, {
               method: 'POST',
-              body: JSON.stringify(payloadEstado),
+              body: JSON.stringify(payloadEmail),
               headers: { 'Content-Type': 'application/json' },
               mode: 'no-cors'
             });
 
-            // 2. Enviar notificación por email según la acción
-            let destinatario = '';
-            let asunto = '';
-            let mensaje = '';
-
-            if (accionNotificacion === 'listo') {
-              if (pedido.tipoEntrega === 'Con Envío') {
-                destinatario = EMAIL_MOTOMANDADO;
-                asunto = `¡Nuevo pedido listo para envío! - Pedido #${pedido.idPedido}`;
-                mensaje = `
-                  <h2>Pedido listo para retiro por motomandado</h2>
-                  <p><strong>Cliente:</strong> ${pedido.nombreCliente}</p>
-                  <p><strong>Dirección de entrega:</strong> ${pedido.direccion}</p>
-                  <p><strong>Observaciones:</strong> ${pedido.observaciones}</p>
-                  <p>Por favor coordinar retiro en el local lo antes posible.</p>
-                `;
-              } else {
-                destinatario = pedido.emailCliente;
-                asunto = `¡Tu pedido está listo para retirar! - Pedido #${pedido.idPedido}`;
-                mensaje = `
-                  <h2>¡Tu pedido está listo!</h2>
-                  <p>Hola ${pedido.nombreCliente},</p>
-                  <p>Tu pedido ya está preparado y listo para que pases a retirarlo por el local.</p>
-                  <p><strong>Dirección del local:</strong> [Aquí va la dirección del local]</p>
-                  <p>¡Gracias por elegirnos!</p>
-                `;
-              }
-            } else if (accionNotificacion === 'entregado') {
-              destinatario = pedido.emailCliente;
-              asunto = `¡Tu pedido ha sido entregado! - Pedido #${pedido.idPedido}`;
-              mensaje = `
-                <h2>¡Gracias por tu compra!</h2>
-                <p>Hola ${pedido.nombreCliente},</p>
-                <p>Tu pedido #${pedido.idPedido} ha sido entregado con éxito.</p>
-                <p>¿Cómo fue tu experiencia? Ayúdanos a mejorar:</p>
-                <div style="text-align:center; margin:20px 0;">
-                  <a href="https://forms.gle/TU_ENLACE_DE_VALORACION_AQUI" style="font-size:18px; padding:12px 24px; background:#d32f2f; color:white; text-decoration:none; border-radius:8px;">⭐ Calificar con 5 estrellas</a>
-                </div>
-                <p>¡Gracias por confiar en nosotros!</p>
-              `;
-            } else if (accionNotificacion === 'rechazado') {
-              destinatario = pedido.emailCliente;
-              asunto = `Pedido rechazado - Pedido #${pedido.idPedido}`;
-              mensaje = `
-                <h2>Lo sentimos</h2>
-                <p>Hola ${pedido.nombreCliente},</p>
-                <p>Lamentamos informarte que tu pedido #${pedido.idPedido} no pudo ser procesado en este momento.</p>
-                <p>Motivo: [Indicar motivo si aplica]</p>
-                <p>Te devolveremos el dinero en los próximos días si corresponde.</p>
-                <p>Disculpa las molestias.</p>
-              `;
-            }
-
-            if (destinatario && asunto && mensaje) {
-              const payloadEmail = {
-                action: 'enviarNotificacionEmail',
-                fromEmail: EMAIL_NOTIFICACIONES,
-                toEmail: destinatario,
-                subject: asunto,
-                htmlBody: mensaje
-              };
-
-              await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify(payloadEmail),
-                headers: { 'Content-Type': 'application/json' },
-                mode: 'no-cors'
-              });
-            }
-
-            alert(`Pedido marcado como ${nuevoEstado}${accionNotificacion !== 'rechazado' ? ' y notificación enviada' : ''}`);
-            cargarMisPedidos(); // Recargar para actualizar estados
-
-          } catch (err) {
-            console.error(err);
-            alert('Error al procesar el pedido o enviar notificación');
-          } finally {
-            spinner.classList.add('d-none');
+            notificacionEnviada = true;
+            console.log(`✅ Notificación enviada a ${destinatario}`);
+          } else {
+            console.warn('⚠️ No hay email de destinatario para enviar notificación');
           }
-        });
-      });
-    }
+
+        } catch (err) {
+          console.error('❌ Error al enviar notificación:', err);
+          errorMsg = errorMsg ? errorMsg + '\n' : '';
+          errorMsg += 'Estado actualizado, pero falló el envío de notificación.';
+        }
+      }
+
+      // Resultado final
+      if (estadoActualizado && notificacionEnviada) {
+        alert(`✅ ¡Pedido marcado como ${accionTexto} y notificación enviada!`);
+      } else if (estadoActualizado) {
+        alert(`⚠️ Pedido marcado como ${accionTexto}, pero no se pudo enviar la notificación.\n\n${errorMsg}`);
+      } else {
+        alert(`❌ Error: ${errorMsg || 'No se pudo procesar el pedido. Revisa la conexión.'}`);
+      }
+
+      // Restaurar botón y recargar
+      cargarMisPedidos();
+
+    });
+  });
+}
 
     function renderizarPedidosEnProceso(filtro = 'todos') {
       const cont = document.getElementById('pedidos-proceso-listado');
