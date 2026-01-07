@@ -785,35 +785,39 @@
     btn.disabled = false;
   });
 
-    async function cargarMisPedidos() {
+      async function cargarMisPedidos() {
     const contProceso = document.getElementById('pedidos-proceso-listado');
     const contFinalizados = document.getElementById('pedidos-finalizados-listado');
 
-    // Siempre mostrar loading al entrar (aunque ya tengamos datos cached)
+    // Siempre mostrar loading breve
     contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
     contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
 
     try {
-      if (pedidosData.length === 0) {
-        const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
-        const locales = await resLocales.json();
+      // NUEVO: Pedir SOLO los pedidos en proceso (Pendiente o Listo)
+      const resProceso = await fetch(`${API_URL}?action=getPedidosLocalesEnProceso&localId=${localToken}`);
+      const localesProceso = await resProceso.json();
 
-        if (!locales || locales.length === 0) {
-          contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
-          contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No hay pedidos finalizados</h4></div>';
-          return;
-        }
+      // Pedir por separado los finalizados (opcional, más rápido porque son menos consultas)
+      const resFinalizados = await fetch(`${API_URL}?action=getPedidosLocalesFinalizados&localId=${localToken}`);
+      const localesFinalizados = await resFinalizados.json();
 
-        pedidosData = [];
-        for (const localPedido of locales) {
+      // Limpiar datos anteriores
+      pedidosData = [];
+
+      // Función auxiliar para procesar un array de pedidos
+      async function procesarPedidos(arrayPedidos, esFinalizado = false) {
+        for (const localPedido of arrayPedidos) {
           const idPedidoLocal = localPedido[0];
           const idPedido = localPedido[1];
           const estadoActual = localPedido[4] || 'Pendiente';
 
-          const resItems = await fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`);
-          const items = await resItems.json();
+          const [resItems, resGeneral] = await Promise.all([
+            fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`),
+            fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`)
+          ]);
 
-          const resGeneral = await fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`);
+          const items = await resItems.json();
           const general = await resGeneral.json();
 
           const pedidoInfo = {
@@ -826,16 +830,23 @@
             metodoPago: general.metodoPago || 'No especificado',
             tipoEntrega: general.tipoEntrega || 'Para Retirar',
             emailCliente: general.emailCliente || '',
-            nombreCliente: general.nombreCliente || 'Cliente'
+            nombreCliente: general.nombreCliente || 'Cliente',
+            esFinalizado
           };
           pedidosData.push(pedidoInfo);
         }
-
-        // Orden ascendente (más viejos arriba)
-        pedidosData.sort((a, b) => a.idPedidoLocal.localeCompare(b.idPedidoLocal, undefined, {numeric: true, sensitivity: 'base'}));
       }
 
-      // Siempre: activar botón Todos y mostrar todos los pedidos en proceso
+      // Procesar en paralelo los dos grupos
+      await Promise.all([
+        procesarPedidos(localesProceso),
+        procesarPedidos(localesFinalizados, true)
+      ]);
+
+      // Ordenar todos por idPedidoLocal ascendente (más viejo arriba)
+      pedidosData.sort((a, b) => a.idPedidoLocal.localeCompare(b.idPedidoLocal, undefined, {numeric: true, sensitivity: 'base'}));
+
+      // Mostrar con "Todos" activo por defecto
       activarFiltroTodos();
       renderizarPedidosEnProceso('todos');
       renderizarPedidosFinalizados();
