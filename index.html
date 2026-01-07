@@ -144,12 +144,21 @@
         transform: scale(1.05);
     }
     /* Sugerencias de locales ≈ mitad de tamaño */
+.suggestions {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
 .suggestion-items {
     display: flex;
     justify-content: center;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 20px; /* Un poco más de espacio entre ellas */
-    padding: 10px 0;
+    gap: 20px;
+    padding: 20px 0;
+    width: 100%;
 }
 
 .suggestion {
@@ -483,8 +492,10 @@
             height: 75px;
         }
         .suggestion-items {
-            gap: 14px;
-        }
+        gap: 14px;
+        padding: 15px 0;
+    }
+}
         h1 { font-size: 1.6rem; }
         h2 { font-size: 1.4rem; }
         .drink-card {
@@ -541,8 +552,10 @@
             height: 70px;
         }
         .suggestion-items {
-            gap: 12px;
-        }
+        gap: 12px;
+        padding: 10px 0;
+    }
+}
         .menu-item img {
             height: 100px;          /* Aún más compacta en móviles pequeños */
         }
