@@ -785,19 +785,15 @@
     btn.disabled = false;
   });
 
-  // === PEDIDOS ===
-  async function cargarMisPedidos() {
+    async function cargarMisPedidos() {
     const contProceso = document.getElementById('pedidos-proceso-listado');
     const contFinalizados = document.getElementById('pedidos-finalizados-listado');
 
-    // Mostrar loading solo la primera vez
-    if (pedidosData.length === 0) {
-      contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
-      contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
-    }
+    // Siempre mostrar loading al entrar (aunque ya tengamos datos cached)
+    contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
+    contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
 
     try {
-      // Solo cargar datos si aún no los tenemos
       if (pedidosData.length === 0) {
         const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
         const locales = await resLocales.json();
@@ -835,12 +831,12 @@
           pedidosData.push(pedidoInfo);
         }
 
-        // ORDEN CRONOLÓGICO ASCENDENTE: más viejos arriba
+        // Orden ascendente (más viejos arriba)
         pedidosData.sort((a, b) => a.idPedidoLocal.localeCompare(b.idPedidoLocal, undefined, {numeric: true, sensitivity: 'base'}));
       }
 
-      // Siempre renderizamos con el filtro por defecto "Todos"
-      activarFiltroTodos(); // Aseguramos que "Todos" esté activo
+      // Siempre: activar botón Todos y mostrar todos los pedidos en proceso
+      activarFiltroTodos();
       renderizarPedidosEnProceso('todos');
       renderizarPedidosFinalizados();
 
