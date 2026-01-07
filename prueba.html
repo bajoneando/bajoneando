@@ -1172,7 +1172,9 @@
 
         if (!ultimoPedidoConocido || idMasReciente.localeCompare(ultimoPedidoConocido, undefined, {numeric: true, sensitivity: 'base'}) > 0) {
           console.log('¡Nuevo pedido detectado! Actualizando...');
-          new Audio('https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3').play();
+
+          // SONIDO CORREGIDO: timbre de mostrador (funciona en todos los navegadores)
+          new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-04.wav').play();
 
           pedidosData = [];
           await cargarMisPedidos();
@@ -1192,7 +1194,7 @@
     }
   }
 
-  // Navegación con activación/desactivación de actualización automática
+  // Navegación
   document.getElementById('btn-mis-pedidos').addEventListener('click', () => {
     ocultarTodo();
     document.getElementById('pedidos-panel').classList.remove('d-none');
