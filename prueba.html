@@ -1146,16 +1146,16 @@
       });
     });
   }
-  // === ACTUALIZACIÓN AUTOMÁTICA DE PEDIDOS ===
-  let ultimoPedidoConocido = null;
+    // === ACTUALIZACIÓN AUTOMÁTICA DE PEDIDOS (CORREGIDA Y MEJORADA) ===
+  let pedidosConocidos = new Set(); // Guardamos los IDs de todos los pedidos que ya vimos
   let intervaloPedidos = null;
 
   function iniciarActualizacionAutomatica() {
     if (document.getElementById('pedidos-panel').classList.contains('d-none')) return;
 
-    if (pedidosData.length > 0) {
-      ultimoPedidoConocido = pedidosData[pedidosData.length - 1].idPedidoLocal;
-    }
+    // Guardamos todos los IDs actuales como "conocidos"
+    pedidosConocidos.clear();
+    pedidosData.forEach(p => pedidosConocidos.add(p.idPedidoLocal));
 
     intervaloPedidos = setInterval(async () => {
       try {
@@ -1164,22 +1164,22 @@
 
         if (!pedidosActuales || pedidosActuales.length === 0) return;
 
-        const pedidoMasReciente = pedidosActuales.reduce((max, p) => 
-          p[0].localeCompare(max[0], undefined, {numeric: true, sensitivity: 'base'}) > 0 ? p : max,
-          pedidosActuales[0]
-        );
-        const idMasReciente = pedidoMasReciente[0];
+        // Buscar si hay algún pedido NUEVO (no estaba en pedidosConocidos)
+        const nuevoPedido = pedidosActuales.find(p => !pedidosConocidos.has(p[0]));
 
-        if (!ultimoPedidoConocido || idMasReciente.localeCompare(ultimoPedidoConocido, undefined, {numeric: true, sensitivity: 'base'}) > 0) {
-          console.log('¡Nuevo pedido detectado! Actualizando...');
+        if (nuevoPedido) {
+          console.log('¡NUEVO PEDIDO REAL detectado! Actualizando...');
 
-          // SONIDO CORREGIDO: timbre de mostrador (funciona en todos los navegadores)
+          // Sonido de notificación (timbre claro y profesional)
           new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-04.wav').play();
 
+          // Recargar todos los pedidos
           pedidosData = [];
           await cargarMisPedidos();
 
-          ultimoPedidoConocido = idMasReciente;
+          // Actualizar el conjunto de conocidos con los nuevos
+          pedidosConocidos.clear();
+          pedidosData.forEach(p => pedidosConocidos.add(p.idPedidoLocal));
         }
       } catch (err) {
         console.error('Error en actualización automática:', err);
@@ -1194,7 +1194,7 @@
     }
   }
 
-  // Navegación
+  // Navegación (queda igual, pero aseguramos que se reinicie el Set al entrar)
   document.getElementById('btn-mis-pedidos').addEventListener('click', () => {
     ocultarTodo();
     document.getElementById('pedidos-panel').classList.remove('d-none');
