@@ -785,70 +785,102 @@
     btn.disabled = false;
   });
 
-      async function cargarMisPedidos() {
+        async function cargarMisPedidos() {
     const contProceso = document.getElementById('pedidos-proceso-listado');
     const contFinalizados = document.getElementById('pedidos-finalizados-listado');
 
-    // Siempre mostrar loading breve
+    // Mostrar loading
     contProceso.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
     contFinalizados.innerHTML = '<div class="text-center py-5 loading"><div class="spinner-border text-danger"></div><p>Cargando pedidos...</p></div>';
 
     try {
-      // NUEVO: Pedir SOLO los pedidos en proceso (Pendiente o Listo)
-      const resProceso = await fetch(`${API_URL}?action=getPedidosLocalesEnProceso&localId=${localToken}`);
-      const localesProceso = await resProceso.json();
+      // Usamos la acción que SÍ existe
+      const resLocales = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
+      const todosLosPedidos = await resLocales.json();
 
-      // Pedir por separado los finalizados (opcional, más rápido porque son menos consultas)
-      const resFinalizados = await fetch(`${API_URL}?action=getPedidosLocalesFinalizados&localId=${localToken}`);
-      const localesFinalizados = await resFinalizados.json();
-
-      // Limpiar datos anteriores
-      pedidosData = [];
-
-      // Función auxiliar para procesar un array de pedidos
-      async function procesarPedidos(arrayPedidos, esFinalizado = false) {
-        for (const localPedido of arrayPedidos) {
-          const idPedidoLocal = localPedido[0];
-          const idPedido = localPedido[1];
-          const estadoActual = localPedido[4] || 'Pendiente';
-
-          const [resItems, resGeneral] = await Promise.all([
-            fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`),
-            fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`)
-          ]);
-
-          const items = await resItems.json();
-          const general = await resGeneral.json();
-
-          const pedidoInfo = {
-            idPedidoLocal,
-            idPedido,
-            estadoActual,
-            items,
-            direccion: general.direccion || 'Retiro en local',
-            observaciones: general.observaciones || 'Ninguna',
-            metodoPago: general.metodoPago || 'No especificado',
-            tipoEntrega: general.tipoEntrega || 'Para Retirar',
-            emailCliente: general.emailCliente || '',
-            nombreCliente: general.nombreCliente || 'Cliente',
-            esFinalizado
-          };
-          pedidosData.push(pedidoInfo);
-        }
+      if (!todosLosPedidos || todosLosPedidos.length === 0) {
+        contProceso.innerHTML = '<div class="text-center py-5"><h4>No tienes pedidos en proceso</h4></div>';
+        contFinalizados.innerHTML = '<div class="text-center py-5"><h4>No hay pedidos finalizados</h4></div>';
+        return;
       }
 
-      // Procesar en paralelo los dos grupos
-      await Promise.all([
-        procesarPedidos(localesProceso),
-        procesarPedidos(localesFinalizados, true)
-      ]);
+      // Separamos temprano: pedidos en proceso vs finalizados
+      const enProceso = todosLosPedidos.filter(p => {
+        const estado = p[4] || 'Pendiente';
+        return estado === 'Pendiente' || estado === 'Listo';
+      });
 
-      // Ordenar todos por idPedidoLocal ascendente (más viejo arriba)
+      const finalizados = todosLosPedidos.filter(p => {
+        const estado = p[4] || 'Pendiente';
+        return estado === 'Entregado' || estado === 'Rechazado';
+      });
+
+      pedidosData = [];
+
+      // === PRIORIDAD: Cargar primero los pedidos en proceso (para que aparezcan rápido) ===
+      for (const localPedido of enProceso) {
+        const idPedidoLocal = localPedido[0];
+        const idPedido = localPedido[1];
+        const estadoActual = localPedido[4] || 'Pendiente';
+
+        const [resItems, resGeneral] = await Promise.all([
+          fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`),
+          fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`)
+        ]);
+
+        const items = await resItems.json();
+        const general = await resGeneral.json();
+
+        pedidosData.push({
+          idPedidoLocal,
+          idPedido,
+          estadoActual,
+          items,
+          direccion: general.direccion || 'Retiro en local',
+          observaciones: general.observaciones || 'Ninguna',
+          metodoPago: general.metodoPago || 'No especificado',
+          tipoEntrega: general.tipoEntrega || 'Para Retirar',
+          emailCliente: general.emailCliente || '',
+          nombreCliente: general.nombreCliente || 'Cliente'
+        });
+      }
+
+      // Ordenar por ID ascendente (más viejos arriba)
       pedidosData.sort((a, b) => a.idPedidoLocal.localeCompare(b.idPedidoLocal, undefined, {numeric: true, sensitivity: 'base'}));
 
-      // Mostrar con "Todos" activo por defecto
+      // MOSTRAR INMEDIATAMENTE los pedidos en proceso con "Todos" activo
       activarFiltroTodos();
       renderizarPedidosEnProceso('todos');
+
+      // === DESPUÉS: cargar los finalizados en segundo plano (no bloquea) ===
+      for (const localPedido of finalizados) {
+        const idPedidoLocal = localPedido[0];
+        const idPedido = localPedido[1];
+        const estadoActual = localPedido[4] || 'Pendiente';
+
+        const [resItems, resGeneral] = await Promise.all([
+          fetch(`${API_URL}?action=getItemsByPedidoLocal&idPedidoLocal=${idPedidoLocal}`),
+          fetch(`${API_URL}?action=getPedidoGeneral&idPedido=${idPedido}`)
+        ]);
+
+        const items = await resItems.json();
+        const general = await resGeneral.json();
+
+        pedidosData.push({
+          idPedidoLocal,
+          idPedido,
+          estadoActual,
+          items,
+          direccion: general.direccion || 'Retiro en local',
+          observaciones: general.observaciones || 'Ninguna',
+          metodoPago: general.metodoPago || 'No especificado',
+          tipoEntrega: general.tipoEntrega || 'Para Retirar',
+          emailCliente: general.emailCliente || '',
+          nombreCliente: general.nombreCliente || 'Cliente'
+        });
+      }
+
+      // Actualizar finalizados cuando termine
       renderizarPedidosFinalizados();
 
     } catch (err) {
