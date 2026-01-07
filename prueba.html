@@ -1146,6 +1146,84 @@
       });
     });
   }
+  // === ACTUALIZACIÓN AUTOMÁTICA DE PEDIDOS ===
+let ultimoPedidoConocido = null;
+let intervaloPedidos = null;
+
+function iniciarActualizacionAutomatica() {
+  if (document.getElementById('pedidos-panel').classList.contains('d-none')) {
+    return;
+  }
+
+  if (pedidosData.length > 0) {
+    ultimoPedidoConocido = pedidosData[pedidosData.length - 1].idPedidoLocal;
+  }
+
+  intervaloPedidos = setInterval(async () => {
+    try {
+      const res = await fetch(`${API_URL}?action=getPedidosLocalesByLocal&localId=${localToken}`);
+      const pedidosActuales = await res.json();
+
+      if (!pedidosActuales || pedidosActuales.length === 0) return;
+
+      const pedidoMasReciente = pedidosActuales.reduce((max, p) => 
+        p[0].localeCompare(max[0], undefined, {numeric: true}) > 0 ? p : max
+      );
+
+      const idMasReciente = pedidoMasReciente[0];
+
+      if (!ultimoPedidoConocido || idMasReciente.localeCompare(ultimoPedidoConocido, undefined, {numeric: true}) > 0) {
+        console.log('¡Nuevo pedido detectado! Actualizando...');
+        
+        // Sonido de notificación (opcional, podés borrarlo si no querés sonido)
+        new Audio('https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3').play();
+
+        pedidosData = [];
+        await cargarMisPedidos();
+
+        ultimoPedidoConocido = idMasReciente;
+      }
+    } catch (err) {
+      console.error('Error en actualización automática:', err);
+    }
+  }, 30000); // Cada 30 segundos
+}
+
+function detenerActualizacionAutomatica() {
+  if (intervaloPedidos) {
+    clearInterval(intervaloPedidos);
+    intervaloPedidos = null;
+  }
+}
+
+// MODIFICAR EL BOTÓN "MIS PEDIDOS" PARA ACTIVAR LA ACTUALIZACIÓN
+document.getElementById('btn-mis-pedidos').addEventListener('click', () => {
+  ocultarTodo();
+  document.getElementById('pedidos-panel').classList.remove('d-none');
+  
+  detenerActualizacionAutomatica();
+  cargarMisPedidos().then(() => {
+    iniciarActualizacionAutomatica();
+  });
+});
+
+// DETENER CUANDO CAMBIÁS DE SECCIÓN
+document.getElementById('btn-mi-menu').addEventListener('click', () => {
+  detenerActualizacionAutomatica();
+  ocultarTodo();
+  document.getElementById('filtros-menu').classList.remove('d-none');
+  document.getElementById('menu-listado').classList.remove('d-none');
+  cargarMenuCompleto();
+});
+
+document.getElementById('btn-agregar-item').addEventListener('click', () => {
+  detenerActualizacionAutomatica();
+  ocultarTodo();
+  document.getElementById('menu-form').classList.remove('d-none');
+  document.getElementById('form-titulo').textContent = 'Nuevo Plato';
+  document.getElementById('menu-form').reset();
+  document.getElementById('edit-item-id').value = '';
+});
 </script>
 </body>
 </html>
