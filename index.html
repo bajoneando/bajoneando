@@ -1116,7 +1116,8 @@ function logoutUser() {
             container.style.display = 'block';
         }
         function showLoading(container) {
-            container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+    container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+    container.style.display = 'block';
         }
         function showError(container, msg) {
             container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
