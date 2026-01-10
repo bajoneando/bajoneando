@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weep - Plataforma de Comidas</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- SDK de Mercado Pago (necesario para el checkout) -->
-    <script src="https://sdk.mercadopago.com/js/v2"></script>
-    
     <style>
     * { box-sizing: border-box; }
     body {
@@ -808,26 +804,6 @@
     color: #e53935 !important;
     background: white !important;
 }
-
-        /* Estilos adicionales para el contenedor de Mercado Pago */
-        #mercadopago-checkout {
-            display: none;
-            margin-top: 25px;
-            min-height: 650px;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            overflow: hidden;
-            background: #f9f9f9;
-        }
-        
-        .mp-loading {
-            text-align: center;
-            padding: 60px 20px;
-            color: #d32f2f;
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
 </style>
 </head>
 <body>
@@ -890,62 +866,48 @@
         </div>
         <div id="menu-display" style="display:none;"></div>
         <div id="cart-section">
+            <h2>Tu Carrito</h2>
+            <div class="delivery-option">
+                <label for="delivery-type">Tipo de entrega</label>
+                <select id="delivery-type">
+                    <option value="envio">Con envío a domicilio</option>
+                    <option value="retiro">Retirar en local</option>
+                </select>
+            </div>
+            <div class="cart-summary-panel">
+                <div class="cart-items-list" id="cart-items"></div>
+                <div class="price-summary">
+                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$500</span></div>
+                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$500</span></div>
+                </div>
+                <div id="free-shipping-notice"></div>
+            </div>
+            <div id="drinks-panel" class="drinks-panel" style="display:none;">
+                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
+                <div class="drinks-carousel">
+                    <button class="carousel-btn left" id="prev-drink">←</button>
+                    <div class="drinks-container" id="drinks-container"></div>
+                    <button class="carousel-btn right" id="next-drink">→</button>
+                </div>
+            </div>
+            <form id="checkout-form">
+                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
+                <select id="metodo-pago" required>
+    <option value="">Método de pago</option>
+    <option value="transferencia">Transferencia / Mercado Pago</option>
+    <option value="efectivo">Efectivo</option>
+</select>
 
-            <div id="cart-section">
-    <h2>Tu Carrito</h2>
-    
-    <div class="delivery-option">
-        <label for="delivery-type">Tipo de entrega</label>
-        <select id="delivery-type">
-            <option value="envio">Con envío a domicilio</option>
-            <option value="retiro">Retirar en local</option>
-        </select>
-    </div>
-
-    <div class="cart-summary-panel">
-        <div class="cart-items-list" id="cart-items"></div>
-        <div class="price-summary">
-            <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-            <div class="price-line"><span>Envío</span><span id="shipping-cost">$500</span></div>
-            <div class="price-line total"><span>Total a pagar</span><span id="final-total">$500</span></div>
-        </div>
-        <div id="free-shipping-notice"></div>
-    </div>
-
-    <div id="drinks-panel" class="drinks-panel" style="display:none;">
-        <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
-        <div class="drinks-carousel">
-            <button class="carousel-btn left" id="prev-drink">←</button>
-            <div class="drinks-container" id="drinks-container"></div>
-            <button class="carousel-btn right" id="next-drink">→</button>
-        </div>
-    </div>
-
-    <!-- Formulario de checkout (único) -->
-    <form id="checkout-form">
-        <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
-        
-        <select id="metodo-pago" required>
-            <option value="">Método de pago</option>
-            <option value="transferencia">Transferencia / Mercado Pago</option>
-            <option value="efectivo">Efectivo</option>
-        </select>
-        
-        <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
-        
-        <button type="button" id="checkout-btn">Realizar Pedido</button>
-    </form>
-
-    <!-- Contenedor Mercado Pago -->
-    <div id="mercadopago-checkout" style="display:none; margin-top:25px; min-height:650px; border:1px solid #ddd; border-radius:12px; overflow:hidden; background:#f9f9f9;">
-        <div class="mp-loading">
-            <div class="spinner"></div> Preparando pago seguro...
-        </div>
-    </div>
-</div>
-        
+<!-- Contenedor donde se mostrará el checkout de MP -->
+<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
+                
+                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
+                <button type="button" id="checkout-btn">Realizar Pedido</button>
+            </form>
         </div>
     </main>
+    
     <!-- Footer -->
     <footer class="text-center">
         <div class="container">
@@ -1010,22 +972,20 @@
 </div>
    
     <script>
-        // =============================================
-        // CONFIGURACIÓN IMPORTANTE - CAMBIAR ESTO
-        // =============================================
-        const MERCADOPAGO_PUBLIC_KEYTEST = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795"; // ← ¡TU CLAVE PÚBLICA REAL AQUÍ!
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG';
+const MP_ACCESS_TOKEN = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795";
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
 
-        let mp;                     // Instancia de Mercado Pago
-        let cart = [];
-        let allDrinks = [];
-        let currentDrinkIndex = 0;
-        const CATEGORIA_BEBIDAS = "Bebidas";
-        const COSTO_ENVIO = 500;
-        let isLoggedIn = false;
-        let userId = null;
-        let userAddress = '';
-        let userFavorites = [];
+let cart = [];
+let allDrinks = [];
+let currentDrinkIndex = 0;
+const CATEGORIA_BEBIDAS = "Bebidas";
+const COSTO_ENVIO = 500;
+let isLoggedIn = false;
+let userId = null;
+let userAddress = '';
+
+// === NUEVA VARIABLE GLOBAL PARA FAVORITOS ===
+let userFavorites = []; // array de menuIds favoritos del usuario actual
 
         // Caché de menús mostrados actualmente (para acceder rápido al hacer clic)
 let currentDisplayedMenus = {};
@@ -1034,25 +994,6 @@ let currentDisplayedMenus = {};
 const profileContainer = document.getElementById('profile-container');
 const profileButton = document.getElementById('profile-button');
 const profileDropdown = document.getElementById('profile-dropdown');
-
-        // Inicialización al cargar la página
-        window.addEventListener('load', () => {
-            checkLoginStatus();
-            loadFilters();
-            setupSearch();
-            setupCart();
-            loadAllDrinks();
-
-            // Inicializar Mercado Pago
-            if (typeof MercadoPago !== 'undefined') {
-                mp = new MercadoPago(MERCADOPAGO_PUBLIC_KEY, {
-                    locale: 'es-AR'
-                });
-                console.log("Mercado Pago SDK inicializado");
-            } else {
-                console.error("No se pudo cargar el SDK de Mercado Pago");
-            }
-        });
 
 // ==================== ESTADO DE SESIÓN ====================
 function checkLoginStatus() {
@@ -1611,9 +1552,6 @@ function loginUser() {
             const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
             document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
         }
-        // =============================================
-        // FUNCIÓN CHECKOUT - MODIFICADA CON MERCADO PAGO
-        // =============================================
         async function checkout() {
     if (!isLoggedIn) {
         showModal('login-modal');
@@ -1635,148 +1573,179 @@ function loginUser() {
         return;
     }
 
-    let direccion = delivery === 'envio' 
-        ? document.getElementById('direccion').value.trim() 
-        : 'Retiro en local';
-
-    if (delivery === 'envio' && !direccion) {
-        alert('Ingresa la dirección de entrega');
-        return;
+    let direccion = '';
+    if (delivery === 'envio') {
+        direccion = document.getElementById('direccion').value.trim();
+        if (!direccion) {
+            alert('Ingresa la dirección de entrega');
+            return;
+        }
+    } else {
+        direccion = 'Retiro en local';
     }
 
     const prices = calculatePrices();
-    const total = prices.total;
 
-    // ── PAGO CON TRANSFERENCIA / MERCADO PAGO ───────────────────────
+    // ── Caso especial: Transferencia / Mercado Pago ────────────────────────
     if (metodoPago === "transferencia") {
-        openPaymentModal();  // ← Abrimos el modal
-
-        const container = document.getElementById('mercadopago-checkout-container');
-        container.innerHTML = `
-            <div class="mp-loading" style="padding: 120px 20px;">
-                <div class="spinner"></div><br><br>
-                Generando link de pago seguro...
-            </div>`;
-
-        try {
-            // 1. Crear preferencia en el backend
-            const response = await fetch(SCRIPT_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'createPaymentPreference',
-                    data: {
-                        userId: userId,
-                        amount: total,
-                        description: `Pedido Weep #${Date.now()}`,
-                        items: cart.map(item => ({
-                            title: item.nombreProducto,
-                            quantity: item.cantidad,
-                            unit_price: item.precioUnitario
-                        })),
-                        back_urls: {
-                            success: window.location.href + '?payment=success',
-                            failure: window.location.href + '?payment=failure',
-                            pending: window.location.href + '?payment=pending'
-                        },
-                        auto_return: "approved"
-                    }
-                })
-            });
-
-            if (!response.ok) throw new Error('Error de conexión al crear preferencia');
-
-            const pref = await response.json();
-
-            if (!pref.success || !pref.preferenceId) {
-                throw new Error(pref.message || 'No se pudo generar el pago');
-            }
-
-            // 2. Renderizar checkout dentro del modal
-            mp.checkout({
-                preference: { id: pref.preferenceId },
-                render: {
-                    container: '#mercadopago-checkout-container',
-                    label: 'Pagar con Mercado Pago',
-                },
-                callbacks: {
-                    onSubmit: () => {
-                        container.innerHTML = `
-                            <div class="mp-loading" style="padding: 120px 20px;">
-                                <div class="spinner"></div><br><br>
-                                Redirigiendo al pago...
-                            </div>`;
-                    },
-                    onError: (err) => {
-                        console.error('Error en checkout:', err);
-                        alert('Hubo un problema con el proceso de pago. Intenta nuevamente.');
-                        closePaymentModal();
-                    }
-                }
-            });
-
-        } catch (error) {
-            console.error('Error al generar pago:', error);
-            alert('No pudimos preparar el pago en este momento.\nIntenta de nuevo o elige otro método.');
-            closePaymentModal();
-        }
-
+        await handleMercadoPagoPayment(direccion, delivery, prices, observaciones);
         return;
     }
 
-            // ── Flujo normal: EFECTIVO ──────────────────────────────────────
-            const payload = {
-                action: 'createOrder',
-                data: {
-                    userId: userId,
-                    fecha: new Date().toLocaleDateString('es-AR'),
-                    direccion: direccion,
-                    metodoPago: metodoPago,
-                    observaciones: observaciones,
-                    envioGratis: prices.shipping === 0,
-                    tipoEntrega: delivery,
-                    cart: cart,
-                    montoTotal: total
-                }
-            };
+    // ── Flujo normal para Efectivo ─────────────────────────────────────────
+    await createOrderNormal(direccion, metodoPago, delivery, prices, observaciones);
+}
 
-            const checkoutBtn = document.getElementById('checkout-btn');
-            const originalText = checkoutBtn.textContent;
-            checkoutBtn.disabled = true;
-            checkoutBtn.textContent = 'Procesando...';
+        async function handleMercadoPagoPayment(direccion, delivery, prices, observaciones) {
+    const checkoutContainer = document.getElementById('mercadopago-checkout');
+    const checkoutBtn = document.getElementById('checkout-btn');
 
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(payload)
-                });
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Generando link de pago...';
 
-                let mensaje = '¡Pedido realizado con éxito!';
-                if (prices.shipping === 0) {
-                    mensaje = delivery === 'retiro'
-                        ? '¡Pedido para retiro confirmado!'
-                        : '¡Pedido con envío GRATIS confirmado!';
-                }
-                alert(mensaje);
+    try {
+        // 1. Creamos la preferencia
+        const preference = {
+            items: [{
+                title: `Pedido Weep #${Date.now()}`,
+                quantity: 1,
+                currency_id: "ARS",
+                unit_price: prices.total
+            }],
+            payer: {
+                email: localStorage.getItem('userEmail') || "cliente@weep.com.ar"
+            },
+            external_reference: `${userId}|${Date.now()}`, // ← importante para identificar
+            back_urls: {
+                success: window.location.href,
+                failure: window.location.href,
+                pending: window.location.href
+            },
+            auto_return: "approved",
+            // Opcional: notification_url para webhook (más seguro)
+        };
 
-                // Limpieza
-                cart = [];
-                updateCartCount();
-                updateCartDisplay();
-                document.getElementById('cart-section').style.display = 'none';
-                document.getElementById('checkout-form').reset();
-                if (userAddress) document.getElementById('direccion').value = userAddress;
+        const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${MP_ACCESS_TOKEN}`
+            },
+            body: JSON.stringify(preference)
+        });
 
-            } catch (error) {
-                console.error('Error al enviar pedido:', error);
-                alert('Hubo un problema al procesar el pedido. Por favor intenta nuevamente.');
-            } finally {
-                checkoutBtn.disabled = false;
-                checkoutBtn.textContent = originalText;
-            }
+        const data = await res.json();
+
+        if (!data.init_point) {
+            throw new Error("No se pudo generar el checkout");
         }
+
+        // Guardamos datos del pedido temporalmente
+        pendingOrderData = {
+            userId,
+            fecha: new Date().toLocaleString('es-AR'),
+            direccion,
+            metodoPago: "Transferencia/Mercado Pago",
+            observaciones,
+            envioGratis: prices.shipping === 0,
+            tipoEntrega: delivery,
+            cart,
+            total: prices.total,
+            preferenceId: data.id,
+            paymentId: null
+        };
+
+        // Mostramos el checkout
+        checkoutContainer.innerHTML = `<iframe src="${data.init_point}" width="100%" height="700" frameborder="0"></iframe>`;
+        checkoutContainer.style.display = 'block';
+
+        checkoutBtn.style.display = 'none'; // ocultamos botón mientras paga
+
+        alert("Serás redirigido al pago. Completa el proceso en la ventana de Mercado Pago.");
+
+        // Iniciamos chequeo periódico del pago (método simple)
+        startPaymentPolling(data.id);
+
+    } catch (err) {
+        console.error(err);
+        alert("Error al generar el pago con Mercado Pago. Intenta nuevamente.");
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = 'Realizar Pedido';
+    }
+}
+
+        // Se ejecuta al cargar la página
+window.addEventListener('load', checkPaymentReturn);
+
+// También se puede usar polling si no redirige bien
+function startPaymentPolling(preferenceId) {
+    const interval = setInterval(async () => {
+        try {
+            const res = await fetch(`https://api.mercadopago.com/v1/payments/search?external_reference=${preferenceId}`, {
+                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+            });
+            const data = await res.json();
+
+            if (data.results?.length > 0) {
+                const payment = data.results[0];
+                if (payment.status === "approved") {
+                    clearInterval(interval);
+                    pendingOrderData.paymentId = payment.id;
+                    await finalizeOrderAfterPayment();
+                }
+            }
+        } catch (e) {
+            console.error("Error en polling", e);
+        }
+    }, 5000); // cada 5 segundos
+}
+
+async function finalizeOrderAfterPayment() {
+    if (!pendingOrderData) return;
+
+    await createOrderNormal(
+        pendingOrderData.direccion,
+        pendingOrderData.metodoPago,
+        pendingOrderData.tipoEntrega,
+        { total: pendingOrderData.total },
+        pendingOrderData.observaciones,
+        true // indica que ya se pagó
+    );
+
+    pendingOrderData = null;
+    document.getElementById('mercadopago-checkout').style.display = 'none';
+    document.getElementById('checkout-btn').style.display = 'block';
+}
+
+async function checkPaymentReturn() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get("status");
+    const paymentId = urlParams.get("payment_id");
+
+    if (status && paymentId && pendingOrderData) {
+        try {
+            const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+            });
+            const payment = await res.json();
+
+            if (payment.status === "approved") {
+                pendingOrderData.paymentId = paymentId;
+                await finalizeOrderAfterPayment();
+                alert("¡Pago aprobado! Tu pedido ha sido registrado.");
+            } else {
+                alert(`El pago no fue aprobado. Estado: ${payment.status}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error verificando el pago");
+        }
+
+        // Limpiamos la URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
+
 // ==================== EDITAR PERFIL ====================
 
 function openEditProfileModal() {
@@ -1886,26 +1855,6 @@ function saveAddressChange() {
         .catch(() => {
             alert('Error de conexión al actualizar dirección');
         });
-}
-
-        // Abrir modal de pago
-function openPaymentModal() {
-    document.getElementById('payment-modal').style.display = 'block';
-}
-
-// Cerrar modal de pago + limpiar contenido
-function closePaymentModal() {
-    const modal = document.getElementById('payment-modal');
-    const container = document.getElementById('mercadopago-checkout-container');
-    
-    if (modal) modal.style.display = 'none';
-    if (container) {
-        container.innerHTML = `
-            <div class="mp-loading" style="padding: 120px 20px;">
-                <div class="spinner"></div><br><br>
-                Generando link de pago seguro...
-            </div>`;
-    }
 }
     </script>
 </body>
