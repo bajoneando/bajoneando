@@ -1133,31 +1133,37 @@ function displayMenus(menus, title) {
 
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
-    } else {
-        menus.forEach(menu => {
-            const div = document.createElement('div');
-            div.className = 'menu-item';
-            div.innerHTML = `
-                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" 
-                     alt="${menu.nombre}" 
-                     onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
-                <h3>${menu.nombre}</h3>
-                <p>${menu.descripcion || 'Sin descripción'}</p>
-                <p>$${menu.precio}</p>
-                <button onclick="addToCart(${JSON.stringify(menu)})">Agregar al carrito</button>
-                
-                <!-- BOTÓN DE FAVORITO (corazón) - ESTA ES LA PARTE QUE FALTABA -->
-                <button class="fav-btn" 
-                        data-menu-id="${menu.id}"
-                        onclick="toggleFavorite('${menu.id}')">
-                    ${userFavorites.includes(menu.id) ? '❤️' : '♡'}
-                </button>
-            `;
-            itemsDiv.appendChild(div);
-        });
+        return;
     }
-    
+
+    menus.forEach(menu => {
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `
+            <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" 
+                 alt="${menu.nombre}" 
+                 onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+            <h3>${menu.nombre}</h3>
+            <p>${menu.descripcion || 'Sin descripción'}</p>
+            <p>$${menu.precio}</p>
+            <button onclick="addToCart(${JSON.stringify(menu)})">Agregar al carrito</button>
+            
+            <!-- BOTÓN FAVORITO (corazón) - ESTO ES LO QUE HACE QUE APAREZCA -->
+            <button class="fav-btn" 
+                    data-menu-id="${menu.id}"
+                    onclick="toggleFavorite('${menu.id}')">
+                ${userFavorites.includes(menu.id) ? '❤️' : '♡'}
+            </button>
+        `;
+        itemsDiv.appendChild(div);
+    });
+
     container.style.display = 'block';
+
+    // Actualiza el estado visual de todos los corazones después de renderizar
+    // (el pequeño delay ayuda a que el DOM ya tenga los elementos)
+    setTimeout(updateFavoriteButtons, 50);
+}
 
     // ¡Importante! Actualizar visual de todos los corazones después de renderizar
     updateFavoriteButtons();
