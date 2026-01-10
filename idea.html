@@ -1125,7 +1125,6 @@ function showMyFavorites() {
         .catch(() => showError(container, 'Error al cargar tus favoritos'));
 }
 
-// ==================== MODIFICAR displayMenus PARA INCLUIR BOTÓN FAVORITO ====================
 function displayMenus(menus, title) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
@@ -1133,40 +1132,34 @@ function displayMenus(menus, title) {
 
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
-        return;
+    } else {
+        menus.forEach(menu => {
+            const div = document.createElement('div');
+            div.className = 'menu-item';
+            div.innerHTML = `
+                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" 
+                     alt="${menu.nombre}" 
+                     onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+                <h3>${menu.nombre}</h3>
+                <p>${menu.descripcion || 'Sin descripción'}</p>
+                <p>$${menu.precio}</p>
+                <button onclick="addToCart(${JSON.stringify(menu)})">Agregar al carrito</button>
+                
+                <!-- Botón de favorito - visible siempre que haya menú -->
+                <button class="fav-btn" 
+                        data-menu-id="${menu.id}"
+                        onclick="toggleFavorite('${menu.id}')">
+                    ${userFavorites.includes(menu.id) ? '❤️' : '♡'}
+                </button>
+            `;
+            itemsDiv.appendChild(div);
+        });
     }
-
-    menus.forEach(menu => {
-        const div = document.createElement('div');
-        div.className = 'menu-item';
-        div.innerHTML = `
-            <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" 
-                 alt="${menu.nombre}" 
-                 onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
-            <h3>${menu.nombre}</h3>
-            <p>${menu.descripcion || 'Sin descripción'}</p>
-            <p>$${menu.precio}</p>
-            <button onclick="addToCart(${JSON.stringify(menu)})">Agregar al carrito</button>
-            
-            <!-- BOTÓN FAVORITO (corazón) - ESTO ES LO QUE HACE QUE APAREZCA -->
-            <button class="fav-btn" 
-                    data-menu-id="${menu.id}"
-                    onclick="toggleFavorite('${menu.id}')">
-                ${userFavorites.includes(menu.id) ? '❤️' : '♡'}
-            </button>
-        `;
-        itemsDiv.appendChild(div);
-    });
 
     container.style.display = 'block';
 
-    // Actualiza el estado visual de todos los corazones después de renderizar
-    // (el pequeño delay ayuda a que el DOM ya tenga los elementos)
-    setTimeout(updateFavoriteButtons, 50);
-}
-
-    // ¡Importante! Actualizar visual de todos los corazones después de renderizar
-    updateFavoriteButtons();
+    // Forzamos actualización de corazones después de renderizar
+    setTimeout(updateFavoriteButtons, 100); // pequeño retraso para asegurar que el DOM esté listo
 }
 
 // ==================== LOGIN (agregamos carga de favoritos) ====================
@@ -1304,29 +1297,7 @@ function loginUser() {
                 .then(menus => displayMenus(menus, type || 'Local seleccionado'))
                 .catch(() => showError(container, 'Error al cargar menús'));
         }
-        function displayMenus(menus, title) {
-            const container = document.getElementById('menu-display');
-            container.innerHTML = `<h2>Menús - ${title}</h2><div class="menu-items"></div>`;
-            const itemsDiv = container.querySelector('.menu-items');
-            if (menus.length === 0) {
-                itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
-            } else {
-                menus.forEach(menu => {
-                    const div = document.createElement('div');
-                    div.className = 'menu-item';
-                    div.innerHTML = `
-                        <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
-                        <h3>${menu.nombre}</h3>
-                        <p>${menu.descripcion || 'Sin descripción'}</p>
-                        <p>$${menu.precio}</p>
-                        <button>Agregar al carrito</button>
-                    `;
-                    div.querySelector('button').onclick = () => addToCart(menu);
-                    itemsDiv.appendChild(div);
-                });
-            }
-            container.style.display = 'block';
-        }
+        
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
    
