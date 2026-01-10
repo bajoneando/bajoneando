@@ -1078,8 +1078,7 @@ localStorage.setItem('userAddress', data.address || '');
                     checkLoginStatus();
                     alert('¡Bienvenido!');
                     
-                    // Rellenar dirección si existe
-                    const dirInput = document.getElementById('direccion');
+                                        const dirInput = document.getElementById('direccion');
                     if (dirInput && userAddress) dirInput.value = userAddress;
                 } else {
                     alert(data.message || 'Credenciales incorrectas');
@@ -1105,6 +1104,15 @@ localStorage.setItem('userAddress', data.address || '');
     checkLoginStatus();  // Esto actualiza el botón a "Iniciar Sesión"
     alert('Sesión cerrada correctamente');
 }
+
+        // ==================== CARGA INICIAL ====================
+    window.addEventListener('load', () => {
+        checkLoginStatus();
+        loadFilters();
+        setupSearch();
+        setupCart();
+        loadAllDrinks();
+    });
        
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
