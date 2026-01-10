@@ -771,24 +771,24 @@
 }
 
         .fav-btn {
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        transition: transform 0.2s;
-        position: absolute;
-        top: 10px;
-        right: 10px;
-    }
-    .fav-btn:hover {
-        transform: scale(1.2);
-    }
-    .fav-btn.active {
-        color: #e53935; /* rojo corazón lleno */
-    }
-    .menu-item {
-        position: relative; /* necesario para posicionar el botón absoluto */
-    }
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+.fav-btn:hover {
+    transform: scale(1.2);
+}
+.fav-btn.active {
+    color: #e53935; /* rojo corazón lleno */
+}
+.menu-item {
+    position: relative; /* ¡muy importante! permite posicionar el botón absoluto */
+}
 </style>
 </head>
 <body>
@@ -1138,21 +1138,27 @@ function displayMenus(menus, title) {
             const div = document.createElement('div');
             div.className = 'menu-item';
             div.innerHTML = `
-                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" 
+                     alt="${menu.nombre}" 
+                     onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
                 <h3>${menu.nombre}</h3>
                 <p>${menu.descripcion || 'Sin descripción'}</p>
                 <p>$${menu.precio}</p>
                 <button onclick="addToCart(${JSON.stringify(menu)})">Agregar al carrito</button>
-                <button class="fav-btn" data-menu-id="${menu.id}" onclick="toggleFavorite('${menu.id}')">
+                <!-- Botón de favorito - ESTO FALTABA -->
+                <button class="fav-btn" 
+                        data-menu-id="${menu.id}" 
+                        onclick="toggleFavorite('${menu.id}')">
                     ${userFavorites.includes(menu.id) ? '❤️' : '♡'}
                 </button>
             `;
             itemsDiv.appendChild(div);
         });
     }
-    container.style.display = 'block';
 
-    // Actualizar estado visual de favoritos
+    container.style.display = 'block';
+    
+    // Muy importante: actualizar el estado visual de todos los corazones
     updateFavoriteButtons();
 }
 
