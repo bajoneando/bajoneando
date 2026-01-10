@@ -1681,36 +1681,48 @@ window.addEventListener('load', checkPaymentReturn);
 
 // También se puede usar polling si no redirige bien
 function startPaymentPolling(preferenceId) {
+    console.log("Iniciando polling para preference_id:", preferenceId);
+
     const interval = setInterval(async () => {
         try {
-            // ¡CAMBIO IMPORTANTE AQUÍ!
-            const url = `https://api.mercadopago.com/v1/payments/search?preference=${encodeURIComponent(preferenceId)}`;
+            const url = `https://api.mercadopago.com/v1/payments/search?preference_id=${encodeURIComponent(preferenceId)}`;
+
+            console.log("Consultando MP:", url);
 
             const res = await fetch(url, {
-                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+                headers: { 
+                    "Authorization": `Bearer ${MP_ACCESS_TOKEN}`,
+                    "Content-Type": "application/json"
+                }
             });
 
             if (!res.ok) {
                 const errorText = await res.text();
-                console.error("Error en search payments:", res.status, errorText);
-                return; // No parar el intervalo aún, puede ser temporal
+                console.error(`Error ${res.status} en /payments/search:`, errorText);
+                return; // sigue intentando
             }
 
             const data = await res.json();
-
-            console.log("Respuesta de /payments/search:", data); // ← Para debug
+            console.log("Respuesta completa de Mercado Pago:", JSON.stringify(data, null, 2));
 
             if (data.results?.length > 0) {
-                const payment = data.results.find(p => p.status === "approved");
-                if (payment) {
+                console.log(`Encontrados ${data.results.length} pagos para esta preferencia`);
+
+                const approvedPayment = data.results.find(p => p.status === "approved");
+                if (approvedPayment) {
+                    console.log("¡Pago aprobado encontrado! ID:", approvedPayment.id);
                     clearInterval(interval);
-                    pendingOrderData.paymentId = payment.id;
+                    pendingOrderData.paymentId = approvedPayment.id;
                     await finalizeOrderAfterPayment();
-                    alert("¡Pago confirmado automáticamente! Tu pedido está registrado.");
+                    alert("¡Pago confirmado automáticamente! Tu pedido ha sido registrado.");
+                } else {
+                    console.log("No hay pagos aprobados aún...");
                 }
+            } else {
+                console.log("Aún no hay pagos asociados a esta preferencia");
             }
         } catch (e) {
-            console.error("Error en polling:", e);
+            console.error("Error grave en polling:", e);
         }
     }, 5000); // cada 5 segundos
 }
