@@ -780,48 +780,49 @@
     margin-bottom: 8px;
 }
 
-        /* Aseguramos que la tarjeta tenga position: relative */
+/* 1. Aseguramos que la TARJETA sea el contenedor relativo */
 .menu-item {
     position: relative !important;
     overflow: hidden;
-    /* ... resto de estilos existentes ... */
+    /* los demás estilos que ya tenías se mantienen */
 }
 
-/* La imagen principal también debe ser relativa para que el botón se ancle a ella */
-.menu-item img:first-child {     /* la primera img es la foto del plato */
-    position: relative;
+/* 2. Hacemos que la IMAGEN del plato sea el nuevo referente (muy importante) */
+.menu-item > img:first-child {
+    position: relative;           /* ← clave */
     display: block;
     width: 100%;
-    height: 150px;               /* o el height que uses en desktop */
+    height: 150px;                /* ajusta según desktop */
     object-fit: cover;
     border-radius: 12px;
+    z-index: 1;
 }
 
-/* Botón favorito ahora se posiciona respecto a la IMAGEN */
+/* 3. Botón favorito ahora se posiciona RESPECTO A LA IMAGEN */
 .fav-btn {
     position: absolute;
-    top: 12px;                   /* distancia desde el borde superior de la IMAGEN */
-    right: 12px;                 /* distancia desde el borde derecho de la IMAGEN */
-    width: 42px;
-    height: 42px;
+    top: 10px;                    /* distancia desde arriba de la IMAGEN */
+    right: 10px;                  /* distancia desde la derecha de la IMAGEN */
+    width: 40px;
+    height: 40px;
     background: rgba(255, 255, 255, 0.92);
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.22);
     transition: all 0.25s ease;
-    z-index: 10;
+    z-index: 20;                  /* muy importante: debe estar POR ENCIMA */
     padding: 0;
     overflow: hidden;
 }
 
 .fav-btn:hover {
-    transform: scale(1.15);
+    transform: scale(1.14);
     background: white;
-    box-shadow: 0 5px 18px rgba(0,0,0,0.3);
+    box-shadow: 0 5px 18px rgba(0,0,0,0.32);
 }
 
-/* Las imágenes dentro del botón */
+/* Las imágenes internas del botón (sin cambios) */
 .fav-btn img {
     width: 100%;
     height: 100%;
@@ -829,13 +830,14 @@
     padding: 6px;
     position: absolute;
     inset: 0;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.35s ease;
 }
 
 .fav-btn .fav-empty { opacity: 1; }
 .fav-btn.active .fav-empty { opacity: 0; }
 .fav-btn .fav-filled { opacity: 0; }
 .fav-btn.active .fav-filled { opacity: 1; }
+        
 </style>
 </head>
 <body>
