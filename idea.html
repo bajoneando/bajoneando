@@ -787,13 +787,13 @@
 }
 
 /* Botón favorito - versión con imágenes */
-  .fav-btn {
+.fav-btn {
     position: absolute;
     top: 12px;
     right: 12px;
     width: 44px;
     height: 44px;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.88);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -802,33 +802,50 @@
     overflow: hidden;
     padding: 0;
     z-index: 10;
-  }
+}
 
-  .fav-btn:hover {
+.fav-btn:hover {
     transform: scale(1.12);
     background: white;
     box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-  }
+}
 
-  .fav-btn img {
+.fav-btn img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 8px;           /* pequeño margen interno para que no se vea apretado */
-    transition: opacity 0.3s ease;
-  }
-
-  .fav-btn.active img.fav-empty,
-  .fav-btn:not(.active) img.fav-filled {
-    opacity: 0;
+    padding: 6px;           /* margen interno para que no se vea tan pegado al borde */
     position: absolute;
     inset: 0;
-  }
+    transition: opacity 0.35s ease;
+}
 
-  .fav-btn.active img.fav-filled,
-  .fav-btn:not(.active) img.fav-empty {
+.fav-btn .fav-empty {
     opacity: 1;
-  }
+}
+
+.fav-btn.active .fav-empty {
+    opacity: 0;
+}
+
+.fav-btn .fav-filled {
+    opacity: 0;
+}
+
+.fav-btn.active .fav-filled {
+    opacity: 1;
+}
+
+/* Pequeño efecto "latido" al presionar (opcional pero recomendado) */
+@keyframes heartBeat {
+    0%, 100% { transform: scale(1); }
+    40%      { transform: scale(1.28); }
+    60%      { transform: scale(1.12); }
+}
+
+.fav-btn:active {
+    animation: heartBeat 0.4s ease;
+}
 </style>
 </head>
 <body>
@@ -1144,10 +1161,8 @@ function updateFavoriteButtons() {
         const menuId = btn.dataset.menuId;
         if (userFavorites.includes(menuId)) {
             btn.classList.add('active');
-            btn.textContent = '❤️';
         } else {
             btn.classList.remove('active');
-            btn.textContent = '♡';
         }
     });
 }
@@ -1225,8 +1240,8 @@ function displayMenus(menus, title) {
 <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
         data-menu-id="${menu.id}"
         onclick="toggleFavorite('${menu.id}')">
-  <img class="fav-empty" src="https://i.postimg.cc/vHk2xS4x/18611.jpg" alt="Agregar a favoritos">
-  <img class="fav-filled" src="https://i.postimg.cc/tgHr2Zt5/18611-(2).jpg" alt="Quitar de favoritos">
+    <img class="fav-empty" src="https://i.postimg.cc/vHk2xS4x/18611.jpg" alt="Agregar a favoritos">
+    <img class="fav-filled" src="https://i.postimg.cc/tgHr2Zt5/18611-(2).jpg" alt="Quitar de favoritos">
 </button>
             `;
             itemsDiv.appendChild(div);
