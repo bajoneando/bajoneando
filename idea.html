@@ -1146,9 +1146,9 @@ function displayMenus(menus, title) {
                 <p>$${menu.precio}</p>
                 <button onclick="addToCart(${JSON.stringify(menu)})">Agregar al carrito</button>
                 
-                <!-- Botón de favorito (corazón) - ESTO ES LO QUE FALTABA -->
+                <!-- BOTÓN DE FAVORITO (corazón) - ESTA ES LA PARTE QUE FALTABA -->
                 <button class="fav-btn" 
-                        data-menu-id="${menu.id}" 
+                        data-menu-id="${menu.id}"
                         onclick="toggleFavorite('${menu.id}')">
                     ${userFavorites.includes(menu.id) ? '❤️' : '♡'}
                 </button>
@@ -1156,10 +1156,10 @@ function displayMenus(menus, title) {
             itemsDiv.appendChild(div);
         });
     }
-
-    container.style.display = 'block';
     
-    // ¡Muy importante! Actualizar el estado visual de todos los corazones después de renderizar
+    container.style.display = 'block';
+
+    // ¡Importante! Actualizar visual de todos los corazones después de renderizar
     updateFavoriteButtons();
 }
 
