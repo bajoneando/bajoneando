@@ -677,6 +677,87 @@
         text-decoration: none;
         cursor: pointer;
     }
+
+        /* Contenedor del perfil */
+.profile-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Botón principal de perfil */
+.profile-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 30px;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.profile-button:hover {
+    background-color: #e0e0e0;
+}
+
+.profile-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #d32f2f;
+}
+
+/* Menú desplegable */
+.profile-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+    border-radius: 12px;
+    min-width: 180px;
+    z-index: 1000;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.profile-dropdown.active {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 12px 18px;
+    color: #333;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #ffebee;
+}
+
+.dropdown-item.logout {
+    color: #d32f2f;
+    border-top: 1px solid #eee;
+}
+
+/* Responsive: evita que se desborde en móviles pequeños */
+@media (max-width: 480px) {
+    .profile-icon {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .profile-button {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+}
 </style>
 </head>
 <body>
@@ -688,15 +769,31 @@
             <input type="text" id="search-input" placeholder="Buscar menús o locales...">
         </div>
         <div class="header-right">
-            <div class="profile" id="profile-link">Mi Perfil</div>
-            <div class="cart-icon" id="cart-icon">
-                <span>🛒</span>
-                <div class="cart-count" id="cart-count">0</div>
-            </div>
+    <div class="profile-container" id="profile-container">
+        <div class="profile-button" id="profile-button">
+            <img 
+                src="https://thumbs.dreamstime.com/b/simple-clean-vector-icon-user-profile-avatar-features-white-silhouette-person-s-head-shoulders-subtle-hair-396756147.jpg" 
+                alt="Perfil" 
+                class="profile-icon">
+            <span>Mi Perfil</span>
         </div>
+        
+        <!-- Menú desplegable -->
+        <div class="profile-dropdown" id="profile-dropdown">
+            <a href="#" class="dropdown-item">Editar perfil</a>
+            <a href="#" class="dropdown-item">Cambiar dirección</a>
+            <a href="#" class="dropdown-item logout" id="logout-link">Cerrar sesión</a>
+        </div>
+    </div>
+
+    <div class="cart-icon" id="cart-icon">
+        <span>🛒</span>
+        <div class="cart-count" id="cart-count">0</div>
+    </div>
+</div>
     </header>
     <main>
-        <h1>¡Hola! ¿Qué se te antoja comer?</h1>
+        <h1>¿Qué se te antoja?</h1>
         <div class="categories">
             <div class="category" data-type="Hamburguesas" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
                 <span>Hamburguesas</span>
@@ -795,209 +892,186 @@
     </div>
    
     <script>
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
-        let cart = [];
-        let allDrinks = [];
-        let currentDrinkIndex = 0;
-        const CATEGORIA_BEBIDAS = "Bebidas";
-        const COSTO_ENVIO = 500;
-        let isLoggedIn = false;
-        let userId = null;
-        window.addEventListener('load', () => {
-            checkLoginStatus();
-            loadFilters();
-            setupSearch();
-            setupCart();
-            loadAllDrinks();
-        });
-        // ==================== FUNCIÓN CLAVE: checkLoginStatus (moverla al inicio) ====================
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+    
+    let cart = [];
+    let allDrinks = [];
+    let currentDrinkIndex = 0;
+    const CATEGORIA_BEBIDAS = "Bebidas";
+    const COSTO_ENVIO = 500;
+    let isLoggedIn = false;
+    let userId = null;
+    let userAddress = '';
+
+    // Elementos importantes del DOM
+    const profileContainer = document.getElementById('profile-container');
+    const profileButton = document.getElementById('profile-button');
+    const profileDropdown = document.getElementById('profile-dropdown');
+
+    // ==================== ESTADO DE SESIÓN ====================
     function checkLoginStatus() {
         userId = localStorage.getItem('userId');
         userAddress = localStorage.getItem('userAddress') || '';
+        
         if (userId) {
             isLoggedIn = true;
-            document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
+            // Usuario logueado → muestra ícono + "Mi Perfil"
+            profileButton.innerHTML = `
+                <img src="https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg" 
+                     alt="Perfil" class="profile-icon">
+                <span>Mi Perfil</span>
+            `;
         } else {
             isLoggedIn = false;
-            document.getElementById('profile-link').textContent = 'Iniciar Sesión';
+            // Sin sesión → solo texto para iniciar
+            profileButton.innerHTML = `
+                <span>Iniciar Sesión</span>
+            `;
         }
-        document.getElementById('profile-link').onclick = () => {
+
+        // Evento click principal
+        profileButton.onclick = () => {
             if (isLoggedIn) {
-                logoutUser();
+                // Mostrar / ocultar menú desplegable
+                profileDropdown.classList.toggle('active');
             } else {
                 showModal('login-modal');
             }
         };
+
+        // Evento para cerrar sesión desde el menú
+        const logoutLink = document.getElementById('logout-link');
+        if (logoutLink) {
+            logoutLink.onclick = (e) => {
+                e.preventDefault();
+                logoutUser();
+                profileDropdown.classList.remove('active');
+            };
+        }
+
+        // Cerrar dropdown al hacer click fuera
+        document.addEventListener('click', function(event) {
+            if (profileContainer && !profileContainer.contains(event.target)) {
+                profileDropdown.classList.remove('active');
+            }
+        });
     }
-    // ==================== CARGA INICIAL ====================
-    window.addEventListener('load', () => {
-        checkLoginStatus(); // Ahora sí existe cuando se llama
-        loadFilters();
-        setupSearch();
-        setupCart();
-        loadAllDrinks();
-    });
+
     // ==================== MODALES ====================
     function showModal(modalId) {
         document.getElementById(modalId).style.display = 'block';
     }
+
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
     }
+
     function switchToRegister() {
         closeModal('login-modal');
         showModal('register-modal');
     }
+
     function switchToLogin() {
         closeModal('register-modal');
         showModal('login-modal');
     }
+
     // ==================== REGISTRO ====================
-function registerUser() {
-    // Obtener los campos del formulario de registro
-    const nameInput = document.getElementById('register-name');
-    const emailInput = document.getElementById('register-email');
-    const passwordInput = document.getElementById('register-password');
-    const addressInput = document.getElementById('register-address'); // Puede no existir si es opcional
-    // Validar que los campos obligatorios existan
-    if (!nameInput || !emailInput || !passwordInput) {
-        alert('Error interno: No se encontraron los campos obligatorios del registro.');
-        console.error('Campos faltantes: name, email o password');
-        return;
-    }
-    // Obtener y limpiar valores
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-    const address = addressInput ? addressInput.value.trim() : '';
-    // Validación básica frontend
-    if (!name) {
-        alert('Por favor ingresa tu nombre completo.');
-        nameInput.focus();
-        return;
-    }
-    if (!email) {
-        alert('Por favor ingresa tu email.');
-        emailInput.focus();
-        return;
-    }
-    if (!password) {
-        alert('Por favor ingresa una contraseña.');
-        passwordInput.focus();
-        return;
-    }
-    if (password.length < 6) {
-        alert('La contraseña debe tener al menos 6 caracteres.');
-        passwordInput.focus();
-        return;
-    }
-    // Construir URL con todos los parámetros (siempre incluimos address, aunque vacío)
-    const url = `${scriptUrl}?action=register`
-        + `&name=${encodeURIComponent(name)}`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`
-        + `&address=${encodeURIComponent(address)}`;
-    // Mostrar feedback visual (opcional: podrías agregar un spinner)
-    const registerBtn = document.querySelector('#register-modal button[type="submit"]') ||
-                        document.querySelector('#register-modal .btn-register');
-    if (registerBtn) registerBtn.disabled = true;
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
-               
-                // Limpiar todos los campos
-                nameInput.value = '';
-                emailInput.value = '';
-                passwordInput.value = '';
-                if (addressInput) addressInput.value = '';
-                // Cambiar a la vista de login
-                switchToLogin();
-            } else {
-                alert(data.message || 'Error al registrar. Intenta con otro email.');
-            }
-        })
-        .catch(err => {
-            console.error('Error en registro:', err);
-            alert('Error de conexión. Revisa tu internet e intenta de nuevo.');
-        })
-        .finally(() => {
-            // Reactivar botón
-            if (registerBtn) registerBtn.disabled = false;
-        });
-}
-// ==================== LOGIN ====================
-function loginUser() {
-    const emailInput = document.getElementById('login-email');
-    const passwordInput = document.getElementById('login-password');
-    if (!emailInput || !passwordInput) {
-        alert('Error interno: Campos de login no encontrados.');
-        console.error('Faltan login-email o login-password en el DOM');
-        return;
-    }
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-    if (!email || !password) {
-        alert('Por favor ingresa tu email y contraseña.');
-        return;
-    }
-    const url = `${scriptUrl}?action=login`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`;
-    const loginBtn = document.querySelector('#login-modal button[type="submit"]') ||
-                     document.querySelector('#login-modal .btn-login');
-    if (loginBtn) loginBtn.disabled = true;
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Guardar datos del usuario
-                localStorage.setItem('userId', data.userId);
-                localStorage.setItem('userAddress', data.address || '');
-                // Actualizar estado global
-                isLoggedIn = true;
-                userId = data.userId;
-                userAddress = data.address || '';
-                // Actualizar UI
-                const profileLink = document.getElementById('profile-link');
-                if (profileLink) {
-                    profileLink.textContent = 'Mi Perfil (Cerrar Sesión)';
-                    profileLink.onclick = logoutUser;
-                }
-                // Cerrar modal
-                closeModal('login-modal');
-                alert('¡Bienvenido de nuevo!');
-                // Rellenar dirección en formulario de pedido si existe
-                const dirInput = document.getElementById('direccion');
-                if (dirInput && userAddress) {
-                    dirInput.value = userAddress;
-                }
-            } else {
-                alert(data.message || 'Email o contraseña incorrectos.');
-            }
-        })
-        .catch(err => {
-            console.error('Error en login:', err);
-            alert('Error de conexión. Intenta nuevamente.');
-        })
-        .finally(() => {
-            if (loginBtn) loginBtn.disabled = false;
-        });
-}
-// ==================== LOGOUT ====================
-function logoutUser() {
-        if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+    function registerUser() {
+        const name = document.getElementById('register-name')?.value.trim();
+        const email = document.getElementById('register-email')?.value.trim().toLowerCase();
+        const password = document.getElementById('register-password')?.value.trim();
+        const address = document.getElementById('register-address')?.value.trim() || '';
+
+        if (!name || !email || !password) {
+            alert('Completa todos los campos obligatorios');
             return;
         }
+
+        if (password.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
+        }
+
+        const url = `${scriptUrl}?action=register`
+            + `&name=${encodeURIComponent(name)}`
+            + `&email=${encodeURIComponent(email)}`
+            + `&password=${encodeURIComponent(password)}`
+            + `&address=${encodeURIComponent(address)}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('¡Registro exitoso! Ahora inicia sesión.');
+                    switchToLogin();
+                } else {
+                    alert(data.message || 'Error al registrar');
+                }
+            })
+            .catch(() => alert('Error de conexión'));
+    }
+
+    // ==================== LOGIN ====================
+    function loginUser() {
+        const email = document.getElementById('login-email')?.value.trim().toLowerCase();
+        const password = document.getElementById('login-password')?.value.trim();
+
+        if (!email || !password) {
+            alert('Ingresa email y contraseña');
+            return;
+        }
+
+        const url = `${scriptUrl}?action=login`
+            + `&email=${encodeURIComponent(email)}`
+            + `&password=${encodeURIComponent(password)}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('userAddress', data.address || '');
+                    isLoggedIn = true;
+                    userId = data.userId;
+                    userAddress = data.address || '';
+                    
+                    closeModal('login-modal');
+                    checkLoginStatus();
+                    alert('¡Bienvenido!');
+                    
+                    // Rellenar dirección si existe
+                    const dirInput = document.getElementById('direccion');
+                    if (dirInput && userAddress) dirInput.value = userAddress;
+                } else {
+                    alert(data.message || 'Credenciales incorrectas');
+                }
+            })
+            .catch(() => alert('Error de conexión'));
+    }
+
+    // ==================== CERRAR SESIÓN ====================
+    function logoutUser() {
+        if (!confirm('¿Realmente quieres cerrar sesión?')) return;
+        
         localStorage.removeItem('userId');
         localStorage.removeItem('userAddress');
         isLoggedIn = false;
         userId = null;
         userAddress = '';
-        alert('Sesión cerrada correctamente.');
-        checkLoginStatus(); // Actualiza el texto y el evento del botón
+        
+        checkLoginStatus();
+        alert('Sesión cerrada');
     }
+
+    // ==================== CARGA INICIAL ====================
+    window.addEventListener('load', () => {
+        checkLoginStatus();
+        loadFilters();
+        setupSearch();
+        setupCart();
+        loadAllDrinks();
+    });
        
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
