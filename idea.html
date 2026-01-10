@@ -890,53 +890,59 @@
         </div>
         <div id="menu-display" style="display:none;"></div>
         <div id="cart-section">
-            <h2>Tu Carrito</h2>
-            <div class="delivery-option">
-                <label for="delivery-type">Tipo de entrega</label>
-                <select id="delivery-type">
-                    <option value="envio">Con envío a domicilio</option>
-                    <option value="retiro">Retirar en local</option>
-                </select>
-            </div>
-            <div class="cart-summary-panel">
-                <div class="cart-items-list" id="cart-items"></div>
-                <div class="price-summary">
-                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$500</span></div>
-                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$500</span></div>
-                </div>
-                <div id="free-shipping-notice"></div>
-            </div>
-            <div id="drinks-panel" class="drinks-panel" style="display:none;">
-                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
-                <div class="drinks-carousel">
-                    <button class="carousel-btn left" id="prev-drink">←</button>
-                    <div class="drinks-container" id="drinks-container"></div>
-                    <button class="carousel-btn right" id="next-drink">→</button>
-                </div>
-            </div>
-            <form id="checkout-form">
-                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
-                <form id="checkout-form">
-            <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
-            
-            <select id="metodo-pago" required>
-                <option value="">Método de pago</option>
-                <option value="transferencia">Transferencia / Mercado Pago</option>
-                <option value="efectivo">Efectivo</option>
-            </select>
-            
-            <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
-            
-            <button type="button" id="checkout-btn">Realizar Pedido</button>
-        </form>
-                <!-- Contenedor donde se mostrará el checkout de Mercado Pago -->
-        <div id="mercadopago-checkout">
-            <div class="mp-loading">
-                <div class="spinner"></div> Preparando pago seguro...
-            </div>
+
+            <div id="cart-section">
+    <h2>Tu Carrito</h2>
+    
+    <div class="delivery-option">
+        <label for="delivery-type">Tipo de entrega</label>
+        <select id="delivery-type">
+            <option value="envio">Con envío a domicilio</option>
+            <option value="retiro">Retirar en local</option>
+        </select>
+    </div>
+
+    <div class="cart-summary-panel">
+        <div class="cart-items-list" id="cart-items"></div>
+        <div class="price-summary">
+            <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+            <div class="price-line"><span>Envío</span><span id="shipping-cost">$500</span></div>
+            <div class="price-line total"><span>Total a pagar</span><span id="final-total">$500</span></div>
+        </div>
+        <div id="free-shipping-notice"></div>
+    </div>
+
+    <div id="drinks-panel" class="drinks-panel" style="display:none;">
+        <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
+        <div class="drinks-carousel">
+            <button class="carousel-btn left" id="prev-drink">←</button>
+            <div class="drinks-container" id="drinks-container"></div>
+            <button class="carousel-btn right" id="next-drink">→</button>
         </div>
     </div>
+
+    <!-- Formulario de checkout (único) -->
+    <form id="checkout-form">
+        <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
+        
+        <select id="metodo-pago" required>
+            <option value="">Método de pago</option>
+            <option value="transferencia">Transferencia / Mercado Pago</option>
+            <option value="efectivo">Efectivo</option>
+        </select>
+        
+        <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
+        
+        <button type="button" id="checkout-btn">Realizar Pedido</button>
+    </form>
+
+    <!-- Contenedor Mercado Pago -->
+    <div id="mercadopago-checkout" style="display:none; margin-top:25px; min-height:650px; border:1px solid #ddd; border-radius:12px; overflow:hidden; background:#f9f9f9;">
+        <div class="mp-loading">
+            <div class="spinner"></div> Preparando pago seguro...
+        </div>
+    </div>
+</div>
         
         </div>
     </main>
@@ -1002,35 +1008,13 @@
         <button onclick="saveAddressChange()">Guardar dirección</button>
     </div>
 </div>
-
-    <!-- Modal de Pago con Mercado Pago -->
-<div id="payment-modal" class="modal">
-    <div class="modal-content" style="max-width: 500px; width: 92%;">
-        <span class="close" onclick="closePaymentModal()">×</span>
-        <h2>Pago Seguro con Mercado Pago</h2>
-        <p style="text-align:center; color:#555; margin: 10px 0 25px;">
-            Completa tu pago mediante transferencia o cualquier medio disponible en Mercado Pago
-        </p>
-        
-        <div id="mercadopago-checkout-container" style="min-height: 580px; border: 1px solid #e0e0e0; border-radius: 10px; overflow: hidden;">
-            <div class="mp-loading" style="padding: 120px 20px;">
-                <div class="spinner"></div><br><br>
-                Generando link de pago seguro...
-            </div>
-        </div>
-        
-        <p style="text-align:center; font-size:0.9rem; color:#777; margin-top:15px;">
-            Al completar el pago recibirás la confirmación de tu pedido automáticamente
-        </p>
-    </div>
-</div>
    
     <script>
         // =============================================
         // CONFIGURACIÓN IMPORTANTE - CAMBIAR ESTO
         // =============================================
         const MERCADOPAGO_PUBLIC_KEYTEST = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795"; // ← ¡TU CLAVE PÚBLICA REAL AQUÍ!
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG';
 
         let mp;                     // Instancia de Mercado Pago
         let cart = [];
