@@ -6,7 +6,10 @@
     <title>Weep - Plataforma de Comidas</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-* { box-sizing: border-box; }
+    * { 
+    box-sizing: border-box; 
+}
+
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
@@ -17,22 +20,25 @@ body {
     flex-direction: column;
 }
 
-/* ===================== HEADER ===================== */
+/* Header */
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background-color: #fff;
     padding: 12px 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     border-radius: 0 0 20px 20px;
     flex-wrap: wrap;
     gap: 10px;
+    position: relative;
+    z-index: 100;
 }
 
 .logo {
     height: 90px;
 }
+
 .logo img {
     height: 100%;
     object-fit: contain;
@@ -44,6 +50,7 @@ header {
     max-width: 500px;
     margin: 0 10px;
 }
+
 .search-bar input {
     width: 100%;
     padding: 12px 15px;
@@ -56,92 +63,101 @@ header {
 .header-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 15px;
 }
 
-/* Perfil con dropdown */
+/* === Perfil con dropdown === */
 .profile-container {
     position: relative;
-    cursor: pointer;
 }
 
-.profile-display {
+.profile-btn {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-weight: 500;
-    color: #333;
-    white-space: nowrap;
+    padding: 6px 12px;
+    border-radius: 30px;
+    transition: background 0.2s;
+    cursor: pointer;
 }
 
-.profile-display img {
-    width: 32px;
-    height: 32px;
+.profile-btn:hover {
+    background: #f5f5f5;
+}
+
+.profile-img {
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid #d32f2f;
 }
 
+.profile-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+}
+
 .dropdown-menu {
-    display: none;
     position: absolute;
-    right: 0;
     top: 100%;
+    right: 0;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
     min-width: 180px;
-    z-index: 100;
-    overflow: hidden;
+    padding: 8px 0;
+    display: none;
+    z-index: 200;
 }
 
 .dropdown-item {
-    padding: 12px 16px;
+    padding: 10px 16px;
+    cursor: pointer;
     color: #333;
-    text-decoration: none;
-    display: block;
-    transition: background 0.2s;
+    font-size: 14px;
 }
 
 .dropdown-item:hover {
     background: #ffebee;
-    color: #d32f2f;
+    color: #c62828;
 }
 
 .dropdown-item.logout {
-    border-top: 1px solid #eee;
     color: #d32f2f;
+    border-top: 1px solid #eee;
+    margin-top: 4px;
 }
 
-/* Carrito actualizado */
+/* Cart */
 .cart-icon {
     position: relative;
     cursor: pointer;
 }
 
-.cart-icon img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
+.cart-icon span {
+    font-size: 28px;
 }
 
 .cart-count {
     position: absolute;
-    top: -6px;
+    top: -8px;
     right: -10px;
     background-color: #d32f2f;
     color: white;
     border-radius: 50%;
     width: 20px;
     height: 20px;
-    font-size: 11px;
+    font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
 }
 
-/* ===================== MAIN ===================== */
+/* Main & Titles */
 main {
     flex: 1;
     max-width: 1200px;
@@ -152,30 +168,30 @@ main {
 h1 {
     text-align: center;
     color: #c62828;
-    font-size: 2rem;
-    margin: 25px 0;
+    font-size: 2.1rem;
     font-weight: 700;
+    margin: 25px 0 35px;
 }
 
 h2 {
     text-align: center;
     color: #c62828;
-    font-size: 1.5rem;
-    margin: 30px 0 20px;
+    font-size: 1.6rem;
+    margin: 35px 0 25px;
 }
 
-/* CATEGORÍAS - ahora 3 columnas en mobile */
+/* Categorías - Grid 3 columnas en mobile */
 .categories {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 14px;
     margin-bottom: 40px;
     justify-items: center;
 }
 
 .category {
-    width: 110px;
-    height: 110px;
+    width: 130px;
+    height: 130px;
     background-size: cover;
     background-position: center;
     border-radius: 16px;
@@ -196,89 +212,59 @@ h2 {
 
 .category span {
     position: absolute;
-    bottom: 10px;
+    bottom: 12px;
     left: 0;
     right: 0;
     text-align: center;
     color: white;
-    font-weight: 600;
-    font-size: 15px;
+    font-weight: 700;
+    font-size: 16px;
     text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    z-index: 1;
 }
 
-.category:hover,
-.category:active {
+.category:hover, .category:active {
     transform: scale(1.06);
 }
 
-/* Sugerencias de locales */
-.suggestions {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
-
-.suggestion-items {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    padding: 20px 0;
-    width: 100%;
-}
-
-.suggestion {
-    width: 120px;
-    height: 120px;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.suggestion:hover,
-.suggestion:active {
-    transform: scale(1.1);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-}
-
-.suggestion img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-
-.suggestion:hover img {
-    transform: scale(1.15);
-}
-
-/* ===================== FOOTER ===================== */
+/* Footer actualizado con imagen */
 footer {
     background-color: #c62828;
-    padding: 35px 20px 20px;
+    padding: 40px 20px 25px;
     margin-top: auto;
-    text-align: center;
-    color: white;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
 }
 
-footer .footer-image {
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.footer-logo {
     max-width: 220px;
-    margin-bottom: 15px;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    margin: 0 auto 20px;
+    filter: brightness(0) invert(1); /* vuelve la imagen blanca */
+    opacity: 0.92;
+}
+
+.footer-logo img {
+    width: 100%;
+    height: auto;
 }
 
 footer p {
-    margin: 8px 0;
+    margin: 10px 0;
+    color: #ffffff;
     font-size: 0.95rem;
 }
 
+footer p strong {
+    color: #ffffff;
+}
+
 footer a {
-    color: #ffebee;
+    color: #ffffff;
     text-decoration: none;
     margin: 0 12px;
 }
@@ -287,129 +273,118 @@ footer a:hover {
     text-decoration: underline;
 }
 
-/* ===================== RESPONSIVE ===================== */
+/* ====================== RESPONSIVE ====================== */
+
 @media (max-width: 768px) {
-    .search-bar {
-        order: 3;
-        width: 100%;
-        margin: 10px 0 0;
-        max-width: none;
-    }
-
-    .header-right {
-        gap: 12px;
-    }
-
-    .logo {
-        height: 75px;
-    }
-
-    h1 {
-        font-size: 1.85rem;
-    }
-
-    h2 {
-        font-size: 1.4rem;
-    }
-
-    /* 3 columnas en categorías en celular */
     .categories {
         grid-template-columns: repeat(3, 1fr);
         gap: 12px;
     }
-
+    
     .category {
         width: 100%;
-        height: 100px;
+        height: 110px;
     }
-
+    
     .category span {
         font-size: 14px;
+        bottom: 10px;
     }
-
-    .suggestion {
-        width: 75px;
+    
+    .profile-img {
+        width: 34px;
+        height: 34px;
+    }
+    
+    .profile-text {
+        font-size: 14px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+        margin: 20px 0 30px;
+    }
+    
+    .search-bar {
+        order: 3;
+        width: 100%;
+        margin: 10px 0 0;
+    }
+    
+    .logo {
         height: 75px;
-    }
-
-    .suggestion-items {
-        gap: 14px;
-        padding: 15px 0;
     }
 }
 
 @media (max-width: 480px) {
-    .logo {
-        height: 65px;
-    }
-
-    h1 {
-        font-size: 1.65rem;
-    }
-
     .categories {
+        grid-template-columns: repeat(3, 1fr);
         gap: 10px;
     }
-
+    
     .category {
-        height: 94px;
+        height: 100px;
     }
-
+    
     .category span {
         font-size: 13px;
     }
-
-    .suggestion {
-        width: 70px;
-        height: 70px;
-    }
-
-    .suggestion-items {
-        gap: 12px;
-        padding: 10px 0;
+    
+    h1 {
+        font-size: 1.6rem;
     }
 }
-
-@media (min-width: 769px) {
-    .categories {
-        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    /* Tarjetas de menú - versión desktop */
+    .menu-item {
+        width: 100%;
+        max-width: 260px;
+        background: white;
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        text-align: center;
+        transition: transform 0.3s ease;
     }
-
-    .category {
-        width: 130px;
-        height: 130px;
+    .menu-item:hover, .menu-item:active {
+        transform: translateY(-8px);
     }
-
-    .category span {
-        font-size: 16px;
+    .menu-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
     }
-}
-
-/* ===================== OTROS ESTILOS QUE SE MANTIENEN ===================== */
-/* (menú items, carrito, checkout, modal, loading, etc.) */
-.menu-item {
-    width: 100%;
-    max-width: 260px;
-    background: white;
-    border-radius: 18px;
-    padding: 12px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    text-align: center;
-    transition: transform 0.3s ease;
-}
-
-.menu-item:hover,
-.menu-item:active {
-    transform: translateY(-8px);
-}
-
-.menu-item img {
-    width: 100%;
-    height: 150px;
-    object-fit: cover;
-    border-radius: 12px;
-}
-   
+    .menu-item h3 {
+        margin: 10px 0 6px;
+        font-size: 1.1rem;
+        color: #333;
+    }
+    .menu-item p {
+        color: #666;
+        margin: 4px 0;
+        font-size: 0.95rem;
+    }
+    .menu-item p:last-of-type {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 8px 0;
+    }
+    .menu-item button {
+        width: 100%;
+        padding: 12px;
+        background-color: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .menu-item button:hover, .menu-item button:active {
+        background-color: #b71c1c;
+    }
     /* Carrito */
     #cart-section {
         display: none;
@@ -653,8 +628,8 @@ footer a:hover {
             height: 75px;
         }
         .category {
-        width: 110px;   /* Antes 95px */
-        height: 110px;  /* Antes 95px */
+        width: 110px; /* Antes 95px */
+        height: 110px; /* Antes 95px */
     }
     .category span {
         font-size: 15px;
@@ -687,7 +662,7 @@ footer a:hover {
             padding: 10px;
         }
         .menu-item img {
-            height: 110px;          /* Más pequeña que antes (era 120px) */
+            height: 110px; /* Más pequeña que antes (era 120px) */
             border-radius: 10px;
         }
         .menu-item h3 {
@@ -707,14 +682,13 @@ footer a:hover {
             font-size: 0.9rem;
         }
     }
-
     @media (max-width: 480px) {
         .logo {
             height: 65px;
         }
         .category {
-        width: 100px;   /* Antes 85px */
-        height: 100px;  /* Antes 85px */
+        width: 100px; /* Antes 85px */
+        height: 100px; /* Antes 85px */
     }
     .category span {
         font-size: 14px;
@@ -730,7 +704,7 @@ footer a:hover {
     }
 }
         .menu-item img {
-            height: 100px;          /* Aún más compacta en móviles pequeños */
+            height: 100px; /* Aún más compacta en móviles pequeños */
         }
         .drink-card {
             flex: 0 0 calc(85% - 12px);
@@ -761,7 +735,6 @@ footer a:hover {
             font-size: 0.85rem;
         }
     }
-
     @media (min-width: 769px) {
         .menu-items {
             display: flex;
@@ -771,11 +744,11 @@ footer a:hover {
         }
         /* Tarjetas de platos más pequeñas en desktop */
         .menu-item {
-            max-width: 230px;        /* Antes era 260px → ahora más compactas */
+            max-width: 230px; /* Antes era 260px → ahora más compactas */
             padding: 10px;
         }
         .menu-item img {
-            height: 130px;           /* Antes 150px → más pequeña */
+            height: 130px; /* Antes 150px → más pequeña */
             border-radius: 12px;
         }
         .menu-item h3 {
@@ -869,23 +842,22 @@ footer a:hover {
         </div>
         <div class="header-right">
             <div class="profile-container" id="profile-container">
-                <div class="profile-display" id="profile-display">
-                    <img src="https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg" alt="Perfil">
-                    <span>Mi Perfil</span>
+                <div class="profile-btn" id="profile-btn">
+                    <img src="https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg" 
+                         alt="Perfil" class="profile-img">
+                    <span class="profile-text">Mi perfil</span>
                 </div>
                 <div class="dropdown-menu" id="profile-dropdown">
-                    <a href="#" class="dropdown-item">Editar perfil</a>
-                    <a href="#" class="dropdown-item">Cambiar dirección</a>
-                    <a href="#" class="dropdown-item logout" id="logout-btn">Cerrar sesión</a>
+                    <div class="dropdown-item" onclick="window.location.href='#edit-profile'">Editar perfil</div>
+                    <div class="dropdown-item" onclick="window.location.href='#change-address'">Cambiar dirección</div>
+                    <div class="dropdown-item" style="color:#d32f2f;" onclick="logoutUser()">Cerrar sesión</div>
                 </div>
             </div>
-
             <div class="cart-icon" id="cart-icon">
-                <img src="https://i.postimg.cc/ZKyY0wjf/png-transparent-computer-icons-shopping-cart-encapsulated-postscript-shopping-cart-angle-black-shopp.png" alt="Carrito">
+                <span>🛒</span>
                 <div class="cart-count" id="cart-count">0</div>
             </div>
         </div>
-    </header>
     </header>
     <main>
         <h1>¿Qué se te antoja?</h1>
@@ -952,11 +924,12 @@ footer a:hover {
             </form>
         </div>
     </main>
-    <!-- Footer actualizado -->
+   <!-- Footer actualizado -->
     <footer>
-        <div class="container">
-            <img src="https://i.postimg.cc/638BdTWv/Chat-GPT-Image-Jan-3-2026-01-27-57-AM-(4).png" 
-                 alt="Weep Footer Image" class="footer-image">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <img src="https://i.postimg.cc/638BdTWv/Chat-GPT-Image-Jan-3-2026-01-27-57-AM-(4).png" alt="Weep Logo Footer">
+            </div>
             <p>© 2026 <strong>Weep</strong> - Plataforma de Pedidos</p>
             <p>
                 <a href="#">Términos</a> • 
@@ -965,7 +938,6 @@ footer a:hover {
             </p>
         </div>
     </footer>
-
     <!-- Login Modal -->
     <div id="login-modal" class="modal">
         <div class="modal-content">
@@ -977,7 +949,6 @@ footer a:hover {
             <p>¿No tienes cuenta? <a onclick="switchToRegister()">Regístrate</a></p>
         </div>
     </div>
-
     <!-- Register Modal - CORREGIDO: ahora incluye el campo dirección -->
     <div id="register-modal" class="modal">
         <div class="modal-content">
@@ -991,351 +962,307 @@ footer a:hover {
             <p>¿Ya tienes cuenta? <a onclick="switchToLogin()">Inicia sesión</a></p>
         </div>
     </div>
-    
+   
     <script>
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
-        let cart = [];
-        let allDrinks = [];
-        let currentDrinkIndex = 0;
-        const CATEGORIA_BEBIDAS = "Bebidas";
-        const COSTO_ENVIO = 500;
-        let isLoggedIn = false;
-        let userId = null;
-
-        window.addEventListener('load', () => {
-            checkLoginStatus();
-            loadFilters();
-            setupSearch();
-            setupCart();
-            loadAllDrinks();
-        });
-
-        // ==================== FUNCIÓN CLAVE: checkLoginStatus (moverla al inicio) ====================
-    function checkLoginStatus() {
-        userId = localStorage.getItem('userId');
-        userAddress = localStorage.getItem('userAddress') || '';
-        if (userId) {
-            isLoggedIn = true;
-            document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
-        } else {
-            isLoggedIn = false;
-            document.getElementById('profile-link').textContent = 'Iniciar Sesión';
-        }
-        document.getElementById('profile-link').onclick = () => {
-            if (isLoggedIn) {
-                logoutUser();
-            } else {
-                showModal('login-modal');
-            }
-        };
-    }
-
-    // ==================== CARGA INICIAL ====================
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+    let cart = [];
+    let allDrinks = [];
+    let currentDrinkIndex = 0;
+    const CATEGORIA_BEBIDAS = "Bebidas";
+    const COSTO_ENVIO = 500;
+    let isLoggedIn = false;
+    let userId = null;
+    let userAddress = '';
+    // Elementos del DOM que usaremos frecuentemente
+    const profileContainer = document.getElementById('profile-container');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    const profileNameEl = document.getElementById('profile-name');
+    const profilePic = document.getElementById('profile-pic');
+    const logoutBtn = document.getElementById('logout-btn');
+    // =============================================
+    // INICIALIZACIÓN
+    // =============================================
     window.addEventListener('load', () => {
-        checkLoginStatus();   // Ahora sí existe cuando se llama
+        checkLoginStatus();
+        updateProfileUI();
         loadFilters();
         setupSearch();
         setupCart();
         loadAllDrinks();
+        setupProfileDropdown();
     });
-
-    // ==================== MODALES ====================
+    // =============================================
+    // ESTADO DE SESIÓN Y PERFIL
+    // =============================================
+    function checkLoginStatus() {
+        userId = localStorage.getItem('userId');
+        userAddress = localStorage.getItem('userAddress') || '';
+        isLoggedIn = !!userId;
+        if (isLoggedIn) {
+            document.getElementById('profile-name').textContent = "Mi Perfil";
+        } else {
+            document.getElementById('profile-name').textContent = "Iniciar Sesión";
+        }
+    }
+    function updateProfileUI() {
+        if (isLoggedIn) {
+            profileNameEl.textContent = "Mi Perfil";
+            profilePic.src = "https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg";
+        } else {
+            profileNameEl.textContent = "Iniciar Sesión";
+            profilePic.src = "https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg";
+        }
+    }
+    function setupProfileDropdown() {
+        // Click en todo el contenedor del perfil
+        profileContainer.addEventListener('click', (e) => {
+            if (!isLoggedIn) {
+                showModal('login-modal');
+                return;
+            }
+            // Toggle dropdown
+            profileDropdown.classList.toggle('show');
+            e.stopPropagation();
+        });
+        // Cerrar dropdown al clickear fuera
+        document.addEventListener('click', (e) => {
+            if (!profileContainer.contains(e.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+        // Botón cerrar sesión dentro del dropdown
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (confirm('¿Estás seguro de cerrar sesión?')) {
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userAddress');
+                isLoggedIn = false;
+                userId = null;
+                userAddress = '';
+                profileDropdown.classList.remove('show');
+                updateProfileUI();
+                alert('Sesión cerrada correctamente');
+            }
+        });
+    }
+    // =============================================
+    // MODALES
+    // =============================================
     function showModal(modalId) {
         document.getElementById(modalId).style.display = 'block';
     }
-
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
     }
-
     function switchToRegister() {
         closeModal('login-modal');
         showModal('register-modal');
     }
-
     function switchToLogin() {
         closeModal('register-modal');
         showModal('login-modal');
     }
-
-    // ==================== REGISTRO ====================
-function registerUser() {
-    // Obtener los campos del formulario de registro
-    const nameInput = document.getElementById('register-name');
-    const emailInput = document.getElementById('register-email');
-    const passwordInput = document.getElementById('register-password');
-    const addressInput = document.getElementById('register-address'); // Puede no existir si es opcional
-
-    // Validar que los campos obligatorios existan
-    if (!nameInput || !emailInput || !passwordInput) {
-        alert('Error interno: No se encontraron los campos obligatorios del registro.');
-        console.error('Campos faltantes: name, email o password');
-        return;
-    }
-
-    // Obtener y limpiar valores
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-    const address = addressInput ? addressInput.value.trim() : '';
-
-    // Validación básica frontend
-    if (!name) {
-        alert('Por favor ingresa tu nombre completo.');
-        nameInput.focus();
-        return;
-    }
-    if (!email) {
-        alert('Por favor ingresa tu email.');
-        emailInput.focus();
-        return;
-    }
-    if (!password) {
-        alert('Por favor ingresa una contraseña.');
-        passwordInput.focus();
-        return;
-    }
-    if (password.length < 6) {
-        alert('La contraseña debe tener al menos 6 caracteres.');
-        passwordInput.focus();
-        return;
-    }
-
-    // Construir URL con todos los parámetros (siempre incluimos address, aunque vacío)
-    const url = `${scriptUrl}?action=register`
-        + `&name=${encodeURIComponent(name)}`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`
-        + `&address=${encodeURIComponent(address)}`;
-
-    // Mostrar feedback visual (opcional: podrías agregar un spinner)
-    const registerBtn = document.querySelector('#register-modal button[type="submit"]') || 
-                        document.querySelector('#register-modal .btn-register');
-    if (registerBtn) registerBtn.disabled = true;
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
-                
-                // Limpiar todos los campos
-                nameInput.value = '';
-                emailInput.value = '';
-                passwordInput.value = '';
-                if (addressInput) addressInput.value = '';
-
-                // Cambiar a la vista de login
-                switchToLogin();
-            } else {
-                alert(data.message || 'Error al registrar. Intenta con otro email.');
-            }
-        })
-        .catch(err => {
-            console.error('Error en registro:', err);
-            alert('Error de conexión. Revisa tu internet e intenta de nuevo.');
-        })
-        .finally(() => {
-            // Reactivar botón
-            if (registerBtn) registerBtn.disabled = false;
-        });
-}
-
-// ==================== LOGIN ====================
-function loginUser() {
-    const emailInput = document.getElementById('login-email');
-    const passwordInput = document.getElementById('login-password');
-
-    if (!emailInput || !passwordInput) {
-        alert('Error interno: Campos de login no encontrados.');
-        console.error('Faltan login-email o login-password en el DOM');
-        return;
-    }
-
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-
-    if (!email || !password) {
-        alert('Por favor ingresa tu email y contraseña.');
-        return;
-    }
-
-    const url = `${scriptUrl}?action=login`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`;
-
-    const loginBtn = document.querySelector('#login-modal button[type="submit"]') || 
-                     document.querySelector('#login-modal .btn-login');
-    if (loginBtn) loginBtn.disabled = true;
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Guardar datos del usuario
-                localStorage.setItem('userId', data.userId);
-                localStorage.setItem('userAddress', data.address || '');
-
-                // Actualizar estado global
-                isLoggedIn = true;
-                userId = data.userId;
-                userAddress = data.address || '';
-
-                // Actualizar UI
-                const profileLink = document.getElementById('profile-link');
-                if (profileLink) {
-                    profileLink.textContent = 'Mi Perfil (Cerrar Sesión)';
-                    profileLink.onclick = logoutUser;
-                }
-
-                // Cerrar modal
-                closeModal('login-modal');
-
-                alert('¡Bienvenido de nuevo!');
-
-                // Rellenar dirección en formulario de pedido si existe
-                const dirInput = document.getElementById('direccion');
-                if (dirInput && userAddress) {
-                    dirInput.value = userAddress;
-                }
-            } else {
-                alert(data.message || 'Email o contraseña incorrectos.');
-            }
-        })
-        .catch(err => {
-            console.error('Error en login:', err);
-            alert('Error de conexión. Intenta nuevamente.');
-        })
-        .finally(() => {
-            if (loginBtn) loginBtn.disabled = false;
-        });
-}
-
-// ==================== LOGOUT ====================
-function logoutUser() {
-        if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+    // =============================================
+    // REGISTRO
+    // =============================================
+    function registerUser() {
+        const name = document.getElementById('register-name')?.value.trim();
+        const email = document.getElementById('register-email')?.value.trim().toLowerCase();
+        const password = document.getElementById('register-password')?.value.trim();
+        const address = document.getElementById('register-address')?.value.trim() || '';
+        if (!name || !email || !password) {
+            alert('Completa todos los campos obligatorios');
             return;
         }
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userAddress');
-        isLoggedIn = false;
-        userId = null;
-        userAddress = '';
-
-        alert('Sesión cerrada correctamente.');
-        checkLoginStatus(); // Actualiza el texto y el evento del botón
-    }
-        
-        function loadAllDrinks() {
-            fetch(`${scriptUrl}?action=getAllMenus`)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(data => {
-                    allDrinks = (data.menus || []).filter(menu =>
-                        menu.categoria && menu.categoria.trim() === CATEGORIA_BEBIDAS
-                    );
-                })
-                .catch(() => { allDrinks = []; });
+        if (password.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
         }
-        function loadFilters() {
-            const container = document.getElementById('suggestion-items');
-            showLoading(container);
-            fetch(scriptUrl + '?action=getFilters')
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(data => {
-                    container.innerHTML = '';
-                    if (data.locals?.length > 0) {
-                        data.locals.forEach(local => {
-                            const div = document.createElement('div');
-                            div.className = 'suggestion';
-                            div.dataset.local = local.local_id;
-                            div.innerHTML = `<img src="${local.imagen_url || 'https://placehold.co/200x200?text=' + encodeURIComponent(local.nombre_local)}" alt="${local.nombre_local}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">`;
-                            div.onclick = () => fetchMenus(null, local.local_id);
-                            container.appendChild(div);
-                        });
-                    } else {
-                        container.innerHTML = '<p style="text-align:center;color:#999;">Aún no hay locales disponibles.</p>';
+        const url = `${scriptUrl}?action=register`
+            + `&name=${encodeURIComponent(name)}`
+            + `&email=${encodeURIComponent(email)}`
+            + `&password=${encodeURIComponent(password)}`
+            + `&address=${encodeURIComponent(address)}`;
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('¡Registro exitoso! Ahora inicia sesión');
+                    switchToLogin();
+                    // Limpiar formulario
+                    document.getElementById('register-name').value = '';
+                    document.getElementById('register-email').value = '';
+                    document.getElementById('register-password').value = '';
+                    if (document.getElementById('register-address')) {
+                        document.getElementById('register-address').value = '';
                     }
-                })
-                .catch(() => showError(container, 'Error al cargar locales'));
-        }
-        document.querySelector('.categories').addEventListener('click', e => {
-            const cat = e.target.closest('.category');
-            if (cat) fetchMenus(cat.dataset.type, null);
-        });
-        function setupSearch() {
-            const input = document.getElementById('search-input');
-            let timeout;
-            input.addEventListener('input', e => {
-                clearTimeout(timeout);
-                const term = e.target.value.trim();
-                if (term.length >= 3) {
-                    timeout = setTimeout(() => performSearch(term), 600);
-                } else if (term === '') {
-                    document.getElementById('menu-display').style.display = 'none';
+                } else {
+                    alert(data.message || 'Error al registrar');
                 }
+            })
+            .catch(() => alert('Error de conexión. Intenta nuevamente'));
+    }
+    // =============================================
+    // LOGIN
+    // =============================================
+    function loginUser() {
+        const email = document.getElementById('login-email')?.value.trim().toLowerCase();
+        const password = document.getElementById('login-password')?.value.trim();
+        if (!email || !password) {
+            alert('Ingresa email y contraseña');
+            return;
+        }
+        const url = `${scriptUrl}?action=login`
+            + `&email=${encodeURIComponent(email)}`
+            + `&password=${encodeURIComponent(password)}`;
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('userAddress', data.address || '');
+                    isLoggedIn = true;
+                    userId = data.userId;
+                    userAddress = data.address || '';
+                    updateProfileUI();
+                    closeModal('login-modal');
+                    alert('¡Bienvenido!');
+                   
+                    // Rellenar dirección si existe
+                    const dirInput = document.getElementById('direccion');
+                    if (dirInput && userAddress) dirInput.value = userAddress;
+                } else {
+                    alert(data.message || 'Credenciales incorrectas');
+                }
+            })
+            .catch(() => alert('Error de conexión'));
+    }
+    // =============================================
+    // CARGA DE DATOS
+    // =============================================
+    function loadAllDrinks() {
+        fetch(`${scriptUrl}?action=getAllMenus`)
+            .then(r => r.json())
+            .then(data => {
+                allDrinks = (data.menus || []).filter(m =>
+                    m.categoria?.trim() === CATEGORIA_BEBIDAS
+                );
+            })
+            .catch(() => console.error('No se pudieron cargar bebidas'));
+    }
+    function loadFilters() {
+        const container = document.getElementById('suggestion-items');
+        if (!container) return;
+        container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando locales...</div>';
+        fetch(scriptUrl + '?action=getFilters')
+            .then(r => r.json())
+            .then(data => {
+                container.innerHTML = '';
+                if (data.locals?.length > 0) {
+                    data.locals.forEach(local => {
+                        const div = document.createElement('div');
+                        div.className = 'suggestion';
+                        div.dataset.local = local.local_id;
+                        div.innerHTML = `
+                            <img src="${local.imagen_url || 'https://placehold.co/200x200?text=' + encodeURIComponent(local.nombre_local)}"
+                                 alt="${local.nombre_local}"
+                                 onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">
+                        `;
+                        div.onclick = () => fetchMenus(null, local.local_id);
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<p style="text-align:center;color:#999;padding:30px;">Aún no hay locales disponibles</p>';
+                }
+            })
+            .catch(() => {
+                container.innerHTML = '<p style="color:#d32f2f;text-align:center;padding:30px;">Error al cargar locales</p>';
             });
+    }
+    // =============================================
+    // CATEGORÍAS Y BÚSQUEDA
+    // =============================================
+    document.querySelector('.categories')?.addEventListener('click', e => {
+        const cat = e.target.closest('.category');
+        if (cat) {
+            fetchMenus(cat.dataset.type, null);
         }
-        function performSearch(query) {
-            const container = document.getElementById('menu-display');
-            showLoading(container);
-            fetch(`${scriptUrl}?action=search&query=${encodeURIComponent(query)}`)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
-                .catch(() => showError(container, 'Error en búsqueda'));
-        }
-        function fetchMenus(type, local) {
-            const container = document.getElementById('menu-display');
-            showLoading(container);
-            let url = `${scriptUrl}?action=getMenus`;
-            if (type) url += `&type=${encodeURIComponent(type)}`;
-            if (local) url += `&local=${encodeURIComponent(local)}`;
-            fetch(url)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
-                .catch(() => showError(container, 'Error al cargar menús'));
-        }
-        function displayMenus(menus, title) {
-            const container = document.getElementById('menu-display');
-            container.innerHTML = `<h2>Menús - ${title}</h2><div class="menu-items"></div>`;
-            const itemsDiv = container.querySelector('.menu-items');
-            if (menus.length === 0) {
-                itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
-            } else {
-                menus.forEach(menu => {
-                    const div = document.createElement('div');
-                    div.className = 'menu-item';
-                    div.innerHTML = `
-                        <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+    });
+    function setupSearch() {
+        const input = document.getElementById('search-input');
+        if (!input) return;
+        let timeout;
+        input.addEventListener('input', e => {
+            clearTimeout(timeout);
+            const term = e.target.value.trim();
+           
+            if (term.length >= 3) {
+                timeout = setTimeout(() => performSearch(term), 600);
+            } else if (term === '') {
+                document.getElementById('menu-display').style.display = 'none';
+            }
+        });
+    }
+    function performSearch(query) {
+        const container = document.getElementById('menu-display');
+        if (!container) return;
+        container.innerHTML = '<div class="loading"><div class="spinner"></div> Buscando...</div>';
+        container.style.display = 'block';
+        fetch(`${scriptUrl}?action=search&query=${encodeURIComponent(query)}`)
+            .then(r => r.json())
+            .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
+            .catch(() => {
+                container.innerHTML = '<p style="color:#d32f2f;text-align:center;padding:40px;">Error en la búsqueda</p>';
+            });
+    }
+    function fetchMenus(type, local) {
+        const container = document.getElementById('menu-display');
+        if (!container) return;
+        container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+        container.style.display = 'block';
+        let url = `${scriptUrl}?action=getMenus`;
+        if (type) url += `&type=${encodeURIComponent(type)}`;
+        if (local) url += `&local=${encodeURIComponent(local)}`;
+        fetch(url)
+            .then(r => r.json())
+            .then(menus => displayMenus(menus, type || 'Menús del local'))
+            .catch(() => {
+                container.innerHTML = '<p style="color:#d32f2f;text-align:center;padding:40px;">Error al cargar menús</p>';
+            });
+    }
+    function displayMenus(menus, title) {
+        const container = document.getElementById('menu-display');
+        if (!container) return;
+        let html = `<h2>${title}</h2><div class="menu-items">`;
+        if (menus.length === 0) {
+            html += '<p style="text-align:center;color:#999;padding:60px 20px;">No se encontraron menús</p>';
+        } else {
+            menus.forEach(menu => {
+                html += `
+                    <div class="menu-item">
+                        <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
+                             alt="${menu.nombre}"
+                             onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
                         <h3>${menu.nombre}</h3>
                         <p>${menu.descripcion || 'Sin descripción'}</p>
-                        <p>$${menu.precio}</p>
-                        <button>Agregar al carrito</button>
-                    `;
-                    div.querySelector('button').onclick = () => addToCart(menu);
-                    itemsDiv.appendChild(div);
-                });
-            }
-            container.style.display = 'block';
+                        <p>$${Number(menu.precio).toLocaleString('es-AR')}</p>
+                        <button onclick="addToCart(${JSON.stringify(menu).replace(/"/g,'&quot;')})">Agregar al carrito</button>
+                    </div>
+                `;
+            });
         }
-        function showLoading(container) {
-    container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
-    
-    // Solo aplicamos display: block al contenedor de menús
-    if (container.id === 'menu-display') {
-        container.style.display = 'block';
+        html += '</div>';
+        container.innerHTML = html;
     }
-    // Para suggestion-items (y cualquier otro), no hacemos nada → mantiene su flex + center
-}
-        function showError(container, msg) {
-            container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
-        }
-        // ==================== CARRITO ====================
+    // =============================================
+    // CARRITO
+    // =============================================
     function setupCart() {
         const cartIcon = document.getElementById('cart-icon');
         const cartSection = document.getElementById('cart-section');
-
-        cartIcon.onclick = function () {
-            // Toggle simple: si está oculto → mostrar, si está visible → ocultar
+        if (!cartIcon || !cartSection) return;
+        cartIcon.onclick = () => {
             if (cartSection.style.display === 'none' || cartSection.style.display === '') {
                 cartSection.style.display = 'block';
                 updateCartDisplay();
@@ -1343,106 +1270,105 @@ function logoutUser() {
                 cartSection.style.display = 'none';
             }
         };
-
-        document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
-        document.getElementById('checkout-btn').onclick = checkout;
+        document.getElementById('delivery-type')?.addEventListener('change', updateCartDisplay);
+        document.getElementById('checkout-btn')?.addEventListener('click', checkout);
     }
-
-    function openCart() {
-        document.getElementById('cart-section').style.display = 'block';
-        updateCartDisplay();
-    }
-
     function addToCart(menu) {
         if (!isLoggedIn) {
             showModal('login-modal');
-            alert('¡Debes iniciar sesión para agregar productos al carrito!');
+            alert('Debes iniciar sesión para agregar productos');
             return;
         }
-
         const item = {
             idLocal: menu.local_id,
-            nombreLocal: menu.nombre_local || 'Local desconocido',
+            nombreLocal: menu.nombre_local || 'Local',
             idProducto: menu.id,
             nombreProducto: menu.nombre,
             precioUnitario: Number(menu.precio),
             cantidad: 1,
             categoria: menu.categoria || ''
         };
-
         const existing = cart.findIndex(i => i.idProducto === item.idProducto);
         if (existing !== -1) {
             cart[existing].cantidad++;
         } else {
             cart.push(item);
         }
-
         updateCartCount();
         updateCartDisplay();
-
-        // Mensaje con botón "Ver carrito"
-        if (confirm(`¡${menu.nombre} agregado al carrito!\n\n¿Quieres ver el carrito ahora?`)) {
-            openCart();
+        if (confirm(`${menu.nombre} agregado al carrito!\n\n¿Ver carrito ahora?`)) {
+            document.getElementById('cart-section').style.display = 'block';
         }
     }
-
     function updateCartCount() {
         const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
-        document.getElementById('cart-count').textContent = total;
+        const countEl = document.getElementById('cart-count');
+        if (countEl) countEl.textContent = total;
     }
-        function hasDrink() {
-            return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
-        }
-        function calculatePrices() {
-            const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
-            const delivery = document.getElementById('delivery-type').value;
-            let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
-            return { subtotal, shipping, total: subtotal + shipping, delivery };
-        }
-        function updateCartDisplay() {
-            const list = document.getElementById('cart-items');
-            const notice = document.getElementById('free-shipping-notice');
-            const drinksPanel = document.getElementById('drinks-panel');
-            list.innerHTML = '';
-            notice.innerHTML = '';
-            if (cart.length === 0) {
-                list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
-            } else {
-                cart.forEach((item, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'cart-item';
-                    div.innerHTML = `
-                        <div class="cart-item-left">
-                            <div class="cart-item-name">${item.nombreProducto}</div>
-                            <div class="quantity-controls">
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
-                                <span class="quantity">${item.cantidad}</span>
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
-                            </div>
+    function hasDrink() {
+        return cart.some(i => i.categoria?.trim() === CATEGORIA_BEBIDAS);
+    }
+    function calculatePrices() {
+        const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
+        const delivery = document.getElementById('delivery-type')?.value || 'envio';
+        const shipping = (delivery === 'envio') ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
+        return {
+            subtotal,
+            shipping,
+            total: subtotal + shipping,
+            deliveryType: delivery
+        };
+    }
+    function updateCartDisplay() {
+        const list = document.getElementById('cart-items');
+        const notice = document.getElementById('free-shipping-notice');
+        const drinksPanel = document.getElementById('drinks-panel');
+        if (!list) return;
+        list.innerHTML = '';
+        if (notice) notice.innerHTML = '';
+        if (drinksPanel) drinksPanel.style.display = 'none';
+        if (cart.length === 0) {
+            list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
+        } else {
+            cart.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <div class="cart-item-left">
+                        <div class="cart-item-name">${item.nombreProducto}</div>
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
+                            <span class="quantity">${item.cantidad}</span>
+                            <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
                         </div>
-                        <div class="cart-item-price">$${(item.precioUnitario * item.cantidad)}</div>
-                        <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
-                    `;
-                    list.appendChild(div);
-                });
+                    </div>
+                    <div class="cart-item-price">$${(item.precioUnitario * item.cantidad).toLocaleString('es-AR')}</div>
+                    <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+        const prices = calculatePrices();
+        document.getElementById('subtotal').textContent = `$${prices.subtotal.toLocaleString('es-AR')}`;
+        document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping.toLocaleString('es-AR')}`;
+        document.getElementById('final-total').textContent = `$${prices.total.toLocaleString('es-AR')}`;
+        // Mensajes envío gratis
+        if (prices.shipping === 0 && cart.length > 0) {
+            if (notice) {
+                notice.innerHTML = prices.deliveryType === 'retiro'
+                    ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis</div>'
+                    : '<div class="free-shipping-msg">¡Envío GRATIS por bebida incluida!</div>';
             }
-            const prices = calculatePrices();
-            document.getElementById('subtotal').textContent = `$${prices.subtotal}`;
-            document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping}`;
-            document.getElementById('final-total').textContent = `$${prices.total}`;
-            if (prices.shipping === 0 && cart.length > 0) {
-                notice.innerHTML = prices.delivery === 'retiro'
-                    ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
-                    : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
-                drinksPanel.style.display = 'none';
-            } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
+        } else if (prices.deliveryType === 'envio' && !hasDrink() && cart.length > 0) {
+            if (drinksPanel) {
                 drinksPanel.style.display = 'block';
                 renderDrinksCarousel();
-            } else {
-                drinksPanel.style.display = 'none';
             }
-            const dirInput = document.getElementById('direccion');
-            if (prices.delivery === 'retiro') {
+        }
+        // Dirección requerida según tipo de entrega
+        const dirInput = document.getElementById('direccion');
+        if (dirInput) {
+            if (prices.deliveryType === 'retiro') {
                 dirInput.placeholder = "No requerida (retirás en local)";
                 dirInput.required = false;
             } else {
@@ -1450,166 +1376,156 @@ function logoutUser() {
                 dirInput.required = true;
             }
         }
-        window.changeQuantity = function(idx, delta) {
-            if (cart[idx].cantidad + delta > 0) {
-                cart[idx].cantidad += delta;
-            } else {
-                cart.splice(idx, 1);
-            }
-            updateCartCount();
-            updateCartDisplay();
-        };
-        window.removeFromCart = function(idx) {
+    }
+    window.changeQuantity = function(idx, delta) {
+        if (cart[idx].cantidad + delta > 0) {
+            cart[idx].cantidad += delta;
+        } else {
             cart.splice(idx, 1);
-            updateCartCount();
-            updateCartDisplay();
-        };
-        function renderDrinksCarousel() {
-            const container = document.getElementById('drinks-container');
-            container.innerHTML = '';
-            if (allDrinks.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#666;padding:40px;width:100%;">No hay bebidas disponibles.</p>';
-                return;
-            }
-            allDrinks.forEach(drink => {
-                const card = document.createElement('div');
-                card.className = 'drink-card';
-                card.innerHTML = `
-                    <img src="${drink.imagen_url || 'https://placehold.co/300x140?text=Bebida'}" alt="${drink.nombre}" onerror="this.src='https://placehold.co/300x140?text=Sin+Imagen'">
-                    <h4>${drink.nombre}</h4>
-                    <div class="price">$${drink.precio}</div>
-                    <button>Agregar</button>
-                `;
-                card.querySelector('button').onclick = () => addToCart(drink);
-                container.appendChild(card);
-            });
-            currentDrinkIndex = 0;
-            scrollCarousel();
-            setupCarouselControls();
         }
-        function setupCarouselControls() {
-            document.getElementById('prev-drink').onclick = () => {
-                if (currentDrinkIndex > 0) {
-                    currentDrinkIndex--;
-                    scrollCarousel();
-                }
-            };
-            document.getElementById('next-drink').onclick = () => {
-                const card = document.querySelector('.drink-card');
-                if (!card) return;
-                const cardWidth = card.offsetWidth + 12;
-                const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
-                if (currentDrinkIndex < allDrinks.length - visible) {
-                    currentDrinkIndex++;
-                    scrollCarousel();
-                }
-            };
-            window.addEventListener('resize', () => {
-                currentDrinkIndex = 0;
-                scrollCarousel();
-            });
-        }
-        function scrollCarousel() {
-            const container = document.getElementById('drinks-container');
-            if (!container || container.children.length === 0) return;
-            const card = container.children[0];
-            const cardWidth = card.offsetWidth + 12;
-            container.style.transform = `translateX(-${currentDrinkIndex * cardWidth}px)`;
-            document.getElementById('prev-drink').disabled = currentDrinkIndex === 0;
-            const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
-            document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
-        }
-        function checkout() {
-    if (!isLoggedIn) {
-        showModal('login-modal');
-        alert('¡Debes iniciar sesión para realizar el pedido!');
-        return;
-    }
-
-    if (cart.length === 0) {
-        alert('El carrito está vacío');
-        return;
-    }
-
-    const delivery = document.getElementById('delivery-type').value;
-    const metodoPago = document.getElementById('metodo-pago').value;
-    const observaciones = document.getElementById('observaciones').value.trim();
-
-    if (!metodoPago) {
-        alert('Selecciona un método de pago');
-        return;
-    }
-
-    let direccion = '';
-    if (delivery === 'envio') {
-        direccion = document.getElementById('direccion').value.trim();
-        if (!direccion) {
-            alert('Ingresa la dirección de entrega');
-            return;
-        }
-    } else {
-        direccion = 'Retiro en local';
-    }
-
-    const prices = calculatePrices();
-
-    const payload = {
-        action: 'createOrder',
-        data: {
-            userId: userId,
-            fecha: new Date().toLocaleDateString('es-AR'),
-            direccion: direccion,
-            metodoPago: metodoPago,
-            observaciones: observaciones,
-            envioGratis: prices.shipping === 0,
-            tipoEntrega: delivery,
-            cart: cart
-        }
-    };
-
-    // Mostrar loading o deshabilitar botón si quieres (opcional)
-    const checkoutBtn = document.getElementById('checkout-btn');
-    const originalText = checkoutBtn.textContent;
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Procesando...';
-
-    fetch(scriptUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        let mensaje = '¡Pedido realizado con éxito!';
-        if (prices.shipping === 0) {
-            mensaje = delivery === 'retiro' 
-                ? '¡Pedido para retiro confirmado!' 
-                : '¡Pedido con envío GRATIS confirmado!';
-        }
-
-        alert(mensaje);
-
-        // Limpiar todo
-        cart = [];
         updateCartCount();
         updateCartDisplay();
-        document.getElementById('cart-section').style.display = 'none';
-        document.getElementById('checkout-form').reset();
-
-        // Si hay dirección guardada, la vuelve a poner por si el usuario quiere hacer otro pedido rápido
-        if (userAddress) {
-            document.getElementById('direccion').value = userAddress;
+    };
+    window.removeFromCart = function(idx) {
+        cart.splice(idx, 1);
+        updateCartCount();
+        updateCartDisplay();
+    };
+    // =============================================
+    // CARRUSEL DE BEBIDAS (ENVÍO GRATIS)
+    // =============================================
+    function renderDrinksCarousel() {
+        const container = document.getElementById('drinks-container');
+        if (!container || allDrinks.length === 0) return;
+        container.innerHTML = '';
+        allDrinks.forEach(drink => {
+            const card = document.createElement('div');
+            card.className = 'drink-card';
+            card.innerHTML = `
+                <img src="${drink.imagen_url || 'https://placehold.co/300x140?text=Bebida'}"
+                     alt="${drink.nombre}"
+                     onerror="this.src='https://placehold.co/300x140?text=Sin+Imagen'">
+                <h4>${drink.nombre}</h4>
+                <div class="price">$${Number(drink.precio).toLocaleString('es-AR')}</div>
+                <button onclick="addToCart(${JSON.stringify(drink).replace(/"/g,'&quot;')})">Agregar</button>
+            `;
+            container.appendChild(card);
+        });
+        currentDrinkIndex = 0;
+        scrollCarousel();
+        setupCarouselControls();
+    }
+    function setupCarouselControls() {
+        const prev = document.getElementById('prev-drink');
+        const next = document.getElementById('next-drink');
+        if (!prev || !next) return;
+        prev.onclick = () => {
+            if (currentDrinkIndex > 0) {
+                currentDrinkIndex--;
+                scrollCarousel();
+            }
+        };
+        next.onclick = () => {
+            const card = document.querySelector('.drink-card');
+            if (!card) return;
+            const cardWidth = card.offsetWidth + 12;
+            const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
+            if (currentDrinkIndex < allDrinks.length - visible) {
+                currentDrinkIndex++;
+                scrollCarousel();
+            }
+        };
+    }
+    function scrollCarousel() {
+        const container = document.getElementById('drinks-container');
+        if (!container) return;
+        const card = container.children[0];
+        if (!card) return;
+        const cardWidth = card.offsetWidth + 12;
+        container.style.transform = `translateX(-${currentDrinkIndex * cardWidth}px)`;
+        document.getElementById('prev-drink').disabled = currentDrinkIndex === 0;
+       
+        const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
+        document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
+    }
+    // =============================================
+    // FINALIZAR PEDIDO
+    // =============================================
+    function checkout() {
+        if (!isLoggedIn) {
+            showModal('login-modal');
+            alert('Debes iniciar sesión para realizar el pedido');
+            return;
         }
-    })
-    .catch((error) => {
-        console.error('Error al enviar pedido:', error);
-        alert('Pedido enviado (posible error de red). Revisa tu conexión.');
-    })
-    .finally(() => {
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = originalText;
-    });
-}
-    </script>
+        if (cart.length === 0) {
+            alert('El carrito está vacío');
+            return;
+        }
+        const delivery = document.getElementById('delivery-type')?.value || 'envio';
+        const metodoPago = document.getElementById('metodo-pago')?.value;
+        const observaciones = document.getElementById('observaciones')?.value.trim() || '';
+        let direccion = '';
+        if (delivery === 'envio') {
+            direccion = document.getElementById('direccion')?.value.trim();
+            if (!direccion) {
+                alert('Por favor ingresa la dirección de entrega');
+                return;
+            }
+        } else {
+            direccion = 'Retiro en local';
+        }
+        if (!metodoPago) {
+            alert('Selecciona un método de pago');
+            return;
+        }
+        const prices = calculatePrices();
+        const payload = {
+            action: 'createOrder',
+            data: {
+                userId: userId,
+                fecha: new Date().toLocaleDateString('es-AR'),
+                direccion: direccion,
+                metodoPago: metodoPago,
+                observaciones: observaciones,
+                envioGratis: prices.shipping === 0,
+                tipoEntrega: delivery,
+                cart: cart
+            }
+        };
+        const btn = document.getElementById('checkout-btn');
+        if (btn) {
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Procesando...';
+        }
+        fetch(scriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            alert('¡Pedido realizado con éxito!');
+            cart = [];
+            updateCartCount();
+            updateCartDisplay();
+            document.getElementById('cart-section').style.display = 'none';
+            document.getElementById('checkout-form')?.reset();
+            if (userAddress) {
+                const dir = document.getElementById('direccion');
+                if (dir) dir.value = userAddress;
+            }
+        })
+        .catch(() => {
+            alert('Pedido enviado (posible problema de red)');
+        })
+        .finally(() => {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+    }
+</script>
 </body>
 </html>
