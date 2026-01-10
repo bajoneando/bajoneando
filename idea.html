@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weep - Plataforma de Comidas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    /* Header */
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #fff;
+        padding: 12px 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        border-radius: 0 0 20px 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .logo {
+        height: 90px; /* Logo más grande en desktop */
+    }
+    .logo img {
+        height: 100%;
+        object-fit: contain;
+    }
+    .search-bar {
+        flex: 1;
+        min-width: 200px;
+        max-width: 500px;
+        margin: 0 10px;
+    }
+    .search-bar input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ccc;
+        border-radius: 30px;
+        font-size: 15px;
+        outline: none;
+    }
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .profile {
+        font-size: 15px;
+        font-weight: 500;
+        color: #333;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    .cart-icon {
+        position: relative;
+        cursor: pointer;
+    }
+    .cart-icon span {
+        font-size: 28px;
+    }
+    .cart-count {
+        position: absolute;
+        top: -8px;
+        right: -10px;
+        background-color: #d32f2f;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    main {
+        flex: 1;
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    h1 {
+        text-align: center;
+        color: #c62828;
+        font-size: 1.8rem;
+        margin: 20px 0;
+    }
+    h2 {
+        text-align: center;
+        color: #c62828;
+        font-size: 1.5rem;
+        margin: 30px 0 20px;
+    }
+    /* Categorías más pequeñas */
+    .categories {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 40px;
+    }
+    .category {
+        width: 130px;
+        height: 130px;
+        background-size: cover;
+        background-position: center;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+    .category::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
+        border-radius: 16px;
+    }
+    .category span {
+        position: absolute;
+        bottom: 12px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+        z-index: 1;
+    }
+    .category:hover, .category:active {
+        transform: scale(1.05);
+    }
+    /* Sugerencias de locales ≈ mitad de tamaño */
+.suggestions {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+.suggestion-items {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px 0;
+    width: 100%;
+}
+
+.suggestion {
+    width: 120px;
+    height: 120px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.suggestion:hover, .suggestion:active {
+    transform: scale(1.1);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+
+.suggestion img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.suggestion:hover img {
+    transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
+}
+    /* Tarjetas de menú - versión desktop */
+    .menu-item {
+        width: 100%;
+        max-width: 260px;
+        background: white;
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+    .menu-item:hover, .menu-item:active {
+        transform: translateY(-8px);
+    }
+    .menu-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
+    }
+    .menu-item h3 {
+        margin: 10px 0 6px;
+        font-size: 1.1rem;
+        color: #333;
+    }
+    .menu-item p {
+        color: #666;
+        margin: 4px 0;
+        font-size: 0.95rem;
+    }
+    .menu-item p:last-of-type {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 8px 0;
+    }
+    .menu-item button {
+        width: 100%;
+        padding: 12px;
+        background-color: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .menu-item button:hover, .menu-item button:active {
+        background-color: #b71c1c;
+    }
+    /* Carrito */
+    #cart-section {
+        display: none;
+        background: white;
+        border-radius: 18px;
+        padding: 20px;
+        margin-top: 30px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    .delivery-option select {
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+    .cart-item {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .cart-item-left {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+    .cart-item-name {
+        font-weight: 500;
+        font-size: 1.1rem;
+    }
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .quantity-btn {
+        width: 40px;
+        height: 40px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+    }
+    .quantity {
+        font-size: 1.2rem;
+        font-weight: bold;
+        min-width: 50px;
+        text-align: center;
+    }
+    .cart-item-price {
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    .remove-btn {
+        background: #ff5252;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .price-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        font-size: 1.1rem;
+    }
+    .price-line.total {
+        font-size: 1.6rem;
+        font-weight: bold;
+        color: #d32f2f;
+        border-top: 2px solid #ddd;
+        padding-top: 20px;
+        margin-top: 15px;
+    }
+    .free-shipping-msg {
+        background: #e8f5e8;
+        color: #2e7d32;
+        padding: 16px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 600;
+        margin: 15px 0;
+        font-size: 1.1rem;
+    }
+    /* Carousel de bebidas */
+    .drinks-panel {
+        margin: 30px 0;
+    }
+    .drinks-carousel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+    .drinks-container {
+        display: flex;
+        transition: transform 0.4s ease;
+        gap: 12px;
+        padding: 10px 0;
+    }
+    .drink-card {
+        flex: 0 0 calc(80% - 12px);
+        background: white;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+    .drink-card img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+    }
+    .drink-card h4 {
+        margin: 12px 10px 6px;
+        font-size: 1rem;
+    }
+    .drink-card .price {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 10px 0;
+    }
+    .drink-card button {
+        width: 90%;
+        margin: 0 auto 15px;
+        padding: 12px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .carousel-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(211,47,47,0.8);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 22px;
+        cursor: pointer;
+        z-index: 10;
+    }
+    .carousel-btn.left { left: 10px; }
+    .carousel-btn.right { right: 10px; }
+    /* Formulario checkout */
+    #checkout-form input,
+    #checkout-form select,
+    #checkout-form textarea {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 12px;
+        font-size: 16px;
+    }
+    #checkout-btn {
+        width: 100%;
+        padding: 16px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    #checkout-btn:hover, #checkout-btn:active {
+        background: #b71c1c;
+    }
+    /* Loading */
+    .loading {
+        text-align: center;
+        padding: 50px 0;
+        color: #d32f2f;
+        font-weight: 600;
+    }
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #d32f2f;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin: 0 10px;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    /* Footer */
+    footer {
+        background-color: #c62828;
+        padding: 30px 20px;
+        text-align: center;
+        margin-top: auto;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    }
+    footer p {
+        margin: 8px 0;
+        color: #ffffff;
+    }
+    footer p strong {
+        color: #ffffff;
+    }
+    footer a {
+        color: #ffffff;
+        text-decoration: none;
+        margin: 0 10px;
+    }
+    footer a:hover {
+        text-decoration: underline;
+    }
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+        /* ====================== RESPONSIVE ====================== */
+    @media (max-width: 768px) {
+        .search-bar {
+            order: 3;
+            width: 100%;
+            margin: 10px 0 0;
+            max-width: none;
+        }
+        .header-right {
+            gap: 12px;
+        }
+        .logo {
+            height: 75px;
+        }
+        .category {
+        width: 110px;   /* Antes 95px */
+        height: 110px;  /* Antes 95px */
+    }
+    .category span {
+        font-size: 15px;
+    }
+}
+        .suggestion {
+            width: 75px;
+            height: 75px;
+        }
+        .suggestion-items {
+        gap: 14px;
+        padding: 15px 0;
+    }
+}
+        h1 { font-size: 1.6rem; }
+        h2 { font-size: 1.4rem; }
+        .drink-card {
+            flex: 0 0 calc(75% - 12px);
+        }
+        /* Menú en 2 columnas */
+        .menu-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            padding: 0 10px;
+            justify-content: center;
+        }
+        .menu-item {
+            max-width: none;
+            padding: 10px;
+        }
+        .menu-item img {
+            height: 110px;          /* Más pequeña que antes (era 120px) */
+            border-radius: 10px;
+        }
+        .menu-item h3 {
+            font-size: 0.95rem;
+            margin: 8px 0 4px;
+        }
+        .menu-item p {
+            font-size: 0.85rem;
+            margin: 3px 0;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.2rem;
+            margin: 6px 0;
+        }
+        .menu-item button {
+            padding: 9px;
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .logo {
+            height: 65px;
+        }
+        .category {
+        width: 100px;   /* Antes 85px */
+        height: 100px;  /* Antes 85px */
+    }
+    .category span {
+        font-size: 14px;
+    }
+}
+        .suggestion {
+            width: 70px;
+            height: 70px;
+        }
+        .suggestion-items {
+        gap: 12px;
+        padding: 10px 0;
+    }
+}
+        .menu-item img {
+            height: 100px;          /* Aún más compacta en móviles pequeños */
+        }
+        .drink-card {
+            flex: 0 0 calc(85% - 12px);
+        }
+        .carousel-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+        }
+        .menu-items {
+            gap: 12px;
+            padding: 0 8px;
+        }
+        .menu-item {
+            padding: 8px;
+        }
+        .menu-item h3 {
+            font-size: 0.9rem;
+        }
+        .menu-item p {
+            font-size: 0.8rem;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.15rem;
+        }
+        .menu-item button {
+            padding: 8px;
+            font-size: 0.85rem;
+        }
+    }
+
+    @media (min-width: 769px) {
+        .menu-items {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+        /* Tarjetas de platos más pequeñas en desktop */
+        .menu-item {
+            max-width: 230px;        /* Antes era 260px → ahora más compactas */
+            padding: 10px;
+        }
+        .menu-item img {
+            height: 130px;           /* Antes 150px → más pequeña */
+            border-radius: 12px;
+        }
+        .menu-item h3 {
+            font-size: 1.05rem;
+            margin: 10px 0 6px;
+        }
+        .menu-item p {
+            font-size: 0.9rem;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.35rem;
+        }
+        .menu-item button {
+            padding: 11px;
+            font-size: 0.95rem;
+        }
+    }
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 12px;
+        width: 80%;
+        max-width: 400px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .modal-content h2 {
+        text-align: center;
+        color: #c62828;
+    }
+    .modal-content input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+    .modal-content button {
+        width: 100%;
+        padding: 12px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .modal-content button:hover {
+        background: #b71c1c;
+    }
+    .modal-content p {
+        text-align: center;
+        margin-top: 10px;
+    }
+    .modal-content a {
+        color: #d32f2f;
+        cursor: pointer;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+        /* ============================================= */
+/*          BOTTOM NAVIGATION BAR (mobile)       */
+/* ============================================= */
+
+.bottom-nav {
+    display: none;                    /* oculto por defecto */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #eee;
+    box-shadow: 0 -3px 15px rgba(0,0,0,0.08);
+    z-index: 1000;
+    height: 68px;
+}
+
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.bottom-nav-item.active,
+.bottom-nav-item:active,
+.bottom-nav-item:hover {
+    color: #d32f2f;
+}
+
+.bottom-nav-item .icon {
+    font-size: 1.8rem;           /* tamaño generoso como Foodgo */
+    margin-bottom: 3px;
+}
+
+.bottom-nav-item .label {
+    font-size: 0.68rem;
+}
+
+/* Mostrar solo en móviles */
+@media (max-width: 768px) {
+    .bottom-nav {
+        display: flex;
+    }
+
+    /* Damos más espacio abajo al contenido principal */
+    body {
+        padding-bottom: 75px;     /* evita que el contenido quede tapado */
+    }
+
+    main {
+        padding-bottom: 20px;
+    }
+
+    /* El carrito flotante puede quedar mejor más arriba si lo deseas */
+    #cart-section {
+        margin-bottom: 90px;
+    }
+}
+
+/* Opcional: efecto ripple suave al tocar (mejora UX móvil) */
+.bottom-nav-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(211, 47, 47, 0.08);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.35s;
+    pointer-events: none;
+}
+
+.bottom-nav-item:active::before {
+    opacity: 1;
+    transform: scale(2.5);
+}
+</style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="https://i.postimg.cc/7PpF3zRP/Chat-GPT-Image-Jan-3-2026-01-27-57-AM-(1).png" alt="Weep Logo">
+        </div>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Buscar menús o locales...">
+        </div>
+        <div class="header-right">
+            <div class="profile" id="profile-link">Mi Perfil</div>
+            <div class="cart-icon" id="cart-icon">
+                <span>🛒</span>
+                <div class="cart-count" id="cart-count">0</div>
+            </div>
+        </div>
+    </header>
+    <main>
+        <h1>¡Hola! ¿Qué se te antoja comer?</h1>
+        <div class="categories">
+            <div class="category" data-type="Hamburguesas" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
+                <span>Hamburguesas</span>
+            </div>
+            <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
+                <span>Pizza</span>
+            </div>
+            <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
+                <span>Helados</span>
+            </div>
+            <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
+                <span>Postres</span>
+            </div>
+            <div class="category" data-type="Merienda" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
+                <span>Merienda</span>
+            </div>
+            <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
+    <span>Bebidas</span>
+</div>
+        </div>
+        <div class="suggestions">
+            <h2>Sugerencias de Locales</h2>
+            <div class="suggestion-items" id="suggestion-items"></div>
+        </div>
+        <div id="menu-display" style="display:none;"></div>
+        <div id="cart-section">
+            <h2>Tu Carrito</h2>
+            <div class="delivery-option">
+                <label for="delivery-type">Tipo de entrega</label>
+                <select id="delivery-type">
+                    <option value="envio">Con envío a domicilio</option>
+                    <option value="retiro">Retirar en local</option>
+                </select>
+            </div>
+            <div class="cart-summary-panel">
+                <div class="cart-items-list" id="cart-items"></div>
+                <div class="price-summary">
+                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$500</span></div>
+                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$500</span></div>
+                </div>
+                <div id="free-shipping-notice"></div>
+            </div>
+            <div id="drinks-panel" class="drinks-panel" style="display:none;">
+                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
+                <div class="drinks-carousel">
+                    <button class="carousel-btn left" id="prev-drink">←</button>
+                    <div class="drinks-container" id="drinks-container"></div>
+                    <button class="carousel-btn right" id="next-drink">→</button>
+                </div>
+            </div>
+            <form id="checkout-form">
+                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
+                <select id="metodo-pago" required>
+                    <option value="">Método de pago</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Efectivo">Efectivo</option>
+                </select>
+                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
+                <button type="button" id="checkout-btn">Realizar Pedido</button>
+            </form>
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer class="text-center">
+        <div class="container">
+            <p class="mb-2">© 2026 <strong>Weep</strong> - Plataforma de Pedidos</p>
+            <p class="small mb-0">
+                <a href="#">Términos</a> • <a href="#">Privacidad</a> • <a href="#">Soporte</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bottom Navigation Bar - Solo visible en móviles -->
+<nav class="bottom-nav">
+    <a href="#" class="bottom-nav-item active">
+        <span class="icon">🏠</span>
+        <span class="label">Inicio</span>
+    </a>
+    <a href="#" class="bottom-nav-item">
+        <span class="icon">❤️</span>
+        <span class="label">Favoritos</span>
+    </a>
+    <a href="#" class="bottom-nav-item">
+        <span class="icon">👤</span>
+        <span class="label">Perfil</span>
+    </a>
+</nav>
+    
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('login-modal')">&times;</span>
+            <h2>Iniciar Sesión</h2>
+            <input type="email" id="login-email" placeholder="Correo electrónico" required>
+            <input type="password" id="login-password" placeholder="Contraseña" required>
+            <button onclick="loginUser()">Entrar</button>
+            <p>¿No tienes cuenta? <a onclick="switchToRegister()">Regístrate</a></p>
+        </div>
+    </div>
+
+    <!-- Register Modal - CORREGIDO: ahora incluye el campo dirección -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('register-modal')">&times;</span>
+            <h2>Registro</h2>
+            <input type="text" id="register-name" placeholder="Nombre completo" required>
+            <input type="email" id="register-email" placeholder="Correo electrónico" required>
+            <input type="password" id="register-password" placeholder="Contraseña" required>
+            <input type="text" id="register-address" placeholder="Dirección (opcional)">
+            <button onclick="registerUser()">Registrarse</button>
+            <p>¿Ya tienes cuenta? <a onclick="switchToLogin()">Inicia sesión</a></p>
+        </div>
+    </div>
+    
+    <script>
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+        let cart = [];
+        let allDrinks = [];
+        let currentDrinkIndex = 0;
+        const CATEGORIA_BEBIDAS = "Bebidas";
+        const COSTO_ENVIO = 500;
+        let isLoggedIn = false;
+        let userId = null;
+
+        window.addEventListener('load', () => {
+            checkLoginStatus();
+            loadFilters();
+            setupSearch();
+            setupCart();
+            loadAllDrinks();
+        });
+
+        // ==================== FUNCIÓN CLAVE: checkLoginStatus (moverla al inicio) ====================
+    function checkLoginStatus() {
+        userId = localStorage.getItem('userId');
+        userAddress = localStorage.getItem('userAddress') || '';
+        if (userId) {
+            isLoggedIn = true;
+            document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
+        } else {
+            isLoggedIn = false;
+            document.getElementById('profile-link').textContent = 'Iniciar Sesión';
+        }
+        document.getElementById('profile-link').onclick = () => {
+            if (isLoggedIn) {
+                logoutUser();
+            } else {
+                showModal('login-modal');
+            }
+        };
+    }
+
+    // ==================== CARGA INICIAL ====================
+    window.addEventListener('load', () => {
+        checkLoginStatus();   // Ahora sí existe cuando se llama
+        loadFilters();
+        setupSearch();
+        setupCart();
+        loadAllDrinks();
+    });
+
+    // ==================== MODALES ====================
+    function showModal(modalId) {
+        document.getElementById(modalId).style.display = 'block';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    function switchToRegister() {
+        closeModal('login-modal');
+        showModal('register-modal');
+    }
+
+    function switchToLogin() {
+        closeModal('register-modal');
+        showModal('login-modal');
+    }
+
+    // ==================== REGISTRO ====================
+function registerUser() {
+    // Obtener los campos del formulario de registro
+    const nameInput = document.getElementById('register-name');
+    const emailInput = document.getElementById('register-email');
+    const passwordInput = document.getElementById('register-password');
+    const addressInput = document.getElementById('register-address'); // Puede no existir si es opcional
+
+    // Validar que los campos obligatorios existan
+    if (!nameInput || !emailInput || !passwordInput) {
+        alert('Error interno: No se encontraron los campos obligatorios del registro.');
+        console.error('Campos faltantes: name, email o password');
+        return;
+    }
+
+    // Obtener y limpiar valores
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim().toLowerCase();
+    const password = passwordInput.value.trim();
+    const address = addressInput ? addressInput.value.trim() : '';
+
+    // Validación básica frontend
+    if (!name) {
+        alert('Por favor ingresa tu nombre completo.');
+        nameInput.focus();
+        return;
+    }
+    if (!email) {
+        alert('Por favor ingresa tu email.');
+        emailInput.focus();
+        return;
+    }
+    if (!password) {
+        alert('Por favor ingresa una contraseña.');
+        passwordInput.focus();
+        return;
+    }
+    if (password.length < 6) {
+        alert('La contraseña debe tener al menos 6 caracteres.');
+        passwordInput.focus();
+        return;
+    }
+
+    // Construir URL con todos los parámetros (siempre incluimos address, aunque vacío)
+    const url = `${scriptUrl}?action=register`
+        + `&name=${encodeURIComponent(name)}`
+        + `&email=${encodeURIComponent(email)}`
+        + `&password=${encodeURIComponent(password)}`
+        + `&address=${encodeURIComponent(address)}`;
+
+    // Mostrar feedback visual (opcional: podrías agregar un spinner)
+    const registerBtn = document.querySelector('#register-modal button[type="submit"]') || 
+                        document.querySelector('#register-modal .btn-register');
+    if (registerBtn) registerBtn.disabled = true;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
+                
+                // Limpiar todos los campos
+                nameInput.value = '';
+                emailInput.value = '';
+                passwordInput.value = '';
+                if (addressInput) addressInput.value = '';
+
+                // Cambiar a la vista de login
+                switchToLogin();
+            } else {
+                alert(data.message || 'Error al registrar. Intenta con otro email.');
+            }
+        })
+        .catch(err => {
+            console.error('Error en registro:', err);
+            alert('Error de conexión. Revisa tu internet e intenta de nuevo.');
+        })
+        .finally(() => {
+            // Reactivar botón
+            if (registerBtn) registerBtn.disabled = false;
+        });
+}
+
+// ==================== LOGIN ====================
+function loginUser() {
+    const emailInput = document.getElementById('login-email');
+    const passwordInput = document.getElementById('login-password');
+
+    if (!emailInput || !passwordInput) {
+        alert('Error interno: Campos de login no encontrados.');
+        console.error('Faltan login-email o login-password en el DOM');
+        return;
+    }
+
+    const email = emailInput.value.trim().toLowerCase();
+    const password = passwordInput.value.trim();
+
+    if (!email || !password) {
+        alert('Por favor ingresa tu email y contraseña.');
+        return;
+    }
+
+    const url = `${scriptUrl}?action=login`
+        + `&email=${encodeURIComponent(email)}`
+        + `&password=${encodeURIComponent(password)}`;
+
+    const loginBtn = document.querySelector('#login-modal button[type="submit"]') || 
+                     document.querySelector('#login-modal .btn-login');
+    if (loginBtn) loginBtn.disabled = true;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Guardar datos del usuario
+                localStorage.setItem('userId', data.userId);
+                localStorage.setItem('userAddress', data.address || '');
+
+                // Actualizar estado global
+                isLoggedIn = true;
+                userId = data.userId;
+                userAddress = data.address || '';
+
+                // Actualizar UI
+                const profileLink = document.getElementById('profile-link');
+                if (profileLink) {
+                    profileLink.textContent = 'Mi Perfil (Cerrar Sesión)';
+                    profileLink.onclick = logoutUser;
+                }
+
+                // Cerrar modal
+                closeModal('login-modal');
+
+                alert('¡Bienvenido de nuevo!');
+
+                // Rellenar dirección en formulario de pedido si existe
+                const dirInput = document.getElementById('direccion');
+                if (dirInput && userAddress) {
+                    dirInput.value = userAddress;
+                }
+            } else {
+                alert(data.message || 'Email o contraseña incorrectos.');
+            }
+        })
+        .catch(err => {
+            console.error('Error en login:', err);
+            alert('Error de conexión. Intenta nuevamente.');
+        })
+        .finally(() => {
+            if (loginBtn) loginBtn.disabled = false;
+        });
+}
+
+// ==================== LOGOUT ====================
+function logoutUser() {
+        if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+            return;
+        }
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userAddress');
+        isLoggedIn = false;
+        userId = null;
+        userAddress = '';
+
+        alert('Sesión cerrada correctamente.');
+        checkLoginStatus(); // Actualiza el texto y el evento del botón
+    }
+        
+        function loadAllDrinks() {
+            fetch(`${scriptUrl}?action=getAllMenus`)
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(data => {
+                    allDrinks = (data.menus || []).filter(menu =>
+                        menu.categoria && menu.categoria.trim() === CATEGORIA_BEBIDAS
+                    );
+                })
+                .catch(() => { allDrinks = []; });
+        }
+        function loadFilters() {
+            const container = document.getElementById('suggestion-items');
+            showLoading(container);
+            fetch(scriptUrl + '?action=getFilters')
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(data => {
+                    container.innerHTML = '';
+                    if (data.locals?.length > 0) {
+                        data.locals.forEach(local => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion';
+                            div.dataset.local = local.local_id;
+                            div.innerHTML = `<img src="${local.imagen_url || 'https://placehold.co/200x200?text=' + encodeURIComponent(local.nombre_local)}" alt="${local.nombre_local}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">`;
+                            div.onclick = () => fetchMenus(null, local.local_id);
+                            container.appendChild(div);
+                        });
+                    } else {
+                        container.innerHTML = '<p style="text-align:center;color:#999;">Aún no hay locales disponibles.</p>';
+                    }
+                })
+                .catch(() => showError(container, 'Error al cargar locales'));
+        }
+        document.querySelector('.categories').addEventListener('click', e => {
+            const cat = e.target.closest('.category');
+            if (cat) fetchMenus(cat.dataset.type, null);
+        });
+        function setupSearch() {
+            const input = document.getElementById('search-input');
+            let timeout;
+            input.addEventListener('input', e => {
+                clearTimeout(timeout);
+                const term = e.target.value.trim();
+                if (term.length >= 3) {
+                    timeout = setTimeout(() => performSearch(term), 600);
+                } else if (term === '') {
+                    document.getElementById('menu-display').style.display = 'none';
+                }
+            });
+        }
+        function performSearch(query) {
+            const container = document.getElementById('menu-display');
+            showLoading(container);
+            fetch(`${scriptUrl}?action=search&query=${encodeURIComponent(query)}`)
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
+                .catch(() => showError(container, 'Error en búsqueda'));
+        }
+        function fetchMenus(type, local) {
+            const container = document.getElementById('menu-display');
+            showLoading(container);
+            let url = `${scriptUrl}?action=getMenus`;
+            if (type) url += `&type=${encodeURIComponent(type)}`;
+            if (local) url += `&local=${encodeURIComponent(local)}`;
+            fetch(url)
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
+                .catch(() => showError(container, 'Error al cargar menús'));
+        }
+        function displayMenus(menus, title) {
+            const container = document.getElementById('menu-display');
+            container.innerHTML = `<h2>Menús - ${title}</h2><div class="menu-items"></div>`;
+            const itemsDiv = container.querySelector('.menu-items');
+            if (menus.length === 0) {
+                itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
+            } else {
+                menus.forEach(menu => {
+                    const div = document.createElement('div');
+                    div.className = 'menu-item';
+                    div.innerHTML = `
+                        <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+                        <h3>${menu.nombre}</h3>
+                        <p>${menu.descripcion || 'Sin descripción'}</p>
+                        <p>$${menu.precio}</p>
+                        <button>Agregar al carrito</button>
+                    `;
+                    div.querySelector('button').onclick = () => addToCart(menu);
+                    itemsDiv.appendChild(div);
+                });
+            }
+            container.style.display = 'block';
+        }
+        function showLoading(container) {
+    container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+    
+    // Solo aplicamos display: block al contenedor de menús
+    if (container.id === 'menu-display') {
+        container.style.display = 'block';
+    }
+    // Para suggestion-items (y cualquier otro), no hacemos nada → mantiene su flex + center
+}
+        function showError(container, msg) {
+            container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
+        }
+        // ==================== CARRITO ====================
+    function setupCart() {
+        const cartIcon = document.getElementById('cart-icon');
+        const cartSection = document.getElementById('cart-section');
+
+        cartIcon.onclick = function () {
+            // Toggle simple: si está oculto → mostrar, si está visible → ocultar
+            if (cartSection.style.display === 'none' || cartSection.style.display === '') {
+                cartSection.style.display = 'block';
+                updateCartDisplay();
+            } else {
+                cartSection.style.display = 'none';
+            }
+        };
+
+        document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
+        document.getElementById('checkout-btn').onclick = checkout;
+    }
+
+    function openCart() {
+        document.getElementById('cart-section').style.display = 'block';
+        updateCartDisplay();
+    }
+
+    function addToCart(menu) {
+        if (!isLoggedIn) {
+            showModal('login-modal');
+            alert('¡Debes iniciar sesión para agregar productos al carrito!');
+            return;
+        }
+
+        const item = {
+            idLocal: menu.local_id,
+            nombreLocal: menu.nombre_local || 'Local desconocido',
+            idProducto: menu.id,
+            nombreProducto: menu.nombre,
+            precioUnitario: Number(menu.precio),
+            cantidad: 1,
+            categoria: menu.categoria || ''
+        };
+
+        const existing = cart.findIndex(i => i.idProducto === item.idProducto);
+        if (existing !== -1) {
+            cart[existing].cantidad++;
+        } else {
+            cart.push(item);
+        }
+
+        updateCartCount();
+        updateCartDisplay();
+
+        // Mensaje con botón "Ver carrito"
+        if (confirm(`¡${menu.nombre} agregado al carrito!\n\n¿Quieres ver el carrito ahora?`)) {
+            openCart();
+        }
+    }
+
+    function updateCartCount() {
+        const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
+        document.getElementById('cart-count').textContent = total;
+    }
+        function hasDrink() {
+            return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
+        }
+        function calculatePrices() {
+            const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
+            const delivery = document.getElementById('delivery-type').value;
+            let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
+            return { subtotal, shipping, total: subtotal + shipping, delivery };
+        }
+        function updateCartDisplay() {
+            const list = document.getElementById('cart-items');
+            const notice = document.getElementById('free-shipping-notice');
+            const drinksPanel = document.getElementById('drinks-panel');
+            list.innerHTML = '';
+            notice.innerHTML = '';
+            if (cart.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
+            } else {
+                cart.forEach((item, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'cart-item';
+                    div.innerHTML = `
+                        <div class="cart-item-left">
+                            <div class="cart-item-name">${item.nombreProducto}</div>
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
+                                <span class="quantity">${item.cantidad}</span>
+                                <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
+                            </div>
+                        </div>
+                        <div class="cart-item-price">$${(item.precioUnitario * item.cantidad)}</div>
+                        <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+            const prices = calculatePrices();
+            document.getElementById('subtotal').textContent = `$${prices.subtotal}`;
+            document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping}`;
+            document.getElementById('final-total').textContent = `$${prices.total}`;
+            if (prices.shipping === 0 && cart.length > 0) {
+                notice.innerHTML = prices.delivery === 'retiro'
+                    ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
+                    : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
+                drinksPanel.style.display = 'none';
+            } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
+                drinksPanel.style.display = 'block';
+                renderDrinksCarousel();
+            } else {
+                drinksPanel.style.display = 'none';
+            }
+            const dirInput = document.getElementById('direccion');
+            if (prices.delivery === 'retiro') {
+                dirInput.placeholder = "No requerida (retirás en local)";
+                dirInput.required = false;
+            } else {
+                dirInput.placeholder = "Dirección de entrega (requerida)";
+                dirInput.required = true;
+            }
+        }
+        window.changeQuantity = function(idx, delta) {
+            if (cart[idx].cantidad + delta > 0) {
+                cart[idx].cantidad += delta;
+            } else {
+                cart.splice(idx, 1);
+            }
+            updateCartCount();
+            updateCartDisplay();
+        };
+        window.removeFromCart = function(idx) {
+            cart.splice(idx, 1);
+            updateCartCount();
+            updateCartDisplay();
+        };
+        function renderDrinksCarousel() {
+            const container = document.getElementById('drinks-container');
+            container.innerHTML = '';
+            if (allDrinks.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#666;padding:40px;width:100%;">No hay bebidas disponibles.</p>';
+                return;
+            }
+            allDrinks.forEach(drink => {
+                const card = document.createElement('div');
+                card.className = 'drink-card';
+                card.innerHTML = `
+                    <img src="${drink.imagen_url || 'https://placehold.co/300x140?text=Bebida'}" alt="${drink.nombre}" onerror="this.src='https://placehold.co/300x140?text=Sin+Imagen'">
+                    <h4>${drink.nombre}</h4>
+                    <div class="price">$${drink.precio}</div>
+                    <button>Agregar</button>
+                `;
+                card.querySelector('button').onclick = () => addToCart(drink);
+                container.appendChild(card);
+            });
+            currentDrinkIndex = 0;
+            scrollCarousel();
+            setupCarouselControls();
+        }
+        function setupCarouselControls() {
+            document.getElementById('prev-drink').onclick = () => {
+                if (currentDrinkIndex > 0) {
+                    currentDrinkIndex--;
+                    scrollCarousel();
+                }
+            };
+            document.getElementById('next-drink').onclick = () => {
+                const card = document.querySelector('.drink-card');
+                if (!card) return;
+                const cardWidth = card.offsetWidth + 12;
+                const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
+                if (currentDrinkIndex < allDrinks.length - visible) {
+                    currentDrinkIndex++;
+                    scrollCarousel();
+                }
+            };
+            window.addEventListener('resize', () => {
+                currentDrinkIndex = 0;
+                scrollCarousel();
+            });
+        }
+        function scrollCarousel() {
+            const container = document.getElementById('drinks-container');
+            if (!container || container.children.length === 0) return;
+            const card = container.children[0];
+            const cardWidth = card.offsetWidth + 12;
+            container.style.transform = `translateX(-${currentDrinkIndex * cardWidth}px)`;
+            document.getElementById('prev-drink').disabled = currentDrinkIndex === 0;
+            const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
+            document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
+        }
+        function checkout() {
+    if (!isLoggedIn) {
+        showModal('login-modal');
+        alert('¡Debes iniciar sesión para realizar el pedido!');
+        return;
+    }
+
+    if (cart.length === 0) {
+        alert('El carrito está vacío');
+        return;
+    }
+
+    const delivery = document.getElementById('delivery-type').value;
+    const metodoPago = document.getElementById('metodo-pago').value;
+    const observaciones = document.getElementById('observaciones').value.trim();
+
+    if (!metodoPago) {
+        alert('Selecciona un método de pago');
+        return;
+    }
+
+    let direccion = '';
+    if (delivery === 'envio') {
+        direccion = document.getElementById('direccion').value.trim();
+        if (!direccion) {
+            alert('Ingresa la dirección de entrega');
+            return;
+        }
+    } else {
+        direccion = 'Retiro en local';
+    }
+
+    const prices = calculatePrices();
+
+    const payload = {
+        action: 'createOrder',
+        data: {
+            userId: userId,
+            fecha: new Date().toLocaleDateString('es-AR'),
+            direccion: direccion,
+            metodoPago: metodoPago,
+            observaciones: observaciones,
+            envioGratis: prices.shipping === 0,
+            tipoEntrega: delivery,
+            cart: cart
+        }
+    };
+
+    // Mostrar loading o deshabilitar botón si quieres (opcional)
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const originalText = checkoutBtn.textContent;
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Procesando...';
+
+    fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        let mensaje = '¡Pedido realizado con éxito!';
+        if (prices.shipping === 0) {
+            mensaje = delivery === 'retiro' 
+                ? '¡Pedido para retiro confirmado!' 
+                : '¡Pedido con envío GRATIS confirmado!';
+        }
+
+        alert(mensaje);
+
+        // Limpiar todo
+        cart = [];
+        updateCartCount();
+        updateCartDisplay();
+        document.getElementById('cart-section').style.display = 'none';
+        document.getElementById('checkout-form').reset();
+
+        // Si hay dirección guardada, la vuelve a poner por si el usuario quiere hacer otro pedido rápido
+        if (userAddress) {
+            document.getElementById('direccion').value = userAddress;
+        }
+    })
+    .catch((error) => {
+        console.error('Error al enviar pedido:', error);
+        alert('Pedido enviado (posible error de red). Revisa tu conexión.');
+    })
+    .finally(() => {
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = originalText;
+    });
+}
+    </script>
+</body>
+</html>
