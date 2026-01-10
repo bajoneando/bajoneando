@@ -758,6 +758,17 @@
         font-size: 0.9rem;
     }
 }
+
+        .modal-content label {
+    display: block;
+    margin: 12px 0 6px;
+    font-weight: 500;
+    color: #444;
+}
+
+.modal-content input[type="password"] {
+    margin-bottom: 8px;
+}
 </style>
 </head>
 <body>
@@ -896,8 +907,19 @@
     <div class="modal-content">
         <span class="close" onclick="closeModal('edit-profile-modal')">×</span>
         <h2>Editar Perfil</h2>
+        
+        <label for="edit-name">Nombre completo</label>
         <input type="text" id="edit-name" placeholder="Nombre completo" required>
-        <input type="email" id="edit-email" placeholder="Correo electrónico" disabled>
+        
+        <label for="edit-email">Correo electrónico</label>
+        <input type="email" id="edit-email" placeholder="Correo electrónico" required>
+        
+        <label for="edit-current-password">Contraseña actual (requerida para guardar cambios)</label>
+        <input type="password" id="edit-current-password" placeholder="Contraseña actual" required>
+        
+        <label for="edit-new-password">Nueva contraseña (opcional)</label>
+        <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
+        
         <button onclick="saveProfileChanges()">Guardar cambios</button>
     </div>
 </div>
@@ -1465,19 +1487,18 @@
 function openEditProfileModal() {
     profileDropdown.classList.remove('active');
     
-    // Precargamos datos actuales
-    const nameInput = document.getElementById('edit-name');
-    const emailInput = document.getElementById('edit-email');
+    // Precargamos los datos actuales
+    document.getElementById('edit-name').value = localStorage.getItem('userName') || '';
+    document.getElementById('edit-email').value = localStorage.getItem('userEmail') || '';
     
-    // Intentamos obtener nombre actual (puedes mejorarlo guardando más datos en login)
-    const currentName = localStorage.getItem('userName') || 'Usuario';
-    nameInput.value = currentName;
-    emailInput.value = localStorage.getItem('userEmail') || '';
+    // Limpiamos campos de contraseña
+    document.getElementById('edit-current-password').value = '';
+    document.getElementById('edit-new-password').value = '';
     
     showModal('edit-profile-modal');
 }
 
-function openChangeAddressModal() {
+    function openChangeAddressModal() {
     profileDropdown.classList.remove('active');
     
     const addressInput = document.getElementById('edit-address');
@@ -1488,40 +1509,62 @@ function openChangeAddressModal() {
 
 function saveProfileChanges() {
     const name = document.getElementById('edit-name').value.trim();
-    const email = document.getElementById('edit-email').value.trim();
+    const email = document.getElementById('edit-email').value.trim().toLowerCase();
+    const currentPassword = document.getElementById('edit-current-password').value.trim();
+    const newPassword = document.getElementById('edit-new-password').value.trim();
 
+    // Validaciones básicas
     if (!name) {
-        alert('El nombre no puede estar vacío');
+        alert('El nombre es obligatorio');
+        return;
+    }
+    
+    if (!email) {
+        alert('El email es obligatorio');
+        return;
+    }
+    
+    if (!currentPassword) {
+        alert('Debes ingresar tu contraseña actual para realizar cambios');
+        return;
+    }
+
+    if (newPassword && newPassword.length < 6) {
+        alert('La nueva contraseña debe tener al menos 6 caracteres (o dejarla en blanco)');
         return;
     }
 
     const url = `${scriptUrl}?action=updateProfile`
         + `&userId=${encodeURIComponent(userId)}`
         + `&name=${encodeURIComponent(name)}`
-        + `&email=${encodeURIComponent(email)}`;
+        + `&email=${encodeURIComponent(email)}`
+        + `&currentPassword=${encodeURIComponent(currentPassword)}`
+        + `&newPassword=${encodeURIComponent(newPassword || '')}`;
 
     fetch(url)
-        .then(r => r.json())
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Actualizamos localStorage
+                // Actualizamos almacenamiento local
                 localStorage.setItem('userName', name);
-                // localStorage.setItem('userEmail', email); // si permites cambiar email
+                localStorage.setItem('userEmail', email);
+                // Si cambiaste contraseña, podrías forzar logout o solo avisar
+                // localStorage.removeItem('userId'); // ← opcional: cerrar sesión tras cambio de contraseña
                 
-                alert('Perfil actualizado correctamente');
+                alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
                 
-                // Opcional: refrescar visualización si muestras nombre en algún lugar
+                // Refrescamos estado visual
                 checkLoginStatus();
             } else {
-                alert(data.message || 'Error al actualizar perfil');
+                alert(data.message || 'No se pudo actualizar el perfil');
             }
         })
-        .catch(() => {
-            alert('Error de conexión al actualizar perfil');
+        .catch(err => {
+            console.error(err);
+            alert('Error de conexión al intentar actualizar el perfil');
         });
 }
-
 function saveAddressChange() {
     const newAddress = document.getElementById('edit-address').value.trim();
 
