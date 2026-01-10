@@ -770,24 +770,39 @@
     margin-bottom: 8px;
 }
 
-        .fav-btn {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    transition: transform 0.2s;
-    position: absolute;
-    top: 10px;
-    right: 10px;
+        .menu-item {
+    position: relative !important; /* Fuerza el posicionamiento relativo */
+    padding: 12px;
+    overflow: hidden; /* Evita que el corazón se salga */
 }
+
+.fav-btn {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    background: rgba(255, 255, 255, 0.8) !important; /* fondo semi-transparente para que se vea */
+    border: none !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    transition: all 0.2s !important;
+    z-index: 10 !important;
+}
+
 .fav-btn:hover {
-    transform: scale(1.2);
+    transform: scale(1.15) !important;
+    background: white !important;
 }
+
 .fav-btn.active {
-    color: #e53935;
-}
-.menu-item {
-    position: relative; /* ¡Obligatorio! */
+    color: #e53935 !important;
+    background: white !important;
 }
 </style>
 </head>
