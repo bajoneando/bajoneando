@@ -1731,13 +1731,15 @@ function startPaymentPolling(preferenceId, externalReference) {  // ← agregamo
 async function finalizeOrderAfterPayment() {
     if (!pendingOrderData) return;
 
+    // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
+    // Método de pago se envía como "Transferencia / Mercado Pago" (o cámbialo a "Efectivo" si quieres)
     await createOrderNormal(
         pendingOrderData.direccion,
-        pendingOrderData.metodoPago,
+        "Transferencia / Mercado Pago",  // ← mismo que en checkout normal
         pendingOrderData.tipoEntrega,
-        { total: pendingOrderData.total },
+        { total: pendingOrderData.total, shipping: pendingOrderData.envioGratis ? 0 : COSTO_ENVIO },
         pendingOrderData.observaciones,
-        true // indica que ya se pagó
+        false  // ← false = no usamos createPaidOrder, usamos createOrder normal
     );
 
     pendingOrderData = null;
