@@ -1900,49 +1900,48 @@ function saveAddressChange() {
 
         async function createOrderNormal(direccion, metodoPago, tipoEntrega, prices, observaciones, isPaid = false) {
     try {
-        const payload = {
-            action: isPaid ? 'createPaidOrder' : 'createOrder',
-            data: {
-                userId: userId,
-                fecha: new Date().toLocaleString('es-AR'),
-                direccion: direccion,
-                metodoPago: metodoPago,
-                observaciones: observaciones,
-                cart: cart,
-                total: prices.total || prices,
-                envioGratis: prices.shipping === 0 || false,
-                tipoEntrega: tipoEntrega
-            }
-        };
+        const action = isPaid ? 'createPaidOrder' : 'createOrder';
 
-        console.log("Enviando pedido al backend (modo no-cors):", payload);
+        // Serializamos el carrito como string JSON para pasarlo por URL
+        const cartString = encodeURIComponent(JSON.stringify(cart));
 
-        const response = await fetch(scriptUrl, {
-            method: 'POST',
-            mode: 'no-cors',                      // ← clave: evita preflight y CORS check
-            redirect: 'follow',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8'  // ← hace simple request (sin OPTIONS)
-            },
-            body: JSON.stringify(payload)         // envía JSON pero como texto plano
+        const url = `${scriptUrl}?action=${action}` +
+            `&userId=${encodeURIComponent(userId)}` +
+            `&fecha=${encodeURIComponent(new Date().toLocaleString('es-AR'))}` +
+            `&direccion=${encodeURIComponent(direccion)}` +
+            `&metodoPago=${encodeURIComponent(metodoPago)}` +
+            `&observaciones=${encodeURIComponent(observaciones || '')}` +
+            `&cart=${cartString}` +
+            `&total=${encodeURIComponent(prices.total || prices)}` +
+            `&envioGratis=${encodeURIComponent(prices.shipping === 0 ? 'true' : 'false')}` +
+            `&tipoEntrega=${encodeURIComponent(tipoEntrega)}`;
+
+        console.log("Enviando pedido vía GET:", url);
+
+        const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-cache' // Evita caché del navegador
         });
 
-        // Como es no-cors, no puedes leer response.json() → solo verificamos si llegó
-        console.log("Solicitud enviada con éxito (no-cors mode). No se puede leer respuesta.");
+        const result = await response.json();
+        console.log("Respuesta del backend:", result);
 
-        // Limpieza UI (asumimos éxito, ya que no-cors no da error visible si llega)
-        alert("¡Pedido enviado! (puede tardar unos segundos en aparecer en la hoja)");
-        cart = [];
-        updateCartCount();
-        updateCartDisplay();
-        document.getElementById('cart-section').style.display = 'none';
-        document.getElementById('mercadopago-checkout').style.display = 'none';
-        document.getElementById('checkout-btn').style.display = 'block';
-        document.getElementById('checkout-form').reset();
-
+        if (result.success) {
+            alert("¡Pedido registrado exitosamente! ID: " + result.idPedido);
+            // Limpieza final
+            cart = [];
+            updateCartCount();
+            updateCartDisplay();
+            document.getElementById('cart-section').style.display = 'none';
+            document.getElementById('mercadopago-checkout').style.display = 'none';
+            document.getElementById('checkout-btn').style.display = 'block';
+            document.getElementById('checkout-form').reset();
+        } else {
+            throw new Error(result.error || "Error desconocido");
+        }
     } catch (err) {
-        console.error("Error al enviar pedido (no-cors):", err);
-        alert("Error al registrar el pedido. Contacta soporte con ID de pago: " + (pendingOrderData?.paymentId || "desconocido"));
+        console.error("Error al enviar pedido vía GET:", err);
+        alert("Error al registrar el pedido. Contacta soporte.");
     }
 }
         // Esta función debería llamarse SOLO cuando el pago está aprobado
