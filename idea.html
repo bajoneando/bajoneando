@@ -780,34 +780,62 @@
     margin-bottom: 8px;
 }
 
-        .menu-item {
-    position: relative !important; /* Fuerza el posicionamiento relativo */
-    padding: 12px;
-    overflow: hidden; /* Evita que el corazón se salga */
+        /* Aseguramos que la tarjeta tenga position: relative */
+.menu-item {
+    position: relative !important;
+    overflow: hidden;
+    /* ... resto de estilos existentes ... */
 }
 
-/* Botón favorito - versión con imágenes */
+/* La imagen principal también debe ser relativa para que el botón se ancle a ella */
+.menu-item img:first-child {     /* la primera img es la foto del plato */
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 150px;               /* o el height que uses en desktop */
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* Botón favorito ahora se posiciona respecto a la IMAGEN */
 .fav-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 38px;
-    height: 38px;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(0,0,0,0.08);
+    top: 12px;                   /* distancia desde el borde superior de la IMAGEN */
+    right: 12px;                 /* distancia desde el borde derecho de la IMAGEN */
+    width: 42px;
+    height: 42px;
+    background: rgba(255, 255, 255, 0.92);
+    border: none;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-    transition: all 0.2s ease;
-    z-index: 15;
-    padding: 4px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+    transition: all 0.25s ease;
+    z-index: 10;
+    padding: 0;
+    overflow: hidden;
 }
 
 .fav-btn:hover {
-    transform: scale(1.18);
-    background: #fff;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+    transform: scale(1.15);
+    background: white;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.3);
 }
+
+/* Las imágenes dentro del botón */
+.fav-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.4s ease;
+}
+
+.fav-btn .fav-empty { opacity: 1; }
+.fav-btn.active .fav-empty { opacity: 0; }
+.fav-btn .fav-filled { opacity: 0; }
+.fav-btn.active .fav-filled { opacity: 1; }
 </style>
 </head>
 <body>
