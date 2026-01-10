@@ -1105,15 +1105,6 @@ localStorage.setItem('userAddress', data.address || '');
     checkLoginStatus();  // Esto actualiza el botón a "Iniciar Sesión"
     alert('Sesión cerrada correctamente');
 }
-
-    // ==================== CARGA INICIAL ====================
-    window.addEventListener('load', () => {
-        checkLoginStatus();
-        loadFilters();
-        setupSearch();
-        setupCart();
-        loadAllDrinks();
-    });
        
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
