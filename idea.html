@@ -769,6 +769,26 @@
 .modal-content input[type="password"] {
     margin-bottom: 8px;
 }
+
+        .fav-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        transition: transform 0.2s;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    .fav-btn:hover {
+        transform: scale(1.2);
+    }
+    .fav-btn.active {
+        color: #e53935; /* rojo corazón lleno */
+    }
+    .menu-item {
+        position: relative; /* necesario para posicionar el botón absoluto */
+    }
 </style>
 </head>
 <body>
@@ -932,127 +952,212 @@
 </div>
    
     <script>
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
-    
-    let cart = [];
-    let allDrinks = [];
-    let currentDrinkIndex = 0;
-    const CATEGORIA_BEBIDAS = "Bebidas";
-    const COSTO_ENVIO = 500;
-    let isLoggedIn = false;
-    let userId = null;
-    let userAddress = '';
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
 
-    // Elementos importantes del DOM
-    const profileContainer = document.getElementById('profile-container');
-    const profileButton = document.getElementById('profile-button');
-    const profileDropdown = document.getElementById('profile-dropdown');
+let cart = [];
+let allDrinks = [];
+let currentDrinkIndex = 0;
+const CATEGORIA_BEBIDAS = "Bebidas";
+const COSTO_ENVIO = 500;
+let isLoggedIn = false;
+let userId = null;
+let userAddress = '';
 
-    // ==================== ESTADO DE SESIÓN ====================
-    function checkLoginStatus() {
-        userId = localStorage.getItem('userId');
-        userAddress = localStorage.getItem('userAddress') || '';
-        
-        if (userId) {
-            isLoggedIn = true;
-            // Usuario logueado → muestra ícono + "Mi Perfil"
-            profileButton.innerHTML = `
-                <img src="https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg" 
-                     alt="Perfil" class="profile-icon">
-                <span>Mi Perfil</span>
-            `;
+// === NUEVA VARIABLE GLOBAL PARA FAVORITOS ===
+let userFavorites = []; // array de menuIds favoritos del usuario actual
+
+// Elementos importantes del DOM
+const profileContainer = document.getElementById('profile-container');
+const profileButton = document.getElementById('profile-button');
+const profileDropdown = document.getElementById('profile-dropdown');
+
+// ==================== ESTADO DE SESIÓN ====================
+function checkLoginStatus() {
+    userId = localStorage.getItem('userId');
+    userAddress = localStorage.getItem('userAddress') || '';
+
+    if (userId) {
+        isLoggedIn = true;
+        profileButton.innerHTML = `
+            <img src="https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg"
+                 alt="Perfil" class="profile-icon">
+            <span>Mi Perfil</span>
+        `;
+        // Cargar favoritos si el usuario está logueado
+        loadUserFavorites();
+        addFavoritesLinkToDropdown();
+    } else {
+        isLoggedIn = false;
+        profileButton.innerHTML = `
+            <span>Iniciar Sesión</span>
+        `;
+        userFavorites = []; // limpiar favoritos al cerrar sesión
+    }
+
+    // Evento click principal
+    profileButton.onclick = () => {
+        if (isLoggedIn) {
+            profileDropdown.classList.toggle('active');
         } else {
-            isLoggedIn = false;
-            // Sin sesión → solo texto para iniciar
-            profileButton.innerHTML = `
-                <span>Iniciar Sesión</span>
-            `;
+            showModal('login-modal');
         }
+    };
 
-        // Evento click principal
-        profileButton.onclick = () => {
-            if (isLoggedIn) {
-                // Mostrar / ocultar menú desplegable
-                profileDropdown.classList.toggle('active');
-            } else {
-                showModal('login-modal');
-            }
+    // Evento cerrar sesión
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.onclick = (e) => {
+            e.preventDefault();
+            logoutUser();
+            profileDropdown.classList.remove('active');
         };
+    }
 
-        // Evento para cerrar sesión desde el menú
-        const logoutLink = document.getElementById('logout-link');
-        if (logoutLink) {
-            logoutLink.onclick = (e) => {
-                e.preventDefault();
-                logoutUser();
-                profileDropdown.classList.remove('active');
-            };
+    // Cerrar dropdown al click fuera
+    document.addEventListener('click', function(event) {
+        if (profileContainer && !profileContainer.contains(event.target)) {
+            profileDropdown.classList.remove('active');
         }
+    });
+}
 
-        // Cerrar dropdown al hacer click fuera
-        document.addEventListener('click', function(event) {
-            if (profileContainer && !profileContainer.contains(event.target)) {
-                profileDropdown.classList.remove('active');
+// ==================== CARGAR FAVORITOS DEL USUARIO ====================
+function loadUserFavorites() {
+    if (!userId) return;
+
+    fetch(`${scriptUrl}?action=getFavorites&userId=${userId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (Array.isArray(data)) {
+                userFavorites = data.map(item => item.menuId);
+                updateFavoriteButtons(); // actualizar visual en caso de que ya haya menús visibles
+            } else {
+                console.warn('Respuesta inesperada al cargar favoritos:', data);
             }
+        })
+        .catch(err => console.error('Error al cargar favoritos:', err));
+}
+
+// ==================== TOGGLE FAVORITO ====================
+function toggleFavorite(menuId) {
+    if (!isLoggedIn) {
+        alert('Debes iniciar sesión para guardar favoritos');
+        showModal('login-modal');
+        return;
+    }
+
+    const isCurrentlyFavorite = userFavorites.includes(menuId);
+    const action = isCurrentlyFavorite ? 'removeFavorite' : 'addFavorite';
+
+    fetch(`${scriptUrl}?action=${action}&userId=${userId}&menuId=${menuId}`)
+        .then(r => r.json())
+        .then(result => {
+            if (result.success) {
+                if (isCurrentlyFavorite) {
+                    userFavorites = userFavorites.filter(id => id !== menuId);
+                } else {
+                    userFavorites.push(menuId);
+                }
+                updateFavoriteButtons();
+                alert(result.message || (isCurrentlyFavorite ? 'Quitado de favoritos' : 'Agregado a favoritos'));
+            } else {
+                alert(result.message || 'Error al actualizar favorito');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error de conexión');
+        });
+}
+
+// ==================== ACTUALIZAR VISUAL DE BOTONES FAVORITOS ====================
+function updateFavoriteButtons() {
+    document.querySelectorAll('.fav-btn').forEach(btn => {
+        const menuId = btn.dataset.menuId;
+        if (userFavorites.includes(menuId)) {
+            btn.classList.add('active');
+            btn.textContent = '❤️';
+        } else {
+            btn.classList.remove('active');
+            btn.textContent = '♡';
+        }
+    });
+}
+
+// ==================== AGREGAR LINK "MIS FAVORITOS" AL DROPDOWN ====================
+function addFavoritesLinkToDropdown() {
+    if (document.getElementById('favorites-link')) return; // evitar duplicados
+
+    const link = document.createElement('a');
+    link.href = '#';
+    link.id = 'favorites-link';
+    link.className = 'dropdown-item';
+    link.textContent = 'Mis Favoritos';
+    link.onclick = (e) => {
+        e.preventDefault();
+        profileDropdown.classList.remove('active');
+        showMyFavorites();
+    };
+
+    // Insertar antes del primer elemento (arriba)
+    profileDropdown.insertBefore(link, profileDropdown.firstChild);
+}
+
+// ==================== MOSTRAR MIS FAVORITOS ====================
+function showMyFavorites() {
+    if (userFavorites.length === 0) {
+        alert('Aún no tienes platos favoritos.');
+        return;
+    }
+
+    const container = document.getElementById('menu-display');
+    showLoading(container);
+
+    // Obtenemos TODOS los menús y filtramos los favoritos
+    // (mejorable: crear endpoint getFavoriteMenus que devuelva solo los favoritos con datos completos)
+    fetch(`${scriptUrl}?action=getAllMenus`)
+        .then(r => r.json())
+        .then(data => {
+            const allMenus = data.menus || [];
+            const favoriteMenus = allMenus.filter(menu => userFavorites.includes(menu.id));
+            displayMenus(favoriteMenus, 'Mis Favoritos');
+        })
+        .catch(() => showError(container, 'Error al cargar tus favoritos'));
+}
+
+// ==================== MODIFICAR displayMenus PARA INCLUIR BOTÓN FAVORITO ====================
+function displayMenus(menus, title) {
+    const container = document.getElementById('menu-display');
+    container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
+    const itemsDiv = container.querySelector('.menu-items');
+
+    if (menus.length === 0) {
+        itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
+    } else {
+        menus.forEach(menu => {
+            const div = document.createElement('div');
+            div.className = 'menu-item';
+            div.innerHTML = `
+                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+                <h3>${menu.nombre}</h3>
+                <p>${menu.descripcion || 'Sin descripción'}</p>
+                <p>$${menu.precio}</p>
+                <button onclick="addToCart(${JSON.stringify(menu)})">Agregar al carrito</button>
+                <button class="fav-btn" data-menu-id="${menu.id}" onclick="toggleFavorite('${menu.id}')">
+                    ${userFavorites.includes(menu.id) ? '❤️' : '♡'}
+                </button>
+            `;
+            itemsDiv.appendChild(div);
         });
     }
+    container.style.display = 'block';
 
-    // ==================== MODALES ====================
-    function showModal(modalId) {
-        document.getElementById(modalId).style.display = 'block';
-    }
+    // Actualizar estado visual de favoritos
+    updateFavoriteButtons();
+}
 
-    function closeModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
-    }
-
-    function switchToRegister() {
-        closeModal('login-modal');
-        showModal('register-modal');
-    }
-
-    function switchToLogin() {
-        closeModal('register-modal');
-        showModal('login-modal');
-    }
-
-    // ==================== REGISTRO ====================
-    function registerUser() {
-        const name = document.getElementById('register-name')?.value.trim();
-        const email = document.getElementById('register-email')?.value.trim().toLowerCase();
-        const password = document.getElementById('register-password')?.value.trim();
-        const address = document.getElementById('register-address')?.value.trim() || '';
-
-        if (!name || !email || !password) {
-            alert('Completa todos los campos obligatorios');
-            return;
-        }
-
-        if (password.length < 6) {
-            alert('La contraseña debe tener al menos 6 caracteres');
-            return;
-        }
-
-        const url = `${scriptUrl}?action=register`
-            + `&name=${encodeURIComponent(name)}`
-            + `&email=${encodeURIComponent(email)}`
-            + `&password=${encodeURIComponent(password)}`
-            + `&address=${encodeURIComponent(address)}`;
-
-        fetch(url)
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    alert('¡Registro exitoso! Ahora inicia sesión.');
-                    switchToLogin();
-                } else {
-                    alert(data.message || 'Error al registrar');
-                }
-            })
-            .catch(() => alert('Error de conexión'));
-    }
-
-    function loginUser() {
+// ==================== LOGIN (agregamos carga de favoritos) ====================
+function loginUser() {
     const email = document.getElementById('login-email')?.value.trim().toLowerCase();
     const password = document.getElementById('login-password')?.value.trim();
 
@@ -1080,21 +1185,17 @@
 
                 closeModal('login-modal');
                 checkLoginStatus();
+                loadUserFavorites(); // ← CARGAR FAVORITOS AQUÍ
                 alert('¡Bienvenido!');
-
-                // Rellenar dirección en el checkout si existe
                 const dirInput = document.getElementById('direccion');
-                if (dirInput && userAddress) {
-                    dirInput.value = userAddress;
-                }
+                if (dirInput && userAddress) dirInput.value = userAddress;
             } else {
                 alert(data.message || 'Credenciales incorrectas');
             }
         })
-        .catch(() => {
-            alert('Error de conexión');
-        });
+        .catch(() => alert('Error de conexión'));
 }
+
     // ==================== CERRAR SESIÓN ====================
     function logoutUser() {
     if (!confirm('¿Realmente quieres cerrar sesión?')) return;
