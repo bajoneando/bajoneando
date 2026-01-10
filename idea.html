@@ -981,6 +981,9 @@ let userAddress = '';
 // === NUEVA VARIABLE GLOBAL PARA FAVORITOS ===
 let userFavorites = []; // array de menuIds favoritos del usuario actual
 
+        // Caché de menús mostrados actualmente (para acceder rápido al hacer clic)
+let currentDisplayedMenus = {};
+
 // Elementos importantes del DOM
 const profileContainer = document.getElementById('profile-container');
 const profileButton = document.getElementById('profile-button');
@@ -1145,10 +1148,16 @@ function displayMenus(menus, title) {
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
 
+    // Limpiamos caché anterior
+    currentDisplayedMenus = {};
+
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
-        menus.forEach(menu => {
+        menus.forEach((menu, index) => {
+            // Guardamos el menú completo en caché usando su ID
+            currentDisplayedMenus[menu.id] = menu;
+
             const div = document.createElement('div');
             div.className = 'menu-item';
             div.innerHTML = `
@@ -1158,9 +1167,11 @@ function displayMenus(menus, title) {
                 <h3>${menu.nombre}</h3>
                 <p>${menu.descripcion || 'Sin descripción'}</p>
                 <p>$${menu.precio}</p>
-                <button onclick="addToCart(${JSON.stringify(menu)})">Agregar al carrito</button>
                 
-                <!-- Botón de favorito - visible siempre que haya menú -->
+                <!-- Botón agregar al carrito - ahora usa solo el ID -->
+                <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+                
+                <!-- Botón favorito -->
                 <button class="fav-btn" 
                         data-menu-id="${menu.id}"
                         onclick="toggleFavorite('${menu.id}')">
@@ -1172,9 +1183,21 @@ function displayMenus(menus, title) {
     }
 
     container.style.display = 'block';
+    
+    // Actualizamos visual de favoritos
+    setTimeout(updateFavoriteButtons, 100);
+}
 
-    // Forzamos actualización de corazones después de renderizar
-    setTimeout(updateFavoriteButtons, 100); // pequeño retraso para asegurar que el DOM esté listo
+        function addToCartById(menuId) {
+    const menu = currentDisplayedMenus[menuId];
+    if (!menu) {
+        console.error('Menú no encontrado en caché:', menuId);
+        alert('Error: no se pudo encontrar el plato seleccionado');
+        return;
+    }
+    
+    // Ahora sí llamamos a addToCart con el objeto completo
+    addToCart(menu);
 }
 
 // ==================== LOGIN (agregamos carga de favoritos) ====================
