@@ -1683,23 +1683,27 @@ window.addEventListener('load', checkPaymentReturn);
 function startPaymentPolling(preferenceId) {
     const interval = setInterval(async () => {
         try {
-            const res = await fetch(`https://api.mercadopago.com/v1/payments/search?external_reference=${preferenceId}`, {
-                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
-            });
+            // Buscamos pagos por preference_id (es más confiable)
+            const res = await fetch(
+                `https://api.mercadopago.com/v1/payments/search?preference_id=${preferenceId}`,
+                { headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` } }
+            );
+
             const data = await res.json();
 
             if (data.results?.length > 0) {
-                const payment = data.results[0];
-                if (payment.status === "approved") {
+                const payment = data.results.find(p => p.status === "approved");
+                if (payment) {
                     clearInterval(interval);
                     pendingOrderData.paymentId = payment.id;
-                    await finalizeOrderAfterPayment();
+                    await createConfirmedOrder(pendingOrderData);
+                    pendingOrderData = null;
                 }
             }
         } catch (e) {
-            console.error("Error en polling", e);
+            console.error("Error en polling:", e);
         }
-    }, 5000); // cada 5 segundos
+    }, 4000); // cada 4 segundos
 }
 
 async function finalizeOrderAfterPayment() {
@@ -1723,29 +1727,42 @@ async function checkPaymentReturn() {
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get("status");
     const paymentId = urlParams.get("payment_id");
+    const externalReference = urlParams.get("external_reference"); // ← también puede venir
 
-    if (status && paymentId && pendingOrderData) {
-        try {
-            const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
-            });
-            const payment = await res.json();
+    if (!status || !paymentId || !pendingOrderData) return;
 
-            if (payment.status === "approved") {
-                pendingOrderData.paymentId = paymentId;
-                await finalizeOrderAfterPayment();
-                alert("¡Pago aprobado! Tu pedido ha sido registrado.");
-            } else {
-                alert(`El pago no fue aprobado. Estado: ${payment.status}`);
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Error verificando el pago");
+    try {
+        const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+            headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+        });
+
+        if (!res.ok) throw new Error("No se pudo verificar el pago");
+
+        const payment = await res.json();
+
+        if (payment.status === "approved") {
+            pendingOrderData.paymentId = payment.id;
+            pendingOrderData.preferenceId = payment.preference_id || pendingOrderData.preferenceId;
+
+            // ¡Aquí se confirma el pedido!
+            await createConfirmedOrder(pendingOrderData);
+
+            // Limpieza importante
+            pendingOrderData = null;
+        } 
+        else if (payment.status === "pending") {
+            alert("El pago está pendiente de aprobación. Te avisaremos cuando se confirme.");
         }
-
-        // Limpiamos la URL
-        window.history.replaceState({}, document.title, window.location.pathname);
+        else {
+            alert(`El pago no fue aprobado. Estado: ${payment.status}\nPuedes intentarlo nuevamente.`);
+        }
+    } catch (e) {
+        console.error("Error verificando pago:", e);
+        alert("No pudimos verificar el estado del pago. Por favor contacta soporte.");
     }
+
+    // Siempre limpiamos la URL
+    window.history.replaceState({}, document.title, window.location.pathname);
 }
 
 // ==================== EDITAR PERFIL ====================
@@ -1857,6 +1874,53 @@ function saveAddressChange() {
         .catch(() => {
             alert('Error de conexión al actualizar dirección');
         });
+}
+
+        // Esta función debería llamarse SOLO cuando el pago está aprobado
+async function createConfirmedOrder(orderData) {
+    const payload = {
+        action: 'createPaidOrder',          // ← acción nueva que deberías crear en tu Google Apps Script
+        userId: orderData.userId,
+        fecha: orderData.fecha,
+        direccion: orderData.direccion,
+        metodoPago: "Mercado Pago - Aprobado",
+        paymentId: orderData.paymentId,
+        preferenceId: orderData.preferenceId,
+        total: orderData.total,
+        envioGratis: orderData.envioGratis,
+        tipoEntrega: orderData.tipoEntrega,
+        observaciones: orderData.observaciones,
+        items: orderData.cart.map(item => ({
+            idProducto: item.idProducto,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario,
+            nombre: item.nombreProducto
+        }))
+    };
+
+    try {
+        await fetch(scriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        });
+
+        alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
+        
+        // Limpieza final
+        cart = [];
+        updateCartCount();
+        updateCartDisplay();
+        document.getElementById('cart-section').style.display = 'none';
+        document.getElementById('mercadopago-checkout').style.display = 'none';
+        document.getElementById('checkout-btn').style.display = 'block';
+        document.getElementById('checkout-form').reset();
+        
+    } catch (err) {
+        console.error("Error registrando pedido pagado:", err);
+        alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
+    }
 }
     </script>
 </body>
