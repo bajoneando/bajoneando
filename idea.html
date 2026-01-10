@@ -832,10 +832,10 @@
 </div>
     </div>
 
-    <div class="cart-icon" id="cart-icon">
-        <span>🛒</span>
-        <div class="cart-count" id="cart-count">0</div>
-    </div>
+    <!-- Reemplaza el <div class="cart-icon"> actual por: -->
+<div class="cart-icon" id="cart-icon">
+  <img src="https://i.postimg.cc/vBY0wJNq/18611-(1).jpg" alt="Carrito de compras">
+  <div class="cart-count" id="cart-count">0</div>
 </div>
     </header>
     <main>
@@ -1197,11 +1197,12 @@ function displayMenus(menus, title) {
                 <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
                 
                 <!-- Botón favorito -->
-                <button class="fav-btn" 
-                        data-menu-id="${menu.id}"
-                        onclick="toggleFavorite('${menu.id}')">
-                    ${userFavorites.includes(menu.id) ? '❤️' : '♡'}
-                </button>
+<button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
+        data-menu-id="${menu.id}"
+        onclick="toggleFavorite('${menu.id}')">
+  <img class="fav-empty" src="https://i.postimg.cc/vHk2xS4x/18611.jpg" alt="Agregar a favoritos">
+  <img class="fav-filled" src="https://i.postimg.cc/tgHr2Zt5/18611-(2).jpg" alt="Quitar de favoritos">
+</button>
             `;
             itemsDiv.appendChild(div);
         });
