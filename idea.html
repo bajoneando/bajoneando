@@ -1683,27 +1683,36 @@ window.addEventListener('load', checkPaymentReturn);
 function startPaymentPolling(preferenceId) {
     const interval = setInterval(async () => {
         try {
-            // Buscamos pagos por preference_id (es más confiable)
-            const res = await fetch(
-                `https://api.mercadopago.com/v1/payments/search?preference_id=${preferenceId}`,
-                { headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` } }
-            );
+            // ¡CAMBIO IMPORTANTE AQUÍ!
+            const url = `https://api.mercadopago.com/v1/payments/search?preference=${encodeURIComponent(preferenceId)}`;
+
+            const res = await fetch(url, {
+                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+            });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error("Error en search payments:", res.status, errorText);
+                return; // No parar el intervalo aún, puede ser temporal
+            }
 
             const data = await res.json();
+
+            console.log("Respuesta de /payments/search:", data); // ← Para debug
 
             if (data.results?.length > 0) {
                 const payment = data.results.find(p => p.status === "approved");
                 if (payment) {
                     clearInterval(interval);
                     pendingOrderData.paymentId = payment.id;
-                    await createConfirmedOrder(pendingOrderData);
-                    pendingOrderData = null;
+                    await finalizeOrderAfterPayment();
+                    alert("¡Pago confirmado automáticamente! Tu pedido está registrado.");
                 }
             }
         } catch (e) {
             console.error("Error en polling:", e);
         }
-    }, 4000); // cada 4 segundos
+    }, 5000); // cada 5 segundos
 }
 
 async function finalizeOrderAfterPayment() {
