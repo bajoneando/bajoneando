@@ -1900,9 +1900,8 @@ function saveAddressChange() {
 
         async function createOrderNormal(direccion, metodoPago, tipoEntrega, prices, observaciones, isPaid = false) {
     try {
-        const action = isPaid ? 'createPaidOrder' : 'createOrder';
+        const action = 'createOrder'; // ← SIEMPRE createOrder, no importa si es pagado o no
 
-        // Serializamos el carrito como string JSON para pasarlo por URL
         const cartString = encodeURIComponent(JSON.stringify(cart));
 
         const url = `${scriptUrl}?action=${action}` +
@@ -1912,7 +1911,7 @@ function saveAddressChange() {
             `&metodoPago=${encodeURIComponent(metodoPago)}` +
             `&observaciones=${encodeURIComponent(observaciones || '')}` +
             `&cart=${cartString}` +
-            `&total=${encodeURIComponent(prices.total || prices)}` +
+            `&total=${encodeURIComponent(prices.total)}` +
             `&envioGratis=${encodeURIComponent(prices.shipping === 0 ? 'true' : 'false')}` +
             `&tipoEntrega=${encodeURIComponent(tipoEntrega)}`;
 
@@ -1920,15 +1919,14 @@ function saveAddressChange() {
 
         const response = await fetch(url, {
             method: 'GET',
-            cache: 'no-cache' // Evita caché del navegador
+            cache: 'no-cache'
         });
 
         const result = await response.json();
-        console.log("Respuesta del backend:", result);
+        console.log("Respuesta backend:", result);
 
         if (result.success) {
             alert("¡Pedido registrado exitosamente! ID: " + result.idPedido);
-            // Limpieza final
             cart = [];
             updateCartCount();
             updateCartDisplay();
@@ -1940,8 +1938,8 @@ function saveAddressChange() {
             throw new Error(result.error || "Error desconocido");
         }
     } catch (err) {
-        console.error("Error al enviar pedido vía GET:", err);
-        alert("Error al registrar el pedido. Contacta soporte.");
+        console.error("Error al enviar pedido:", err);
+        alert("El pago fue confirmado pero hubo un error al registrar el pedido.\nContacta soporte con ID de pago: " + (pendingOrderData?.paymentId || "desconocido"));
     }
 }
         // Esta función debería llamarse SOLO cuando el pago está aprobado
