@@ -1898,6 +1898,53 @@ function saveAddressChange() {
         });
 }
 
+        async function createOrderNormal(direccion, metodoPago, tipoEntrega, prices, observaciones, isPaid = false) {
+    try {
+        const payload = {
+            action: isPaid ? 'createPaidOrder' : 'createOrder',  // Usa acción diferente si ya pagó
+            data: {
+                userId: userId,
+                fecha: new Date().toLocaleString('es-AR'),
+                direccion: direccion,
+                metodoPago: metodoPago,
+                observaciones: observaciones,
+                cart: cart,  // envía el carrito completo
+                total: prices.total || prices,  // si prices es objeto o número
+                envioGratis: prices.shipping === 0 || false,
+                tipoEntrega: tipoEntrega
+            }
+        };
+
+        console.log("Enviando pedido al backend:", payload);
+
+        const response = await fetch(scriptUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        console.log("Respuesta del backend al crear pedido:", result);
+
+        if (result.success) {
+            alert("¡Pedido registrado exitosamente! ID: " + result.idPedido);
+            // Limpieza final
+            cart = [];
+            updateCartCount();
+            updateCartDisplay();
+            document.getElementById('cart-section').style.display = 'none';
+            document.getElementById('mercadopago-checkout').style.display = 'none';
+            document.getElementById('checkout-btn').style.display = 'block';
+            document.getElementById('checkout-form').reset();
+        } else {
+            throw new Error(result.error || "Error desconocido en backend");
+        }
+    } catch (err) {
+        console.error("Error al guardar pedido en backend:", err);
+        alert("El pago fue aprobado, pero hubo un error al registrar el pedido.\nContacta soporte con este ID de pago: " + (pendingOrderData?.paymentId || "desconocido"));
+    }
+}
+
         // Esta función debería llamarse SOLO cuando el pago está aprobado
 async function createConfirmedOrder(orderData) {
     const payload = {
