@@ -1617,7 +1617,8 @@ function loginUser() {
             payer: {
                 email: localStorage.getItem('userEmail') || "cliente@weep.com.ar"
             },
-            external_reference: `${userId}|${Date.now()}`, // ← importante para identificar
+            const externalRef = `WEEP-ORD-${userId}-${Date.now()}`;
+external_reference: externalRef,
             back_urls: {
                 success: window.location.href,
                 failure: window.location.href,
@@ -1680,53 +1681,49 @@ function loginUser() {
 window.addEventListener('load', checkPaymentReturn);
 
 // También se puede usar polling si no redirige bien
-function startPaymentPolling(preferenceId) {
-    console.log("Iniciando polling para preference_id:", preferenceId);
+function startPaymentPolling(preferenceId, externalReference) {  // ← agregamos externalReference como segundo parámetro
+    console.log("Iniciando polling con external_reference:", externalReference);
 
     const interval = setInterval(async () => {
         try {
-            const url = `https://api.mercadopago.com/v1/payments/search?preference_id=${encodeURIComponent(preferenceId)}`;
+            // Buscamos por external_reference (esto SÍ funciona)
+            const url = `https://api.mercadopago.com/v1/payments/search?external_reference=${encodeURIComponent(externalReference)}`;
 
-            console.log("Consultando MP:", url);
+            console.log("Consultando pagos por external_reference:", url);
 
             const res = await fetch(url, {
-                headers: { 
-                    "Authorization": `Bearer ${MP_ACCESS_TOKEN}`,
-                    "Content-Type": "application/json"
-                }
+                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
             });
 
             if (!res.ok) {
                 const errorText = await res.text();
-                console.error(`Error ${res.status} en /payments/search:`, errorText);
-                return; // sigue intentando
+                console.error(`Error ${res.status} en search por external_reference:`, errorText);
+                return;
             }
 
             const data = await res.json();
-            console.log("Respuesta completa de Mercado Pago:", JSON.stringify(data, null, 2));
+            console.log("Respuesta de /payments/search:", JSON.stringify(data, null, 2));
 
             if (data.results?.length > 0) {
-                console.log(`Encontrados ${data.results.length} pagos para esta preferencia`);
-
-                const approvedPayment = data.results.find(p => p.status === "approved");
-                if (approvedPayment) {
-                    console.log("¡Pago aprobado encontrado! ID:", approvedPayment.id);
+                const approved = data.results.find(p => p.status === "approved");
+                if (approved) {
+                    console.log("¡Pago aprobado encontrado! ID:", approved.id);
                     clearInterval(interval);
-                    pendingOrderData.paymentId = approvedPayment.id;
+                    pendingOrderData.paymentId = approved.id;
                     await finalizeOrderAfterPayment();
                     alert("¡Pago confirmado automáticamente! Tu pedido ha sido registrado.");
                 } else {
-                    console.log("No hay pagos aprobados aún...");
+                    console.log("Pagos encontrados pero ninguno aprobado aún...");
                 }
             } else {
-                console.log("Aún no hay pagos asociados a esta preferencia");
+                console.log("Aún no hay pagos para este external_reference");
             }
         } catch (e) {
-            console.error("Error grave en polling:", e);
+            console.error("Error en polling:", e);
         }
-    }, 5000); // cada 5 segundos
+    }, 5000);
 }
-
+        
 async function finalizeOrderAfterPayment() {
     if (!pendingOrderData) return;
 
