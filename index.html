@@ -695,15 +695,27 @@
             <input type="text" id="search-input" placeholder="Buscar menús o locales...">
         </div>
         <div class="header-right">
-            <div class="profile" id="profile-link">Mi Perfil</div>
+            <div class="profile-container" id="profile-container">
+                <div class="profile-display" id="profile-display">
+                    <img src="https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg" alt="Perfil">
+                    <span>Mi Perfil</span>
+                </div>
+                <div class="dropdown-menu" id="profile-dropdown">
+                    <a href="#" class="dropdown-item">Editar perfil</a>
+                    <a href="#" class="dropdown-item">Cambiar dirección</a>
+                    <a href="#" class="dropdown-item logout" id="logout-btn">Cerrar sesión</a>
+                </div>
+            </div>
+
             <div class="cart-icon" id="cart-icon">
-                <span>🛒</span>
+                <img src="https://i.postimg.cc/ZKyY0wjf/png-transparent-computer-icons-shopping-cart-encapsulated-postscript-shopping-cart-angle-black-shopp.png" alt="Carrito">
                 <div class="cart-count" id="cart-count">0</div>
             </div>
         </div>
     </header>
+    </header>
     <main>
-        <h1>¡Hola! ¿Qué se te antoja comer?</h1>
+        <h1>¿Qué se te antoja?</h1>
         <div class="categories">
             <div class="category" data-type="Hamburguesas" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
                 <span>Hamburguesas</span>
@@ -767,12 +779,16 @@
             </form>
         </div>
     </main>
-    <!-- Footer -->
-    <footer class="text-center">
+    <!-- Footer actualizado -->
+    <footer>
         <div class="container">
-            <p class="mb-2">© 2026 <strong>Weep</strong> - Plataforma de Pedidos</p>
-            <p class="small mb-0">
-                <a href="#">Términos</a> • <a href="#">Privacidad</a> • <a href="#">Soporte</a>
+            <img src="https://i.postimg.cc/638BdTWv/Chat-GPT-Image-Jan-3-2026-01-27-57-AM-(4).png" 
+                 alt="Weep Footer Image" class="footer-image">
+            <p>© 2026 <strong>Weep</strong> - Plataforma de Pedidos</p>
+            <p>
+                <a href="#">Términos</a> • 
+                <a href="#">Privacidad</a> • 
+                <a href="#">Soporte</a>
             </p>
         </div>
     </footer>
