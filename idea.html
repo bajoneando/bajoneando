@@ -311,125 +311,123 @@
 
     .suggestion:hover img { transform: scale(1.12); }
 
-    /* Tarjetas de menú - Restauramos comportamiento y tamaños originales en mobile */
-.menu-items {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    justify-content: center;
-    padding: 20px 0;
-}
-
-/* Mobile: 2 columnas (como la versión original) */
-@media (max-width: 768px) {
-    .menu-items {
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-        padding: 0 10px;
-        justify-content: center;
-    }
-
+    /* === MENÚ ITEMS → VERSIÓN ORIGINAL exactamente como pediste === */
     .menu-item {
-        max-width: none;
-        padding: 10px;
+        width: 100%;
+        max-width: 260px;
+        background: white;
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        text-align: center;
+        transition: transform 0.3s ease;
     }
-
+    .menu-item:hover, .menu-item:active {
+        transform: translateY(-8px);
+    }
     .menu-item img {
-        height: 110px;          /* ← tamaño original en mobile */
-        border-radius: 10px;
-    }
-
-    .menu-item h3 {
-        font-size: 0.95rem;
-        margin: 8px 0 4px;
-    }
-
-    .menu-item p {
-        font-size: 0.85rem;
-        margin: 3px 0;
-    }
-
-    .menu-item p:last-of-type {
-        font-size: 1.2rem;
-        margin: 6px 0;
-    }
-
-    .menu-item button {
-        padding: 9px;
-        font-size: 0.9rem;
-    }
-}
-
-/* Mobile muy pequeño (< 480px) → 1 columna, como original */
-@media (max-width: 480px) {
-    .menu-items {
-        grid-template-columns: 1fr;
-        gap: 12px;
-        padding: 0 8px;
-    }
-
-    .menu-item {
-        padding: 8px;
-    }
-
-    .menu-item img {
-        height: 100px;          /* ← tamaño original en 480px */
-    }
-
-    .menu-item h3 {
-        font-size: 0.9rem;
-    }
-
-    .menu-item p {
-        font-size: 0.8rem;
-    }
-
-    .menu-item p:last-of-type {
-        font-size: 1.15rem;
-    }
-
-    .menu-item button {
-        padding: 8px;
-        font-size: 0.85rem;
-    }
-}
-
-/* Desktop (> 769px) → mantenemos el estilo mejorado pero con tamaños cercanos al original */
-@media (min-width: 769px) {
-    .menu-items {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        gap: 22px;
-    }
-
-    .menu-item {
-        padding: 18px;
-        max-width: 260px;       /* volvemos al tamaño original */
-    }
-
-    .menu-item img {
-        height: 150px;          /* tamaño original desktop */
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
         border-radius: 12px;
     }
-
     .menu-item h3 {
-        font-size: 1.1rem;
         margin: 10px 0 6px;
+        font-size: 1.1rem;
+        color: #333;
     }
-
     .menu-item p {
+        color: #666;
+        margin: 4px 0;
         font-size: 0.95rem;
     }
-
     .menu-item p:last-of-type {
         font-size: 1.4rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 8px 0;
+    }
+    .menu-item button {
+        width: 100%;
+        padding: 12px;
+        background-color: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .menu-item button:hover, .menu-item button:active {
+        background-color: #b71c1c;
     }
 
-    .menu-item button {
-        padding: 12px;
-        font-size: 1rem;
+    /* Responsive del menú - exactamente como la versión original */
+    @media (max-width: 768px) {
+        .menu-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            padding: 0 10px;
+            justify-content: center;
+        }
+        .menu-item {
+            max-width: none;
+            padding: 10px;
+        }
+        .menu-item img {
+            height: 110px;
+        }
+        .menu-item h3 {
+            font-size: 0.95rem;
+        }
+        .menu-item p {
+            font-size: 0.85rem;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.2rem;
+        }
+        .menu-item button {
+            padding: 9px;
+            font-size: 0.9rem;
+        }
     }
-}
+
+    @media (max-width: 480px) {
+        .menu-item img {
+            height: 100px;
+        }
+        .menu-item h3 {
+            font-size: 0.9rem;
+        }
+        .menu-item p {
+            font-size: 0.8rem;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.15rem;
+        }
+        .menu-item button {
+            padding: 8px;
+            font-size: 0.85rem;
+        }
+    }
+
+    @media (min-width: 769px) {
+        .menu-items {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+        .menu-item {
+            max-width: 230px;
+            padding: 10px;
+        }
+        .menu-item img {
+            height: 130px;
+        }
+    }
 
     /* Carrito */
     #cart-section {
@@ -1310,21 +1308,6 @@
             </div>
         </div>
     </footer>
-    <!-- Bottom Navigation Bar - Solo visible en móviles -->
-<nav class="bottom-nav">
-    <a href="#" class="bottom-nav-item active">
-        <span class="icon">🏠</span>
-        <span class="label">Inicio</span>
-    </a>
-    <a href="#" class="bottom-nav-item">
-        <span class="icon">❤️</span>
-        <span class="label">Favoritos</span>
-    </a>
-    <a href="#" class="bottom-nav-item">
-        <span class="icon">👤</span>
-        <span class="label">Perfil</span>
-    </a>
-</nav>
    
     <!-- Login Modal -->
     <div id="login-modal" class="modal">
