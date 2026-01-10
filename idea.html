@@ -1052,41 +1052,49 @@
             .catch(() => alert('Error de conexión'));
     }
 
-    // ==================== LOGIN ====================
     function loginUser() {
-        const email = document.getElementById('login-email')?.value.trim().toLowerCase();
-        const password = document.getElementById('login-password')?.value.trim();
+    const email = document.getElementById('login-email')?.value.trim().toLowerCase();
+    const password = document.getElementById('login-password')?.value.trim();
 
-        if (!email || !password) {
-            alert('Ingresa email y contraseña');
-            return;
-        }
-
-        const url = `${scriptUrl}?action=login`
-            + `&email=${encodeURIComponent(email)}`
-            + `&password=${encodeURIComponent(password)}`;
-
-        fetch(url)
-            .then(r => r.json())
-            .then(data => {
-                localStorage.setItem('userId', data.userId);
-localStorage.setItem('userName', data.name || 'Usuario');     // ← si tu backend devuelve "name"
-localStorage.setItem('userEmail', data.email || email);       // ← opcional
-localStorage.setItem('userAddress', data.address || '');
-                    
-                    closeModal('login-modal');
-                    checkLoginStatus();
-                    alert('¡Bienvenido!');
-                    
-                                        const dirInput = document.getElementById('direccion');
-                    if (dirInput && userAddress) dirInput.value = userAddress;
-                } else {
-                    alert(data.message || 'Credenciales incorrectas');
-                }
-            })
-            .catch(() => alert('Error de conexión'));
+    if (!email || !password) {
+        alert('Ingresa email y contraseña');
+        return;
     }
 
+    const url = `${scriptUrl}?action=login`
+        + `&email=${encodeURIComponent(email)}`
+        + `&password=${encodeURIComponent(password)}`;
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                localStorage.setItem('userId', data.userId);
+                localStorage.setItem('userAddress', data.address || '');
+                localStorage.setItem('userName', data.name || '');
+                localStorage.setItem('userEmail', data.email || email);
+
+                isLoggedIn = true;
+                userId = data.userId;
+                userAddress = data.address || '';
+
+                closeModal('login-modal');
+                checkLoginStatus();
+                alert('¡Bienvenido!');
+
+                // Rellenar dirección en el checkout si existe
+                const dirInput = document.getElementById('direccion');
+                if (dirInput && userAddress) {
+                    dirInput.value = userAddress;
+                }
+            } else {
+                alert(data.message || 'Credenciales incorrectas');
+            }
+        })
+        .catch(() => {
+            alert('Error de conexión');
+        });
+}
     // ==================== CERRAR SESIÓN ====================
     function logoutUser() {
     if (!confirm('¿Realmente quieres cerrar sesión?')) return;
