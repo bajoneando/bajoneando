@@ -1069,12 +1069,10 @@
         fetch(url)
             .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    localStorage.setItem('userId', data.userId);
-                    localStorage.setItem('userAddress', data.address || '');
-                    isLoggedIn = true;
-                    userId = data.userId;
-                    userAddress = data.address || '';
+                localStorage.setItem('userId', data.userId);
+localStorage.setItem('userName', data.name || 'Usuario');     // ← si tu backend devuelve "name"
+localStorage.setItem('userEmail', data.email || email);       // ← opcional
+localStorage.setItem('userAddress', data.address || '');
                     
                     closeModal('login-modal');
                     checkLoginStatus();
@@ -1092,18 +1090,21 @@
 
     // ==================== CERRAR SESIÓN ====================
     function logoutUser() {
-        if (!confirm('¿Realmente quieres cerrar sesión?')) return;
-        
-        localStorage.removeItem('userId');
-        localStorage.setItem('userName', data.name || 'Usuario');   // ← agregar
-        localStorage.removeItem('userAddress');
-        isLoggedIn = false;
-        userId = null;
-        userAddress = '';
-        
-        checkLoginStatus();
-        alert('Sesión cerrada');
-    }
+    if (!confirm('¿Realmente quieres cerrar sesión?')) return;
+
+    // Eliminamos todos los datos de sesión
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName');     // ← si lo estabas guardando
+    localStorage.removeItem('userEmail');    // ← si lo estabas guardando
+    localStorage.removeItem('userAddress');
+
+    isLoggedIn = false;
+    userId = null;
+    userAddress = '';
+
+    checkLoginStatus();  // Esto actualiza el botón a "Iniciar Sesión"
+    alert('Sesión cerrada correctamente');
+}
 
     // ==================== CARGA INICIAL ====================
     window.addEventListener('load', () => {
