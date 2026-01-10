@@ -983,6 +983,8 @@ const COSTO_ENVIO = 500;
 let isLoggedIn = false;
 let userId = null;
 let userAddress = '';
+let currentPreferenceId = null;     // para saber qué preferencia estamos esperando
+let pendingOrderData = null;        // guardamos temporalmente los datos del pedido
 
 // === NUEVA VARIABLE GLOBAL PARA FAVORITOS ===
 let userFavorites = []; // array de menuIds favoritos del usuario actual
