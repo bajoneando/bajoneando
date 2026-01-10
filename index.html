@@ -684,6 +684,90 @@
         text-decoration: none;
         cursor: pointer;
     }
+
+        /* ============================================= */
+/*          BOTTOM NAVIGATION BAR (mobile)       */
+/* ============================================= */
+
+.bottom-nav {
+    display: none;                    /* oculto por defecto */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #eee;
+    box-shadow: 0 -3px 15px rgba(0,0,0,0.08);
+    z-index: 1000;
+    height: 68px;
+}
+
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.bottom-nav-item.active,
+.bottom-nav-item:active,
+.bottom-nav-item:hover {
+    color: #d32f2f;
+}
+
+.bottom-nav-item .icon {
+    font-size: 1.8rem;           /* tamaño generoso como Foodgo */
+    margin-bottom: 3px;
+}
+
+.bottom-nav-item .label {
+    font-size: 0.68rem;
+}
+
+/* Mostrar solo en móviles */
+@media (max-width: 768px) {
+    .bottom-nav {
+        display: flex;
+    }
+
+    /* Damos más espacio abajo al contenido principal */
+    body {
+        padding-bottom: 75px;     /* evita que el contenido quede tapado */
+    }
+
+    main {
+        padding-bottom: 20px;
+    }
+
+    /* El carrito flotante puede quedar mejor más arriba si lo deseas */
+    #cart-section {
+        margin-bottom: 90px;
+    }
+}
+
+/* Opcional: efecto ripple suave al tocar (mejora UX móvil) */
+.bottom-nav-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(211, 47, 47, 0.08);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.35s;
+    pointer-events: none;
+}
+
+.bottom-nav-item:active::before {
+    opacity: 1;
+    transform: scale(2.5);
+}
 </style>
 </head>
 <body>
@@ -777,6 +861,22 @@
         </div>
     </footer>
 
+    <!-- Bottom Navigation Bar - Solo visible en móviles -->
+<nav class="bottom-nav">
+    <a href="#" class="bottom-nav-item active">
+        <span class="icon">🏠</span>
+        <span class="label">Inicio</span>
+    </a>
+    <a href="#" class="bottom-nav-item">
+        <span class="icon">❤️</span>
+        <span class="label">Favoritos</span>
+    </a>
+    <a href="#" class="bottom-nav-item">
+        <span class="icon">👤</span>
+        <span class="label">Perfil</span>
+    </a>
+</nav>
+    
     <!-- Login Modal -->
     <div id="login-modal" class="modal">
         <div class="modal-content">
