@@ -1375,20 +1375,25 @@ function loginUser() {
         }
         // ==================== CARRITO ====================
     function setupCart() {
-        const cartIcon = document.getElementById('cart-icon');
-        const cartSection = document.getElementById('cart-section');
-        cartIcon.onclick = function () {
-            // Toggle simple: si está oculto → mostrar, si está visible → ocultar
-            if (cartSection.style.display === 'none' || cartSection.style.display === '') {
-                cartSection.style.display = 'block';
-                updateCartDisplay();
-            } else {
-                cartSection.style.display = 'none';
-            }
-        };
-        document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
-        document.getElementById('checkout-btn').onclick = checkout;
-    }
+    const cartIcon = document.getElementById('cart-icon');
+    const cartSection = document.getElementById('cart-section');
+    cartIcon.onclick = function () {
+        if (cartSection.style.display === 'none' || cartSection.style.display === '') {
+            cartSection.style.display = 'block';
+            updateCartDisplay();
+        } else {
+            cartSection.style.display = 'none';
+        }
+    };
+
+    // Ya tenías esto
+    document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
+
+    // ← NUEVO: Recalcular precios y total cuando cambie el método de pago
+    document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
+
+    document.getElementById('checkout-btn').onclick = checkout;
+}
     function openCart() {
         document.getElementById('cart-section').style.display = 'block';
         updateCartDisplay();
