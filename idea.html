@@ -914,9 +914,6 @@
         <label for="edit-email">Correo electrónico</label>
         <input type="email" id="edit-email" placeholder="Correo electrónico" required>
         
-        <label for="edit-current-password">Contraseña actual (requerida para guardar cambios)</label>
-        <input type="password" id="edit-current-password" placeholder="Contraseña actual" required>
-        
         <label for="edit-new-password">Nueva contraseña (opcional)</label>
         <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
         
@@ -1482,7 +1479,7 @@
     });
 }
 
-        // ==================== EDITAR PERFIL Y DIRECCIÓN ====================
+// ==================== EDITAR PERFIL ====================
 
 function openEditProfileModal() {
     profileDropdown.classList.remove('active');
@@ -1490,27 +1487,23 @@ function openEditProfileModal() {
     // Precargamos los datos actuales
     document.getElementById('edit-name').value = localStorage.getItem('userName') || '';
     document.getElementById('edit-email').value = localStorage.getItem('userEmail') || '';
-    
-    // Limpiamos campos de contraseña
-    document.getElementById('edit-current-password').value = '';
-    document.getElementById('edit-new-password').value = '';
+    document.getElementById('edit-new-password').value = ''; // siempre vacío al abrir
     
     showModal('edit-profile-modal');
 }
 
-    function openChangeAddressModal() {
+function openChangeAddressModal() {
     profileDropdown.classList.remove('active');
     
     const addressInput = document.getElementById('edit-address');
     addressInput.value = userAddress || '';
     
     showModal('change-address-modal');
-}
-
+}        
+        
 function saveProfileChanges() {
     const name = document.getElementById('edit-name').value.trim();
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
-    const currentPassword = document.getElementById('edit-current-password').value.trim();
     const newPassword = document.getElementById('edit-new-password').value.trim();
 
     // Validaciones básicas
@@ -1524,47 +1517,45 @@ function saveProfileChanges() {
         return;
     }
     
-    if (!currentPassword) {
-        alert('Debes ingresar tu contraseña actual para realizar cambios');
-        return;
-    }
-
     if (newPassword && newPassword.length < 6) {
         alert('La nueva contraseña debe tener al menos 6 caracteres (o dejarla en blanco)');
         return;
     }
 
-    const url = `${scriptUrl}?action=updateProfile`
+    // Construimos la URL con los parámetros
+    let url = `${scriptUrl}?action=updateProfile`
         + `&userId=${encodeURIComponent(userId)}`
         + `&name=${encodeURIComponent(name)}`
-        + `&email=${encodeURIComponent(email)}`
-        + `&currentPassword=${encodeURIComponent(currentPassword)}`
-        + `&newPassword=${encodeURIComponent(newPassword || '')}`;
+        + `&email=${encodeURIComponent(email)}`;
+
+    // Solo agregamos la nueva contraseña si se ingresó algo
+    if (newPassword) {
+        url += `&newPassword=${encodeURIComponent(newPassword)}`;
+    }
 
     fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Actualizamos almacenamiento local
+                // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-                // Si cambiaste contraseña, podrías forzar logout o solo avisar
-                // localStorage.removeItem('userId'); // ← opcional: cerrar sesión tras cambio de contraseña
                 
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
                 
-                // Refrescamos estado visual
+                // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
                 alert(data.message || 'No se pudo actualizar el perfil');
             }
         })
         .catch(err => {
-            console.error(err);
+            console.error('Error al actualizar perfil:', err);
             alert('Error de conexión al intentar actualizar el perfil');
         });
 }
+        
 function saveAddressChange() {
     const newAddress = document.getElementById('edit-address').value.trim();
 
