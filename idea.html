@@ -1598,87 +1598,44 @@ function loginUser() {
     await createOrderNormal(direccion, metodoPago, delivery, prices, observaciones);
 }
 
-        async function handleMercadoPagoPayment(direccion, delivery, prices, observaciones) {
-    const checkoutContainer = document.getElementById('mercadopago-checkout');
-    const checkoutBtn = document.getElementById('checkout-btn');
+        function startPaymentPolling(preferenceId, externalReference) {
+    console.log("Iniciando polling - Preference:", preferenceId, "ExternalRef:", externalReference);
 
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Generando link de pago...';
+    const interval = setInterval(async () => {
+        try {
+            // ¡ESTA ES LA CONSULTA QUE FUNCIONA!
+            const url = `https://api.mercadopago.com/v1/payments/search?external_reference=${encodeURIComponent(externalReference)}`;
 
-    try {
-        // 1. Creamos la preferencia
-        const preference = {
-            items: [{
-                title: `Pedido Weep #${Date.now()}`,
-                quantity: 1,
-                currency_id: "ARS",
-                unit_price: prices.total
-            }],
-            payer: {
-                email: localStorage.getItem('userEmail') || "cliente@weep.com.ar"
-            },
-            const externalRef = `WEEP-ORD-${userId}-${Date.now()}`;
-external_reference: externalRef,
-            back_urls: {
-                success: window.location.href,
-                failure: window.location.href,
-                pending: window.location.href
-            },
-            auto_return: "approved",
-            // Opcional: notification_url para webhook (más seguro)
-        };
+            console.log("Consultando por external_reference:", url);
 
-        const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${MP_ACCESS_TOKEN}`
-            },
-            body: JSON.stringify(preference)
-        });
+            const res = await fetch(url, {
+                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+            });
 
-        const data = await res.json();
+            if (!res.ok) {
+                const err = await res.text();
+                console.error("Error en search:", res.status, err);
+                return;
+            }
 
-        if (!data.init_point) {
-            throw new Error("No se pudo generar el checkout");
+            const data = await res.json();
+            console.log("Respuesta MP search:", data);
+
+            if (data.results?.length > 0) {
+                const approved = data.results.find(p => p.status === "approved");
+                if (approved) {
+                    console.log("¡Pago aprobado detectado! ID:", approved.id);
+                    clearInterval(interval);
+                    pendingOrderData.paymentId = approved.id;
+                    await finalizeOrderAfterPayment();
+                    alert("¡Pago confirmado! Tu pedido ha sido registrado.");
+                }
+            }
+        } catch (e) {
+            console.error("Error en polling:", e);
         }
-
-        // Guardamos datos del pedido temporalmente
-        pendingOrderData = {
-            userId,
-            fecha: new Date().toLocaleString('es-AR'),
-            direccion,
-            metodoPago: "Transferencia/Mercado Pago",
-            observaciones,
-            envioGratis: prices.shipping === 0,
-            tipoEntrega: delivery,
-            cart,
-            total: prices.total,
-            preferenceId: data.id,
-            paymentId: null
-        };
-
-        // Mostramos el checkout
-        checkoutContainer.innerHTML = `<iframe src="${data.init_point}" width="100%" height="700" frameborder="0"></iframe>`;
-        checkoutContainer.style.display = 'block';
-
-        checkoutBtn.style.display = 'none'; // ocultamos botón mientras paga
-
-        alert("Serás redirigido al pago. Completa el proceso en la ventana de Mercado Pago.");
-
-        // Iniciamos chequeo periódico del pago (método simple)
-        startPaymentPolling(data.id);
-
-    } catch (err) {
-        console.error(err);
-        alert("Error al generar el pago con Mercado Pago. Intenta nuevamente.");
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = 'Realizar Pedido';
-    }
+    }, 5000);
 }
-
-        // Se ejecuta al cargar la página
-window.addEventListener('load', checkPaymentReturn);
 
 // También se puede usar polling si no redirige bien
 function startPaymentPolling(preferenceId, externalReference) {  // ← agregamos externalReference como segundo parámetro
