@@ -1429,76 +1429,106 @@ function loginUser() {
             return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
         }
         function calculatePrices() {
-            const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
-            const delivery = document.getElementById('delivery-type').value;
-            let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
-            return { subtotal, shipping, total: subtotal + shipping, delivery };
-        }
+    const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
+    const delivery = document.getElementById('delivery-type').value;
+    const metodoPago = document.getElementById('metodo-pago').value; // ← nuevo: leemos el método
+
+    // Envío
+    let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
+
+    // Comisión 4% SOLO si es Transferencia / Mercado Pago
+    let comision = 0;
+    if (metodoPago === "transferencia") {
+        comision = subtotal * 0.04; // 4%
+    }
+
+    const total = subtotal + shipping + comision;
+
+    return { 
+        subtotal, 
+        shipping, 
+        comision,           // ← nuevo campo
+        total, 
+        delivery,
+        metodoPago 
+    };
+}
         function updateCartDisplay() {
-            const list = document.getElementById('cart-items');
-            const notice = document.getElementById('free-shipping-notice');
-            const drinksPanel = document.getElementById('drinks-panel');
-            list.innerHTML = '';
-            notice.innerHTML = '';
-            if (cart.length === 0) {
-                list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
-            } else {
-                cart.forEach((item, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'cart-item';
-                    div.innerHTML = `
-                        <div class="cart-item-left">
-                            <div class="cart-item-name">${item.nombreProducto}</div>
-                            <div class="quantity-controls">
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
-                                <span class="quantity">${item.cantidad}</span>
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
-                            </div>
-                        </div>
-                        <div class="cart-item-price">$${(item.precioUnitario * item.cantidad)}</div>
-                        <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
-                    `;
-                    list.appendChild(div);
-                });
-            }
-            const prices = calculatePrices();
-            document.getElementById('subtotal').textContent = `$${prices.subtotal}`;
-            document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping}`;
-            document.getElementById('final-total').textContent = `$${prices.total}`;
-            if (prices.shipping === 0 && cart.length > 0) {
-                notice.innerHTML = prices.delivery === 'retiro'
-                    ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
-                    : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
-                drinksPanel.style.display = 'none';
-            } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
-                drinksPanel.style.display = 'block';
-                renderDrinksCarousel();
-            } else {
-                drinksPanel.style.display = 'none';
-            }
-            const dirInput = document.getElementById('direccion');
-            if (prices.delivery === 'retiro') {
-                dirInput.placeholder = "No requerida (retirás en local)";
-                dirInput.required = false;
-            } else {
-                dirInput.placeholder = "Dirección de entrega (requerida)";
-                dirInput.required = true;
-            }
-        }
-        window.changeQuantity = function(idx, delta) {
-            if (cart[idx].cantidad + delta > 0) {
-                cart[idx].cantidad += delta;
-            } else {
-                cart.splice(idx, 1);
-            }
-            updateCartCount();
-            updateCartDisplay();
-        };
-        window.removeFromCart = function(idx) {
-            cart.splice(idx, 1);
-            updateCartCount();
-            updateCartDisplay();
-        };
+    const list = document.getElementById('cart-items');
+    const notice = document.getElementById('free-shipping-notice');
+    const drinksPanel = document.getElementById('drinks-panel');
+    list.innerHTML = '';
+    notice.innerHTML = '';
+
+    if (cart.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
+    } else {
+        cart.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'cart-item';
+            div.innerHTML = `
+                <div class="cart-item-left">
+                    <div class="cart-item-name">${item.nombreProducto}</div>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
+                        <span class="quantity">${item.cantidad}</span>
+                        <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
+                    </div>
+                </div>
+                <div class="cart-item-price">$${(item.precioUnitario * item.cantidad).toFixed(2)}</div>
+                <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    const prices = calculatePrices();
+
+    // Mostrar subtotal
+    document.getElementById('subtotal').textContent = `$${prices.subtotal.toFixed(2)}`;
+
+    // Envío
+    document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping.toFixed(2)}`;
+
+    // Nueva línea: Comisión (solo aparece si hay comisión)
+    let comisionLine = '';
+    if (prices.comision > 0) {
+        comisionLine = `<div class="price-line"><span>Comisión 4% (Mercado Pago)</span><span>+$${prices.comision.toFixed(2)}</span></div>`;
+    }
+
+    // Actualizar el HTML del resumen de precios dinámicamente
+    const priceSummary = document.querySelector('.price-summary');
+    priceSummary.innerHTML = `
+        <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$${prices.subtotal.toFixed(2)}</span></div>
+        <div class="price-line"><span>Envío</span><span id="shipping-cost">${prices.shipping === 0 ? 'GRATIS' : '$'+prices.shipping.toFixed(2)}</span></div>
+        ${comisionLine}
+        <div class="price-line total"><span>Total a pagar</span><span id="final-total">$${prices.total.toFixed(2)}</span></div>
+    `;
+
+    // Mensaje envío gratis
+    if (prices.shipping === 0 && cart.length > 0) {
+        notice.innerHTML = prices.delivery === 'retiro'
+            ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
+            : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
+        drinksPanel.style.display = 'none';
+    } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
+        drinksPanel.style.display = 'block';
+        renderDrinksCarousel();
+    } else {
+        drinksPanel.style.display = 'none';
+    }
+
+    // Actualizar dirección según tipo entrega
+    const dirInput = document.getElementById('direccion');
+    if (prices.delivery === 'retiro') {
+        dirInput.placeholder = "No requerida (retirás en local)";
+        dirInput.required = false;
+    } else {
+        dirInput.placeholder = "Dirección de entrega (requerida)";
+        dirInput.required = true;
+    }
+}
+        
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
