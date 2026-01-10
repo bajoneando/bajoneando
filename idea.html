@@ -1039,6 +1039,23 @@ function checkLoginStatus() {
     });
 }
 
+        // ==================== FUNCIONES BÁSICAS DE MODALES ====================
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+    } else {
+        console.error('Modal no encontrado:', modalId);
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
 // ==================== CARGAR FAVORITOS DEL USUARIO ====================
 function loadUserFavorites() {
     if (!userId) return;
