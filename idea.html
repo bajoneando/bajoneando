@@ -1499,53 +1499,104 @@
     </div>
     
     <script>
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
-        let cart = [];
-        let allDrinks = [];
-        let currentDrinkIndex = 0;
-        const CATEGORIA_BEBIDAS = "Bebidas";
-        const COSTO_ENVIO = 500;
-        let isLoggedIn = false;
-        let userId = null;
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
 
-        window.addEventListener('load', () => {
-            checkLoginStatus();
-            loadFilters();
-            setupSearch();
-            setupCart();
-            loadAllDrinks();
-        });
+    let cart = [];
+    let allDrinks = [];
+    let currentDrinkIndex = 0;
+    const CATEGORIA_BEBIDAS = "Bebidas";
+    const COSTO_ENVIO = 500;
 
-        // ==================== FUNCIÓN CLAVE: checkLoginStatus (moverla al inicio) ====================
-    function checkLoginStatus() {
-        userId = localStorage.getItem('userId');
-        userAddress = localStorage.getItem('userAddress') || '';
-        if (userId) {
-            isLoggedIn = true;
-            document.getElementById('profile-link').textContent = 'Mi Perfil (Cerrar Sesión)';
-        } else {
-            isLoggedIn = false;
-            document.getElementById('profile-link').textContent = 'Iniciar Sesión';
-        }
-        document.getElementById('profile-link').onclick = () => {
-            if (isLoggedIn) {
-                logoutUser();
-            } else {
-                showModal('login-modal');
-            }
-        };
-    }
+    let isLoggedIn = false;
+    let userId = null;
+    let userAddress = '';
 
-    // ==================== CARGA INICIAL ====================
+    // Elementos del DOM que usaremos frecuentemente
+    const profileContainer = document.getElementById('profile-container');
+    const profileDropdown = document.getElementById('profile-dropdown');
+    const profileNameEl = document.getElementById('profile-name');
+    const profilePic = document.getElementById('profile-pic');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    // =============================================
+    //  INICIALIZACIÓN
+    // =============================================
     window.addEventListener('load', () => {
-        checkLoginStatus();   // Ahora sí existe cuando se llama
+        checkLoginStatus();
+        updateProfileUI();
         loadFilters();
         setupSearch();
         setupCart();
         loadAllDrinks();
+        setupProfileDropdown();
     });
 
-    // ==================== MODALES ====================
+    // =============================================
+    //  ESTADO DE SESIÓN Y PERFIL
+    // =============================================
+    function checkLoginStatus() {
+        userId = localStorage.getItem('userId');
+        userAddress = localStorage.getItem('userAddress') || '';
+        isLoggedIn = !!userId;
+
+        if (isLoggedIn) {
+            document.getElementById('profile-name').textContent = "Mi Perfil";
+        } else {
+            document.getElementById('profile-name').textContent = "Iniciar Sesión";
+        }
+    }
+
+    function updateProfileUI() {
+        if (isLoggedIn) {
+            profileNameEl.textContent = "Mi Perfil";
+            profilePic.src = "https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg";
+        } else {
+            profileNameEl.textContent = "Iniciar Sesión";
+            profilePic.src = "https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg";
+        }
+    }
+
+    function setupProfileDropdown() {
+        // Click en todo el contenedor del perfil
+        profileContainer.addEventListener('click', (e) => {
+            if (!isLoggedIn) {
+                showModal('login-modal');
+                return;
+            }
+
+            // Toggle dropdown
+            profileDropdown.classList.toggle('show');
+            e.stopPropagation();
+        });
+
+        // Cerrar dropdown al clickear fuera
+        document.addEventListener('click', (e) => {
+            if (!profileContainer.contains(e.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+
+        // Botón cerrar sesión dentro del dropdown
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (confirm('¿Estás seguro de cerrar sesión?')) {
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userAddress');
+                isLoggedIn = false;
+                userId = null;
+                userAddress = '';
+                profileDropdown.classList.remove('show');
+                updateProfileUI();
+                alert('Sesión cerrada correctamente');
+            }
+        });
+    }
+
+    // =============================================
+    //           MODALES
+    // =============================================
     function showModal(modalId) {
         document.getElementById(modalId).style.display = 'block';
     }
@@ -1564,284 +1615,236 @@
         showModal('login-modal');
     }
 
-    // ==================== REGISTRO ====================
-function registerUser() {
-    // Obtener los campos del formulario de registro
-    const nameInput = document.getElementById('register-name');
-    const emailInput = document.getElementById('register-email');
-    const passwordInput = document.getElementById('register-password');
-    const addressInput = document.getElementById('register-address'); // Puede no existir si es opcional
+    // =============================================
+    //           REGISTRO
+    // =============================================
+    function registerUser() {
+        const name = document.getElementById('register-name')?.value.trim();
+        const email = document.getElementById('register-email')?.value.trim().toLowerCase();
+        const password = document.getElementById('register-password')?.value.trim();
+        const address = document.getElementById('register-address')?.value.trim() || '';
 
-    // Validar que los campos obligatorios existan
-    if (!nameInput || !emailInput || !passwordInput) {
-        alert('Error interno: No se encontraron los campos obligatorios del registro.');
-        console.error('Campos faltantes: name, email o password');
-        return;
-    }
-
-    // Obtener y limpiar valores
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-    const address = addressInput ? addressInput.value.trim() : '';
-
-    // Validación básica frontend
-    if (!name) {
-        alert('Por favor ingresa tu nombre completo.');
-        nameInput.focus();
-        return;
-    }
-    if (!email) {
-        alert('Por favor ingresa tu email.');
-        emailInput.focus();
-        return;
-    }
-    if (!password) {
-        alert('Por favor ingresa una contraseña.');
-        passwordInput.focus();
-        return;
-    }
-    if (password.length < 6) {
-        alert('La contraseña debe tener al menos 6 caracteres.');
-        passwordInput.focus();
-        return;
-    }
-
-    // Construir URL con todos los parámetros (siempre incluimos address, aunque vacío)
-    const url = `${scriptUrl}?action=register`
-        + `&name=${encodeURIComponent(name)}`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`
-        + `&address=${encodeURIComponent(address)}`;
-
-    // Mostrar feedback visual (opcional: podrías agregar un spinner)
-    const registerBtn = document.querySelector('#register-modal button[type="submit"]') || 
-                        document.querySelector('#register-modal .btn-register');
-    if (registerBtn) registerBtn.disabled = true;
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
-                
-                // Limpiar todos los campos
-                nameInput.value = '';
-                emailInput.value = '';
-                passwordInput.value = '';
-                if (addressInput) addressInput.value = '';
-
-                // Cambiar a la vista de login
-                switchToLogin();
-            } else {
-                alert(data.message || 'Error al registrar. Intenta con otro email.');
-            }
-        })
-        .catch(err => {
-            console.error('Error en registro:', err);
-            alert('Error de conexión. Revisa tu internet e intenta de nuevo.');
-        })
-        .finally(() => {
-            // Reactivar botón
-            if (registerBtn) registerBtn.disabled = false;
-        });
-}
-
-// ==================== LOGIN ====================
-function loginUser() {
-    const emailInput = document.getElementById('login-email');
-    const passwordInput = document.getElementById('login-password');
-
-    if (!emailInput || !passwordInput) {
-        alert('Error interno: Campos de login no encontrados.');
-        console.error('Faltan login-email o login-password en el DOM');
-        return;
-    }
-
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-
-    if (!email || !password) {
-        alert('Por favor ingresa tu email y contraseña.');
-        return;
-    }
-
-    const url = `${scriptUrl}?action=login`
-        + `&email=${encodeURIComponent(email)}`
-        + `&password=${encodeURIComponent(password)}`;
-
-    const loginBtn = document.querySelector('#login-modal button[type="submit"]') || 
-                     document.querySelector('#login-modal .btn-login');
-    if (loginBtn) loginBtn.disabled = true;
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Guardar datos del usuario
-                localStorage.setItem('userId', data.userId);
-                localStorage.setItem('userAddress', data.address || '');
-
-                // Actualizar estado global
-                isLoggedIn = true;
-                userId = data.userId;
-                userAddress = data.address || '';
-
-                // Actualizar UI
-                const profileLink = document.getElementById('profile-link');
-                if (profileLink) {
-                    profileLink.textContent = 'Mi Perfil (Cerrar Sesión)';
-                    profileLink.onclick = logoutUser;
-                }
-
-                // Cerrar modal
-                closeModal('login-modal');
-
-                alert('¡Bienvenido de nuevo!');
-
-                // Rellenar dirección en formulario de pedido si existe
-                const dirInput = document.getElementById('direccion');
-                if (dirInput && userAddress) {
-                    dirInput.value = userAddress;
-                }
-            } else {
-                alert(data.message || 'Email o contraseña incorrectos.');
-            }
-        })
-        .catch(err => {
-            console.error('Error en login:', err);
-            alert('Error de conexión. Intenta nuevamente.');
-        })
-        .finally(() => {
-            if (loginBtn) loginBtn.disabled = false;
-        });
-}
-
-// ==================== LOGOUT ====================
-function logoutUser() {
-        if (!confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        if (!name || !email || !password) {
+            alert('Completa todos los campos obligatorios');
             return;
         }
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userAddress');
-        isLoggedIn = false;
-        userId = null;
-        userAddress = '';
 
-        alert('Sesión cerrada correctamente.');
-        checkLoginStatus(); // Actualiza el texto y el evento del botón
-    }
-        
-        function loadAllDrinks() {
-            fetch(`${scriptUrl}?action=getAllMenus`)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(data => {
-                    allDrinks = (data.menus || []).filter(menu =>
-                        menu.categoria && menu.categoria.trim() === CATEGORIA_BEBIDAS
-                    );
-                })
-                .catch(() => { allDrinks = []; });
+        if (password.length < 6) {
+            alert('La contraseña debe tener al menos 6 caracteres');
+            return;
         }
-        function loadFilters() {
-            const container = document.getElementById('suggestion-items');
-            showLoading(container);
-            fetch(scriptUrl + '?action=getFilters')
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(data => {
-                    container.innerHTML = '';
-                    if (data.locals?.length > 0) {
-                        data.locals.forEach(local => {
-                            const div = document.createElement('div');
-                            div.className = 'suggestion';
-                            div.dataset.local = local.local_id;
-                            div.innerHTML = `<img src="${local.imagen_url || 'https://placehold.co/200x200?text=' + encodeURIComponent(local.nombre_local)}" alt="${local.nombre_local}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">`;
-                            div.onclick = () => fetchMenus(null, local.local_id);
-                            container.appendChild(div);
-                        });
-                    } else {
-                        container.innerHTML = '<p style="text-align:center;color:#999;">Aún no hay locales disponibles.</p>';
+
+        const url = `${scriptUrl}?action=register`
+            + `&name=${encodeURIComponent(name)}`
+            + `&email=${encodeURIComponent(email)}`
+            + `&password=${encodeURIComponent(password)}`
+            + `&address=${encodeURIComponent(address)}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    alert('¡Registro exitoso! Ahora inicia sesión');
+                    switchToLogin();
+                    // Limpiar formulario
+                    document.getElementById('register-name').value = '';
+                    document.getElementById('register-email').value = '';
+                    document.getElementById('register-password').value = '';
+                    if (document.getElementById('register-address')) {
+                        document.getElementById('register-address').value = '';
                     }
-                })
-                .catch(() => showError(container, 'Error al cargar locales'));
-        }
-        document.querySelector('.categories').addEventListener('click', e => {
-            const cat = e.target.closest('.category');
-            if (cat) fetchMenus(cat.dataset.type, null);
-        });
-        function setupSearch() {
-            const input = document.getElementById('search-input');
-            let timeout;
-            input.addEventListener('input', e => {
-                clearTimeout(timeout);
-                const term = e.target.value.trim();
-                if (term.length >= 3) {
-                    timeout = setTimeout(() => performSearch(term), 600);
-                } else if (term === '') {
-                    document.getElementById('menu-display').style.display = 'none';
+                } else {
+                    alert(data.message || 'Error al registrar');
                 }
+            })
+            .catch(() => alert('Error de conexión. Intenta nuevamente'));
+    }
+
+    // =============================================
+    //           LOGIN
+    // =============================================
+    function loginUser() {
+        const email = document.getElementById('login-email')?.value.trim().toLowerCase();
+        const password = document.getElementById('login-password')?.value.trim();
+
+        if (!email || !password) {
+            alert('Ingresa email y contraseña');
+            return;
+        }
+
+        const url = `${scriptUrl}?action=login`
+            + `&email=${encodeURIComponent(email)}`
+            + `&password=${encodeURIComponent(password)}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('userAddress', data.address || '');
+                    isLoggedIn = true;
+                    userId = data.userId;
+                    userAddress = data.address || '';
+
+                    updateProfileUI();
+                    closeModal('login-modal');
+                    alert('¡Bienvenido!');
+                    
+                    // Rellenar dirección si existe
+                    const dirInput = document.getElementById('direccion');
+                    if (dirInput && userAddress) dirInput.value = userAddress;
+                } else {
+                    alert(data.message || 'Credenciales incorrectas');
+                }
+            })
+            .catch(() => alert('Error de conexión'));
+    }
+
+    // =============================================
+    //           CARGA DE DATOS
+    // =============================================
+    function loadAllDrinks() {
+        fetch(`${scriptUrl}?action=getAllMenus`)
+            .then(r => r.json())
+            .then(data => {
+                allDrinks = (data.menus || []).filter(m => 
+                    m.categoria?.trim() === CATEGORIA_BEBIDAS
+                );
+            })
+            .catch(() => console.error('No se pudieron cargar bebidas'));
+    }
+
+    function loadFilters() {
+        const container = document.getElementById('suggestion-items');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando locales...</div>';
+
+        fetch(scriptUrl + '?action=getFilters')
+            .then(r => r.json())
+            .then(data => {
+                container.innerHTML = '';
+                if (data.locals?.length > 0) {
+                    data.locals.forEach(local => {
+                        const div = document.createElement('div');
+                        div.className = 'suggestion';
+                        div.dataset.local = local.local_id;
+                        div.innerHTML = `
+                            <img src="${local.imagen_url || 'https://placehold.co/200x200?text=' + encodeURIComponent(local.nombre_local)}" 
+                                 alt="${local.nombre_local}"
+                                 onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">
+                        `;
+                        div.onclick = () => fetchMenus(null, local.local_id);
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<p style="text-align:center;color:#999;padding:30px;">Aún no hay locales disponibles</p>';
+                }
+            })
+            .catch(() => {
+                container.innerHTML = '<p style="color:#d32f2f;text-align:center;padding:30px;">Error al cargar locales</p>';
             });
+    }
+
+    // =============================================
+    //           CATEGORÍAS Y BÚSQUEDA
+    // =============================================
+    document.querySelector('.categories')?.addEventListener('click', e => {
+        const cat = e.target.closest('.category');
+        if (cat) {
+            fetchMenus(cat.dataset.type, null);
         }
-        function performSearch(query) {
-            const container = document.getElementById('menu-display');
-            showLoading(container);
-            fetch(`${scriptUrl}?action=search&query=${encodeURIComponent(query)}`)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
-                .catch(() => showError(container, 'Error en búsqueda'));
-        }
-        function fetchMenus(type, local) {
-            const container = document.getElementById('menu-display');
-            showLoading(container);
-            let url = `${scriptUrl}?action=getMenus`;
-            if (type) url += `&type=${encodeURIComponent(type)}`;
-            if (local) url += `&local=${encodeURIComponent(local)}`;
-            fetch(url)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
-                .catch(() => showError(container, 'Error al cargar menús'));
-        }
-        function displayMenus(menus, title) {
-            const container = document.getElementById('menu-display');
-            container.innerHTML = `<h2>Menús - ${title}</h2><div class="menu-items"></div>`;
-            const itemsDiv = container.querySelector('.menu-items');
-            if (menus.length === 0) {
-                itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
-            } else {
-                menus.forEach(menu => {
-                    const div = document.createElement('div');
-                    div.className = 'menu-item';
-                    div.innerHTML = `
-                        <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" alt="${menu.nombre}" onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+    });
+
+    function setupSearch() {
+        const input = document.getElementById('search-input');
+        if (!input) return;
+
+        let timeout;
+        input.addEventListener('input', e => {
+            clearTimeout(timeout);
+            const term = e.target.value.trim();
+            
+            if (term.length >= 3) {
+                timeout = setTimeout(() => performSearch(term), 600);
+            } else if (term === '') {
+                document.getElementById('menu-display').style.display = 'none';
+            }
+        });
+    }
+
+    function performSearch(query) {
+        const container = document.getElementById('menu-display');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading"><div class="spinner"></div> Buscando...</div>';
+        container.style.display = 'block';
+
+        fetch(`${scriptUrl}?action=search&query=${encodeURIComponent(query)}`)
+            .then(r => r.json())
+            .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
+            .catch(() => {
+                container.innerHTML = '<p style="color:#d32f2f;text-align:center;padding:40px;">Error en la búsqueda</p>';
+            });
+    }
+
+    function fetchMenus(type, local) {
+        const container = document.getElementById('menu-display');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+        container.style.display = 'block';
+
+        let url = `${scriptUrl}?action=getMenus`;
+        if (type) url += `&type=${encodeURIComponent(type)}`;
+        if (local) url += `&local=${encodeURIComponent(local)}`;
+
+        fetch(url)
+            .then(r => r.json())
+            .then(menus => displayMenus(menus, type || 'Menús del local'))
+            .catch(() => {
+                container.innerHTML = '<p style="color:#d32f2f;text-align:center;padding:40px;">Error al cargar menús</p>';
+            });
+    }
+
+    function displayMenus(menus, title) {
+        const container = document.getElementById('menu-display');
+        if (!container) return;
+
+        let html = `<h2>${title}</h2><div class="menu-items">`;
+
+        if (menus.length === 0) {
+            html += '<p style="text-align:center;color:#999;padding:60px 20px;">No se encontraron menús</p>';
+        } else {
+            menus.forEach(menu => {
+                html += `
+                    <div class="menu-item">
+                        <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" 
+                             alt="${menu.nombre}"
+                             onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
                         <h3>${menu.nombre}</h3>
                         <p>${menu.descripcion || 'Sin descripción'}</p>
-                        <p>$${menu.precio}</p>
-                        <button>Agregar al carrito</button>
-                    `;
-                    div.querySelector('button').onclick = () => addToCart(menu);
-                    itemsDiv.appendChild(div);
-                });
-            }
-            container.style.display = 'block';
+                        <p>$${Number(menu.precio).toLocaleString('es-AR')}</p>
+                        <button onclick="addToCart(${JSON.stringify(menu).replace(/"/g,'&quot;')})">Agregar al carrito</button>
+                    </div>
+                `;
+            });
         }
-        function showLoading(container) {
-    container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
-    
-    // Solo aplicamos display: block al contenedor de menús
-    if (container.id === 'menu-display') {
-        container.style.display = 'block';
+
+        html += '</div>';
+        container.innerHTML = html;
     }
-    // Para suggestion-items (y cualquier otro), no hacemos nada → mantiene su flex + center
-}
-        function showError(container, msg) {
-            container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
-        }
-        // ==================== CARRITO ====================
+
+    // =============================================
+    //           CARRITO
+    // =============================================
     function setupCart() {
         const cartIcon = document.getElementById('cart-icon');
         const cartSection = document.getElementById('cart-section');
 
-        cartIcon.onclick = function () {
-            // Toggle simple: si está oculto → mostrar, si está visible → ocultar
+        if (!cartIcon || !cartSection) return;
+
+        cartIcon.onclick = () => {
             if (cartSection.style.display === 'none' || cartSection.style.display === '') {
                 cartSection.style.display = 'block';
                 updateCartDisplay();
@@ -1850,25 +1853,20 @@ function logoutUser() {
             }
         };
 
-        document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
-        document.getElementById('checkout-btn').onclick = checkout;
-    }
-
-    function openCart() {
-        document.getElementById('cart-section').style.display = 'block';
-        updateCartDisplay();
+        document.getElementById('delivery-type')?.addEventListener('change', updateCartDisplay);
+        document.getElementById('checkout-btn')?.addEventListener('click', checkout);
     }
 
     function addToCart(menu) {
         if (!isLoggedIn) {
             showModal('login-modal');
-            alert('¡Debes iniciar sesión para agregar productos al carrito!');
+            alert('Debes iniciar sesión para agregar productos');
             return;
         }
 
         const item = {
             idLocal: menu.local_id,
-            nombreLocal: menu.nombre_local || 'Local desconocido',
+            nombreLocal: menu.nombre_local || 'Local',
             idProducto: menu.id,
             nombreProducto: menu.nombre,
             precioUnitario: Number(menu.precio),
@@ -1886,69 +1884,91 @@ function logoutUser() {
         updateCartCount();
         updateCartDisplay();
 
-        // Mensaje con botón "Ver carrito"
-        if (confirm(`¡${menu.nombre} agregado al carrito!\n\n¿Quieres ver el carrito ahora?`)) {
-            openCart();
+        if (confirm(`${menu.nombre} agregado al carrito!\n\n¿Ver carrito ahora?`)) {
+            document.getElementById('cart-section').style.display = 'block';
         }
     }
 
     function updateCartCount() {
         const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
-        document.getElementById('cart-count').textContent = total;
+        const countEl = document.getElementById('cart-count');
+        if (countEl) countEl.textContent = total;
     }
-        function hasDrink() {
-            return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
-        }
-        function calculatePrices() {
-            const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
-            const delivery = document.getElementById('delivery-type').value;
-            let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
-            return { subtotal, shipping, total: subtotal + shipping, delivery };
-        }
-        function updateCartDisplay() {
-            const list = document.getElementById('cart-items');
-            const notice = document.getElementById('free-shipping-notice');
-            const drinksPanel = document.getElementById('drinks-panel');
-            list.innerHTML = '';
-            notice.innerHTML = '';
-            if (cart.length === 0) {
-                list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
-            } else {
-                cart.forEach((item, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'cart-item';
-                    div.innerHTML = `
-                        <div class="cart-item-left">
-                            <div class="cart-item-name">${item.nombreProducto}</div>
-                            <div class="quantity-controls">
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
-                                <span class="quantity">${item.cantidad}</span>
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
-                            </div>
+
+    function hasDrink() {
+        return cart.some(i => i.categoria?.trim() === CATEGORIA_BEBIDAS);
+    }
+
+    function calculatePrices() {
+        const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
+        const delivery = document.getElementById('delivery-type')?.value || 'envio';
+        const shipping = (delivery === 'envio') ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
+
+        return {
+            subtotal,
+            shipping,
+            total: subtotal + shipping,
+            deliveryType: delivery
+        };
+    }
+
+    function updateCartDisplay() {
+        const list = document.getElementById('cart-items');
+        const notice = document.getElementById('free-shipping-notice');
+        const drinksPanel = document.getElementById('drinks-panel');
+
+        if (!list) return;
+
+        list.innerHTML = '';
+        if (notice) notice.innerHTML = '';
+        if (drinksPanel) drinksPanel.style.display = 'none';
+
+        if (cart.length === 0) {
+            list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
+        } else {
+            cart.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <div class="cart-item-left">
+                        <div class="cart-item-name">${item.nombreProducto}</div>
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
+                            <span class="quantity">${item.cantidad}</span>
+                            <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
                         </div>
-                        <div class="cart-item-price">$${(item.precioUnitario * item.cantidad)}</div>
-                        <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
-                    `;
-                    list.appendChild(div);
-                });
+                    </div>
+                    <div class="cart-item-price">$${(item.precioUnitario * item.cantidad).toLocaleString('es-AR')}</div>
+                    <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        const prices = calculatePrices();
+
+        document.getElementById('subtotal').textContent = `$${prices.subtotal.toLocaleString('es-AR')}`;
+        document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping.toLocaleString('es-AR')}`;
+        document.getElementById('final-total').textContent = `$${prices.total.toLocaleString('es-AR')}`;
+
+        // Mensajes envío gratis
+        if (prices.shipping === 0 && cart.length > 0) {
+            if (notice) {
+                notice.innerHTML = prices.deliveryType === 'retiro'
+                    ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis</div>'
+                    : '<div class="free-shipping-msg">¡Envío GRATIS por bebida incluida!</div>';
             }
-            const prices = calculatePrices();
-            document.getElementById('subtotal').textContent = `$${prices.subtotal}`;
-            document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping}`;
-            document.getElementById('final-total').textContent = `$${prices.total}`;
-            if (prices.shipping === 0 && cart.length > 0) {
-                notice.innerHTML = prices.delivery === 'retiro'
-                    ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
-                    : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
-                drinksPanel.style.display = 'none';
-            } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
+        } else if (prices.deliveryType === 'envio' && !hasDrink() && cart.length > 0) {
+            if (drinksPanel) {
                 drinksPanel.style.display = 'block';
                 renderDrinksCarousel();
-            } else {
-                drinksPanel.style.display = 'none';
             }
-            const dirInput = document.getElementById('direccion');
-            if (prices.delivery === 'retiro') {
+        }
+
+        // Dirección requerida según tipo de entrega
+        const dirInput = document.getElementById('direccion');
+        if (dirInput) {
+            if (prices.deliveryType === 'retiro') {
                 dirInput.placeholder = "No requerida (retirás en local)";
                 dirInput.required = false;
             } else {
@@ -1956,166 +1976,180 @@ function logoutUser() {
                 dirInput.required = true;
             }
         }
-        window.changeQuantity = function(idx, delta) {
-            if (cart[idx].cantidad + delta > 0) {
-                cart[idx].cantidad += delta;
-            } else {
-                cart.splice(idx, 1);
-            }
-            updateCartCount();
-            updateCartDisplay();
-        };
-        window.removeFromCart = function(idx) {
+    }
+
+    window.changeQuantity = function(idx, delta) {
+        if (cart[idx].cantidad + delta > 0) {
+            cart[idx].cantidad += delta;
+        } else {
             cart.splice(idx, 1);
-            updateCartCount();
-            updateCartDisplay();
-        };
-        function renderDrinksCarousel() {
-            const container = document.getElementById('drinks-container');
-            container.innerHTML = '';
-            if (allDrinks.length === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#666;padding:40px;width:100%;">No hay bebidas disponibles.</p>';
-                return;
-            }
-            allDrinks.forEach(drink => {
-                const card = document.createElement('div');
-                card.className = 'drink-card';
-                card.innerHTML = `
-                    <img src="${drink.imagen_url || 'https://placehold.co/300x140?text=Bebida'}" alt="${drink.nombre}" onerror="this.src='https://placehold.co/300x140?text=Sin+Imagen'">
-                    <h4>${drink.nombre}</h4>
-                    <div class="price">$${drink.precio}</div>
-                    <button>Agregar</button>
-                `;
-                card.querySelector('button').onclick = () => addToCart(drink);
-                container.appendChild(card);
-            });
-            currentDrinkIndex = 0;
-            scrollCarousel();
-            setupCarouselControls();
         }
-        function setupCarouselControls() {
-            document.getElementById('prev-drink').onclick = () => {
-                if (currentDrinkIndex > 0) {
-                    currentDrinkIndex--;
-                    scrollCarousel();
-                }
-            };
-            document.getElementById('next-drink').onclick = () => {
-                const card = document.querySelector('.drink-card');
-                if (!card) return;
-                const cardWidth = card.offsetWidth + 12;
-                const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
-                if (currentDrinkIndex < allDrinks.length - visible) {
-                    currentDrinkIndex++;
-                    scrollCarousel();
-                }
-            };
-            window.addEventListener('resize', () => {
-                currentDrinkIndex = 0;
-                scrollCarousel();
-            });
-        }
-        function scrollCarousel() {
-            const container = document.getElementById('drinks-container');
-            if (!container || container.children.length === 0) return;
-            const card = container.children[0];
-            const cardWidth = card.offsetWidth + 12;
-            container.style.transform = `translateX(-${currentDrinkIndex * cardWidth}px)`;
-            document.getElementById('prev-drink').disabled = currentDrinkIndex === 0;
-            const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
-            document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
-        }
-        function checkout() {
-    if (!isLoggedIn) {
-        showModal('login-modal');
-        alert('¡Debes iniciar sesión para realizar el pedido!');
-        return;
-    }
-
-    if (cart.length === 0) {
-        alert('El carrito está vacío');
-        return;
-    }
-
-    const delivery = document.getElementById('delivery-type').value;
-    const metodoPago = document.getElementById('metodo-pago').value;
-    const observaciones = document.getElementById('observaciones').value.trim();
-
-    if (!metodoPago) {
-        alert('Selecciona un método de pago');
-        return;
-    }
-
-    let direccion = '';
-    if (delivery === 'envio') {
-        direccion = document.getElementById('direccion').value.trim();
-        if (!direccion) {
-            alert('Ingresa la dirección de entrega');
-            return;
-        }
-    } else {
-        direccion = 'Retiro en local';
-    }
-
-    const prices = calculatePrices();
-
-    const payload = {
-        action: 'createOrder',
-        data: {
-            userId: userId,
-            fecha: new Date().toLocaleDateString('es-AR'),
-            direccion: direccion,
-            metodoPago: metodoPago,
-            observaciones: observaciones,
-            envioGratis: prices.shipping === 0,
-            tipoEntrega: delivery,
-            cart: cart
-        }
-    };
-
-    // Mostrar loading o deshabilitar botón si quieres (opcional)
-    const checkoutBtn = document.getElementById('checkout-btn');
-    const originalText = checkoutBtn.textContent;
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Procesando...';
-
-    fetch(scriptUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        let mensaje = '¡Pedido realizado con éxito!';
-        if (prices.shipping === 0) {
-            mensaje = delivery === 'retiro' 
-                ? '¡Pedido para retiro confirmado!' 
-                : '¡Pedido con envío GRATIS confirmado!';
-        }
-
-        alert(mensaje);
-
-        // Limpiar todo
-        cart = [];
         updateCartCount();
         updateCartDisplay();
-        document.getElementById('cart-section').style.display = 'none';
-        document.getElementById('checkout-form').reset();
+    };
 
-        // Si hay dirección guardada, la vuelve a poner por si el usuario quiere hacer otro pedido rápido
-        if (userAddress) {
-            document.getElementById('direccion').value = userAddress;
+    window.removeFromCart = function(idx) {
+        cart.splice(idx, 1);
+        updateCartCount();
+        updateCartDisplay();
+    };
+
+    // =============================================
+    //       CARRUSEL DE BEBIDAS (ENVÍO GRATIS)
+    // =============================================
+    function renderDrinksCarousel() {
+        const container = document.getElementById('drinks-container');
+        if (!container || allDrinks.length === 0) return;
+
+        container.innerHTML = '';
+
+        allDrinks.forEach(drink => {
+            const card = document.createElement('div');
+            card.className = 'drink-card';
+            card.innerHTML = `
+                <img src="${drink.imagen_url || 'https://placehold.co/300x140?text=Bebida'}" 
+                     alt="${drink.nombre}"
+                     onerror="this.src='https://placehold.co/300x140?text=Sin+Imagen'">
+                <h4>${drink.nombre}</h4>
+                <div class="price">$${Number(drink.precio).toLocaleString('es-AR')}</div>
+                <button onclick="addToCart(${JSON.stringify(drink).replace(/"/g,'&quot;')})">Agregar</button>
+            `;
+            container.appendChild(card);
+        });
+
+        currentDrinkIndex = 0;
+        scrollCarousel();
+        setupCarouselControls();
+    }
+
+    function setupCarouselControls() {
+        const prev = document.getElementById('prev-drink');
+        const next = document.getElementById('next-drink');
+
+        if (!prev || !next) return;
+
+        prev.onclick = () => {
+            if (currentDrinkIndex > 0) {
+                currentDrinkIndex--;
+                scrollCarousel();
+            }
+        };
+
+        next.onclick = () => {
+            const card = document.querySelector('.drink-card');
+            if (!card) return;
+            const cardWidth = card.offsetWidth + 12;
+            const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
+            if (currentDrinkIndex < allDrinks.length - visible) {
+                currentDrinkIndex++;
+                scrollCarousel();
+            }
+        };
+    }
+
+    function scrollCarousel() {
+        const container = document.getElementById('drinks-container');
+        if (!container) return;
+
+        const card = container.children[0];
+        if (!card) return;
+
+        const cardWidth = card.offsetWidth + 12;
+        container.style.transform = `translateX(-${currentDrinkIndex * cardWidth}px)`;
+
+        document.getElementById('prev-drink').disabled = currentDrinkIndex === 0;
+        
+        const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
+        document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
+    }
+
+    // =============================================
+    //           FINALIZAR PEDIDO
+    // =============================================
+    function checkout() {
+        if (!isLoggedIn) {
+            showModal('login-modal');
+            alert('Debes iniciar sesión para realizar el pedido');
+            return;
         }
-    })
-    .catch((error) => {
-        console.error('Error al enviar pedido:', error);
-        alert('Pedido enviado (posible error de red). Revisa tu conexión.');
-    })
-    .finally(() => {
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = originalText;
-    });
-}
-    </script>
+
+        if (cart.length === 0) {
+            alert('El carrito está vacío');
+            return;
+        }
+
+        const delivery = document.getElementById('delivery-type')?.value || 'envio';
+        const metodoPago = document.getElementById('metodo-pago')?.value;
+        const observaciones = document.getElementById('observaciones')?.value.trim() || '';
+        let direccion = '';
+
+        if (delivery === 'envio') {
+            direccion = document.getElementById('direccion')?.value.trim();
+            if (!direccion) {
+                alert('Por favor ingresa la dirección de entrega');
+                return;
+            }
+        } else {
+            direccion = 'Retiro en local';
+        }
+
+        if (!metodoPago) {
+            alert('Selecciona un método de pago');
+            return;
+        }
+
+        const prices = calculatePrices();
+
+        const payload = {
+            action: 'createOrder',
+            data: {
+                userId: userId,
+                fecha: new Date().toLocaleDateString('es-AR'),
+                direccion: direccion,
+                metodoPago: metodoPago,
+                observaciones: observaciones,
+                envioGratis: prices.shipping === 0,
+                tipoEntrega: delivery,
+                cart: cart
+            }
+        };
+
+        const btn = document.getElementById('checkout-btn');
+        if (btn) {
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Procesando...';
+        }
+
+        fetch(scriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            alert('¡Pedido realizado con éxito!');
+            cart = [];
+            updateCartCount();
+            updateCartDisplay();
+            document.getElementById('cart-section').style.display = 'none';
+            document.getElementById('checkout-form')?.reset();
+
+            if (userAddress) {
+                const dir = document.getElementById('direccion');
+                if (dir) dir.value = userAddress;
+            }
+        })
+        .catch(() => {
+            alert('Pedido enviado (posible problema de red)');
+        })
+        .finally(() => {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+    }
+</script>
 </body>
 </html>
