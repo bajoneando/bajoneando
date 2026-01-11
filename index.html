@@ -61,27 +61,37 @@
         white-space: nowrap;
         cursor: pointer;
     }
+    /* Ícono de carrito con imagen */
     .cart-icon {
         position: relative;
         cursor: pointer;
-    }
-    .cart-icon span {
-        font-size: 28px;
-    }
-    .cart-count {
-        position: absolute;
-        top: -8px;
-        right: -10px;
-        background-color: #d32f2f;
-        color: white;
-        border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        font-size: 12px;
+        width: 48px;
+        height: 48px;
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+    .cart-icon img {
+        width: 85%;
+        height: 85%;
+        object-fit: contain;
+    }
+    .cart-count {
+        position: absolute;
+        top: -6px;
+        right: -8px;
+        background: #d32f2f;
+        color: white;
+        border-radius: 50%;
+        min-width: 22px;
+        height: 22px;
+        font-size: 12px;
         font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 5px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     main {
         flex: 1;
@@ -770,22 +780,21 @@
     margin-bottom: 8px;
 }
 
-        .menu-item {
-    position: relative !important; /* Fuerza el posicionamiento relativo */
+.menu-item {
+    position: relative !important;
     padding: 12px;
-    overflow: hidden; /* Evita que el corazón se salga */
+    overflow: hidden;
 }
 
 .fav-btn {
     position: absolute !important;
     top: 10px !important;
     right: 10px !important;
-    background: rgba(255, 255, 255, 0.8) !important; /* fondo semi-transparente para que se vea */
+    background: rgba(255, 255, 255, 0.8) !important;
     border: none !important;
     border-radius: 50% !important;
     width: 40px !important;
     height: 40px !important;
-    font-size: 24px !important;
     cursor: pointer !important;
     display: flex !important;
     align-items: center !important;
@@ -793,6 +802,8 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
     transition: all 0.2s !important;
     z-index: 10 !important;
+    overflow: hidden; /* importante para las imágenes */
+    padding: 4px; /* pequeño margen interno */
 }
 
 .fav-btn:hover {
@@ -800,10 +811,131 @@
     background: white !important;
 }
 
-.fav-btn.active {
-    color: #e53935 !important;
-    background: white !important;
+/* Las dos imágenes se superponen y cambian con opacidad */
+.fav-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.25s ease;
 }
+
+.fav-btn .fav-empty {
+    opacity: 1;
+}
+
+.fav-btn.active .fav-empty {
+    opacity: 0;
+}
+
+.fav-btn .fav-filled {
+    opacity: 0;
+}
+
+.fav-btn.active .fav-filled {
+    opacity: 1;
+}
+
+        /* ============================================= */
+/*          DESKTOP - 3 columnas + ajustes      */
+/* ============================================= */
+@media (min-width: 992px) {
+    .menu-items {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 24px !important;           /* un poco menos espacio que 28px */
+        max-width: 1200px;               /* ancho total más controlado */
+        margin: 30px auto !important;
+        padding: 0 15px;
+    }
+
+    .menu-item {
+        max-width: none !important;
+        width: 100%;                     /* ocupa todo el espacio de la celda */
+        background: white;
+        border-radius: 16px;
+        padding: 12px !important;        /* ← menos padding = tarjeta más compacta */
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Imagen más pequeña y proporcionada */
+    .menu-item img {
+        width: 100%;
+        height: 220px !important;        /* ← bajamos de 280px → más equilibrado */
+        object-fit: cover;
+        border-radius: 12px;
+    }
+
+    /* Aseguramos que el botón favorito esté bien posicionado y visible */
+    .fav-btn {
+        position: absolute !important;
+        top: 12px !important;
+        right: 12px !important;
+        width: 38px !important;          /* ← un poco más pequeño */
+        height: 38px !important;
+        background: rgba(255, 255, 255, 0.92) !important;
+        border-radius: 50% !important;
+        padding: 6px !important;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
+        z-index: 15 !important;          /* más arriba que la mayoría de elementos */
+        transition: all 0.2s ease !important;
+    }
+
+    .fav-btn:hover {
+        transform: scale(1.12) !important;
+        background: white !important;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
+    }
+
+    /* Íconos dentro del botón favorito más pequeños también */
+    .fav-btn img {
+        width: 80% !important;
+        height: 80% !important;
+    }
+
+    /* Opcional: texto un poco más pequeño para mantener proporción */
+    .menu-item h3 {
+        font-size: 1.15rem !important;
+        margin: 12px 0 6px !important;
+    }
+
+    .menu-item p {
+        font-size: 0.92rem !important;
+    }
+
+    .menu-item p:last-of-type {
+        font-size: 1.4rem !important;
+        margin: 10px 0 !important;
+    }
+
+    .menu-item button {  /* botón "Agregar al carrito" */
+        padding: 11px !important;
+        font-size: 0.98rem !important;
+    }
+}
+
+/* Para que no se rompa en tablets grandes */
+@media (min-width: 768px) and (max-width: 991px) {
+    .menu-items {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 20px !important;
+    }
+    
+    .menu-item img {
+        height: 200px !important;
+    }
+    
+    .fav-btn {
+        width: 36px !important;
+        height: 36px !important;
+        top: 10px !important;
+        right: 10px !important;
+    }
+}
+        
 </style>
 </head>
 <body>
@@ -832,10 +964,10 @@
 </div>
     </div>
 
-    <div class="cart-icon" id="cart-icon">
-        <span>🛒</span>
-        <div class="cart-count" id="cart-count">0</div>
-    </div>
+    <!-- Reemplaza el <div class="cart-icon"> actual por: -->
+<div class="cart-icon" id="cart-icon">
+  <img src="https://i.postimg.cc/vBY0wJNq/18611-(1).jpg" alt="Carrito de compras">
+  <div class="cart-count" id="cart-count">0</div>
 </div>
     </header>
     <main>
@@ -878,8 +1010,8 @@
                 <div class="cart-items-list" id="cart-items"></div>
                 <div class="price-summary">
                     <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$500</span></div>
-                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$500</span></div>
+                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
+                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
                 </div>
                 <div id="free-shipping-notice"></div>
             </div>
@@ -894,15 +1026,20 @@
             <form id="checkout-form">
                 <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
                 <select id="metodo-pago" required>
-                    <option value="">Método de pago</option>
-                    <option value="Tarjeta">Transferencia</option>
-                    <option value="Efectivo">Efectivo</option>
-                </select>
+    <option value="">Método de pago</option>
+    <option value="transferencia">Transferencia / Mercado Pago</option>
+    <option value="efectivo">Efectivo</option>
+</select>
+
+<!-- Contenedor donde se mostrará el checkout de MP -->
+<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
+                
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
         </div>
     </main>
+    
     <!-- Footer -->
     <footer class="text-center">
         <div class="container">
@@ -967,16 +1104,19 @@
 </div>
    
     <script>
+const MP_ACCESS_TOKEN = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795";
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
 
 let cart = [];
 let allDrinks = [];
 let currentDrinkIndex = 0;
 const CATEGORIA_BEBIDAS = "Bebidas";
-const COSTO_ENVIO = 500;
+const COSTO_ENVIO = 2500;
 let isLoggedIn = false;
 let userId = null;
 let userAddress = '';
+let currentPreferenceId = null;     // para saber qué preferencia estamos esperando
+let pendingOrderData = null;        // guardamos temporalmente los datos del pedido
 
 // === NUEVA VARIABLE GLOBAL PARA FAVORITOS ===
 let userFavorites = []; // array de menuIds favoritos del usuario actual
@@ -1111,10 +1251,8 @@ function updateFavoriteButtons() {
         const menuId = btn.dataset.menuId;
         if (userFavorites.includes(menuId)) {
             btn.classList.add('active');
-            btn.textContent = '❤️';
         } else {
             btn.classList.remove('active');
-            btn.textContent = '♡';
         }
     });
 }
@@ -1164,47 +1302,46 @@ function displayMenus(menus, title) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
-
+    
     // Limpiamos caché anterior
     currentDisplayedMenus = {};
-
+    
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
         menus.forEach((menu, index) => {
-            // Guardamos el menú completo en caché usando su ID
             currentDisplayedMenus[menu.id] = menu;
-
             const div = document.createElement('div');
             div.className = 'menu-item';
             div.innerHTML = `
-                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" 
-                     alt="${menu.nombre}" 
+                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
+                     alt="${menu.nombre}"
                      onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
                 <h3>${menu.nombre}</h3>
                 <p>${menu.descripcion || 'Sin descripción'}</p>
                 <p>$${menu.precio}</p>
-                
-                <!-- Botón agregar al carrito - ahora usa solo el ID -->
+               
+                <!-- Botón agregar al carrito -->
                 <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
-                
-                <!-- Botón favorito -->
-                <button class="fav-btn" 
+               
+                <!-- Botón favorito con imágenes (sin texto) -->
+                <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
                         data-menu-id="${menu.id}"
                         onclick="toggleFavorite('${menu.id}')">
-                    ${userFavorites.includes(menu.id) ? '❤️' : '♡'}
+                    <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
+                    <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
                 </button>
             `;
             itemsDiv.appendChild(div);
         });
     }
-
+    
     container.style.display = 'block';
     
     // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
-
+        
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1367,20 +1504,25 @@ function loginUser() {
         }
         // ==================== CARRITO ====================
     function setupCart() {
-        const cartIcon = document.getElementById('cart-icon');
-        const cartSection = document.getElementById('cart-section');
-        cartIcon.onclick = function () {
-            // Toggle simple: si está oculto → mostrar, si está visible → ocultar
-            if (cartSection.style.display === 'none' || cartSection.style.display === '') {
-                cartSection.style.display = 'block';
-                updateCartDisplay();
-            } else {
-                cartSection.style.display = 'none';
-            }
-        };
-        document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
-        document.getElementById('checkout-btn').onclick = checkout;
-    }
+    const cartIcon = document.getElementById('cart-icon');
+    const cartSection = document.getElementById('cart-section');
+    cartIcon.onclick = function () {
+        if (cartSection.style.display === 'none' || cartSection.style.display === '') {
+            cartSection.style.display = 'block';
+            updateCartDisplay();
+        } else {
+            cartSection.style.display = 'none';
+        }
+    };
+
+    // Ya tenías esto
+    document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
+
+    // ← NUEVO: Recalcular precios y total cuando cambie el método de pago
+    document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
+
+    document.getElementById('checkout-btn').onclick = checkout;
+}
     function openCart() {
         document.getElementById('cart-section').style.display = 'block';
         updateCartDisplay();
@@ -1421,76 +1563,106 @@ function loginUser() {
             return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
         }
         function calculatePrices() {
-            const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
-            const delivery = document.getElementById('delivery-type').value;
-            let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
-            return { subtotal, shipping, total: subtotal + shipping, delivery };
-        }
+    const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
+    const delivery = document.getElementById('delivery-type').value;
+    const metodoPago = document.getElementById('metodo-pago').value; // ← nuevo: leemos el método
+
+    // Envío
+    let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
+
+    // Comisión 4% SOLO si es Transferencia / Mercado Pago
+    let comision = 0;
+    if (metodoPago === "transferencia") {
+        comision = subtotal * 0.04; // 4%
+    }
+
+    const total = subtotal + shipping + comision;
+
+    return { 
+        subtotal, 
+        shipping, 
+        comision,           // ← nuevo campo
+        total, 
+        delivery,
+        metodoPago 
+    };
+}
         function updateCartDisplay() {
-            const list = document.getElementById('cart-items');
-            const notice = document.getElementById('free-shipping-notice');
-            const drinksPanel = document.getElementById('drinks-panel');
-            list.innerHTML = '';
-            notice.innerHTML = '';
-            if (cart.length === 0) {
-                list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
-            } else {
-                cart.forEach((item, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'cart-item';
-                    div.innerHTML = `
-                        <div class="cart-item-left">
-                            <div class="cart-item-name">${item.nombreProducto}</div>
-                            <div class="quantity-controls">
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
-                                <span class="quantity">${item.cantidad}</span>
-                                <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
-                            </div>
-                        </div>
-                        <div class="cart-item-price">$${(item.precioUnitario * item.cantidad)}</div>
-                        <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
-                    `;
-                    list.appendChild(div);
-                });
-            }
-            const prices = calculatePrices();
-            document.getElementById('subtotal').textContent = `$${prices.subtotal}`;
-            document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping}`;
-            document.getElementById('final-total').textContent = `$${prices.total}`;
-            if (prices.shipping === 0 && cart.length > 0) {
-                notice.innerHTML = prices.delivery === 'retiro'
-                    ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
-                    : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
-                drinksPanel.style.display = 'none';
-            } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
-                drinksPanel.style.display = 'block';
-                renderDrinksCarousel();
-            } else {
-                drinksPanel.style.display = 'none';
-            }
-            const dirInput = document.getElementById('direccion');
-            if (prices.delivery === 'retiro') {
-                dirInput.placeholder = "No requerida (retirás en local)";
-                dirInput.required = false;
-            } else {
-                dirInput.placeholder = "Dirección de entrega (requerida)";
-                dirInput.required = true;
-            }
-        }
-        window.changeQuantity = function(idx, delta) {
-            if (cart[idx].cantidad + delta > 0) {
-                cart[idx].cantidad += delta;
-            } else {
-                cart.splice(idx, 1);
-            }
-            updateCartCount();
-            updateCartDisplay();
-        };
-        window.removeFromCart = function(idx) {
-            cart.splice(idx, 1);
-            updateCartCount();
-            updateCartDisplay();
-        };
+    const list = document.getElementById('cart-items');
+    const notice = document.getElementById('free-shipping-notice');
+    const drinksPanel = document.getElementById('drinks-panel');
+    list.innerHTML = '';
+    notice.innerHTML = '';
+
+    if (cart.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
+    } else {
+        cart.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'cart-item';
+            div.innerHTML = `
+                <div class="cart-item-left">
+                    <div class="cart-item-name">${item.nombreProducto}</div>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
+                        <span class="quantity">${item.cantidad}</span>
+                        <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
+                    </div>
+                </div>
+                <div class="cart-item-price">$${(item.precioUnitario * item.cantidad).toFixed(2)}</div>
+                <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    const prices = calculatePrices();
+
+    // Mostrar subtotal
+    document.getElementById('subtotal').textContent = `$${prices.subtotal.toFixed(2)}`;
+
+    // Envío
+    document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping.toFixed(2)}`;
+
+    // Nueva línea: Comisión (solo aparece si hay comisión)
+    let comisionLine = '';
+    if (prices.comision > 0) {
+        comisionLine = `<div class="price-line"><span>Comisión 4% (Mercado Pago)</span><span>+$${prices.comision.toFixed(2)}</span></div>`;
+    }
+
+    // Actualizar el HTML del resumen de precios dinámicamente
+    const priceSummary = document.querySelector('.price-summary');
+    priceSummary.innerHTML = `
+        <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$${prices.subtotal.toFixed(2)}</span></div>
+        <div class="price-line"><span>Envío</span><span id="shipping-cost">${prices.shipping === 0 ? 'GRATIS' : '$'+prices.shipping.toFixed(2)}</span></div>
+        ${comisionLine}
+        <div class="price-line total"><span>Total a pagar</span><span id="final-total">$${prices.total.toFixed(2)}</span></div>
+    `;
+
+    // Mensaje envío gratis
+    if (prices.shipping === 0 && cart.length > 0) {
+        notice.innerHTML = prices.delivery === 'retiro'
+            ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
+            : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
+        drinksPanel.style.display = 'none';
+    } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
+        drinksPanel.style.display = 'block';
+        renderDrinksCarousel();
+    } else {
+        drinksPanel.style.display = 'none';
+    }
+
+    // Actualizar dirección según tipo entrega
+    const dirInput = document.getElementById('direccion');
+    if (prices.delivery === 'retiro') {
+        dirInput.placeholder = "No requerida (retirás en local)";
+        dirInput.required = false;
+    } else {
+        dirInput.placeholder = "Dirección de entrega (requerida)";
+        dirInput.required = true;
+    }
+}
+        
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
@@ -1546,23 +1718,27 @@ function loginUser() {
             const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
             document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
         }
-        function checkout() {
+        async function checkout() {
     if (!isLoggedIn) {
         showModal('login-modal');
         alert('¡Debes iniciar sesión para realizar el pedido!');
         return;
     }
+
     if (cart.length === 0) {
         alert('El carrito está vacío');
         return;
     }
+
     const delivery = document.getElementById('delivery-type').value;
     const metodoPago = document.getElementById('metodo-pago').value;
     const observaciones = document.getElementById('observaciones').value.trim();
+
     if (!metodoPago) {
         alert('Selecciona un método de pago');
         return;
     }
+
     let direccion = '';
     if (delivery === 'envio') {
         direccion = document.getElementById('direccion').value.trim();
@@ -1573,58 +1749,208 @@ function loginUser() {
     } else {
         direccion = 'Retiro en local';
     }
+
     const prices = calculatePrices();
-    const payload = {
-        action: 'createOrder',
-        data: {
-            userId: userId,
-            fecha: new Date().toLocaleDateString('es-AR'),
-            direccion: direccion,
-            metodoPago: metodoPago,
-            observaciones: observaciones,
+
+    // ── Caso especial: Transferencia / Mercado Pago ────────────────────────
+    if (metodoPago === "transferencia") {
+        await handleMercadoPagoPayment(direccion, delivery, prices, observaciones);
+        return;
+    }
+
+    // ── Flujo normal para Efectivo ─────────────────────────────────────────
+    await createOrderNormal(direccion, metodoPago, delivery, prices, observaciones);
+}
+
+        async function handleMercadoPagoPayment(direccion, delivery, prices, observaciones) {
+    const checkoutContainer = document.getElementById('mercadopago-checkout');
+    const checkoutBtn = document.getElementById('checkout-btn');
+
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Generando pago seguro...';
+
+    try {
+        // Generamos external_reference único y traceable
+        const externalRef = `WEEP-ORD-${userId}-${Date.now()}`;
+
+        console.log("Iniciando Mercado Pago con externalRef:", externalRef);
+
+        const preference = {
+            items: [{
+                title: `Pedido Weep #${Date.now()}`,
+                quantity: 1,
+                currency_id: "ARS",
+                unit_price: prices.total
+            }],
+            payer: {
+                email: localStorage.getItem('userEmail') || "cliente@weep.com.ar"
+            },
+            external_reference: externalRef,
+            back_urls: {
+                success: window.location.href + '?status=approved',
+                failure: window.location.href + '?status=failure',
+                pending: window.location.href + '?status=pending'
+            },
+            auto_return: "approved"
+        };
+
+        const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${MP_ACCESS_TOKEN}`
+            },
+            body: JSON.stringify(preference)
+        });
+
+        if (!res.ok) {
+            const error = await res.text();
+            throw new Error(`Error ${res.status}: ${error}`);
+        }
+
+        const data = await res.json();
+
+        if (!data.init_point) {
+            throw new Error("No se recibió init_point");
+        }
+
+        // Guardamos datos para confirmación posterior
+        pendingOrderData = {
+            userId,
+            fecha: new Date().toLocaleString('es-AR'),
+            direccion,
+            metodoPago: "Mercado Pago",
+            observaciones,
             envioGratis: prices.shipping === 0,
             tipoEntrega: delivery,
-            cart: cart
-        }
-    };
-    // Mostrar loading o deshabilitar botón si quieres (opcional)
-    const checkoutBtn = document.getElementById('checkout-btn');
-    const originalText = checkoutBtn.textContent;
-    checkoutBtn.disabled = true;
-    checkoutBtn.textContent = 'Procesando...';
-    fetch(scriptUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        let mensaje = '¡Pedido realizado con éxito!';
-        if (prices.shipping === 0) {
-            mensaje = delivery === 'retiro'
-                ? '¡Pedido para retiro confirmado!'
-                : '¡Pedido con envío GRATIS confirmado!';
-        }
-        alert(mensaje);
-        // Limpiar todo
-        cart = [];
-        updateCartCount();
-        updateCartDisplay();
-        document.getElementById('cart-section').style.display = 'none';
-        document.getElementById('checkout-form').reset();
-        // Si hay dirección guardada, la vuelve a poner por si el usuario quiere hacer otro pedido rápido
-        if (userAddress) {
-            document.getElementById('direccion').value = userAddress;
-        }
-    })
-    .catch((error) => {
-        console.error('Error al enviar pedido:', error);
-        alert('Pedido enviado (posible error de red). Revisa tu conexión.');
-    })
-    .finally(() => {
+            cart,
+            total: prices.total,
+            preferenceId: data.id,
+            externalReference: externalRef,
+            paymentId: null
+        };
+
+        // Mostrar checkout
+        checkoutContainer.innerHTML = `<iframe src="${data.init_point}" width="100%" height="700" frameborder="0"></iframe>`;
+        checkoutContainer.style.display = 'block';
+        checkoutBtn.style.display = 'none';
+
+        alert("Completa el pago en la ventana de Mercado Pago.\nEl pedido se confirmará automáticamente.");
+
+        // Iniciar polling con external_reference (clave para detección)
+        startPaymentPolling(data.id, externalRef);
+
+    } catch (err) {
+        console.error("Error en handleMercadoPagoPayment:", err);
+        alert("Error al generar el pago: " + (err.message || "Intenta nuevamente"));
         checkoutBtn.disabled = false;
-        checkoutBtn.textContent = originalText;
-    });
+        checkoutBtn.textContent = 'Realizar Pedido';
+    }
+}
+
+// También se puede usar polling si no redirige bien
+function startPaymentPolling(preferenceId, externalReference) {  // ← agregamos externalReference como segundo parámetro
+    console.log("Iniciando polling con external_reference:", externalReference);
+
+    const interval = setInterval(async () => {
+        try {
+            // Buscamos por external_reference (esto SÍ funciona)
+            const url = `https://api.mercadopago.com/v1/payments/search?external_reference=${encodeURIComponent(externalReference)}`;
+
+            console.log("Consultando pagos por external_reference:", url);
+
+            const res = await fetch(url, {
+                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+            });
+
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error(`Error ${res.status} en search por external_reference:`, errorText);
+                return;
+            }
+
+            const data = await res.json();
+            console.log("Respuesta de /payments/search:", JSON.stringify(data, null, 2));
+
+            if (data.results?.length > 0) {
+                const approved = data.results.find(p => p.status === "approved");
+                if (approved) {
+                    console.log("¡Pago aprobado encontrado! ID:", approved.id);
+                    clearInterval(interval);
+                    pendingOrderData.paymentId = approved.id;
+                    await finalizeOrderAfterPayment();
+                    alert("¡Pago confirmado automáticamente! Tu pedido ha sido registrado.");
+                } else {
+                    console.log("Pagos encontrados pero ninguno aprobado aún...");
+                }
+            } else {
+                console.log("Aún no hay pagos para este external_reference");
+            }
+        } catch (e) {
+            console.error("Error en polling:", e);
+        }
+    }, 5000);
+}
+        
+async function finalizeOrderAfterPayment() {
+    if (!pendingOrderData) return;
+
+    // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
+    // Método de pago se envía como "Transferencia / Mercado Pago" (o cámbialo a "Efectivo" si quieres)
+    await createOrderNormal(
+        pendingOrderData.direccion,
+        "Transferencia / Mercado Pago",  // ← mismo que en checkout normal
+        pendingOrderData.tipoEntrega,
+        { total: pendingOrderData.total, shipping: pendingOrderData.envioGratis ? 0 : COSTO_ENVIO },
+        pendingOrderData.observaciones,
+        false  // ← false = no usamos createPaidOrder, usamos createOrder normal
+    );
+
+    pendingOrderData = null;
+    document.getElementById('mercadopago-checkout').style.display = 'none';
+    document.getElementById('checkout-btn').style.display = 'block';
+}
+
+async function checkPaymentReturn() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get("status");
+    const paymentId = urlParams.get("payment_id");
+    const externalReference = urlParams.get("external_reference"); // ← también puede venir
+
+    if (!status || !paymentId || !pendingOrderData) return;
+
+    try {
+        const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+            headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+        });
+
+        if (!res.ok) throw new Error("No se pudo verificar el pago");
+
+        const payment = await res.json();
+
+        if (payment.status === "approved") {
+            pendingOrderData.paymentId = payment.id;
+            pendingOrderData.preferenceId = payment.preference_id || pendingOrderData.preferenceId;
+
+            // ¡Aquí se confirma el pedido!
+            await createConfirmedOrder(pendingOrderData);
+
+            // Limpieza importante
+            pendingOrderData = null;
+        } 
+        else if (payment.status === "pending") {
+            alert("El pago está pendiente de aprobación. Te avisaremos cuando se confirme.");
+        }
+        else {
+            alert(`El pago no fue aprobado. Estado: ${payment.status}\nPuedes intentarlo nuevamente.`);
+        }
+    } catch (e) {
+        console.error("Error verificando pago:", e);
+        alert("No pudimos verificar el estado del pago. Por favor contacta soporte.");
+    }
+
+    // Siempre limpiamos la URL
+    window.history.replaceState({}, document.title, window.location.pathname);
 }
 
 // ==================== EDITAR PERFIL ====================
@@ -1736,6 +2062,97 @@ function saveAddressChange() {
         .catch(() => {
             alert('Error de conexión al actualizar dirección');
         });
+}
+
+        async function createOrderNormal(direccion, metodoPago, tipoEntrega, prices, observaciones, isPaid = false) {
+    try {
+        const action = 'createOrder'; // ← SIEMPRE createOrder, no importa si es pagado o no
+
+        const cartString = encodeURIComponent(JSON.stringify(cart));
+
+        const url = `${scriptUrl}?action=${action}` +
+            `&userId=${encodeURIComponent(userId)}` +
+            `&fecha=${encodeURIComponent(new Date().toLocaleString('es-AR'))}` +
+            `&direccion=${encodeURIComponent(direccion)}` +
+            `&metodoPago=${encodeURIComponent(metodoPago)}` +
+            `&observaciones=${encodeURIComponent(observaciones || '')}` +
+            `&cart=${cartString}` +
+            `&total=${encodeURIComponent(prices.total)}` +
+            `&envioGratis=${encodeURIComponent(prices.shipping === 0 ? 'true' : 'false')}` +
+            `&tipoEntrega=${encodeURIComponent(tipoEntrega)}`;
+
+        console.log("Enviando pedido vía GET:", url);
+
+        const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-cache'
+        });
+
+        const result = await response.json();
+        console.log("Respuesta backend:", result);
+
+        if (result.success) {
+            alert("¡Pedido registrado exitosamente! ID: " + result.idPedido);
+            cart = [];
+            updateCartCount();
+            updateCartDisplay();
+            document.getElementById('cart-section').style.display = 'none';
+            document.getElementById('mercadopago-checkout').style.display = 'none';
+            document.getElementById('checkout-btn').style.display = 'block';
+            document.getElementById('checkout-form').reset();
+        } else {
+            throw new Error(result.error || "Error desconocido");
+        }
+    } catch (err) {
+        console.error("Error al enviar pedido:", err);
+        alert("El pago fue confirmado pero hubo un error al registrar el pedido.\nContacta soporte con ID de pago: " + (pendingOrderData?.paymentId || "desconocido"));
+    }
+}
+        // Esta función debería llamarse SOLO cuando el pago está aprobado
+async function createConfirmedOrder(orderData) {
+    const payload = {
+        action: 'createPaidOrder',          // ← acción nueva que deberías crear en tu Google Apps Script
+        userId: orderData.userId,
+        fecha: orderData.fecha,
+        direccion: orderData.direccion,
+        metodoPago: "Mercado Pago - Aprobado",
+        paymentId: orderData.paymentId,
+        preferenceId: orderData.preferenceId,
+        total: orderData.total,
+        envioGratis: orderData.envioGratis,
+        tipoEntrega: orderData.tipoEntrega,
+        observaciones: orderData.observaciones,
+        items: orderData.cart.map(item => ({
+            idProducto: item.idProducto,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario,
+            nombre: item.nombreProducto
+        }))
+    };
+
+    try {
+        await fetch(scriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        });
+
+        alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
+        
+        // Limpieza final
+        cart = [];
+        updateCartCount();
+        updateCartDisplay();
+        document.getElementById('cart-section').style.display = 'none';
+        document.getElementById('mercadopago-checkout').style.display = 'none';
+        document.getElementById('checkout-btn').style.display = 'block';
+        document.getElementById('checkout-form').reset();
+        
+    } catch (err) {
+        console.error("Error registrando pedido pagado:", err);
+        alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
+    }
 }
     </script>
 </body>
