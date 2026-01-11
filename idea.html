@@ -780,85 +780,61 @@
     margin-bottom: 8px;
 }
 
-/* Contenedor de la imagen (nuevo wrapper) */
-.menu-image-container {
-    position: relative;
-    width: 100%;
+.menu-item {
+    position: relative !important;
+    padding: 12px;
     overflow: hidden;
-    border-radius: 12px;
 }
 
-/* Imagen del plato */
-.menu-image-container img {
-    width: 100%;
-    height: 150px;               /* desktop */
-    object-fit: cover;
-    display: block;
-}
-
-/* Botón favorito - pegado a la esquina superior derecha de la IMAGEN */
 .fav-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 38px;
-    height: 38px;
-    background: rgba(255, 255, 255, 0.92);
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.22);
-    transition: all 0.25s ease;
-    z-index: 20;
-    padding: 0;
-    overflow: hidden;
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    transition: all 0.2s !important;
+    z-index: 10 !important;
+    overflow: hidden; /* importante para las imágenes */
+    padding: 4px; /* pequeño margen interno */
 }
 
 .fav-btn:hover {
-    transform: scale(1.15);
-    background: white;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transform: scale(1.15) !important;
+    background: white !important;
 }
 
-/* Imágenes del corazón dentro del botón */
+/* Las dos imágenes se superponen y cambian con opacidad */
 .fav-btn img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 6px;
     position: absolute;
     inset: 0;
-    transition: opacity 0.35s ease;
+    transition: opacity 0.25s ease;
 }
 
-.fav-btn .fav-empty { opacity: 1; }
-.fav-btn.active .fav-empty { opacity: 0; }
-.fav-btn .fav-filled { opacity: 0; }
-.fav-btn.active .fav-filled { opacity: 1; }
-
-/* Responsive: más pequeño en móviles */
-@media (max-width: 768px) {
-    .menu-image-container img {
-        height: 110px;
-    }
-    .fav-btn {
-        width: 34px;
-        height: 34px;
-        top: 8px;
-        right: 8px;
-    }
+.fav-btn .fav-empty {
+    opacity: 1;
 }
 
-@media (max-width: 480px) {
-    .menu-image-container img {
-        height: 100px;
-    }
-    .fav-btn {
-        width: 32px;
-        height: 32px;
-        top: 6px;
-        right: 6px;
-    }
+.fav-btn.active .fav-empty {
+    opacity: 0;
+}
+
+.fav-btn .fav-filled {
+    opacity: 0;
+}
+
+.fav-btn.active .fav-filled {
+    opacity: 1;
 }
         
 </style>
@@ -1227,49 +1203,46 @@ function displayMenus(menus, title) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
-
+    
     // Limpiamos caché anterior
     currentDisplayedMenus = {};
-
+    
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
         menus.forEach((menu, index) => {
-            // Guardamos el menú completo en caché
             currentDisplayedMenus[menu.id] = menu;
-
             const div = document.createElement('div');
             div.className = 'menu-item';
             div.innerHTML = `
-                <div class="menu-image-container">
-                    <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
-                         alt="${menu.nombre}"
-                         onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
-                    
-                    <!-- Botón favorito (pegado a la esquina de la imagen) -->
-                    <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
-                            data-menu-id="${menu.id}"
-                            onclick="toggleFavorite('${menu.id}')">
-                        <img class="fav-empty" src="https://i.postimg.cc/vHk2xS4x/18611.jpg" alt="Agregar a favoritos">
-                        <img class="fav-filled" src="https://i.postimg.cc/tgHr2Zt5/18611-(2).jpg" alt="Quitar de favoritos">
-                    </button>
-                </div>
-
+                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
+                     alt="${menu.nombre}"
+                     onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
                 <h3>${menu.nombre}</h3>
                 <p>${menu.descripcion || 'Sin descripción'}</p>
                 <p>$${menu.precio}</p>
-                
+               
+                <!-- Botón agregar al carrito -->
                 <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+               
+                <!-- Botón favorito con imágenes (sin texto) -->
+                <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
+                        data-menu-id="${menu.id}"
+                        onclick="toggleFavorite('${menu.id}')">
+                    <img class="fav-empty" src="https://i.postimg.cc/vHk2xS4x/18611.jpg" alt="No favorito">
+                    <img class="fav-filled" src="https://i.postimg.cc/tgHr2Zt5/18611-(2).jpg" alt="Favorito">
+                </button>
             `;
             itemsDiv.appendChild(div);
         });
     }
-
+    
     container.style.display = 'block';
-
-    // Actualizamos visual de favoritos después de renderizar
+    
+    // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
+        
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
