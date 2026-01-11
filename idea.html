@@ -836,6 +836,24 @@
 .fav-btn.active .fav-filled {
     opacity: 1;
 }
+
+        @media (min-width: 992px) {
+    .menu-items {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 28px !important;
+        max-width: 1240px;
+        margin: 0 auto;
+    }
+    
+    .menu-item {
+        max-width: none !important;
+    }
+    
+    .menu-item img {
+        height: 280px !important;     /* ← juega con este valor: 240–300px */
+    }
+}
         
 </style>
 </head>
