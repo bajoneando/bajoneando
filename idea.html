@@ -130,95 +130,62 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-   
-    /* Solo categorías son deslizables */
-.categories-carousel {
+        
+    /* Contenedor principal de categorías - ahora con scroll horizontal */
+.categories-wrapper {
     position: relative;
-    width: 100%;
-    margin: 0 auto 40px auto;
+    margin: 0 -15px;           /* para que toque los bordes en mobile */
+    padding: 0 15px;
     overflow: hidden;
 }
 
-.categories-track {
+.categories {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: nowrap;          /* ¡clave! no permite que baje de línea */
     gap: 14px;
-    transition: transform 0.4s ease;
-    padding: 10px 0;
-    touch-action: pan-x;               /* permite swipe horizontal */
-    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;           /* permite el scroll horizontal */
+    scroll-behavior: smooth;    /* scroll suave */
+    padding: 12px 0;
+    margin: 0;
+    -webkit-overflow-scrolling: touch; /* mejor experiencia en iOS */
+    scrollbar-width: none;      /* oculta scrollbar en Firefox */
 }
 
+/* Ocultar scrollbar en Chrome/Safari/Edge */
+.categories::-webkit-scrollbar {
+    display: none;
+}
+
+/* Cada categoría mantiene su tamaño, pero ahora en fila */
 .category {
-    flex: 0 0 120px;
-    height: 120px;
+    flex: 0 0 130px;           /* ancho fijo - igual que antes */
+    height: 130px;
     background-size: cover;
     background-position: center;
     border-radius: 16px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     cursor: pointer;
-    transition: transform 0.22s ease;
+    transition: transform 0.3s ease;
 }
 
-.category:active {
-    transform: scale(0.96);
-}
-
-.category::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 55%);
-    border-radius: 16px;
-}
-
-.category span {
-    position: absolute;
-    bottom: 10px;
-    left: 0; right: 0;
-    text-align: center;
-    color: white;
-    font-weight: 600;
-    font-size: 14px;
-    text-shadow: 0 2px 4px #0008;
-    z-index: 1;
-}
-
-/* Botones navegación (visibles siempre, pero más discretos en móvil) */
-.carousel-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 36px;
-    height: 36px;
-    background: rgba(200, 40, 40, 0.85);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 18px;
-    z-index: 5;
-    cursor: pointer;
-}
-
-.carousel-nav.left  { left: 6px; }
-.carousel-nav.right { right: 6px; }
-
-.carousel-nav:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-/* Tamaños más pequeños en móvil */
+/* Responsive - categorías más pequeñas en mobile */
 @media (max-width: 768px) {
-    .category { flex: 0 0 105px; height: 105px; }
-    .category span { font-size: 13px; }
+    .category {
+        flex: 0 0 110px;
+        height: 110px;
+    }
 }
 
 @media (max-width: 480px) {
-    .category { flex: 0 0 94px; height: 94px; }
-    .category span { font-size: 12.5px; bottom: 8px; }
+    .category {
+        flex: 0 0 100px;
+        height: 100px;
+    }
+    .category span {
+        font-size: 14px;
+    }
 }
         
     /* Sugerencias de locales ≈ mitad de tamaño */
@@ -886,7 +853,7 @@ body {
         width: 28px;
         height: 28px;
     }
-   
+  
     .profile-button {
         padding: 6px 10px;
         font-size: 0.9rem;
@@ -1026,11 +993,11 @@ body {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 20px !important;
     }
-   
+  
     .menu-item img {
         height: 200px !important;
     }
-   
+  
     .fav-btn {
         width: 36px !important;
         height: 36px !important;
@@ -1038,7 +1005,7 @@ body {
         right: 10px !important;
     }
 }
-       
+      
 </style>
 </head>
 <body>
@@ -1058,7 +1025,7 @@ body {
                 class="profile-icon">
             <span>Mi Perfil</span>
         </div>
-       
+      
         <!-- Menú desplegable -->
         <div class="profile-dropdown" id="profile-dropdown">
     <a href="#" class="dropdown-item" onclick="openEditProfileModal()">Editar perfil</a>
@@ -1074,34 +1041,26 @@ body {
     </header>
     <main>
         <h1>¿Qué se te antoja?</h1>
-        <div class="categories-carousel">
-    <button class="carousel-nav left" id="prev-cat">←</button>
-    
-    <div class="categories-track" id="categories-track">
-        <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
-            <span>Burguers</span>
-        </div>
-        <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
-            <span>Pizza</span>
-        </div>
-        <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
-            <span>Helados</span>
-        </div>
-        <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
-            <span>Postres</span>
-        </div>
-        <div class="category" data-type="Panadería" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
-            <span>Panadería</span>
-        </div>
-        <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
-            <span>Bebidas</span>
-        </div>
-        <!-- Puedes agregar más categorías aquí sin romper el diseño -->
-    </div>
-    
-    <button class="carousel-nav right" id="next-cat">→</button>
-</div>
         
+        <div class="categories-wrapper">
+            <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
+                <span>Burguers</span>
+            </div>
+            <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
+                <span>Pizza</span>
+            </div>
+            <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
+                <span>Helados</span>
+            </div>
+            <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
+                <span>Postres</span>
+            </div>
+            <div class="category" data-type="Panadería" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
+                <span>Panadería</span>
+            </div>
+            <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
+    <span>Bebidas</span>
+</div>
         </div>
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
@@ -1150,13 +1109,13 @@ body {
 </select>
 <!-- Contenedor donde se mostrará el checkout de MP -->
 <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-               
+              
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
         </div>
     </main>
-   
+  
     <!-- Footer -->
     <footer class="text-center">
         <div class="container">
@@ -1195,16 +1154,16 @@ body {
     <div class="modal-content">
         <span class="close" onclick="closeModal('edit-profile-modal')">×</span>
         <h2>Editar Perfil</h2>
-       
+      
         <label for="edit-name">Nombre completo</label>
         <input type="text" id="edit-name" placeholder="Nombre completo" required>
-       
+      
         <label for="edit-email">Correo electrónico</label>
         <input type="email" id="edit-email" placeholder="Correo electrónico" required>
-       
+      
         <label for="edit-new-password">Nueva contraseña (opcional)</label>
         <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
-       
+      
         <button onclick="saveProfileChanges()">Guardar cambios</button>
     </div>
 </div>
@@ -1217,7 +1176,7 @@ body {
         <button onclick="saveAddressChange()">Guardar dirección</button>
     </div>
 </div>
-  
+ 
     <script>
 const MP_ACCESS_TOKEN = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795";
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
@@ -1393,10 +1352,10 @@ function displayMenus(menus, title) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
-   
+  
     // Limpiamos caché anterior
     currentDisplayedMenus = {};
-   
+  
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
@@ -1411,10 +1370,10 @@ function displayMenus(menus, title) {
                 <h3>${menu.nombre}</h3>
                 <p>${menu.descripcion || 'Sin descripción'}</p>
                 <p>$${menu.precio}</p>
-              
+             
                 <!-- Botón agregar al carrito -->
                 <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
-              
+             
                 <!-- Botón favorito con imágenes (sin texto) -->
                 <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
                         data-menu-id="${menu.id}"
@@ -1426,13 +1385,13 @@ function displayMenus(menus, title) {
             itemsDiv.appendChild(div);
         });
     }
-   
+  
     container.style.display = 'block';
-   
+  
     // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
-       
+      
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1440,7 +1399,7 @@ function displayMenus(menus, title) {
         alert('Error: no se pudo encontrar el plato seleccionado');
         return;
     }
-   
+  
     // Ahora sí llamamos a addToCart con el objeto completo
     addToCart(menu);
 }
@@ -1500,7 +1459,7 @@ function loginUser() {
         setupCart();
         loadAllDrinks();
     });
-      
+     
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
@@ -1569,10 +1528,10 @@ function loginUser() {
                 .then(menus => displayMenus(menus, type || 'Local seleccionado'))
                 .catch(() => showError(container, 'Error al cargar menús'));
         }
-       
+      
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
-  
+ 
     // Solo aplicamos display: block al contenedor de menús
     if (container.id === 'menu-display') {
         container.style.display = 'block';
@@ -1748,17 +1707,17 @@ function addToCart(menu) {
         // Modificar cantidad de un ítem en el carrito
 function changeQuantity(index, delta) {
     if (!cart[index]) return;
-   
+  
     const nuevaCantidad = cart[index].cantidad + delta;
-   
+  
     if (nuevaCantidad < 1) {
         // En lugar de dejar en 1, eliminamos directamente
         removeFromCart(index);
         return;
     }
-   
+  
     cart[index].cantidad = nuevaCantidad;
-   
+  
     updateCartCount();
     updateCartDisplay();
 }
@@ -1770,7 +1729,7 @@ function removeFromCart(index) {
         updateCartDisplay();
     }
 }
-       
+      
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
@@ -1971,7 +1930,7 @@ function startPaymentPolling(preferenceId, externalReference) { // ← agregamos
         }
     }, 5000);
 }
-       
+      
 async function finalizeOrderAfterPayment() {
     if (!pendingOrderData) return;
     // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
@@ -2024,23 +1983,23 @@ async function checkPaymentReturn() {
 // ==================== EDITAR PERFIL ====================
 function openEditProfileModal() {
     profileDropdown.classList.remove('active');
-   
+  
     // Precargamos los datos actuales
     document.getElementById('edit-name').value = localStorage.getItem('userName') || '';
     document.getElementById('edit-email').value = localStorage.getItem('userEmail') || '';
     document.getElementById('edit-new-password').value = ''; // siempre vacío al abrir
-   
+  
     showModal('edit-profile-modal');
 }
 function openChangeAddressModal() {
     profileDropdown.classList.remove('active');
-   
+  
     const addressInput = document.getElementById('edit-address');
     addressInput.value = userAddress || '';
-   
+  
     showModal('change-address-modal');
 }
-       
+      
 function saveProfileChanges() {
     const name = document.getElementById('edit-name').value.trim();
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
@@ -2050,12 +2009,12 @@ function saveProfileChanges() {
         alert('El nombre es obligatorio');
         return;
     }
-   
+  
     if (!email) {
         alert('El email es obligatorio');
         return;
     }
-   
+  
     if (newPassword && newPassword.length < 6) {
         alert('La nueva contraseña debe tener al menos 6 caracteres (o dejarla en blanco)');
         return;
@@ -2076,10 +2035,10 @@ function saveProfileChanges() {
                 // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-               
+              
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
-               
+              
                 // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
@@ -2091,7 +2050,7 @@ function saveProfileChanges() {
             alert('Error de conexión al intentar actualizar el perfil');
         });
 }
-       
+      
 function saveAddressChange() {
     const newAddress = document.getElementById('edit-address').value.trim();
     if (!newAddress) {
@@ -2107,11 +2066,11 @@ function saveAddressChange() {
             if (data.success) {
                 userAddress = newAddress;
                 localStorage.setItem('userAddress', newAddress);
-               
+              
                 // Actualizamos el campo de dirección del checkout si está visible
                 const checkoutDir = document.getElementById('direccion');
                 if (checkoutDir) checkoutDir.value = newAddress;
-               
+              
                 alert('Dirección actualizada correctamente');
                 closeModal('change-address-modal');
             } else {
@@ -2189,7 +2148,7 @@ async function createConfirmedOrder(orderData) {
             body: JSON.stringify(payload)
         });
         alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
-       
+      
         // Limpieza final
         cart = [];
         updateCartCount();
@@ -2198,80 +2157,12 @@ async function createConfirmedOrder(orderData) {
         document.getElementById('mercadopago-checkout').style.display = 'none';
         document.getElementById('checkout-btn').style.display = 'block';
         document.getElementById('checkout-form').reset();
-       
+      
     } catch (err) {
         console.error("Error registrando pedido pagado:", err);
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
 }
-
-        // Carrusel solo para categorías
-let currentCatIndex = 0;
-
-function updateCategoriesCarousel() {
-    const track = document.getElementById('categories-track');
-    if (!track) return;
-
-    const card = track.querySelector('.category');
-    if (!card) return;
-
-    const cardWidth = card.offsetWidth + 14; // gap
-    const visibleWidth = track.parentElement.offsetWidth;
-    const maxIndex = Math.max(0, track.children.length - Math.floor(visibleWidth / cardWidth));
-
-    currentCatIndex = Math.max(0, Math.min(currentCatIndex, maxIndex));
-
-    track.style.transform = `translateX(-${currentCatIndex * cardWidth}px)`;
-
-    document.getElementById('prev-cat').disabled = currentCatIndex === 0;
-    document.getElementById('next-cat').disabled = currentCatIndex >= maxIndex;
-}
-
-document.getElementById('prev-cat')?.addEventListener('click', () => {
-    currentCatIndex--;
-    updateCategoriesCarousel();
-});
-
-document.getElementById('next-cat')?.addEventListener('click', () => {
-    currentCatIndex++;
-    updateCategoriesCarousel();
-});
-
-// Swipe touch
-let isDragging = false;
-let startX = 0;
-let scrollLeftPos = 0;
-
-const track = document.getElementById('categories-track');
-if (track) {
-    const startDrag = (e) => {
-        isDragging = true;
-        startX = (e.type === 'touchstart' ? e.touches[0] : e).pageX - track.offsetLeft;
-        scrollLeftPos = track.scrollLeft;
-    };
-
-    const moveDrag = (e) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const x = (e.type === 'touchmove' ? e.touches[0] : e).pageX - track.offsetLeft;
-        const walk = (x - startX) * 2;
-        track.scrollLeft = scrollLeftPos - walk;
-    };
-
-    track.addEventListener('mousedown', startDrag);
-    track.addEventListener('touchstart', startDrag, { passive: false });
-
-    track.addEventListener('mousemove', moveDrag);
-    track.addEventListener('touchmove', moveDrag, { passive: false });
-
-    track.addEventListener('mouseup mouseleave', () => isDragging = false);
-    track.addEventListener('touchend', () => isDragging = false);
-}
-
-// Inicializar
-window.addEventListener('load', updateCategoriesCarousel);
-window.addEventListener('resize', updateCategoriesCarousel);
-        
     </script>
 </body>
 </html>
