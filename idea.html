@@ -1630,7 +1630,7 @@ function loginUser() {
     function openCart() {
         sidebar.classList.add('open');
         overlay.classList.add('active');
-        document.body.style.overflow = 'hidden'; // evita scroll detrás
+        document.body.style.overflow = 'hidden'; // bloquea scroll de fondo
         updateCartDisplay();
     }
 
@@ -1640,11 +1640,41 @@ function loginUser() {
         document.body.style.overflow = '';
     }
 
+    // ── Eventos de apertura/cierre ───────────────────────────────
     cartIcon.onclick = openCart;
     closeBtn.onclick = closeCart;
-    overlay.onclick  = closeCart;
 
-    // Mantén los listeners que ya tenías
+    // ←←← Cambio clave: stopPropagation + evitar que cierre al interactuar dentro
+    sidebar.addEventListener('click', function(e) {
+        // Evitamos que el clic dentro del sidebar cierre (stopPropagation)
+        e.stopPropagation();
+    });
+
+    // El overlay SOLO cierra si se hace clic directamente en él (no en sus hijos)
+    overlay.addEventListener('click', function(e) {
+        // Si el target es el overlay mismo (no un hijo), cerramos
+        if (e.target === overlay) {
+            closeCart();
+        }
+    });
+
+    // Opcional pero muy recomendado en móviles: cerrar con swipe derecha → izquierda
+    let touchStartX = 0;
+    sidebar.addEventListener('touchstart', e => {
+        touchStartX = e.touches[0].clientX;
+    });
+
+    sidebar.addEventListener('touchend', e => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const diff = touchStartX - touchEndX;
+
+        // Si deslizó hacia la izquierda más de 80px → cerrar
+        if (diff > 80) {
+            closeCart();
+        }
+    });
+
+    // Mantener los listeners internos del carrito
     document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
     document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
     document.getElementById('checkout-btn').onclick = checkout;
