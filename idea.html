@@ -264,14 +264,94 @@ body {
         background-color: #b71c1c;
     }
     /* Carrito */
+    <!-- ==================== NUEVOS ESTILOS para el carrito lateral ==================== -->
+<style>
+  /* Fondo oscuro cuando el carrito está abierto */
+  #cart-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  #cart-backdrop.active {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Panel lateral derecho */
+  #cart-section {
+    position: fixed;
+    top: 0;
+    right: -420px;               /* empieza fuera de pantalla */
+    width: 420px;
+    max-width: 92vw;             /* evita desborde en móviles */
+    height: 100%;
+    background: white;
+    box-shadow: -6px 0 25px rgba(0,0,0,0.25);
+    z-index: 2000;
+    overflow-y: auto;
+    transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 0;
+    border-radius: 16px 0 0 16px;
+  }
+
+  #cart-section.active {
+    right: 0;
+  }
+
+  /* Header del carrito dentro del panel */
+  .cart-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .cart-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #c62828;
+  }
+
+  .cart-close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #666;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .cart-close-btn:hover {
+    color: #d32f2f;
+  }
+
+  /* Contenido con padding */
+  .cart-content {
+    padding: 20px;
+  }
+
+  /* Ajustes responsive */
+  @media (max-width: 480px) {
     #cart-section {
-        display: none;
-        background: white;
-        border-radius: 18px;
-        padding: 20px;
-        margin-top: 30px;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+      width: 85vw;
+      right: -85vw;
     }
+  }
+
+  /* Ocultamos el viejo botón de checkout si queremos más espacio */
+  #checkout-form {
+    margin-top: 25px;
+  }
+
     .delivery-option select {
         width: 100%;
         padding: 14px;
@@ -956,103 +1036,6 @@ body {
         right: 10px !important;
     }
 }
-
-        /* ── SIDEBAR CARRITO ── */
-.cart-sidebar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 380px;               /* ancho en desktop */
-    height: 100%;
-    background: white;
-    box-shadow: -8px 0 25px rgba(0,0,0,0.25);
-    transform: translateX(100%); /* oculto por defecto */
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    z-index: 1200;
-    display: flex;
-    flex-direction: column;
-}
-
-.cart-sidebar.open {
-    transform: translateX(0);
-}
-
-.cart-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.35s ease;
-    z-index: 1100;
-}
-
-.cart-overlay.active {
-    opacity: 1;
-    pointer-events: all;
-}
-
-/* Header del sidebar */
-.cart-sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 20px;
-    border-bottom: 1px solid #eee;
-    background: #fff;
-    position: sticky;
-    top: 0;
-    z-index: 2;
-}
-
-.cart-sidebar-header h2 {
-    margin: 0;
-    color: #c62828;
-    font-size: 1.5rem;
-}
-
-.close-cart {
-    background: none;
-    border: none;
-    font-size: 2.2rem;
-    color: #666;
-    cursor: pointer;
-    line-height: 1;
-}
-
-/* Contenido con scroll */
-.cart-sidebar-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    padding-bottom: 100px; /* espacio para botón final si es necesario */
-}
-
-/* Ajustes en mobile */
-@media (max-width: 768px) {
-    .cart-sidebar {
-        width: 85vw;           /* o 100vw si prefieres full width */
-        max-width: 420px;
-    }
-    
-    .cart-sidebar-content {
-        padding: 16px;
-    }
-}
-
-/* Elimina o comenta el estilo anterior de #cart-section */
-#cart-section {
-    display: none !important;  /* ← importante para no conflictos */
-}
-
-        .cart-sidebar,
-.cart-sidebar * {
-    pointer-events: auto !important;
-}
-
-.cart-overlay {
-    pointer-events: auto;
-}
         
 </style>
 </head>
@@ -1115,56 +1098,57 @@ body {
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
         <div id="menu-display" style="display:none;"></div>
-        <!-- →→→ Aquí va el nuevo panel lateral ←←← -->
-    <div id="cart-sidebar" class="cart-sidebar">
-        <div class="cart-sidebar-header">
-            <h2>Tu Carrito</h2>
-            <button class="close-cart" id="close-cart">×</button>
-        </div>
-        
-        <div class="cart-sidebar-content">
-            <div class="delivery-option">
-                <label for="delivery-type">Tipo de entrega</label>
-                <select id="delivery-type">
-                    <option value="envio">Con envío a domicilio</option>
-                    <option value="retiro">Retirar en local</option>
-                </select>
-            </div>
-            <div class="cart-summary-panel">
-                <div class="cart-items-list" id="cart-items"></div>
-                <div class="price-summary">
-                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
-                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
-                </div>
-                <div id="free-shipping-notice"></div>
-            </div>
-            <div id="drinks-panel" class="drinks-panel" style="display:none;">
-                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
-                <div class="drinks-carousel">
-                    <button class="carousel-btn left" id="prev-drink">←</button>
-                    <div class="drinks-container" id="drinks-container"></div>
-                    <button class="carousel-btn right" id="next-drink">→</button>
-                </div>
-            </div>
-            <form id="checkout-form">
-                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
-                <select id="metodo-pago" required>
-    <option value="">Método de pago</option>
-    <option value="transferencia">Transferencia / Mercado Pago</option>
-    <option value="efectivo">Efectivo</option>
-</select>
+        <!-- Reemplaza TODO el <div id="cart-section"> actual por esto -->
 
-<!-- Contenedor donde se mostrará el checkout de MP -->
-<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-                
-                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
-                <button type="button" id="checkout-btn">Realizar Pedido</button>
-            </form>
-        </div>
+<div id="cart-backdrop" onclick="closeCart()"></div>
 
-    <!-- Fondo oscuro cuando el sidebar está abierto -->
-    <div id="cart-overlay" class="cart-overlay"></div>
+<div id="cart-section">
+  <div class="cart-header">
+    <h2>Tu Carrito</h2>
+    <button class="cart-close-btn" onclick="closeCart()">×</button>
+  </div>
+
+  <div class="cart-content">
+    <div class="delivery-option">
+      <label for="delivery-type">Tipo de entrega</label>
+      <select id="delivery-type">
+        <option value="envio">Con envío a domicilio</option>
+        <option value="retiro">Retirar en local</option>
+      </select>
+    </div>
+
+    <div class="cart-summary-panel">
+      <div class="cart-items-list" id="cart-items"></div>
+      <div class="price-summary">
+        <!-- Los precios se generan dinámicamente con JS -->
+      </div>
+      <div id="free-shipping-notice"></div>
+    </div>
+
+    <div id="drinks-panel" class="drinks-panel" style="display:none;">
+      <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
+      <div class="drinks-carousel">
+        <button class="carousel-btn left" id="prev-drink">←</button>
+        <div class="drinks-container" id="drinks-container"></div>
+        <button class="carousel-btn right" id="next-drink">→</button>
+      </div>
+    </div>
+
+    <form id="checkout-form">
+      <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
+      <select id="metodo-pago" required>
+        <option value="">Método de pago</option>
+        <option value="transferencia">Transferencia / Mercado Pago</option>
+        <option value="efectivo">Efectivo</option>
+      </select>
+
+      <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 500px;"></div>
+      
+      <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
+      <button type="button" id="checkout-btn">Realizar Pedido</button>
+    </form>
+  </div>
+</div>
     </main>
     
     <!-- Footer -->
@@ -1631,73 +1615,29 @@ function loginUser() {
         }
         // ==================== CARRITO ====================
     function setupCart() {
-    const cartIcon    = document.getElementById('cart-icon');
-    const sidebar     = document.getElementById('cart-sidebar');
-    const overlay     = document.getElementById('cart-overlay');
-    const closeBtn    = document.getElementById('close-cart');
+  const cartIcon = document.getElementById('cart-icon');
+  
+  cartIcon.onclick = function () {
+    openCart();
+  };
 
-    function openCart() {
-        sidebar.classList.add('open');
-        overlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        updateCartDisplay();
-    }
+  // Los demás event listeners siguen igual
+  document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
+  document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
+  document.getElementById('checkout-btn').onclick = checkout;
+}
 
-    function closeCart() {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('active');
-        document.body.style.overflow = '';
-    }
+function openCart() {
+  document.getElementById('cart-section').classList.add('active');
+  document.getElementById('cart-backdrop').classList.add('active');
+  document.body.style.overflow = 'hidden'; // evita scroll detrás
+  updateCartDisplay();
+}
 
-    // Abrir carrito
-    cartIcon.addEventListener('click', function(e) {
-        e.preventDefault();
-        openCart();
-    });
-
-    // Cerrar con el botón ×
-    closeBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        closeCart();
-    });
-
-    // Cerrar SOLO si se hace clic directamente en el fondo (overlay)
-    overlay.addEventListener('click', function(e) {
-        // Solo cerramos si el clic fue exactamente en el overlay (no en hijos)
-        if (e.target === overlay) {
-            closeCart();
-        }
-    });
-
-    // ← Protección clave: evitamos que los clics dentro del sidebar cierren el panel
-    sidebar.addEventListener('click', function(e) {
-        e.stopPropagation();     // Detiene la propagación hacia el overlay
-    }, true);                    // true = fase de captura (más efectivo)
-
-    // Cerrar con tecla ESC (muy útil)
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && sidebar.classList.contains('open')) {
-            closeCart();
-        }
-    });
-
-    // Restauramos los listeners internos del carrito (los que ya funcionaban antes)
-    document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
-    document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
-    
-    // El botón de checkout debe seguir funcionando normalmente
-    document.getElementById('checkout-btn').addEventListener('click', function(e) {
-        e.stopPropagation();   // por si acaso
-        checkout();
-    });
-
-    // También protegemos los botones de cantidad y eliminar (por si acaso)
-    document.addEventListener('click', function(e) {
-        if (sidebar.classList.contains('open') && 
-            (e.target.closest('.quantity-btn') || e.target.closest('.remove-btn'))) {
-            e.stopPropagation();
-        }
-    }, true);
+function closeCart() {
+  document.getElementById('cart-section').classList.remove('active');
+  document.getElementById('cart-backdrop').classList.remove('active');
+  document.body.style.overflow = '';
 }
     function addToCart(menu) {
         if (!isLoggedIn) {
