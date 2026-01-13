@@ -1649,46 +1649,55 @@ function loginUser() {
         document.body.style.overflow = '';
     }
 
-    // 1. Abrir con clic en ícono
+    // Abrir carrito
     cartIcon.addEventListener('click', function(e) {
         e.preventDefault();
         openCart();
     });
 
-    // 2. Cerrar con botón X
+    // Cerrar con el botón ×
     closeBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         closeCart();
     });
 
-    // 3. Cerrar SOLO si se hace clic directamente en el overlay (fondo oscuro)
+    // Cerrar SOLO si se hace clic directamente en el fondo (overlay)
     overlay.addEventListener('click', function(e) {
-        // Solo cerramos si el clic fue EXACTAMENTE en el overlay
-        // (no en el sidebar ni en ningún elemento hijo)
+        // Solo cerramos si el clic fue exactamente en el overlay (no en hijos)
         if (e.target === overlay) {
             closeCart();
         }
     });
 
-    // 4. Bloqueamos la propagación de clics que salgan del sidebar hacia el overlay
+    // ← Protección clave: evitamos que los clics dentro del sidebar cierren el panel
     sidebar.addEventListener('click', function(e) {
-        e.stopPropagation();   // ← evita que llegue al overlay
-    }, { capture: true });     // capture phase → más efectivo
+        e.stopPropagation();     // Detiene la propagación hacia el overlay
+    }, true);                    // true = fase de captura (más efectivo)
 
-    // 5. Cerrar con tecla ESC (muy útil)
+    // Cerrar con tecla ESC (muy útil)
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && sidebar.classList.contains('open')) {
             closeCart();
         }
     });
 
-    // Mantener los eventos internos del carrito (cambio de cantidad, etc.)
+    // Restauramos los listeners internos del carrito (los que ya funcionaban antes)
     document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
     document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
+    
+    // El botón de checkout debe seguir funcionando normalmente
     document.getElementById('checkout-btn').addEventListener('click', function(e) {
-        e.stopPropagation();   // importante para que no cierre al presionar "Realizar Pedido"
+        e.stopPropagation();   // por si acaso
         checkout();
     });
+
+    // También protegemos los botones de cantidad y eliminar (por si acaso)
+    document.addEventListener('click', function(e) {
+        if (sidebar.classList.contains('open') && 
+            (e.target.closest('.quantity-btn') || e.target.closest('.remove-btn'))) {
+            e.stopPropagation();
+        }
+    }, true);
 }
     function addToCart(menu) {
         if (!isLoggedIn) {
