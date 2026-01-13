@@ -130,48 +130,134 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-    /* Categorías más pequeñas */
-    .categories {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 40px;
-    }
+   
+    /* Carrusel de categorías - una fila horizontal deslizable */
+.categories-carousel {
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 40px;
+    padding: 0 40px;          /* espacio para los botones laterales */
+    overflow: hidden;
+}
+
+.categories-track {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 14px;
+    transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+    will-change: transform;
+    padding: 8px 0;
+    scroll-behavior: smooth;
+}
+
+.category {
+    flex: 0 0 130px;           /* ancho fijo de cada tarjeta */
+    height: 130px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform 0.25s ease;
+}
+
+.category:hover,
+.category:active {
+    transform: scale(1.06);
+}
+
+/* Oscurecimiento inferior + texto */
+.category::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 55%);
+    border-radius: 16px;
+}
+
+.category span {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: white;
+    font-weight: 600;
+    font-size: 15.5px;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    z-index: 1;
+}
+
+/* Botones de navegación */
+.carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 38px;
+    height: 38px;
+    background: rgba(211, 47, 47, 0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    transition: all 0.2s;
+}
+
+.carousel-nav:hover {
+    background: #d32f2f;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-nav.left  { left: 0; }
+.carousel-nav.right { right: 0; }
+
+.carousel-nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: translateY(-50%);
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
     .category {
-        width: 130px;
-        height: 130px;
-        background-size: cover;
-        background-position: center;
-        border-radius: 16px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        cursor: pointer;
-        transition: transform 0.3s ease;
-    }
-    .category::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
-        border-radius: 16px;
+        flex: 0 0 110px;
+        height: 110px;
     }
     .category span {
-        position: absolute;
-        bottom: 12px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        color: white;
-        font-weight: bold;
-        font-size: 16px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.7);
-        z-index: 1;
+        font-size: 14px;
     }
-    .category:hover, .category:active {
-        transform: scale(1.05);
+    .categories-carousel {
+        padding: 0 32px;
     }
+    .carousel-nav {
+        width: 34px;
+        height: 34px;
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .category {
+        flex: 0 0 100px;
+        height: 100px;
+    }
+    .category span {
+        font-size: 13px;
+        bottom: 8px;
+    }
+    .categories-carousel {
+        padding: 0 28px;
+    }
+}
     /* Sugerencias de locales ≈ mitad de tamaño */
 .suggestions {
     width: 100%;
@@ -1025,25 +1111,34 @@ body {
     </header>
     <main>
         <h1>¿Qué se te antoja?</h1>
-        <div class="categories">
-            <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
-                <span>Burguers</span>
-            </div>
-            <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
-                <span>Pizza</span>
-            </div>
-            <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
-                <span>Helados</span>
-            </div>
-            <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
-                <span>Postres</span>
-            </div>
-            <div class="category" data-type="Panadería" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
-                <span>Panadería</span>
-            </div>
-            <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
-    <span>Bebidas</span>
+        <div class="categories-carousel">
+    <button class="carousel-nav left" id="prev-cat">←</button>
+    
+    <div class="categories-track" id="categories-track">
+        <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
+            <span>Burguers</span>
+        </div>
+        <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
+            <span>Pizza</span>
+        </div>
+        <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
+            <span>Helados</span>
+        </div>
+        <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
+            <span>Postres</span>
+        </div>
+        <div class="category" data-type="Panadería" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
+            <span>Panadería</span>
+        </div>
+        <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
+            <span>Bebidas</span>
+        </div>
+        <!-- Puedes agregar más categorías aquí sin romper el diseño -->
+    </div>
+    
+    <button class="carousel-nav right" id="next-cat">→</button>
 </div>
+        
         </div>
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
@@ -2146,6 +2241,46 @@ async function createConfirmedOrder(orderData) {
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
 }
+
+        // =============================================
+// Carrusel de categorías
+// =============================================
+let currentCatIndex = 0;
+
+function updateCategoriesCarousel() {
+    const track = document.getElementById('categories-track');
+    if (!track) return;
+    
+    const card = track.querySelector('.category');
+    if (!card) return;
+    
+    const cardWidth = card.offsetWidth + 14; // + gap
+    const visibleWidth = track.parentElement.offsetWidth;
+    const maxIndex = Math.max(0, track.children.length - Math.floor(visibleWidth / cardWidth));
+    
+    currentCatIndex = Math.min(currentCatIndex, maxIndex);
+    currentCatIndex = Math.max(0, currentCatIndex);
+    
+    track.style.transform = `translateX(-${currentCatIndex * cardWidth}px)`;
+    
+    document.getElementById('prev-cat').disabled = currentCatIndex === 0;
+    document.getElementById('next-cat').disabled = currentCatIndex >= maxIndex;
+}
+
+document.getElementById('prev-cat')?.addEventListener('click', () => {
+    currentCatIndex--;
+    updateCategoriesCarousel();
+});
+
+document.getElementById('next-cat')?.addEventListener('click', () => {
+    currentCatIndex++;
+    updateCategoriesCarousel();
+});
+
+// Actualizar al cargar y al redimensionar
+window.addEventListener('load', updateCategoriesCarousel);
+window.addEventListener('resize', updateCategoriesCarousel);
+        
     </script>
 </body>
 </html>
