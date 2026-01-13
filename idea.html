@@ -1108,47 +1108,44 @@ body {
 
   <div class="cart-body">
     <div class="delivery-option">
-      <label for="delivery-type">Tipo de entrega</label>
-      <select id="delivery-type">
-        <option value="envio">Con envío a domicilio</option>
-        <option value="retiro">Retirar en local</option>
-      </select>
-    </div>
+                <label for="delivery-type">Tipo de entrega</label>
+                <select id="delivery-type">
+                    <option value="envio">Con envío a domicilio</option>
+                    <option value="retiro">Retirar en local</option>
+                </select>
+            </div>
+            <div class="cart-summary-panel">
+                <div class="cart-items-list" id="cart-items"></div>
+                <div class="price-summary">
+                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
+                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
+                </div>
+                <div id="free-shipping-notice"></div>
+            </div>
+            <div id="drinks-panel" class="drinks-panel" style="display:none;">
+                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
+                <div class="drinks-carousel">
+                    <button class="carousel-btn left" id="prev-drink">←</button>
+                    <div class="drinks-container" id="drinks-container"></div>
+                    <button class="carousel-btn right" id="next-drink">→</button>
+                </div>
+            </div>
+            <form id="checkout-form">
+                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
+                <select id="metodo-pago" required>
+    <option value="">Método de pago</option>
+    <option value="transferencia">Transferencia / Mercado Pago</option>
+    <option value="efectivo">Efectivo</option>
+</select>
 
-    <div class="cart-summary-panel">
-      <div class="cart-items-list" id="cart-items"></div>
-      <div class="price-summary">
-        <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-        <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
-        <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
-      </div>
-      <div id="free-shipping-notice"></div>
-    </div>
-
-    <div id="drinks-panel" class="drinks-panel" style="display:none;">
-      <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
-      <div class="drinks-carousel">
-        <button class="carousel-btn left" id="prev-drink">←</button>
-        <div class="drinks-container" id="drinks-container"></div>
-        <button class="carousel-btn right" id="next-drink">→</button>
-      </div>
-    </div>
-
-    <form id="checkout-form">
-      <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
-      <select id="metodo-pago" required>
-        <option value="">Método de pago</option>
-        <option value="transferencia">Transferencia / Mercado Pago</option>
-        <option value="efectivo">Efectivo</option>
-      </select>
-
-      <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-      
-      <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
-      <button type="button" id="checkout-btn">Realizar Pedido</button>
-    </form>
-  </div>
-</div>
+<!-- Contenedor donde se mostrará el checkout de MP -->
+<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
+                
+                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
+                <button type="button" id="checkout-btn">Realizar Pedido</button>
+            </form>
+        </div>
     </main>
     
     <!-- Footer -->
@@ -1614,59 +1611,86 @@ function loginUser() {
             container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
         }
         // ==================== CARRITO ====================
-    function setupCart() {
-  const cartIcon = document.getElementById('cart-icon');
-  
-  cartIcon.onclick = function () {
-    openCart();
-  };
+    // ==================== CARRITO ====================
+function setupCart() {
+    const cartIcon = document.getElementById('cart-icon');
+    const closeBtn = document.querySelector('.cart-close');
+    const backdrop = document.getElementById('cart-backdrop');
 
-  // Los demás event listeners siguen igual
-  document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
-  document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
-  document.getElementById('checkout-btn').onclick = checkout;
+    if (cartIcon) {
+        cartIcon.onclick = openCart;
+    }
+
+    if (closeBtn) {
+        closeBtn.onclick = closeCart;
+    }
+
+    if (backdrop) {
+        backdrop.onclick = closeCart;
+    }
+
+    // Cerrar con tecla ESC (muy útil)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === "Escape" && document.getElementById('cart-section').classList.contains('active')) {
+            closeCart();
+        }
+    });
+
+    // Listeners originales que NO se deben perder
+    const deliverySelect = document.getElementById('delivery-type');
+    const paymentSelect = document.getElementById('metodo-pago');
+    const checkoutBtn = document.getElementById('checkout-btn');
+
+    if (deliverySelect) deliverySelect.addEventListener('change', updateCartDisplay);
+    if (paymentSelect) paymentSelect.addEventListener('change', updateCartDisplay);
+    if (checkoutBtn) checkoutBtn.onclick = checkout;
 }
 
 function openCart() {
-  document.getElementById('cart-section').classList.add('active');
-  document.getElementById('cart-backdrop').classList.add('active');
-  document.body.style.overflow = 'hidden'; // evita scroll detrás
-  updateCartDisplay();
+    document.getElementById('cart-section').classList.add('active');
+    document.getElementById('cart-backdrop').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    updateCartDisplay();           // ← muy importante
 }
 
 function closeCart() {
-  document.getElementById('cart-section').classList.remove('active');
-  document.getElementById('cart-backdrop').classList.remove('active');
-  document.body.style.overflow = '';
+    document.getElementById('cart-section').classList.remove('active');
+    document.getElementById('cart-backdrop').classList.remove('active');
+    document.body.style.overflow = '';
 }
-    function addToCart(menu) {
-        if (!isLoggedIn) {
-            showModal('login-modal');
-            alert('¡Debes iniciar sesión para agregar productos al carrito!');
-            return;
-        }
-        const item = {
-            idLocal: menu.local_id,
-            nombreLocal: menu.nombre_local || 'Local desconocido',
-            idProducto: menu.id,
-            nombreProducto: menu.nombre,
-            precioUnitario: Number(menu.precio),
-            cantidad: 1,
-            categoria: menu.categoria || ''
-        };
-        const existing = cart.findIndex(i => i.idProducto === item.idProducto);
-        if (existing !== -1) {
-            cart[existing].cantidad++;
-        } else {
-            cart.push(item);
-        }
-        updateCartCount();
-        updateCartDisplay();
-        // Mensaje con botón "Ver carrito"
-        if (confirm(`¡${menu.nombre} agregado al carrito!\n\n¿Quieres ver el carrito ahora?`)) {
-            openCart();
-        }
+
+// Mantener TODAS las funciones originales del carrito
+function addToCart(menu) {
+    if (!isLoggedIn) {
+        showModal('login-modal');
+        alert('¡Debes iniciar sesión para agregar productos al carrito!');
+        return;
     }
+
+    const item = {
+        idLocal: menu.local_id,
+        nombreLocal: menu.nombre_local || 'Local desconocido',
+        idProducto: menu.id,
+        nombreProducto: menu.nombre,
+        precioUnitario: Number(menu.precio),
+        cantidad: 1,
+        categoria: menu.categoria || ''
+    };
+
+    const existing = cart.findIndex(i => i.idProducto === item.idProducto);
+    if (existing !== -1) {
+        cart[existing].cantidad++;
+    } else {
+        cart.push(item);
+    }
+
+    updateCartCount();
+    updateCartDisplay();
+
+    if (confirm(`¡${menu.nombre} agregado al carrito!\n\n¿Quieres ver el carrito ahora?`)) {
+        openCart();
+    }
+}
     function updateCartCount() {
         const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
         document.getElementById('cart-count').textContent = total;
