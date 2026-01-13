@@ -133,45 +133,51 @@ body {
     /* Categorías más pequeñas */
     .categories {
     display: flex;
-    flex-wrap: nowrap;          /* ¡Importante! Evita que salten de línea */
-    gap: 12px;
-    overflow-x: auto;           /* Activa scroll horizontal cuando sea necesario */
-    padding: 0 15px 20px 15px;  /* Espacio lateral + inferior para mejor UX */
-    scroll-behavior: smooth;    /* Scroll suave al usar botones o touch */
-    margin-bottom: 40px;
-    -webkit-overflow-scrolling: touch; /* Mejor scroll en iOS */
+    flex-direction: row;           /* items uno al lado del otro */
+    overflow-x: auto;              /* permite scroll horizontal */
+    overflow-y: hidden;            /* evita scroll vertical no deseado */
+    gap: 16px;                     /* espacio entre tarjetas */
+    padding: 0 15px 20px 15px;     /* márgenes laterales + espacio inferior */
+    scroll-snap-type: x mandatory; /* snap obligatorio al soltar */
+    -webkit-overflow-scrolling: touch; /* scroll suave en iOS */
+    scrollbar-width: none;         /* oculta scrollbar en Firefox */
+    -ms-overflow-style: none;      /* oculta scrollbar en Edge/IE */
 }
 
-/* Oculta la scrollbar en la mayoría de navegadores modernos (opcional pero queda más limpio) */
+/* Ocultar scrollbar en WebKit (Chrome, Safari, etc.) */
 .categories::-webkit-scrollbar {
-    height: 6px;
-}
-.categories::-webkit-scrollbar-track {
-    background: transparent;
-}
-.categories::-webkit-scrollbar-thumb {
-    background: #d32f2f;
-    border-radius: 3px;
+    display: none;
 }
 
-/* Opcional: centrar items cuando son pocos (desktop) */
-@media (min-width: 769px) {
-    .categories {
-        justify-content: center;
-        padding: 0 0 20px 0;
-    }
+/* Cada categoría ahora ocupa un ancho fijo y snap */
+.category {
+    flex: 0 0 130px;               /* ancho fijo → no crece ni se achica */
+    height: 130px;
+    scroll-snap-align: start;      /* snap al borde izquierdo de cada tarjeta */
+    /* el resto de tus estilos se mantienen: background, border-radius, etc. */
+    transition: transform 0.25s ease;
 }
 
-/* Ajuste mobile: más compacto */
-@media (max-width: 768px) {
+/* Efecto hover/tap (opcional, pero queda muy bien) */
+.category:active {
+    transform: scale(0.96);
+}
+
+        @media (max-width: 768px) {
     .categories {
-        padding: 0 10px 15px 10px;
-        gap: 10px;
+        gap: 12px;
+        padding: 0 12px 16px 12px;
     }
     .category {
-        width: 100px;     /* Tamaño más pequeño para mobile */
+        flex: 0 0 110px;
+        height: 110px;
+    }
+}
+
+@media (max-width: 480px) {
+    .category {
+        flex: 0 0 100px;
         height: 100px;
-        flex: 0 0 auto;   /* No crece, mantiene tamaño fijo */
     }
     .category span {
         font-size: 14px;
@@ -267,7 +273,6 @@ body {
     .menu-item button:hover, .menu-item button:active {
         background-color: #b71c1c;
     }
-        
     /* Carrito */
   .cart-backdrop {
   position: fixed;
@@ -576,7 +581,14 @@ body {
         .logo {
             height: 75px;
         }
-        
+        .category {
+        width: 110px; /* Antes 95px */
+        height: 110px; /* Antes 95px */
+    }
+    .category span {
+        font-size: 15px;
+    }
+}
         .suggestion {
             width: 75px;
             height: 75px;
@@ -628,7 +640,14 @@ body {
         .logo {
             height: 65px;
         }
-        
+        .category {
+        width: 100px; /* Antes 85px */
+        height: 100px; /* Antes 85px */
+    }
+    .category span {
+        font-size: 14px;
+    }
+}
         .suggestion {
             width: 70px;
             height: 70px;
