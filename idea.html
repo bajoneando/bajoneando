@@ -263,186 +263,101 @@ body {
     .menu-item button:hover, .menu-item button:active {
         background-color: #b71c1c;
     }
-    /* =============================================
-   CARRITO LATERAL (SIDEBAR) - ESTILO COMPLETO
-   ============================================= */
-
-/* Fondo oscuro / overlay */
-.cart-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);          /* efecto vidrio esmerilado - opcional pero queda lindo */
-    z-index: 1998;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.35s ease, visibility 0.35s ease;
-    pointer-events: none;
-}
-
-.cart-overlay.show {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-}
-
-/* Contenedor principal del sidebar */
-.cart-sidebar {
-    position: fixed;
-    top: 0;
-    right: -100%;                        /* oculto por defecto */
-    width: 420px;
-    max-width: 92vw;
-    height: 100vh;
-    background: #ffffff;
-    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.25);
-    z-index: 2000;
-    transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    display: flex;
-    flex-direction: column;
-}
-
-/* Cuando está abierto */
-.cart-sidebar.open {
-    right: 0;
-}
-
-/* Header del carrito */
-.cart-sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 24px;
-    border-bottom: 1px solid #eee;
-    background: linear-gradient(to bottom, #fff, #fcfcfc);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.cart-sidebar-header h2 {
-    margin: 0;
-    font-size: 1.55rem;
-    font-weight: 600;
-    color: #c62828;
-}
-
-.cart-close-btn {
-    background: none;
-    border: none;
-    font-size: 2.4rem;
-    line-height: 1;
-    color: #555;
-    cursor: pointer;
-    padding: 0 8px;
-    transition: color 0.2s, transform 0.2s;
-}
-
-.cart-close-btn:hover {
-    color: #d32f2f;
-    transform: rotate(90deg);
-}
-
-/* Área de contenido con scroll */
-.cart-sidebar-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px 24px;
-    -webkit-overflow-scrolling: touch;   /* scroll suave en iOS */
-}
-
-/* Ajustes para móviles pequeños */
-@media (max-width: 480px) {
-    .cart-sidebar {
+    /* Carrito */
+    #cart-section {
+        display: none;
+        background: white;
+        border-radius: 18px;
+        padding: 20px;
+        margin-top: 30px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    .delivery-option select {
         width: 100%;
-        max-width: 100%;
-        right: -100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        margin-bottom: 20px;
     }
-    
-    .cart-sidebar.open {
-        right: 0;
+    .cart-item {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 0;
+        border-bottom: 1px solid #eee;
     }
-    
-    .cart-sidebar-header {
-        padding: 16px 20px;
+    .cart-item-left {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
     }
-    
-    .cart-sidebar-content {
-        padding: 16px 20px;
+    .cart-item-name {
+        font-weight: 500;
+        font-size: 1.1rem;
     }
-    
-    .cart-sidebar-header h2 {
-        font-size: 1.4rem;
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
     }
-}
-
-/* Mejora visual de los elementos internos (opcional pero recomendado) */
-.cart-sidebar .delivery-option {
-    margin-bottom: 24px;
-}
-
-.cart-sidebar .delivery-option label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #444;
-}
-
-.cart-sidebar select,
-.cart-sidebar input,
-.cart-sidebar textarea {
-    width: 100%;
-    padding: 14px 16px;
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    font-size: 1rem;
-    transition: border-color 0.2s;
-}
-
-.cart-sidebar select:focus,
-.cart-sidebar input:focus,
-.cart-sidebar textarea:focus {
-    outline: none;
-    border-color: #d32f2f;
-    box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.15);
-}
-
-/* Botón de realizar pedido (más destacado) */
-#checkout-btn {
-    margin-top: 20px;
-    padding: 16px;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.15rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.25s;
-    width: 100%;
-}
-
-#checkout-btn:hover {
-    background: #b71c1c;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(183, 28, 28, 0.3);
-}
-
-#checkout-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Espaciado extra para el panel de bebidas */
-.drinks-panel {
-    margin: 28px 0;
-    padding: 20px;
-    background: #fff8f8;
-    border-radius: 12px;
-    border: 1px solid #ffebee;
-}
+    .quantity-btn {
+        width: 40px;
+        height: 40px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+    }
+    .quantity {
+        font-size: 1.2rem;
+        font-weight: bold;
+        min-width: 50px;
+        text-align: center;
+    }
+    .cart-item-price {
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    .remove-btn {
+        background: #ff5252;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .price-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        font-size: 1.1rem;
+    }
+    .price-line.total {
+        font-size: 1.6rem;
+        font-weight: bold;
+        color: #d32f2f;
+        border-top: 2px solid #ddd;
+        padding-top: 20px;
+        margin-top: 15px;
+    }
+    .free-shipping-msg {
+        background: #e8f5e8;
+        color: #2e7d32;
+        padding: 16px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 600;
+        margin: 15px 0;
+        font-size: 1.1rem;
+    }
+    /* Carousel de bebidas */
+    .drinks-panel {
+        margin: 30px 0;
+    }
     .drinks-carousel {
         position: relative;
         overflow: hidden;
@@ -1041,7 +956,7 @@ body {
         right: 10px !important;
     }
 }
-
+        
 </style>
 </head>
 <body>
@@ -1103,6 +1018,54 @@ body {
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
         <div id="menu-display" style="display:none;"></div>
+       <div id="cart-sidebar" class="cart-sidebar">
+    <div class="cart-sidebar-header">
+        <h2>Tu Carrito</h2>
+        <button class="close-cart">×</button>
+    </div>
+    
+    <div class="cart-sidebar-body">
+        <div class="delivery-option">
+                <label for="delivery-type">Tipo de entrega</label>
+                <select id="delivery-type">
+                    <option value="envio">Con envío a domicilio</option>
+                    <option value="retiro">Retirar en local</option>
+                </select>
+            </div>
+            <div class="cart-summary-panel">
+                <div class="cart-items-list" id="cart-items"></div>
+                <div class="price-summary">
+                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
+                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
+                </div>
+                <div id="free-shipping-notice"></div>
+            </div>
+            <div id="drinks-panel" class="drinks-panel" style="display:none;">
+                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
+                <div class="drinks-carousel">
+                    <button class="carousel-btn left" id="prev-drink">←</button>
+                    <div class="drinks-container" id="drinks-container"></div>
+                    <button class="carousel-btn right" id="next-drink">→</button>
+                </div>
+            </div>
+            <form id="checkout-form">
+                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
+                <select id="metodo-pago" required>
+    <option value="">Método de pago</option>
+    <option value="transferencia">Transferencia / Mercado Pago</option>
+    <option value="efectivo">Efectivo</option>
+</select>
+
+<!-- Contenedor donde se mostrará el checkout de MP -->
+<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
+                
+                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
+                <button type="button" id="checkout-btn">Realizar Pedido</button>
+            </form>
+        </div>
+            
+    </main>
     
     <!-- Footer -->
     <footer class="text-center">
@@ -1166,60 +1129,6 @@ body {
         <button onclick="saveAddressChange()">Guardar dirección</button>
     </div>
 </div>
-
-        <!-- Sidebar -->
-<div id="cart-sidebar" class="cart-sidebar">
-    <div class="cart-sidebar-header">
-        <h2>Tu Carrito</h2>
-        <button class="cart-close-btn" onclick="closeCartSidebar()">×</button>
-    </div>
-   
-    <div class="cart-sidebar-content">
-        <!-- YA NO uses #cart-section como contenedor -->
-        <!-- Mueve todo el contenido directamente aquí -->
-        <div class="delivery-option">
-                <label for="delivery-type">Tipo de entrega</label>
-                <select id="delivery-type">
-                    <option value="envio">Con envío a domicilio</option>
-                    <option value="retiro">Retirar en local</option>
-                </select>
-            </div>
-            <div class="cart-summary-panel">
-                <div class="cart-items-list" id="cart-items"></div>
-                <div class="price-summary">
-                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
-                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
-                </div>
-                <div id="free-shipping-notice"></div>
-            </div>
-            <div id="drinks-panel" class="drinks-panel" style="display:none;">
-                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
-                <div class="drinks-carousel">
-                    <button class="carousel-btn left" id="prev-drink">←</button>
-                    <div class="drinks-container" id="drinks-container"></div>
-                    <button class="carousel-btn right" id="next-drink">→</button>
-                </div>
-            </div>
-            <form id="checkout-form">
-                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
-                <select id="metodo-pago" required>
-    <option value="">Método de pago</option>
-    <option value="transferencia">Transferencia / Mercado Pago</option>
-    <option value="efectivo">Efectivo</option>
-</select>
-
-<!-- Contenedor donde se mostrará el checkout de MP -->
-<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-                
-                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
-                <button type="button" id="checkout-btn">Realizar Pedido</button>
-            </form>
-        </div>
-    </div>
-
-<!-- Overlay → FUERA del sidebar, al mismo nivel o después -->
-<div id="cart-overlay" class="cart-overlay" onclick="closeCartSidebar()"></div>
    
     <script>
 const MP_ACCESS_TOKEN = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795";
@@ -1622,59 +1531,44 @@ function loginUser() {
         }
         // ==================== CARRITO ====================
     function setupCart() {
-    const cartIcon = document.getElementById('cart-icon');
-    
-    if (!cartIcon) {
-        console.error("¡No se encontró el elemento #cart-icon!");
-        return;
-    }
+    const cartIcon    = document.getElementById('cart-icon');
+    const cartSidebar = document.getElementById('cart-sidebar');
+    const closeBtn    = document.querySelector('.close-cart');
+    const overlay     = document.createElement('div');
+    overlay.className = 'cart-overlay';
+    document.body.appendChild(overlay);
 
-    console.log("setupCart() se ejecutó correctamente → evento conectado");
-
-    cartIcon.onclick = function () {
-        console.log("Clic en carrito detectado → intentando abrir sidebar");
-        openCartSidebar();
+    // Abrir carrito
+    cartIcon.onclick = () => {
+        cartSidebar.classList.add('open');
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // evita scroll de fondo
+        updateCartDisplay();
     };
 
-    // listeners restantes...
-    document.getElementById('delivery-type')?.addEventListener('change', updateCartDisplay);
-    document.getElementById('metodo-pago')?.addEventListener('change', updateCartDisplay);
-    document.getElementById('checkout-btn')?.onclick = checkout;
-}
-function openCartSidebar() {
-    const sidebar = document.getElementById('cart-sidebar');
-    const overlay = document.getElementById('cart-overlay');
-
-    if (!sidebar || !overlay) {
-        console.error("No se encontraron #cart-sidebar o #cart-overlay en el DOM");
-        return;
+    // Cerrar carrito (dos formas)
+    function closeCart() {
+        cartSidebar.classList.remove('open');
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
     }
 
-    console.log("Abriendo carrito → agregando clases 'open' y 'show'");
-    
-    sidebar.classList.add('open');
-    overlay.classList.add('show');
-    
+    closeBtn.onclick = closeCart;
+    overlay.onclick  = closeCart;
+
+    // Mantener los listeners existentes
+    document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
+    document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
+    document.getElementById('checkout-btn').onclick = checkout;
+}
+
+// Reemplazar openCart() por:
+function openCart() {
+    document.getElementById('cart-sidebar').classList.add('open');
+    document.querySelector('.cart-overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
     updateCartDisplay();
 }
-function closeCartSidebar() {
-    const sidebar = document.getElementById('cart-sidebar');
-    const overlay = document.getElementById('cart-overlay');
-    
-    if (sidebar) sidebar.classList.remove('open');
-    if (overlay) overlay.classList.remove('show');
-}
-
-// Opcional: cerrar con tecla ESC
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        closeCartSidebar();
-    }
-});
-    function openCart() {
-        document.getElementById('cart-section').style.display = 'block';
-        updateCartDisplay();
-    }
     function addToCart(menu) {
         if (!isLoggedIn) {
             showModal('login-modal');
