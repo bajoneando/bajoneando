@@ -956,6 +956,94 @@ body {
         right: 10px !important;
     }
 }
+
+        /* ── SIDEBAR CARRITO ── */
+.cart-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 380px;               /* ancho en desktop */
+    height: 100%;
+    background: white;
+    box-shadow: -8px 0 25px rgba(0,0,0,0.25);
+    transform: translateX(100%); /* oculto por defecto */
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+}
+
+.cart-sidebar.open {
+    transform: translateX(0);
+}
+
+.cart-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+    z-index: 1100;
+}
+
+.cart-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Header del sidebar */
+.cart-sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px;
+    border-bottom: 1px solid #eee;
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.cart-sidebar-header h2 {
+    margin: 0;
+    color: #c62828;
+    font-size: 1.5rem;
+}
+
+.close-cart {
+    background: none;
+    border: none;
+    font-size: 2.2rem;
+    color: #666;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* Contenido con scroll */
+.cart-sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    padding-bottom: 100px; /* espacio para botón final si es necesario */
+}
+
+/* Ajustes en mobile */
+@media (max-width: 768px) {
+    .cart-sidebar {
+        width: 85vw;           /* o 100vw si prefieres full width */
+        max-width: 420px;
+    }
+    
+    .cart-sidebar-content {
+        padding: 16px;
+    }
+}
+
+/* Elimina o comenta el estilo anterior de #cart-section */
+#cart-section {
+    display: none !important;  /* ← importante para no conflictos */
+}
         
 </style>
 </head>
@@ -1017,13 +1105,15 @@ body {
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
-        <!-- ── CARRITO LATERAL (side cart) ── -->
+        <div id="menu-display" style="display:none;"></div>
+        <!-- →→→ Aquí va el nuevo panel lateral ←←← -->
     <div id="cart-sidebar" class="cart-sidebar">
         <div class="cart-sidebar-header">
             <h2>Tu Carrito</h2>
-            <button class="close-cart">×</button>
+            <button class="close-cart" id="close-cart">×</button>
         </div>
-        <div class="cart-sidebar-body">
+        
+        <div class="cart-sidebar-content">
             <div class="delivery-option">
                 <label for="delivery-type">Tipo de entrega</label>
                 <select id="delivery-type">
@@ -1031,39 +1121,41 @@ body {
                     <option value="retiro">Retirar en local</option>
                 </select>
             </div>
-
-            <div class="cart-items-list" id="cart-items"></div>
-
-            <div class="price-summary">
-                <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-                <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
-                <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
+            <div class="cart-summary-panel">
+                <div class="cart-items-list" id="cart-items"></div>
+                <div class="price-summary">
+                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
+                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
+                </div>
+                <div id="free-shipping-notice"></div>
             </div>
-
-            <div id="free-shipping-notice"></div>
-
             <div id="drinks-panel" class="drinks-panel" style="display:none;">
                 <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
-                <div class="drinks-carousel">...</div>
+                <div class="drinks-carousel">
+                    <button class="carousel-btn left" id="prev-drink">←</button>
+                    <div class="drinks-container" id="drinks-container"></div>
+                    <button class="carousel-btn right" id="next-drink">→</button>
+                </div>
             </div>
-
             <form id="checkout-form">
                 <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
                 <select id="metodo-pago" required>
-                    <option value="">Método de pago</option>
-                    <option value="transferencia">Transferencia / Mercado Pago</option>
-                    <option value="efectivo">Efectivo</option>
-                </select>
-                <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
+    <option value="">Método de pago</option>
+    <option value="transferencia">Transferencia / Mercado Pago</option>
+    <option value="efectivo">Efectivo</option>
+</select>
+
+<!-- Contenedor donde se mostrará el checkout de MP -->
+<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
+                
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
         </div>
-    </div>
 
-    <!-- Overlay fondo oscuro -->
-    <div class="cart-overlay" id="cart-overlay"></div>
-            
+    <!-- Fondo oscuro cuando el sidebar está abierto -->
+    <div id="cart-overlay" class="cart-overlay"></div>
     </main>
     
     <!-- Footer -->
@@ -1531,42 +1623,31 @@ function loginUser() {
         // ==================== CARRITO ====================
     function setupCart() {
     const cartIcon    = document.getElementById('cart-icon');
-    const cartSidebar = document.getElementById('cart-sidebar');
-    const closeBtn    = document.querySelector('.close-cart');
-    const overlay     = document.createElement('div');
-    overlay.className = 'cart-overlay';
-    document.body.appendChild(overlay);
+    const sidebar     = document.getElementById('cart-sidebar');
+    const overlay     = document.getElementById('cart-overlay');
+    const closeBtn    = document.getElementById('close-cart');
 
-    // Abrir carrito
-    cartIcon.onclick = () => {
-        cartSidebar.classList.add('open');
-        overlay.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // evita scroll de fondo
+    function openCart() {
+        sidebar.classList.add('open');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; // evita scroll detrás
         updateCartDisplay();
-    };
+    }
 
-    // Cerrar carrito (dos formas)
     function closeCart() {
-        cartSidebar.classList.remove('open');
-        overlay.style.display = 'none';
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
         document.body.style.overflow = '';
     }
 
+    cartIcon.onclick = openCart;
     closeBtn.onclick = closeCart;
     overlay.onclick  = closeCart;
 
-    // Mantener los listeners existentes
+    // Mantén los listeners que ya tenías
     document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
     document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
     document.getElementById('checkout-btn').onclick = checkout;
-}
-
-// Reemplazar openCart() por:
-function openCart() {
-    document.getElementById('cart-sidebar').classList.add('open');
-    document.querySelector('.cart-overlay').style.display = 'block';
-    document.body.style.overflow = 'hidden';
-    updateCartDisplay();
 }
     function addToCart(menu) {
         if (!isLoggedIn) {
