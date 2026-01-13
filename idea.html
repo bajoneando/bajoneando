@@ -1798,6 +1798,33 @@ function addToCart(menu) {
         dirInput.required = true;
     }
 }
+
+        // Modificar cantidad de un ítem en el carrito
+function changeQuantity(index, delta) {
+    if (!cart[index]) return;
+    
+    const nuevaCantidad = cart[index].cantidad + delta;
+    
+    if (nuevaCantidad < 1) {
+        // En lugar de dejar en 1, eliminamos directamente
+        removeFromCart(index);
+        return;
+    }
+    
+    cart[index].cantidad = nuevaCantidad;
+    
+    updateCartCount();
+    updateCartDisplay();
+}
+
+// Eliminar un ítem del carrito
+function removeFromCart(index) {
+    if (confirm(`¿Eliminar ${cart[index].nombreProducto} del carrito?`)) {
+        cart.splice(index, 1);
+        updateCartCount();
+        updateCartDisplay();
+    }
+}
         
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
