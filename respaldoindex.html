@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weep - Plataforma de Comidas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    /* Header */
+    header {
+    position: fixed; /* ← clave */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000; /* para que quede por encima de todo */
+    background-color: #fff;
+    padding: 12px 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    border-radius: 0 0 20px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+/* Importante: compensar el espacio que ocupa el header fijo */
+body {
+    padding-top: 140px; /* ← ajusta según la altura real del header en desktop */
+}
+/* Versión mobile (más pequeño) */
+@media (max-width: 768px) {
+    body {
+        padding-top: 110px; /* altura aproximada en mobile */
+    }
+    header {
+        padding: 10px 12px;
+        border-radius: 0;
+    }
+}
+    .logo {
+        height: 90px; /* Logo más grande en desktop */
+    }
+    .logo img {
+        height: 100%;
+        object-fit: contain;
+    }
+    .search-bar {
+        flex: 1;
+        min-width: 200px;
+        max-width: 500px;
+        margin: 0 10px;
+    }
+    .search-bar input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ccc;
+        border-radius: 30px;
+        font-size: 15px;
+        outline: none;
+    }
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .profile {
+        font-size: 15px;
+        font-weight: 500;
+        color: #333;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    /* Ícono de carrito con imagen */
+    .cart-icon {
+        position: relative;
+        cursor: pointer;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cart-icon img {
+        width: 85%;
+        height: 85%;
+        object-fit: contain;
+    }
+    .cart-count {
+        position: absolute;
+        top: -6px;
+        right: -8px;
+        background: #d32f2f;
+        color: white;
+        border-radius: 50%;
+        min-width: 22px;
+        height: 22px;
+        font-size: 12px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 5px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    main {
+        flex: 1;
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    h1 {
+        text-align: center;
+        color: #c62828;
+        font-size: 1.8rem;
+        margin: 20px 0;
+    }
+    h2 {
+        text-align: center;
+        color: #c62828;
+        font-size: 1.5rem;
+        margin: 30px 0 20px;
+    }
+    /* Categorías más pequeñas */
+    .categories {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 40px;
+    }
+    .category {
+        width: 130px;
+        height: 130px;
+        background-size: cover;
+        background-position: center;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+    .category::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
+        border-radius: 16px;
+    }
+    .category span {
+        position: absolute;
+        bottom: 12px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: white;
+        font-weight: bold;
+        font-size: 16px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+        z-index: 1;
+    }
+    .category:hover, .category:active {
+        transform: scale(1.05);
+    }
+    /* Sugerencias de locales ≈ mitad de tamaño */
+.suggestions {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+.suggestion-items {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 20px 0;
+    width: 100%;
+}
+.suggestion {
+    width: 120px;
+    height: 120px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.suggestion:hover, .suggestion:active {
+    transform: scale(1.1);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+}
+.suggestion img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+.suggestion:hover img {
+    transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
+}
+    /* Tarjetas de menú - versión desktop */
+    .menu-item {
+        width: 100%;
+        max-width: 260px;
+        background: white;
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+    .menu-item:hover, .menu-item:active {
+        transform: translateY(-8px);
+    }
+    .menu-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
+    }
+    .menu-item h3 {
+        margin: 10px 0 6px;
+        font-size: 1.1rem;
+        color: #333;
+    }
+    .menu-item p {
+        color: #666;
+        margin: 4px 0;
+        font-size: 0.95rem;
+    }
+    .menu-item p:last-of-type {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 8px 0;
+    }
+    .menu-item button {
+        width: 100%;
+        padding: 12px;
+        background-color: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .menu-item button:hover, .menu-item button:active {
+        background-color: #b71c1c;
+    }
+    /* Carrito */
+  .cart-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
+.cart-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.cart-sidebar {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  background: white;
+  z-index: 2000;
+  transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -8px 0 30px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+}
+.cart-sidebar.active {
+  right: 0;
+}
+.cart-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.cart-header h2 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: #c62828;
+}
+.cart-close {
+  background: none;
+  border: none;
+  font-size: 2.2rem;
+  line-height: 1;
+  color: #555;
+  cursor: pointer;
+}
+.cart-close:hover {
+  color: #d32f2f;
+}
+.cart-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+/* Mobile: más ancho */
+@media (max-width: 500px) {
+  .cart-sidebar {
+    max-width: 90%;
+  }
+}
+  /* Ocultamos el viejo botón de checkout si queremos más espacio */
+  #checkout-form {
+    margin-top: 25px;
+  }
+    .delivery-option select {
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+    .cart-item {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .cart-item-left {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+    .cart-item-name {
+        font-weight: 500;
+        font-size: 1.1rem;
+    }
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .quantity-btn {
+        width: 40px;
+        height: 40px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+    }
+    .quantity {
+        font-size: 1.2rem;
+        font-weight: bold;
+        min-width: 50px;
+        text-align: center;
+    }
+    .cart-item-price {
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    .remove-btn {
+        background: #ff5252;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .price-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        font-size: 1.1rem;
+    }
+    .price-line.total {
+        font-size: 1.6rem;
+        font-weight: bold;
+        color: #d32f2f;
+        border-top: 2px solid #ddd;
+        padding-top: 20px;
+        margin-top: 15px;
+    }
+    .free-shipping-msg {
+        background: #e8f5e8;
+        color: #2e7d32;
+        padding: 16px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 600;
+        margin: 15px 0;
+        font-size: 1.1rem;
+    }
+    /* Carousel de bebidas */
+    .drinks-panel {
+        margin: 30px 0;
+    }
+    .drinks-carousel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+    .drinks-container {
+        display: flex;
+        transition: transform 0.4s ease;
+        gap: 12px;
+        padding: 10px 0;
+    }
+    .drink-card {
+        flex: 0 0 calc(80% - 12px);
+        background: white;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+    .drink-card img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+    }
+    .drink-card h4 {
+        margin: 12px 10px 6px;
+        font-size: 1rem;
+    }
+    .drink-card .price {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 10px 0;
+    }
+    .drink-card button {
+        width: 90%;
+        margin: 0 auto 15px;
+        padding: 12px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .carousel-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(211,47,47,0.8);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 22px;
+        cursor: pointer;
+        z-index: 10;
+    }
+    .carousel-btn.left { left: 10px; }
+    .carousel-btn.right { right: 10px; }
+    /* Formulario checkout */
+    #checkout-form input,
+    #checkout-form select,
+    #checkout-form textarea {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 12px;
+        font-size: 16px;
+    }
+    #checkout-btn {
+        width: 100%;
+        padding: 16px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    #checkout-btn:hover, #checkout-btn:active {
+        background: #b71c1c;
+    }
+    /* Loading */
+    .loading {
+        text-align: center;
+        padding: 50px 0;
+        color: #d32f2f;
+        font-weight: 600;
+    }
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #d32f2f;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin: 0 10px;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    /* Footer */
+    footer {
+        background-color: #c62828;
+        padding: 30px 20px;
+        text-align: center;
+        margin-top: auto;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+    }
+    footer p {
+        margin: 8px 0;
+        color: #ffffff;
+    }
+    footer p strong {
+        color: #ffffff;
+    }
+    footer a {
+        color: #ffffff;
+        text-decoration: none;
+        margin: 0 10px;
+    }
+    footer a:hover {
+        text-decoration: underline;
+    }
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+        /* ====================== RESPONSIVE ====================== */
+    @media (max-width: 768px) {
+        .search-bar {
+            order: 3;
+            width: 100%;
+            margin: 10px 0 0;
+            max-width: none;
+        }
+        .header-right {
+            gap: 12px;
+        }
+        .logo {
+            height: 75px;
+        }
+        .category {
+        width: 110px; /* Antes 95px */
+        height: 110px; /* Antes 95px */
+    }
+    .category span {
+        font-size: 15px;
+    }
+}
+        .suggestion {
+            width: 75px;
+            height: 75px;
+        }
+        .suggestion-items {
+        gap: 14px;
+        padding: 15px 0;
+    }
+}
+        h1 { font-size: 1.6rem; }
+        h2 { font-size: 1.4rem; }
+        .drink-card {
+            flex: 0 0 calc(75% - 12px);
+        }
+        /* Menú en 2 columnas */
+        .menu-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            padding: 0 10px;
+            justify-content: center;
+        }
+        .menu-item {
+            max-width: none;
+            padding: 10px;
+        }
+        .menu-item img {
+            height: 110px; /* Más pequeña que antes (era 120px) */
+            border-radius: 10px;
+        }
+        .menu-item h3 {
+            font-size: 0.95rem;
+            margin: 8px 0 4px;
+        }
+        .menu-item p {
+            font-size: 0.85rem;
+            margin: 3px 0;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.2rem;
+            margin: 6px 0;
+        }
+        .menu-item button {
+            padding: 9px;
+            font-size: 0.9rem;
+        }
+    }
+    @media (max-width: 480px) {
+        .logo {
+            height: 65px;
+        }
+        .category {
+        width: 100px; /* Antes 85px */
+        height: 100px; /* Antes 85px */
+    }
+    .category span {
+        font-size: 14px;
+    }
+}
+        .suggestion {
+            width: 70px;
+            height: 70px;
+        }
+        .suggestion-items {
+        gap: 12px;
+        padding: 10px 0;
+    }
+}
+        .menu-item img {
+            height: 100px; /* Aún más compacta en móviles pequeños */
+        }
+        .drink-card {
+            flex: 0 0 calc(85% - 12px);
+        }
+        .carousel-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+        }
+        .menu-items {
+            gap: 12px;
+            padding: 0 8px;
+        }
+        .menu-item {
+            padding: 8px;
+        }
+        .menu-item h3 {
+            font-size: 0.9rem;
+        }
+        .menu-item p {
+            font-size: 0.8rem;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.15rem;
+        }
+        .menu-item button {
+            padding: 8px;
+            font-size: 0.85rem;
+        }
+    }
+    @media (min-width: 769px) {
+        .menu-items {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+        /* Tarjetas de platos más pequeñas en desktop */
+        .menu-item {
+            max-width: 230px; /* Antes era 260px → ahora más compactas */
+            padding: 10px;
+        }
+        .menu-item img {
+            height: 130px; /* Antes 150px → más pequeña */
+            border-radius: 12px;
+        }
+        .menu-item h3 {
+            font-size: 1.05rem;
+            margin: 10px 0 6px;
+        }
+        .menu-item p {
+            font-size: 0.9rem;
+        }
+        .menu-item p:last-of-type {
+            font-size: 1.35rem;
+        }
+        .menu-item button {
+            padding: 11px;
+            font-size: 0.95rem;
+        }
+    }
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.5);
+    }
+    .modal-content {
+        background-color: #fff;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 12px;
+        width: 80%;
+        max-width: 400px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .modal-content h2 {
+        text-align: center;
+        color: #c62828;
+    }
+    .modal-content input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+    .modal-content button {
+        width: 100%;
+        padding: 12px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .modal-content button:hover {
+        background: #b71c1c;
+    }
+    .modal-content p {
+        text-align: center;
+        margin-top: 10px;
+    }
+    .modal-content a {
+        color: #d32f2f;
+        cursor: pointer;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+        /* Contenedor del perfil */
+.profile-container {
+    position: relative;
+    display: inline-block;
+}
+/* Botón principal de perfil */
+.profile-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 30px;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+.profile-button:hover {
+    background-color: #e0e0e0;
+}
+.profile-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #d32f2f;
+}
+/* Menú desplegable */
+.profile-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+    border-radius: 12px;
+    min-width: 180px;
+    z-index: 1000;
+    overflow: hidden;
+    margin-top: 8px;
+}
+.profile-dropdown.active {
+    display: block;
+}
+.dropdown-item {
+    display: block;
+    padding: 12px 18px;
+    color: #333;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+}
+.dropdown-item:hover {
+    background-color: #ffebee;
+}
+.dropdown-item.logout {
+    color: #d32f2f;
+    border-top: 1px solid #eee;
+}
+/* Responsive: evita que se desborde en móviles pequeños */
+@media (max-width: 480px) {
+    .profile-icon {
+        width: 28px;
+        height: 28px;
+    }
+   
+    .profile-button {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+}
+        .modal-content label {
+    display: block;
+    margin: 12px 0 6px;
+    font-weight: 500;
+    color: #444;
+}
+.modal-content input[type="password"] {
+    margin-bottom: 8px;
+}
+.menu-item {
+    position: relative !important;
+    padding: 12px;
+    overflow: hidden;
+}
+.fav-btn {
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 40px !important;
+    height: 40px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    transition: all 0.2s !important;
+    z-index: 10 !important;
+    overflow: hidden; /* importante para las imágenes */
+    padding: 4px; /* pequeño margen interno */
+}
+.fav-btn:hover {
+    transform: scale(1.15) !important;
+    background: white !important;
+}
+/* Las dos imágenes se superponen y cambian con opacidad */
+.fav-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.25s ease;
+}
+.fav-btn .fav-empty {
+    opacity: 1;
+}
+.fav-btn.active .fav-empty {
+    opacity: 0;
+}
+.fav-btn .fav-filled {
+    opacity: 0;
+}
+.fav-btn.active .fav-filled {
+    opacity: 1;
+}
+        /* ============================================= */
+/* DESKTOP - 3 columnas + ajustes */
+/* ============================================= */
+@media (min-width: 992px) {
+    .menu-items {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 24px !important; /* un poco menos espacio que 28px */
+        max-width: 1200px; /* ancho total más controlado */
+        margin: 30px auto !important;
+        padding: 0 15px;
+    }
+    .menu-item {
+        max-width: none !important;
+        width: 100%; /* ocupa todo el espacio de la celda */
+        background: white;
+        border-radius: 16px;
+        padding: 12px !important; /* ← menos padding = tarjeta más compacta */
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        position: relative;
+        overflow: hidden;
+    }
+    /* Imagen más pequeña y proporcionada */
+    .menu-item img {
+        width: 100%;
+        height: 220px !important; /* ← bajamos de 280px → más equilibrado */
+        object-fit: cover;
+        border-radius: 12px;
+    }
+    /* Aseguramos que el botón favorito esté bien posicionado y visible */
+    .fav-btn {
+        position: absolute !important;
+        top: 12px !important;
+        right: 12px !important;
+        width: 38px !important; /* ← un poco más pequeño */
+        height: 38px !important;
+        background: rgba(255, 255, 255, 0.92) !important;
+        border-radius: 50% !important;
+        padding: 6px !important;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
+        z-index: 15 !important; /* más arriba que la mayoría de elementos */
+        transition: all 0.2s ease !important;
+    }
+    .fav-btn:hover {
+        transform: scale(1.12) !important;
+        background: white !important;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
+    }
+    /* Íconos dentro del botón favorito más pequeños también */
+    .fav-btn img {
+        width: 80% !important;
+        height: 80% !important;
+    }
+    /* Opcional: texto un poco más pequeño para mantener proporción */
+    .menu-item h3 {
+        font-size: 1.15rem !important;
+        margin: 12px 0 6px !important;
+    }
+    .menu-item p {
+        font-size: 0.92rem !important;
+    }
+    .menu-item p:last-of-type {
+        font-size: 1.4rem !important;
+        margin: 10px 0 !important;
+    }
+    .menu-item button { /* botón "Agregar al carrito" */
+        padding: 11px !important;
+        font-size: 0.98rem !important;
+    }
+}
+/* Para que no se rompa en tablets grandes */
+@media (min-width: 768px) and (max-width: 991px) {
+    .menu-items {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 20px !important;
+    }
+   
+    .menu-item img {
+        height: 200px !important;
+    }
+   
+    .fav-btn {
+        width: 36px !important;
+        height: 36px !important;
+        top: 10px !important;
+        right: 10px !important;
+    }
+}
+       
+</style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="https://i.postimg.cc/7PpF3zRP/Chat-GPT-Image-Jan-3-2026-01-27-57-AM-(1).png" alt="Weep Logo">
+        </div>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Buscar menús o locales...">
+        </div>
+        <div class="header-right">
+    <div class="profile-container" id="profile-container">
+        <div class="profile-button" id="profile-button">
+            <img
+                src="https://thumbs.dreamstime.com/b/simple-clean-vector-icon-user-profile-avatar-features-white-silhouette-person-s-head-shoulders-subtle-hair-396756147.jpg"
+                alt="Perfil"
+                class="profile-icon">
+            <span>Mi Perfil</span>
+        </div>
+       
+        <!-- Menú desplegable -->
+        <div class="profile-dropdown" id="profile-dropdown">
+    <a href="#" class="dropdown-item" onclick="openEditProfileModal()">Editar perfil</a>
+    <a href="#" class="dropdown-item" onclick="openChangeAddressModal()">Cambiar dirección</a>
+    <a href="#" class="dropdown-item logout" id="logout-link">Cerrar sesión</a>
+</div>
+    </div>
+    <!-- Reemplaza el <div class="cart-icon"> actual por: -->
+<div class="cart-icon" id="cart-icon">
+  <img src="https://i.postimg.cc/vBY0wJNq/18611-(1).jpg" alt="Carrito de compras">
+  <div class="cart-count" id="cart-count">0</div>
+</div>
+    </header>
+    <main>
+        <h1>¿Qué se te antoja?</h1>
+        <div class="categories">
+            <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
+                <span>Burguers</span>
+            </div>
+            <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
+                <span>Pizza</span>
+            </div>
+            <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
+                <span>Helados</span>
+            </div>
+            <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
+                <span>Postres</span>
+            </div>
+            <div class="category" data-type="Panadería" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
+                <span>Panadería</span>
+            </div>
+            <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
+    <span>Bebidas</span>
+</div>
+        </div>
+        <div class="suggestions">
+            <h2>Sugerencias de Locales</h2>
+            <div class="suggestion-items" id="suggestion-items"></div>
+        </div>
+        <div id="menu-display" style="display:none;"></div>
+<!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
+<div id="cart-backdrop" class="cart-backdrop"></div>
+<!-- 2. Reemplaza completamente el <div id="cart-section"> original por este bloque -->
+<div id="cart-section" class="cart-sidebar">
+  <div class="cart-header">
+    <h2>Tu Carrito</h2>
+    <button type="button" class="cart-close" aria-label="Cerrar carrito">×</button>
+  </div>
+  <div class="cart-body">
+    <div class="delivery-option">
+                <label for="delivery-type">Tipo de entrega</label>
+                <select id="delivery-type">
+                    <option value="envio">Con envío a domicilio</option>
+                    <option value="retiro">Retirar en local</option>
+                </select>
+            </div>
+            <div class="cart-summary-panel">
+                <div class="cart-items-list" id="cart-items"></div>
+                <div class="price-summary">
+                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
+                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
+                </div>
+                <div id="free-shipping-notice"></div>
+            </div>
+            <div id="drinks-panel" class="drinks-panel" style="display:none;">
+                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
+                <div class="drinks-carousel">
+                    <button class="carousel-btn left" id="prev-drink">←</button>
+                    <div class="drinks-container" id="drinks-container"></div>
+                    <button class="carousel-btn right" id="next-drink">→</button>
+                </div>
+            </div>
+            <form id="checkout-form">
+                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
+                <select id="metodo-pago" required>
+    <option value="">Método de pago</option>
+    <option value="transferencia">Transferencia / Mercado Pago</option>
+    <option value="efectivo">Efectivo</option>
+</select>
+<!-- Contenedor donde se mostrará el checkout de MP -->
+<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
+               
+                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
+                <button type="button" id="checkout-btn">Realizar Pedido</button>
+            </form>
+        </div>
+    </main>
+   
+    <!-- Footer -->
+    <footer class="text-center">
+        <div class="container">
+            <p class="mb-2">© 2026 <strong>Weep</strong> - Plataforma de Pedidos</p>
+            <p class="small mb-0">
+                <a href="#">Términos</a> • <a href="#">Privacidad</a> • <a href="#">Soporte</a>
+            </p>
+        </div>
+    </footer>
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('login-modal')">&times;</span>
+            <h2>Iniciar Sesión</h2>
+            <input type="email" id="login-email" placeholder="Correo electrónico" required>
+            <input type="password" id="login-password" placeholder="Contraseña" required>
+            <button onclick="loginUser()">Entrar</button>
+            <p>¿No tienes cuenta? <a onclick="switchToRegister()">Regístrate</a></p>
+        </div>
+    </div>
+    <!-- Register Modal - CORREGIDO: ahora incluye el campo dirección -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('register-modal')">&times;</span>
+            <h2>Registro</h2>
+            <input type="text" id="register-name" placeholder="Nombre completo" required>
+            <input type="email" id="register-email" placeholder="Correo electrónico" required>
+            <input type="password" id="register-password" placeholder="Contraseña" required>
+            <input type="text" id="register-address" placeholder="Dirección (opcional)">
+            <button onclick="registerUser()">Registrarse</button>
+            <p>¿Ya tienes cuenta? <a onclick="switchToLogin()">Inicia sesión</a></p>
+        </div>
+    </div>
+    <!-- Modal Editar Perfil -->
+<div id="edit-profile-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('edit-profile-modal')">×</span>
+        <h2>Editar Perfil</h2>
+       
+        <label for="edit-name">Nombre completo</label>
+        <input type="text" id="edit-name" placeholder="Nombre completo" required>
+       
+        <label for="edit-email">Correo electrónico</label>
+        <input type="email" id="edit-email" placeholder="Correo electrónico" required>
+       
+        <label for="edit-new-password">Nueva contraseña (opcional)</label>
+        <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
+       
+        <button onclick="saveProfileChanges()">Guardar cambios</button>
+    </div>
+</div>
+<!-- Modal Cambiar Dirección -->
+<div id="change-address-modal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('change-address-modal')">×</span>
+        <h2>Cambiar Dirección</h2>
+        <input type="text" id="edit-address" placeholder="Nueva dirección de entrega" required>
+        <button onclick="saveAddressChange()">Guardar dirección</button>
+    </div>
+</div>
+  
+    <script>
+const MP_ACCESS_TOKEN = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795";
+const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+let cart = [];
+let allDrinks = [];
+let currentDrinkIndex = 0;
+const CATEGORIA_BEBIDAS = "Bebidas";
+const COSTO_ENVIO = 2500;
+let isLoggedIn = false;
+let userId = null;
+let userAddress = '';
+let currentPreferenceId = null; // para saber qué preferencia estamos esperando
+let pendingOrderData = null; // guardamos temporalmente los datos del pedido
+// === NUEVA VARIABLE GLOBAL PARA FAVORITOS ===
+let userFavorites = []; // array de menuIds favoritos del usuario actual
+        // Caché de menús mostrados actualmente (para acceder rápido al hacer clic)
+let currentDisplayedMenus = {};
+// Elementos importantes del DOM
+const profileContainer = document.getElementById('profile-container');
+const profileButton = document.getElementById('profile-button');
+const profileDropdown = document.getElementById('profile-dropdown');
+// ==================== ESTADO DE SESIÓN ====================
+function checkLoginStatus() {
+    userId = localStorage.getItem('userId');
+    userAddress = localStorage.getItem('userAddress') || '';
+    if (userId) {
+        isLoggedIn = true;
+        profileButton.innerHTML = `
+            <img src="https://i.postimg.cc/xCzWfmjX/user-profile-sign-on-white-background-vector.jpg"
+                 alt="Perfil" class="profile-icon">
+            <span>Mi Perfil</span>
+        `;
+        // Cargar favoritos si el usuario está logueado
+        loadUserFavorites();
+        addFavoritesLinkToDropdown();
+    } else {
+        isLoggedIn = false;
+        profileButton.innerHTML = `
+            <span>Iniciar Sesión</span>
+        `;
+        userFavorites = []; // limpiar favoritos al cerrar sesión
+    }
+    // Evento click principal
+    profileButton.onclick = () => {
+        if (isLoggedIn) {
+            profileDropdown.classList.toggle('active');
+        } else {
+            showModal('login-modal');
+        }
+    };
+    // Evento cerrar sesión
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.onclick = (e) => {
+            e.preventDefault();
+            logoutUser();
+            profileDropdown.classList.remove('active');
+        };
+    }
+    // Cerrar dropdown al click fuera
+    document.addEventListener('click', function(event) {
+        if (profileContainer && !profileContainer.contains(event.target)) {
+            profileDropdown.classList.remove('active');
+        }
+    });
+}
+        // ==================== FUNCIONES BÁSICAS DE MODALES ====================
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+    } else {
+        console.error('Modal no encontrado:', modalId);
+    }
+}
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+// ==================== CARGAR FAVORITOS DEL USUARIO ====================
+function loadUserFavorites() {
+    if (!userId) return;
+    fetch(`${scriptUrl}?action=getFavorites&userId=${userId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (Array.isArray(data)) {
+                userFavorites = data.map(item => item.menuId);
+                updateFavoriteButtons(); // actualizar visual en caso de que ya haya menús visibles
+            } else {
+                console.warn('Respuesta inesperada al cargar favoritos:', data);
+            }
+        })
+        .catch(err => console.error('Error al cargar favoritos:', err));
+}
+// ==================== TOGGLE FAVORITO ====================
+function toggleFavorite(menuId) {
+    if (!isLoggedIn) {
+        alert('Debes iniciar sesión para guardar favoritos');
+        showModal('login-modal');
+        return;
+    }
+    const isCurrentlyFavorite = userFavorites.includes(menuId);
+    const action = isCurrentlyFavorite ? 'removeFavorite' : 'addFavorite';
+    fetch(`${scriptUrl}?action=${action}&userId=${userId}&menuId=${menuId}`)
+        .then(r => r.json())
+        .then(result => {
+            if (result.success) {
+                if (isCurrentlyFavorite) {
+                    userFavorites = userFavorites.filter(id => id !== menuId);
+                } else {
+                    userFavorites.push(menuId);
+                }
+                updateFavoriteButtons();
+                alert(result.message || (isCurrentlyFavorite ? 'Quitado de favoritos' : 'Agregado a favoritos'));
+            } else {
+                alert(result.message || 'Error al actualizar favorito');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error de conexión');
+        });
+}
+// ==================== ACTUALIZAR VISUAL DE BOTONES FAVORITOS ====================
+function updateFavoriteButtons() {
+    document.querySelectorAll('.fav-btn').forEach(btn => {
+        const menuId = btn.dataset.menuId;
+        if (userFavorites.includes(menuId)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+// ==================== AGREGAR LINK "MIS FAVORITOS" AL DROPDOWN ====================
+function addFavoritesLinkToDropdown() {
+    if (document.getElementById('favorites-link')) return; // evitar duplicados
+    const link = document.createElement('a');
+    link.href = '#';
+    link.id = 'favorites-link';
+    link.className = 'dropdown-item';
+    link.textContent = 'Mis Favoritos';
+    link.onclick = (e) => {
+        e.preventDefault();
+        profileDropdown.classList.remove('active');
+        showMyFavorites();
+    };
+    // Insertar antes del primer elemento (arriba)
+    profileDropdown.insertBefore(link, profileDropdown.firstChild);
+}
+// ==================== MOSTRAR MIS FAVORITOS ====================
+function showMyFavorites() {
+    if (userFavorites.length === 0) {
+        alert('Aún no tienes platos favoritos.');
+        return;
+    }
+    const container = document.getElementById('menu-display');
+    showLoading(container);
+    // Obtenemos TODOS los menús y filtramos los favoritos
+    // (mejorable: crear endpoint getFavoriteMenus que devuelva solo los favoritos con datos completos)
+    fetch(`${scriptUrl}?action=getAllMenus`)
+        .then(r => r.json())
+        .then(data => {
+            const allMenus = data.menus || [];
+            const favoriteMenus = allMenus.filter(menu => userFavorites.includes(menu.id));
+            displayMenus(favoriteMenus, 'Mis Favoritos');
+        })
+        .catch(() => showError(container, 'Error al cargar tus favoritos'));
+}
+function displayMenus(menus, title) {
+    const container = document.getElementById('menu-display');
+    container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
+    const itemsDiv = container.querySelector('.menu-items');
+   
+    // Limpiamos caché anterior
+    currentDisplayedMenus = {};
+   
+    if (menus.length === 0) {
+        itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
+    } else {
+        menus.forEach((menu, index) => {
+            currentDisplayedMenus[menu.id] = menu;
+            const div = document.createElement('div');
+            div.className = 'menu-item';
+            div.innerHTML = `
+                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
+                     alt="${menu.nombre}"
+                     onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+                <h3>${menu.nombre}</h3>
+                <p>${menu.descripcion || 'Sin descripción'}</p>
+                <p>$${menu.precio}</p>
+              
+                <!-- Botón agregar al carrito -->
+                <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+              
+                <!-- Botón favorito con imágenes (sin texto) -->
+                <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
+                        data-menu-id="${menu.id}"
+                        onclick="toggleFavorite('${menu.id}')">
+                    <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
+                    <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
+                </button>
+            `;
+            itemsDiv.appendChild(div);
+        });
+    }
+   
+    container.style.display = 'block';
+   
+    // Actualizamos visual de favoritos
+    setTimeout(updateFavoriteButtons, 100);
+}
+       
+        function addToCartById(menuId) {
+    const menu = currentDisplayedMenus[menuId];
+    if (!menu) {
+        console.error('Menú no encontrado en caché:', menuId);
+        alert('Error: no se pudo encontrar el plato seleccionado');
+        return;
+    }
+   
+    // Ahora sí llamamos a addToCart con el objeto completo
+    addToCart(menu);
+}
+// ==================== LOGIN (agregamos carga de favoritos) ====================
+function loginUser() {
+    const email = document.getElementById('login-email')?.value.trim().toLowerCase();
+    const password = document.getElementById('login-password')?.value.trim();
+    if (!email || !password) {
+        alert('Ingresa email y contraseña');
+        return;
+    }
+    const url = `${scriptUrl}?action=login`
+        + `&email=${encodeURIComponent(email)}`
+        + `&password=${encodeURIComponent(password)}`;
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                localStorage.setItem('userId', data.userId);
+                localStorage.setItem('userAddress', data.address || '');
+                localStorage.setItem('userName', data.name || '');
+                localStorage.setItem('userEmail', data.email || email);
+                isLoggedIn = true;
+                userId = data.userId;
+                userAddress = data.address || '';
+                closeModal('login-modal');
+                checkLoginStatus();
+                loadUserFavorites(); // ← CARGAR FAVORITOS AQUÍ
+                alert('¡Bienvenido!');
+                const dirInput = document.getElementById('direccion');
+                if (dirInput && userAddress) dirInput.value = userAddress;
+            } else {
+                alert(data.message || 'Credenciales incorrectas');
+            }
+        })
+        .catch(() => alert('Error de conexión'));
+}
+    // ==================== CERRAR SESIÓN ====================
+    function logoutUser() {
+    if (!confirm('¿Realmente quieres cerrar sesión?')) return;
+    // Eliminamos todos los datos de sesión
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userName'); // ← si lo estabas guardando
+    localStorage.removeItem('userEmail'); // ← si lo estabas guardando
+    localStorage.removeItem('userAddress');
+    isLoggedIn = false;
+    userId = null;
+    userAddress = '';
+    checkLoginStatus(); // Esto actualiza el botón a "Iniciar Sesión"
+    alert('Sesión cerrada correctamente');
+}
+        // ==================== CARGA INICIAL ====================
+    window.addEventListener('load', () => {
+        checkLoginStatus();
+        loadFilters();
+        setupSearch();
+        setupCart();
+        loadAllDrinks();
+    });
+      
+        function loadAllDrinks() {
+            fetch(`${scriptUrl}?action=getAllMenus`)
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(data => {
+                    allDrinks = (data.menus || []).filter(menu =>
+                        menu.categoria && menu.categoria.trim() === CATEGORIA_BEBIDAS
+                    );
+                })
+                .catch(() => { allDrinks = []; });
+        }
+        function loadFilters() {
+            const container = document.getElementById('suggestion-items');
+            showLoading(container);
+            fetch(scriptUrl + '?action=getFilters')
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(data => {
+                    container.innerHTML = '';
+                    if (data.locals?.length > 0) {
+                        data.locals.forEach(local => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion';
+                            div.dataset.local = local.local_id;
+                            div.innerHTML = `<img src="${local.imagen_url || 'https://placehold.co/200x200?text=' + encodeURIComponent(local.nombre_local)}" alt="${local.nombre_local}" onerror="this.src='https://placehold.co/200x200?text=Sin+Imagen'">`;
+                            div.onclick = () => fetchMenus(null, local.local_id);
+                            container.appendChild(div);
+                        });
+                    } else {
+                        container.innerHTML = '<p style="text-align:center;color:#999;">Aún no hay locales disponibles.</p>';
+                    }
+                })
+                .catch(() => showError(container, 'Error al cargar locales'));
+        }
+        document.querySelector('.categories').addEventListener('click', e => {
+            const cat = e.target.closest('.category');
+            if (cat) fetchMenus(cat.dataset.type, null);
+        });
+        function setupSearch() {
+            const input = document.getElementById('search-input');
+            let timeout;
+            input.addEventListener('input', e => {
+                clearTimeout(timeout);
+                const term = e.target.value.trim();
+                if (term.length >= 3) {
+                    timeout = setTimeout(() => performSearch(term), 600);
+                } else if (term === '') {
+                    document.getElementById('menu-display').style.display = 'none';
+                }
+            });
+        }
+        function performSearch(query) {
+            const container = document.getElementById('menu-display');
+            showLoading(container);
+            fetch(`${scriptUrl}?action=search&query=${encodeURIComponent(query)}`)
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
+                .catch(() => showError(container, 'Error en búsqueda'));
+        }
+        function fetchMenus(type, local) {
+            const container = document.getElementById('menu-display');
+            showLoading(container);
+            let url = `${scriptUrl}?action=getMenus`;
+            if (type) url += `&type=${encodeURIComponent(type)}`;
+            if (local) url += `&local=${encodeURIComponent(local)}`;
+            fetch(url)
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
+                .catch(() => showError(container, 'Error al cargar menús'));
+        }
+       
+        function showLoading(container) {
+    container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+  
+    // Solo aplicamos display: block al contenedor de menús
+    if (container.id === 'menu-display') {
+        container.style.display = 'block';
+    }
+    // Para suggestion-items (y cualquier otro), no hacemos nada → mantiene su flex + center
+}
+        function showError(container, msg) {
+            container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
+        }
+        // ==================== CARRITO ====================
+    // ==================== CARRITO ====================
+function setupCart() {
+    const cartIcon = document.getElementById('cart-icon');
+    const closeBtn = document.querySelector('.cart-close');
+    const backdrop = document.getElementById('cart-backdrop');
+    if (cartIcon) {
+        cartIcon.onclick = openCart;
+    }
+    if (closeBtn) {
+        closeBtn.onclick = closeCart;
+    }
+    if (backdrop) {
+        backdrop.onclick = closeCart;
+    }
+    // Cerrar con tecla ESC (muy útil)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === "Escape" && document.getElementById('cart-section').classList.contains('active')) {
+            closeCart();
+        }
+    });
+    // Listeners originales que NO se deben perder
+    const deliverySelect = document.getElementById('delivery-type');
+    const paymentSelect = document.getElementById('metodo-pago');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    if (deliverySelect) deliverySelect.addEventListener('change', updateCartDisplay);
+    if (paymentSelect) paymentSelect.addEventListener('change', updateCartDisplay);
+    if (checkoutBtn) checkoutBtn.onclick = checkout;
+}
+function openCart() {
+    document.getElementById('cart-section').classList.add('active');
+    document.getElementById('cart-backdrop').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    updateCartDisplay(); // ← muy importante
+}
+function closeCart() {
+    document.getElementById('cart-section').classList.remove('active');
+    document.getElementById('cart-backdrop').classList.remove('active');
+    document.body.style.overflow = '';
+}
+// Mantener TODAS las funciones originales del carrito
+function addToCart(menu) {
+    if (!isLoggedIn) {
+        showModal('login-modal');
+        alert('¡Debes iniciar sesión para agregar productos al carrito!');
+        return;
+    }
+    const item = {
+        idLocal: menu.local_id,
+        nombreLocal: menu.nombre_local || 'Local desconocido',
+        idProducto: menu.id,
+        nombreProducto: menu.nombre,
+        precioUnitario: Number(menu.precio),
+        cantidad: 1,
+        categoria: menu.categoria || ''
+    };
+    const existing = cart.findIndex(i => i.idProducto === item.idProducto);
+    if (existing !== -1) {
+        cart[existing].cantidad++;
+    } else {
+        cart.push(item);
+    }
+    updateCartCount();
+    updateCartDisplay();
+    if (confirm(`¡${menu.nombre} agregado al carrito!\n\n¿Quieres ver el carrito ahora?`)) {
+        openCart();
+    }
+}
+    function updateCartCount() {
+        const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
+        document.getElementById('cart-count').textContent = total;
+    }
+        function hasDrink() {
+            return cart.some(i => i.categoria && i.categoria.trim() === CATEGORIA_BEBIDAS);
+        }
+        function calculatePrices() {
+    const subtotal = cart.reduce((s, i) => s + i.precioUnitario * i.cantidad, 0);
+    const delivery = document.getElementById('delivery-type').value;
+    const metodoPago = document.getElementById('metodo-pago').value; // ← nuevo: leemos el método
+    // Envío
+    let shipping = delivery === 'envio' ? (hasDrink() ? 0 : COSTO_ENVIO) : 0;
+    // Comisión 4% SOLO si es Transferencia / Mercado Pago
+    let comision = 0;
+    if (metodoPago === "transferencia") {
+        comision = subtotal * 0.04; // 4%
+    }
+    const total = subtotal + shipping + comision;
+    return {
+        subtotal,
+        shipping,
+        comision, // ← nuevo campo
+        total,
+        delivery,
+        metodoPago
+    };
+}
+        function updateCartDisplay() {
+    const list = document.getElementById('cart-items');
+    const notice = document.getElementById('free-shipping-notice');
+    const drinksPanel = document.getElementById('drinks-panel');
+    list.innerHTML = '';
+    notice.innerHTML = '';
+    if (cart.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Tu carrito está vacío</p>';
+    } else {
+        cart.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'cart-item';
+            div.innerHTML = `
+                <div class="cart-item-left">
+                    <div class="cart-item-name">${item.nombreProducto}</div>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeQuantity(${idx}, -1)">–</button>
+                        <span class="quantity">${item.cantidad}</span>
+                        <button class="quantity-btn" onclick="changeQuantity(${idx}, 1)">+</button>
+                    </div>
+                </div>
+                <div class="cart-item-price">$${(item.precioUnitario * item.cantidad).toFixed(2)}</div>
+                <button class="remove-btn" onclick="removeFromCart(${idx})">Eliminar</button>
+            `;
+            list.appendChild(div);
+        });
+    }
+    const prices = calculatePrices();
+    // Mostrar subtotal
+    document.getElementById('subtotal').textContent = `$${prices.subtotal.toFixed(2)}`;
+    // Envío
+    document.getElementById('shipping-cost').textContent = prices.shipping === 0 ? 'GRATIS' : `$${prices.shipping.toFixed(2)}`;
+    // Nueva línea: Comisión (solo aparece si hay comisión)
+    let comisionLine = '';
+    if (prices.comision > 0) {
+        comisionLine = `<div class="price-line"><span>Comisión 4% (Mercado Pago)</span><span>+$${prices.comision.toFixed(2)}</span></div>`;
+    }
+    // Actualizar el HTML del resumen de precios dinámicamente
+    const priceSummary = document.querySelector('.price-summary');
+    priceSummary.innerHTML = `
+        <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$${prices.subtotal.toFixed(2)}</span></div>
+        <div class="price-line"><span>Envío</span><span id="shipping-cost">${prices.shipping === 0 ? 'GRATIS' : '$'+prices.shipping.toFixed(2)}</span></div>
+        ${comisionLine}
+        <div class="price-line total"><span>Total a pagar</span><span id="final-total">$${prices.total.toFixed(2)}</span></div>
+    `;
+    // Mensaje envío gratis
+    if (prices.shipping === 0 && cart.length > 0) {
+        notice.innerHTML = prices.delivery === 'retiro'
+            ? '<div class="free-shipping-msg">¡Retiro en local! Envío gratis.</div>'
+            : '<div class="free-shipping-msg">¡Envío GRATIS por agregar una bebida!</div>';
+        drinksPanel.style.display = 'none';
+    } else if (prices.delivery === 'envio' && !hasDrink() && cart.length > 0) {
+        drinksPanel.style.display = 'block';
+        renderDrinksCarousel();
+    } else {
+        drinksPanel.style.display = 'none';
+    }
+    // Actualizar dirección según tipo entrega
+    const dirInput = document.getElementById('direccion');
+    if (prices.delivery === 'retiro') {
+        dirInput.placeholder = "No requerida (retirás en local)";
+        dirInput.required = false;
+    } else {
+        dirInput.placeholder = "Dirección de entrega (requerida)";
+        dirInput.required = true;
+    }
+}
+        // Modificar cantidad de un ítem en el carrito
+function changeQuantity(index, delta) {
+    if (!cart[index]) return;
+   
+    const nuevaCantidad = cart[index].cantidad + delta;
+   
+    if (nuevaCantidad < 1) {
+        // En lugar de dejar en 1, eliminamos directamente
+        removeFromCart(index);
+        return;
+    }
+   
+    cart[index].cantidad = nuevaCantidad;
+   
+    updateCartCount();
+    updateCartDisplay();
+}
+// Eliminar un ítem del carrito
+function removeFromCart(index) {
+    if (confirm(`¿Eliminar ${cart[index].nombreProducto} del carrito?`)) {
+        cart.splice(index, 1);
+        updateCartCount();
+        updateCartDisplay();
+    }
+}
+       
+        function renderDrinksCarousel() {
+            const container = document.getElementById('drinks-container');
+            container.innerHTML = '';
+            if (allDrinks.length === 0) {
+                container.innerHTML = '<p style="text-align:center;color:#666;padding:40px;width:100%;">No hay bebidas disponibles.</p>';
+                return;
+            }
+            allDrinks.forEach(drink => {
+                const card = document.createElement('div');
+                card.className = 'drink-card';
+                card.innerHTML = `
+                    <img src="${drink.imagen_url || 'https://placehold.co/300x140?text=Bebida'}" alt="${drink.nombre}" onerror="this.src='https://placehold.co/300x140?text=Sin+Imagen'">
+                    <h4>${drink.nombre}</h4>
+                    <div class="price">$${drink.precio}</div>
+                    <button>Agregar</button>
+                `;
+                card.querySelector('button').onclick = () => addToCart(drink);
+                container.appendChild(card);
+            });
+            currentDrinkIndex = 0;
+            scrollCarousel();
+            setupCarouselControls();
+        }
+        function setupCarouselControls() {
+            document.getElementById('prev-drink').onclick = () => {
+                if (currentDrinkIndex > 0) {
+                    currentDrinkIndex--;
+                    scrollCarousel();
+                }
+            };
+            document.getElementById('next-drink').onclick = () => {
+                const card = document.querySelector('.drink-card');
+                if (!card) return;
+                const cardWidth = card.offsetWidth + 12;
+                const visible = Math.floor(document.querySelector('.drinks-carousel').offsetWidth / cardWidth);
+                if (currentDrinkIndex < allDrinks.length - visible) {
+                    currentDrinkIndex++;
+                    scrollCarousel();
+                }
+            };
+            window.addEventListener('resize', () => {
+                currentDrinkIndex = 0;
+                scrollCarousel();
+            });
+        }
+        function scrollCarousel() {
+            const container = document.getElementById('drinks-container');
+            if (!container || container.children.length === 0) return;
+            const card = container.children[0];
+            const cardWidth = card.offsetWidth + 12;
+            container.style.transform = `translateX(-${currentDrinkIndex * cardWidth}px)`;
+            document.getElementById('prev-drink').disabled = currentDrinkIndex === 0;
+            const visible = Math.floor(container.parentElement.offsetWidth / cardWidth);
+            document.getElementById('next-drink').disabled = currentDrinkIndex >= allDrinks.length - visible;
+        }
+        async function checkout() {
+    if (!isLoggedIn) {
+        showModal('login-modal');
+        alert('¡Debes iniciar sesión para realizar el pedido!');
+        return;
+    }
+    if (cart.length === 0) {
+        alert('El carrito está vacío');
+        return;
+    }
+    const delivery = document.getElementById('delivery-type').value;
+    const metodoPago = document.getElementById('metodo-pago').value;
+    const observaciones = document.getElementById('observaciones').value.trim();
+    if (!metodoPago) {
+        alert('Selecciona un método de pago');
+        return;
+    }
+    let direccion = '';
+    if (delivery === 'envio') {
+        direccion = document.getElementById('direccion').value.trim();
+        if (!direccion) {
+            alert('Ingresa la dirección de entrega');
+            return;
+        }
+    } else {
+        direccion = 'Retiro en local';
+    }
+    const prices = calculatePrices();
+    // ── Caso especial: Transferencia / Mercado Pago ────────────────────────
+    if (metodoPago === "transferencia") {
+        await handleMercadoPagoPayment(direccion, delivery, prices, observaciones);
+        return;
+    }
+    // ── Flujo normal para Efectivo ─────────────────────────────────────────
+    await createOrderNormal(direccion, metodoPago, delivery, prices, observaciones);
+}
+        async function handleMercadoPagoPayment(direccion, delivery, prices, observaciones) {
+    const checkoutContainer = document.getElementById('mercadopago-checkout');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = 'Generando pago seguro...';
+    try {
+        // Generamos external_reference único y traceable
+        const externalRef = `WEEP-ORD-${userId}-${Date.now()}`;
+        console.log("Iniciando Mercado Pago con externalRef:", externalRef);
+        const preference = {
+            items: [{
+                title: `Pedido Weep #${Date.now()}`,
+                quantity: 1,
+                currency_id: "ARS",
+                unit_price: prices.total
+            }],
+            payer: {
+                email: localStorage.getItem('userEmail') || "cliente@weep.com.ar"
+            },
+            external_reference: externalRef,
+            back_urls: {
+                success: window.location.href + '?status=approved',
+                failure: window.location.href + '?status=failure',
+                pending: window.location.href + '?status=pending'
+            },
+            auto_return: "approved"
+        };
+        const res = await fetch("https://api.mercadopago.com/checkout/preferences", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${MP_ACCESS_TOKEN}`
+            },
+            body: JSON.stringify(preference)
+        });
+        if (!res.ok) {
+            const error = await res.text();
+            throw new Error(`Error ${res.status}: ${error}`);
+        }
+        const data = await res.json();
+        if (!data.init_point) {
+            throw new Error("No se recibió init_point");
+        }
+        // Guardamos datos para confirmación posterior
+        pendingOrderData = {
+            userId,
+            fecha: new Date().toLocaleString('es-AR'),
+            direccion,
+            metodoPago: "Mercado Pago",
+            observaciones,
+            envioGratis: prices.shipping === 0,
+            tipoEntrega: delivery,
+            cart,
+            total: prices.total,
+            preferenceId: data.id,
+            externalReference: externalRef,
+            paymentId: null
+        };
+        // Mostrar checkout
+        checkoutContainer.innerHTML = `<iframe src="${data.init_point}" width="100%" height="700" frameborder="0"></iframe>`;
+        checkoutContainer.style.display = 'block';
+        checkoutBtn.style.display = 'none';
+        alert("Completa el pago en la ventana de Mercado Pago.\nEl pedido se confirmará automáticamente.");
+        // Iniciar polling con external_reference (clave para detección)
+        startPaymentPolling(data.id, externalRef);
+    } catch (err) {
+        console.error("Error en handleMercadoPagoPayment:", err);
+        alert("Error al generar el pago: " + (err.message || "Intenta nuevamente"));
+        checkoutBtn.disabled = false;
+        checkoutBtn.textContent = 'Realizar Pedido';
+    }
+}
+// También se puede usar polling si no redirige bien
+function startPaymentPolling(preferenceId, externalReference) { // ← agregamos externalReference como segundo parámetro
+    console.log("Iniciando polling con external_reference:", externalReference);
+    const interval = setInterval(async () => {
+        try {
+            // Buscamos por external_reference (esto SÍ funciona)
+            const url = `https://api.mercadopago.com/v1/payments/search?external_reference=${encodeURIComponent(externalReference)}`;
+            console.log("Consultando pagos por external_reference:", url);
+            const res = await fetch(url, {
+                headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+            });
+            if (!res.ok) {
+                const errorText = await res.text();
+                console.error(`Error ${res.status} en search por external_reference:`, errorText);
+                return;
+            }
+            const data = await res.json();
+            console.log("Respuesta de /payments/search:", JSON.stringify(data, null, 2));
+            if (data.results?.length > 0) {
+                const approved = data.results.find(p => p.status === "approved");
+                if (approved) {
+                    console.log("¡Pago aprobado encontrado! ID:", approved.id);
+                    clearInterval(interval);
+                    pendingOrderData.paymentId = approved.id;
+                    await finalizeOrderAfterPayment();
+                    alert("¡Pago confirmado automáticamente! Tu pedido ha sido registrado.");
+                } else {
+                    console.log("Pagos encontrados pero ninguno aprobado aún...");
+                }
+            } else {
+                console.log("Aún no hay pagos para este external_reference");
+            }
+        } catch (e) {
+            console.error("Error en polling:", e);
+        }
+    }, 5000);
+}
+       
+async function finalizeOrderAfterPayment() {
+    if (!pendingOrderData) return;
+    // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
+    // Método de pago se envía como "Transferencia / Mercado Pago" (o cámbialo a "Efectivo" si quieres)
+    await createOrderNormal(
+        pendingOrderData.direccion,
+        "Transferencia / Mercado Pago", // ← mismo que en checkout normal
+        pendingOrderData.tipoEntrega,
+        { total: pendingOrderData.total, shipping: pendingOrderData.envioGratis ? 0 : COSTO_ENVIO },
+        pendingOrderData.observaciones,
+        false // ← false = no usamos createPaidOrder, usamos createOrder normal
+    );
+    pendingOrderData = null;
+    document.getElementById('mercadopago-checkout').style.display = 'none';
+    document.getElementById('checkout-btn').style.display = 'block';
+}
+async function checkPaymentReturn() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get("status");
+    const paymentId = urlParams.get("payment_id");
+    const externalReference = urlParams.get("external_reference"); // ← también puede venir
+    if (!status || !paymentId || !pendingOrderData) return;
+    try {
+        const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+            headers: { "Authorization": `Bearer ${MP_ACCESS_TOKEN}` }
+        });
+        if (!res.ok) throw new Error("No se pudo verificar el pago");
+        const payment = await res.json();
+        if (payment.status === "approved") {
+            pendingOrderData.paymentId = payment.id;
+            pendingOrderData.preferenceId = payment.preference_id || pendingOrderData.preferenceId;
+            // ¡Aquí se confirma el pedido!
+            await createConfirmedOrder(pendingOrderData);
+            // Limpieza importante
+            pendingOrderData = null;
+        }
+        else if (payment.status === "pending") {
+            alert("El pago está pendiente de aprobación. Te avisaremos cuando se confirme.");
+        }
+        else {
+            alert(`El pago no fue aprobado. Estado: ${payment.status}\nPuedes intentarlo nuevamente.`);
+        }
+    } catch (e) {
+        console.error("Error verificando pago:", e);
+        alert("No pudimos verificar el estado del pago. Por favor contacta soporte.");
+    }
+    // Siempre limpiamos la URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+}
+// ==================== EDITAR PERFIL ====================
+function openEditProfileModal() {
+    profileDropdown.classList.remove('active');
+   
+    // Precargamos los datos actuales
+    document.getElementById('edit-name').value = localStorage.getItem('userName') || '';
+    document.getElementById('edit-email').value = localStorage.getItem('userEmail') || '';
+    document.getElementById('edit-new-password').value = ''; // siempre vacío al abrir
+   
+    showModal('edit-profile-modal');
+}
+function openChangeAddressModal() {
+    profileDropdown.classList.remove('active');
+   
+    const addressInput = document.getElementById('edit-address');
+    addressInput.value = userAddress || '';
+   
+    showModal('change-address-modal');
+}
+       
+function saveProfileChanges() {
+    const name = document.getElementById('edit-name').value.trim();
+    const email = document.getElementById('edit-email').value.trim().toLowerCase();
+    const newPassword = document.getElementById('edit-new-password').value.trim();
+    // Validaciones básicas
+    if (!name) {
+        alert('El nombre es obligatorio');
+        return;
+    }
+   
+    if (!email) {
+        alert('El email es obligatorio');
+        return;
+    }
+   
+    if (newPassword && newPassword.length < 6) {
+        alert('La nueva contraseña debe tener al menos 6 caracteres (o dejarla en blanco)');
+        return;
+    }
+    // Construimos la URL con los parámetros
+    let url = `${scriptUrl}?action=updateProfile`
+        + `&userId=${encodeURIComponent(userId)}`
+        + `&name=${encodeURIComponent(name)}`
+        + `&email=${encodeURIComponent(email)}`;
+    // Solo agregamos la nueva contraseña si se ingresó algo
+    if (newPassword) {
+        url += `&newPassword=${encodeURIComponent(newPassword)}`;
+    }
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualizamos el almacenamiento local
+                localStorage.setItem('userName', name);
+                localStorage.setItem('userEmail', email);
+               
+                alert(data.message || 'Perfil actualizado correctamente');
+                closeModal('edit-profile-modal');
+               
+                // Refrescamos el estado visual si es necesario
+                checkLoginStatus();
+            } else {
+                alert(data.message || 'No se pudo actualizar el perfil');
+            }
+        })
+        .catch(err => {
+            console.error('Error al actualizar perfil:', err);
+            alert('Error de conexión al intentar actualizar el perfil');
+        });
+}
+       
+function saveAddressChange() {
+    const newAddress = document.getElementById('edit-address').value.trim();
+    if (!newAddress) {
+        alert('La dirección no puede estar vacía');
+        return;
+    }
+    const url = `${scriptUrl}?action=updateAddress`
+        + `&userId=${encodeURIComponent(userId)}`
+        + `&address=${encodeURIComponent(newAddress)}`;
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                userAddress = newAddress;
+                localStorage.setItem('userAddress', newAddress);
+               
+                // Actualizamos el campo de dirección del checkout si está visible
+                const checkoutDir = document.getElementById('direccion');
+                if (checkoutDir) checkoutDir.value = newAddress;
+               
+                alert('Dirección actualizada correctamente');
+                closeModal('change-address-modal');
+            } else {
+                alert(data.message || 'Error al actualizar dirección');
+            }
+        })
+        .catch(() => {
+            alert('Error de conexión al actualizar dirección');
+        });
+}
+        async function createOrderNormal(direccion, metodoPago, tipoEntrega, prices, observaciones, isPaid = false) {
+    try {
+        const action = 'createOrder'; // ← SIEMPRE createOrder, no importa si es pagado o no
+        const cartString = encodeURIComponent(JSON.stringify(cart));
+        const url = `${scriptUrl}?action=${action}` +
+            `&userId=${encodeURIComponent(userId)}` +
+            `&fecha=${encodeURIComponent(new Date().toLocaleString('es-AR'))}` +
+            `&direccion=${encodeURIComponent(direccion)}` +
+            `&metodoPago=${encodeURIComponent(metodoPago)}` +
+            `&observaciones=${encodeURIComponent(observaciones || '')}` +
+            `&cart=${cartString}` +
+            `&total=${encodeURIComponent(prices.total)}` +
+            `&envioGratis=${encodeURIComponent(prices.shipping === 0 ? 'true' : 'false')}` +
+            `&tipoEntrega=${encodeURIComponent(tipoEntrega)}`;
+        console.log("Enviando pedido vía GET:", url);
+        const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-cache'
+        });
+        const result = await response.json();
+        console.log("Respuesta backend:", result);
+        if (result.success) {
+            alert("¡Pedido registrado exitosamente! ID: " + result.idPedido);
+            cart = [];
+            updateCartCount();
+            updateCartDisplay();
+            document.getElementById('cart-section').style.display = 'none';
+            document.getElementById('mercadopago-checkout').style.display = 'none';
+            document.getElementById('checkout-btn').style.display = 'block';
+            document.getElementById('checkout-form').reset();
+        } else {
+            throw new Error(result.error || "Error desconocido");
+        }
+    } catch (err) {
+        console.error("Error al enviar pedido:", err);
+        alert("El pago fue confirmado pero hubo un error al registrar el pedido.\nContacta soporte con ID de pago: " + (pendingOrderData?.paymentId || "desconocido"));
+    }
+}
+        // Esta función debería llamarse SOLO cuando el pago está aprobado
+async function createConfirmedOrder(orderData) {
+    const payload = {
+        action: 'createPaidOrder', // ← acción nueva que deberías crear en tu Google Apps Script
+        userId: orderData.userId,
+        fecha: orderData.fecha,
+        direccion: orderData.direccion,
+        metodoPago: "Mercado Pago - Aprobado",
+        paymentId: orderData.paymentId,
+        preferenceId: orderData.preferenceId,
+        total: orderData.total,
+        envioGratis: orderData.envioGratis,
+        tipoEntrega: orderData.tipoEntrega,
+        observaciones: orderData.observaciones,
+        items: orderData.cart.map(item => ({
+            idProducto: item.idProducto,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario,
+            nombre: item.nombreProducto
+        }))
+    };
+    try {
+        await fetch(scriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        });
+        alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
+       
+        // Limpieza final
+        cart = [];
+        updateCartCount();
+        updateCartDisplay();
+        document.getElementById('cart-section').style.display = 'none';
+        document.getElementById('mercadopago-checkout').style.display = 'none';
+        document.getElementById('checkout-btn').style.display = 'block';
+        document.getElementById('checkout-form').reset();
+       
+    } catch (err) {
+        console.error("Error registrando pedido pagado:", err);
+        alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
+    }
+}
+    </script>
+</body>
+</html>
