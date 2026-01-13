@@ -16,18 +16,38 @@
         display: flex;
         flex-direction: column;
     }
-    /* Header */
     header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #fff;
-        padding: 12px 15px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        border-radius: 0 0 20px 20px;
-        flex-wrap: wrap;
-        gap: 10px;
+    position: fixed;           /* ← clave */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;             /* para que quede por encima de todo */
+    background-color: #fff;
+    padding: 12px 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    border-radius: 0 0 20px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Importante: compensar el espacio que ocupa el header fijo */
+body {
+    padding-top: 140px;        /* ← ajusta según la altura real del header en desktop */
+}
+
+/* Versión mobile (más pequeño) */
+@media (max-width: 768px) {
+    body {
+        padding-top: 110px;    /* altura aproximada en mobile */
     }
+    header {
+        padding: 10px 12px;
+        border-radius: 0;
+    }
+}
     .logo {
         height: 90px; /* Logo más grande en desktop */
     }
@@ -997,48 +1017,48 @@
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
         <div id="menu-display" style="display:none;"></div>
-        <div id="cart-section">
-            <h2>Tu Carrito</h2>
-            <div class="delivery-option">
-                <label for="delivery-type">Tipo de entrega</label>
-                <select id="delivery-type">
-                    <option value="envio">Con envío a domicilio</option>
-                    <option value="retiro">Retirar en local</option>
-                </select>
-            </div>
-            <div class="cart-summary-panel">
-                <div class="cart-items-list" id="cart-items"></div>
-                <div class="price-summary">
-                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
-                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
-                </div>
-                <div id="free-shipping-notice"></div>
-            </div>
-            <div id="drinks-panel" class="drinks-panel" style="display:none;">
-                <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
-                <div class="drinks-carousel">
-                    <button class="carousel-btn left" id="prev-drink">←</button>
-                    <div class="drinks-container" id="drinks-container"></div>
-                    <button class="carousel-btn right" id="next-drink">→</button>
-                </div>
-            </div>
-            <form id="checkout-form">
-                <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
-                <select id="metodo-pago" required>
-    <option value="">Método de pago</option>
-    <option value="transferencia">Transferencia / Mercado Pago</option>
-    <option value="efectivo">Efectivo</option>
-</select>
+        <!-- Reemplaza el <div id="cart-section"> que está dentro de <main> por esto (al final del body, antes de los scripts): -->
 
-<!-- Contenedor donde se mostrará el checkout de MP -->
-<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-                
-                <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
-                <button type="button" id="checkout-btn">Realizar Pedido</button>
-            </form>
+<div id="cart-modal" class="modal" style="display:none;">
+    <div class="modal-content" style="width:90%; max-width:500px; margin: 8% auto 5% auto; padding:20px;">
+        <span class="close" onclick="closeCartModal()">&times;</span>
+        <h2>Tu Carrito</h2>
+        
+        <div class="delivery-option">
+            <label for="delivery-type">Tipo de entrega</label>
+            <select id="delivery-type">
+                <option value="envio">Con envío a domicilio</option>
+                <option value="retiro">Retirar en local</option>
+            </select>
         </div>
-    </main>
+
+        <div class="cart-items-list" id="cart-items"></div>
+        
+        <div class="price-summary">
+            <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+            <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
+            <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
+        </div>
+
+        <div id="free-shipping-notice"></div>
+
+        <div id="drinks-panel" class="drinks-panel" style="display:none;">
+            <!-- ... carousel de bebidas ... -->
+        </div>
+
+        <form id="checkout-form">
+            <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)">
+            <select id="metodo-pago" required>
+                <option value="">Método de pago</option>
+                <option value="transferencia">Transferencia / Mercado Pago</option>
+                <option value="efectivo">Efectivo</option>
+            </select>
+            <div id="mercadopago-checkout" style="display:none; margin:20px 0; min-height:500px;"></div>
+            <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
+            <button type="button" id="checkout-btn">Realizar Pedido</button>
+        </form>
+    </div>
+</div>
     
     <!-- Footer -->
     <footer class="text-center">
@@ -2154,6 +2174,31 @@ async function createConfirmedOrder(orderData) {
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
 }
+
+        function openCartModal() {
+    const modal = document.getElementById('cart-modal');
+    modal.style.display = 'block';
+    updateCartDisplay();           // actualiza contenido
+    document.body.style.overflow = 'hidden'; // evita scroll de fondo
+}
+
+function closeCartModal() {
+    const modal = document.getElementById('cart-modal');
+    modal.style.display = 'none';
+    document.body.style.overflow = ''; // restaura scroll
+}
+
+// Cambia el evento del ícono del carrito
+document.getElementById('cart-icon').onclick = function() {
+    openCartModal();
+};
+
+// Opcional: cerrar con click fuera del contenido
+document.getElementById('cart-modal').onclick = function(e) {
+    if (e.target === this) {
+        closeCartModal();
+    }
+};
     </script>
 </body>
 </html>
