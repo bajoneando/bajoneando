@@ -130,48 +130,139 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-    /* Categorías más pequeñas */
-    .categories {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 40px;
-    }
+   
+    /* Carrusel de categorías - una fila horizontal deslizable */
+/* Carrusel de categorías - una fila horizontal deslizable */
+.categories-carousel {
+    position: relative;
+    width: 100%;
+    margin: 0 auto 40px;
+    overflow: hidden;               /* evita que se vea contenido fuera */
+}
+
+.categories-track {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 14px;
+    transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+    will-change: transform;
+    padding: 12px 0;
+    touch-action: pan-x;            /* mejora el swipe horizontal en móviles */
+    -webkit-overflow-scrolling: touch; /* momentum scrolling en iOS */
+}
+
+/* Tarjetas de categoría */
+.category {
+    flex: 0 0 120px;                /* base razonable - se ajusta en media queries */
+    height: 120px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+    cursor: pointer;
+    transition: transform 0.22s ease;
+    user-select: none;              /* evita selección de texto al tocar */
+}
+
+.category:active {
+    transform: scale(0.97);         /* feedback al tocar en móvil */
+}
+
+/* Oscurecimiento + texto */
+.category::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.78), transparent 50%);
+    border-radius: 16px;
+}
+
+.category span {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14.5px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.75);
+    z-index: 1;
+    padding: 0 4px;
+}
+
+/* Botones de navegación (opcionales en móvil muy pequeño) */
+.carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    background: rgba(211, 47, 47, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 19px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    transition: all 0.18s;
+}
+
+.carousel-nav:hover:not(:disabled) {
+    background: #d32f2f;
+    transform: translateY(-50%) scale(1.08);
+}
+
+.carousel-nav.left  { left: 4px; }
+.carousel-nav.right { right: 4px; }
+
+.carousel-nav:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 768px) {
     .category {
-        width: 130px;
-        height: 130px;
-        background-size: cover;
-        background-position: center;
-        border-radius: 16px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        cursor: pointer;
-        transition: transform 0.3s ease;
-    }
-    .category::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
-        border-radius: 16px;
+        flex: 0 0 105px;
+        height: 105px;
     }
     .category span {
-        position: absolute;
-        bottom: 12px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        color: white;
-        font-weight: bold;
+        font-size: 13.5px;
+        bottom: 8px;
+    }
+    .carousel-nav {
+        width: 32px;
+        height: 32px;
+        font-size: 17px;
+    }
+}
+
+@media (max-width: 480px) {
+    .category {
+        flex: 0 0 96px;           /* más pequeño en móviles estrechos */
+        height: 96px;
+    }
+    .category span {
+        font-size: 13px;
+        bottom: 7px;
+    }
+    .carousel-nav {
+        width: 30px;
+        height: 30px;
         font-size: 16px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.7);
-        z-index: 1;
     }
-    .category:hover, .category:active {
-        transform: scale(1.05);
+    /* En pantallas muy pequeñas podemos ocultar botones y confiar en swipe */
+    .carousel-nav {
+        opacity: 0.7;
     }
+}
     /* Sugerencias de locales ≈ mitad de tamaño */
 .suggestions {
     width: 100%;
@@ -1025,25 +1116,34 @@ body {
     </header>
     <main>
         <h1>¿Qué se te antoja?</h1>
-        <div class="categories">
-            <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
-                <span>Burguers</span>
-            </div>
-            <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
-                <span>Pizza</span>
-            </div>
-            <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
-                <span>Helados</span>
-            </div>
-            <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
-                <span>Postres</span>
-            </div>
-            <div class="category" data-type="Panadería" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
-                <span>Panadería</span>
-            </div>
-            <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
-    <span>Bebidas</span>
+        <div class="categories-carousel">
+    <button class="carousel-nav left" id="prev-cat">←</button>
+    
+    <div class="categories-track" id="categories-track">
+        <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
+            <span>Burguers</span>
+        </div>
+        <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
+            <span>Pizza</span>
+        </div>
+        <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
+            <span>Helados</span>
+        </div>
+        <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
+            <span>Postres</span>
+        </div>
+        <div class="category" data-type="Panadería" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
+            <span>Panadería</span>
+        </div>
+        <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
+            <span>Bebidas</span>
+        </div>
+        <!-- Puedes agregar más categorías aquí sin romper el diseño -->
+    </div>
+    
+    <button class="carousel-nav right" id="next-cat">→</button>
 </div>
+        
         </div>
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
@@ -2146,6 +2246,102 @@ async function createConfirmedOrder(orderData) {
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
 }
+
+        // =============================================
+// Carrusel de categorías
+// =============================================
+let currentCatIndex = 0;
+
+function updateCategoriesCarousel() {
+    const track = document.getElementById('categories-track');
+    if (!track) return;
+    
+    const card = track.querySelector('.category');
+    if (!card) return;
+    
+    const cardWidth = card.offsetWidth + 14; // + gap
+    const visibleWidth = track.parentElement.offsetWidth;
+    const maxIndex = Math.max(0, track.children.length - Math.floor(visibleWidth / cardWidth));
+    
+    currentCatIndex = Math.min(currentCatIndex, maxIndex);
+    currentCatIndex = Math.max(0, currentCatIndex);
+    
+    track.style.transform = `translateX(-${currentCatIndex * cardWidth}px)`;
+    
+    document.getElementById('prev-cat').disabled = currentCatIndex === 0;
+    document.getElementById('next-cat').disabled = currentCatIndex >= maxIndex;
+}
+
+document.getElementById('prev-cat')?.addEventListener('click', () => {
+    currentCatIndex--;
+    updateCategoriesCarousel();
+});
+
+document.getElementById('next-cat')?.addEventListener('click', () => {
+    currentCatIndex++;
+    updateCategoriesCarousel();
+});
+
+// Actualizar al cargar y al redimensionar
+window.addEventListener('load', updateCategoriesCarousel);
+window.addEventListener('resize', updateCategoriesCarousel);
+
+        // =============================================
+// Mejora: Soporte para swipe/touch en el carrusel de categorías
+// =============================================
+let isDragging = false;
+let startX = 0;
+let scrollLeft = 0;
+
+const track = document.getElementById('categories-track');
+
+if (track) {
+    // Mouse drag (opcional, pero útil en desktop con mouse)
+    track.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.pageX - track.offsetLeft;
+        scrollLeft = track.scrollLeft;
+        track.style.cursor = 'grabbing';
+    });
+
+    track.addEventListener('mouseleave', () => {
+        isDragging = false;
+        track.style.cursor = 'grab';
+    });
+
+    track.addEventListener('mouseup', () => {
+        isDragging = false;
+        track.style.cursor = 'grab';
+    });
+
+    track.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - track.offsetLeft;
+        const walk = (x - startX) * 1.8; // velocidad del arrastre
+        track.scrollLeft = scrollLeft - walk;
+    });
+
+    // ── Touch swipe (lo más importante para móviles) ──
+    track.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startX = e.touches[0].pageX - track.offsetLeft;
+        scrollLeft = track.scrollLeft;
+    }, { passive: false });
+
+    track.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault(); // evita scroll vertical mientras deslizas horizontal
+        const x = e.touches[0].pageX - track.offsetLeft;
+        const walk = (x - startX) * 2.0;
+        track.scrollLeft = scrollLeft - walk;
+    }, { passive: false });
+
+    track.addEventListener('touchend', () => {
+        isDragging = false;
+    });
+}
+        
     </script>
 </body>
 </html>
