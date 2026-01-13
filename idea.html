@@ -1044,6 +1044,15 @@ body {
 #cart-section {
     display: none !important;  /* ← importante para no conflictos */
 }
+
+        .cart-sidebar,
+.cart-sidebar * {
+    pointer-events: auto !important;
+}
+
+.cart-overlay {
+    pointer-events: auto;
+}
         
 </style>
 </head>
@@ -1630,7 +1639,7 @@ function loginUser() {
     function openCart() {
         sidebar.classList.add('open');
         overlay.classList.add('active');
-        document.body.style.overflow = 'hidden'; // bloquea scroll de fondo
+        document.body.style.overflow = 'hidden';
         updateCartDisplay();
     }
 
@@ -1640,36 +1649,29 @@ function loginUser() {
         document.body.style.overflow = '';
     }
 
-    // ── Eventos de apertura/cierre ───────────────────────────────
-    cartIcon.onclick = openCart;
-    closeBtn.onclick = closeCart;
+    // Apertura
+    cartIcon.addEventListener('click', openCart);
 
-    // ←←← Cambio clave: stopPropagation + evitar que cierre al interactuar dentro
-    sidebar.addEventListener('click', function(e) {
-        // Evitamos que el clic dentro del sidebar cierre (stopPropagation)
-        e.stopPropagation();
-    });
+    // Cierre con botón X
+    closeBtn.addEventListener('click', closeCart);
 
-    // El overlay SOLO cierra si se hace clic directamente en él (no en sus hijos)
+    // Cierre SOLO cuando se hace clic directamente en el overlay (fondo oscuro)
     overlay.addEventListener('click', function(e) {
-        // Si el target es el overlay mismo (no un hijo), cerramos
+        // Importante: solo cerramos si el clic fue exactamente en el overlay
+        // (no en elementos hijos como el sidebar)
         if (e.target === overlay) {
             closeCart();
         }
     });
 
-    // Opcional pero muy recomendado en móviles: cerrar con swipe derecha → izquierda
-    let touchStartX = 0;
-    sidebar.addEventListener('touchstart', e => {
-        touchStartX = e.touches[0].clientX;
-    });
+    // ←←← Protección extra: evitamos que los clics dentro del sidebar lleguen al overlay
+    sidebar.addEventListener('click', function(e) {
+        e.stopPropagation();           // Detiene la propagación hacia arriba
+    }, true);  // true = usar capture phase (más efectivo en algunos casos)
 
-    sidebar.addEventListener('touchend', e => {
-        const touchEndX = e.changedTouches[0].clientX;
-        const diff = touchStartX - touchEndX;
-
-        // Si deslizó hacia la izquierda más de 80px → cerrar
-        if (diff > 80) {
+    // Opcional pero muy recomendado: cerrar con tecla ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) {
             closeCart();
         }
     });
@@ -1677,7 +1679,7 @@ function loginUser() {
     // Mantener los listeners internos del carrito
     document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
     document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
-    document.getElementById('checkout-btn').onclick = checkout;
+    document.getElementById('checkout-btn').addEventListener('click', checkout);
 }
     function addToCart(menu) {
         if (!isLoggedIn) {
