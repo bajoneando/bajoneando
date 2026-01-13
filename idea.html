@@ -131,56 +131,63 @@ body {
         margin: 30px 0 20px;
     }
     /* Categorías más pequeñas */
-    .categories {
+    /* Categorías - base */
+.categories {
     display: flex;
-    flex-direction: row;           /* items uno al lado del otro */
-    overflow-x: auto;              /* permite scroll horizontal */
-    overflow-y: hidden;            /* evita scroll vertical no deseado */
-    gap: 16px;                     /* espacio entre tarjetas */
-    padding: 0 15px 20px 15px;     /* márgenes laterales + espacio inferior */
-    scroll-snap-type: x mandatory; /* snap obligatorio al soltar */
-    -webkit-overflow-scrolling: touch; /* scroll suave en iOS */
-    scrollbar-width: none;         /* oculta scrollbar en Firefox */
-    -ms-overflow-style: none;      /* oculta scrollbar en Edge/IE */
+    flex-wrap: nowrap;           /* ← impide que salten de línea */
+    gap: 14px;
+    padding: 0 15px;
+    margin: 0 auto 40px auto;
+    overflow-x: auto;            /* ← habilita scroll horizontal */
+    scroll-behavior: smooth;     /* scroll suave al tocar flechas o deslizar */
+    -webkit-overflow-scrolling: touch; /* mejor experiencia en iOS */
+    scrollbar-width: none;       /* oculta scrollbar en Firefox */
 }
 
-/* Ocultar scrollbar en WebKit (Chrome, Safari, etc.) */
+/* Ocultar scrollbar en Chrome/Safari/Edge */
 .categories::-webkit-scrollbar {
     display: none;
 }
 
-/* Cada categoría ahora ocupa un ancho fijo y snap */
-.category {
-    flex: 0 0 130px;               /* ancho fijo → no crece ni se achica */
-    height: 130px;
-    scroll-snap-align: start;      /* snap al borde izquierdo de cada tarjeta */
-    /* el resto de tus estilos se mantienen: background, border-radius, etc. */
-    transition: transform 0.25s ease;
+/* Centrado en desktop (cuando hay espacio) */
+@media (min-width: 769px) {
+    .categories {
+        flex-wrap: wrap;         /* ← vuelve a wrap en pantallas grandes */
+        justify-content: center;
+        overflow-x: hidden;      /* sin scroll en desktop */
+        padding: 0;
+        max-width: 1000px;       /* opcional: limita ancho total */
+    }
 }
 
-/* Efecto hover/tap (opcional, pero queda muy bien) */
-.category:active {
-    transform: scale(0.96);
-}
-
-        @media (max-width: 768px) {
+/* Ajustes mobile - más compacto */
+@media (max-width: 768px) {
     .categories {
         gap: 12px;
-        padding: 0 12px 16px 12px;
+        padding: 0 12px;
     }
+    
     .category {
-        flex: 0 0 110px;
+        width: 110px;
         height: 110px;
+        flex: 0 0 110px;         /* fija ancho para que no se achique */
+    }
+    
+    .category span {
+        font-size: 14px;
+        bottom: 10px;
     }
 }
 
 @media (max-width: 480px) {
     .category {
-        flex: 0 0 100px;
+        width: 100px;
         height: 100px;
+        flex: 0 0 100px;
     }
+    
     .category span {
-        font-size: 14px;
+        font-size: 13px;
     }
 }
         
