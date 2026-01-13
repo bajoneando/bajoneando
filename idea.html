@@ -130,139 +130,81 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-    /* Contenedor principal del carrusel de categorías */
+    /* Reemplaza COMPLETAMENTE la regla .categories existente por esta: */
 .categories {
-    position: relative;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto 40px auto;
-    padding: 0 15px;
-    overflow: hidden;           /* evita que se vea contenido fuera */
-}
-
-/* Contenedor que se desliza */
-.categories-scroller {
     display: flex;
-    gap: 16px;                  /* más separación que antes */
-    overflow-x: auto;           /* permite scroll horizontal */
-    scroll-behavior: smooth;    /* scroll suave con JS o flechas */
-    padding: 12px 0;
-    scrollbar-width: none;      /* Firefox */
-    -ms-overflow-style: none;   /* IE/Edge */
+    flex-direction: row;           /* una sola fila */
+    flex-wrap: nowrap;             /* ¡importante! no baja de línea */
+    gap: 16px;                     /* espacio entre categorías */
+    margin-bottom: 40px;
+    padding: 0 15px;               /* margen lateral para que no pegue */
+    overflow-x: auto;              /* permite deslizar horizontalmente */
+    scroll-behavior: smooth;       /* deslizamiento suave al clickear flechas o tocar */
+    -webkit-overflow-scrolling: touch; /* mejor experiencia en iOS */
+    scrollbar-width: thin;         /* firefox */
+    scrollbar-color: #d32f2f #ffebee;
 }
 
-/* Ocultar scrollbar en Chrome/Safari */
-.categories-scroller::-webkit-scrollbar {
-    display: none;
+/* Ocultar scrollbar en WebKit (Chrome, Safari, Edge) */
+.categories::-webkit-scrollbar {
+    height: 6px;
+}
+.categories::-webkit-scrollbar-track {
+    background: #ffebee;
+    border-radius: 10px;
+}
+.categories::-webkit-scrollbar-thumb {
+    background: #d32f2f;
+    border-radius: 10px;
+}
+.categories::-webkit-scrollbar-thumb:hover {
+    background: #b71c1c;
 }
 
-/* Cada categoría */
+/* Opcional: snap para que las tarjetas queden bien centradas al soltar */
+.categories {
+    scroll-snap-type: x mandatory;
+}
 .category {
-    flex: 0 0 130px;            /* ancho fijo - importante */
-    height: 130px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 16px;
+    flex: 0 0 auto;                /* no crece, no se achica */
+    scroll-snap-align: start;      /* alinea al inicio al hacer snap */
+    /* el resto de estilos de .category se mantienen */
+}
+
+        @media (min-width: 900px) {
+    .categories {
+        justify-content: center;
+        padding: 0;
+    }
+}
+
+        .categories-wrapper {
     position: relative;
-    overflow: hidden;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    cursor: pointer;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    flex-shrink: 0;             /* no se achica */
+    margin: 0 -15px;          /* compensa el padding del main */
 }
 
-.category:hover,
-.category:active {
-    transform: scale(1.06);
-    box-shadow: 0 12px 35px rgba(0,0,0,0.22);
-}
-
-/* Gradiente inferior (texto legible) */
-.category::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 55%);
-    border-radius: 16px;
-    pointer-events: none;
-}
-
-.category span {
-    position: absolute;
-    bottom: 14px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    color: white;
-    font-weight: 600;
-    font-size: 15.5px;
-    text-shadow: 0 2px 5px rgba(0,0,0,0.8);
-    z-index: 1;
-}
-
-/* Flechas (opcional - muy recomendado en desktop) */
-.categories-nav {
+.carousel-arrow {
     position: absolute;
     top: 50%;
-    left: 0;
-    right: 0;
     transform: translateY(-50%);
-    display: flex;
-    justify-content: space-between;
-    pointer-events: none;
-    padding: 0 8px;
-    z-index: 5;
-}
-
-.categories-nav button {
-    pointer-events: auto;
+    background: rgba(211, 47, 47, 0.85);
+    color: white;
+    border: none;
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.92);
-    border: none;
-    font-size: 22px;
-    color: #c62828;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    font-size: 24px;
     cursor: pointer;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    z-index: 5;
+    display: none;            /* ocultas por defecto en mobile */
 }
 
-.categories-nav button:hover {
-    background: white;
-    transform: scale(1.1);
-}
+.carousel-arrow.left  { left: 10px; }
+.carousel-arrow.right { right: 10px; }
 
-.categories-nav button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Mobile: menos ancho por item + snap */
-@media (max-width: 768px) {
-    .categories-scroller {
-        gap: 12px;
-        scroll-snap-type: x mandatory;
-    }
-    
-    .category {
-        flex: 0 0 110px;
-        height: 110px;
-    }
-    
-    .category span {
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 480px) {
-    .category {
-        flex: 0 0 100px;
-        height: 100px;
+@media (min-width: 768px) {
+    .carousel-arrow {
+        display: block;
     }
 }
         
@@ -1119,14 +1061,10 @@ body {
     </header>
     <main>
         <h1>¿Qué se te antoja?</h1>
-
-        <div class="categories">
-    <div class="categories-nav">
-        <button id="categories-prev" aria-label="Anterior">←</button>
-        <button id="categories-next" aria-label="Siguiente">→</button>
-    </div>
-    
-    <div class="categories-scroller" id="categories-scroller">
+        
+        <div class="categories-wrapper">
+    <button class="carousel-arrow left" id="prev-category">←</button>
+    <div class="categories">
             <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
                 <span>Burguers</span>
             </div>
@@ -1145,6 +1083,9 @@ body {
             <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
     <span>Bebidas</span>
 </div>
+<button class="carousel-arrow right" id="next-category">→</button>
+</div>
+        
         </div>
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
@@ -2248,40 +2189,23 @@ async function createConfirmedOrder(orderData) {
     }
 }
 
-        // Control del carrusel de categorías
-function initCategoriesCarousel() {
-    const scroller = document.getElementById('categories-scroller');
-    const prevBtn = document.getElementById('categories-prev');
-    const nextBtn = document.getElementById('categories-next');
-    
-    if (!scroller || !prevBtn || !nextBtn) return;
+        // Carrusel de categorías (opcional)
+document.addEventListener('DOMContentLoaded', () => {
+    const categories = document.querySelector('.categories');
+    const prevBtn = document.getElementById('prev-category');
+    const nextBtn = document.getElementById('next-category');
 
-    function updateButtons() {
-        prevBtn.disabled = scroller.scrollLeft <= 0;
-        // Hay que calcular si estamos al final (con algo de margen)
-        const atEnd = Math.abs(scroller.scrollLeft + scroller.clientWidth - scroller.scrollWidth) < 10;
-        nextBtn.disabled = atEnd;
-    }
+    if (!categories || !prevBtn || !nextBtn) return;
 
-    prevBtn.onclick = () => {
-        scroller.scrollBy({ left: -scroller.clientWidth * 0.8, behavior: 'smooth' });
-    };
+    const scrollAmount = 280; // ≈ ancho de 2 categorías + gap
 
-    nextBtn.onclick = () => {
-        scroller.scrollBy({ left: scroller.clientWidth * 0.8, behavior: 'smooth' });
-    };
+    prevBtn.addEventListener('click', () => {
+        categories.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    });
 
-    scroller.addEventListener('scroll', updateButtons);
-    window.addEventListener('resize', updateButtons);
-
-    // Estado inicial
-    setTimeout(updateButtons, 300);
-}
-
-// Llamar después de cargar la página
-window.addEventListener('load', () => {
-    // ... tus otras inicializaciones ...
-    initCategoriesCarousel();
+    nextBtn.addEventListener('click', () => {
+        categories.scrollBy({ left: +scrollAmount, behavior: 'smooth' });
+    });
 });
     </script>
 </body>
