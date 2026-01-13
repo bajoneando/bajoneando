@@ -132,48 +132,59 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-    /* Categorías más pequeñas */
+    /* Categorías - base (desktop) */
+.categories {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 40px;
+}
+
+/* Mobile: scroll horizontal + más pequeñas */
+@media (max-width: 768px) {
     .categories {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 40px;
+        flex-wrap: nowrap;           /* ¡Importante! Evita que salten de línea */
+        overflow-x: auto;            /* Activa scroll horizontal */
+        justify-content: flex-start; /* Empieza desde la izquierda */
+        padding: 0 15px;             /* Espacio lateral para no pegar al borde */
+        scroll-behavior: smooth;     /* Scroll más suave al tocar */
+        -webkit-overflow-scrolling: touch; /* Mejor experiencia en iOS */
+        gap: 10px;                   /* Espacio entre tarjetas más chico */
     }
+
     .category {
-        width: 130px;
-        height: 130px;
-        background-size: cover;
-        background-position: center;
-        border-radius: 16px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        cursor: pointer;
-        transition: transform 0.3s ease;
+        flex: 0 0 95px;             /* Ancho fijo más pequeño (antes 110px) */
+        height: 95px;               /* Altura también más chica */
+        min-width: 95px;            /* Evita que se achique demasiado */
     }
-    .category::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
-        border-radius: 16px;
+
+    .category span {
+        font-size: 13px;            /* Texto más pequeño para que quepa bien */
+        bottom: 8px;                /* Ajuste fino de posición */
+    }
+
+    /* Ocultar scrollbar en algunos navegadores (opcional pero queda más limpio) */
+    .categories::-webkit-scrollbar {
+        display: none;
+    }
+    .categories {
+        -ms-overflow-style: none;    /* IE y Edge */
+        scrollbar-width: none;       /* Firefox */
+    }
+}
+
+/* Móviles muy pequeños (ej: iPhone SE, < 400px aprox) */
+@media (max-width: 480px) {
+    .category {
+        flex: 0 0 85px;
+        height: 85px;
+        min-width: 85px;
     }
     .category span {
-        position: absolute;
-        bottom: 12px;
-        left: 0;
-        right: 0;
-        text-align: center;
-        color: white;
-        font-weight: bold;
-        font-size: 16px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.7);
-        z-index: 1;
+        font-size: 12px;
     }
-    .category:hover, .category:active {
-        transform: scale(1.05);
-    }
+}
     /* Sugerencias de locales ≈ mitad de tamaño */
 .suggestions {
     width: 100%;
