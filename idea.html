@@ -1649,37 +1649,46 @@ function loginUser() {
         document.body.style.overflow = '';
     }
 
-    // Apertura
-    cartIcon.addEventListener('click', openCart);
+    // 1. Abrir con clic en ícono
+    cartIcon.addEventListener('click', function(e) {
+        e.preventDefault();
+        openCart();
+    });
 
-    // Cierre con botón X
-    closeBtn.addEventListener('click', closeCart);
+    // 2. Cerrar con botón X
+    closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeCart();
+    });
 
-    // Cierre SOLO cuando se hace clic directamente en el overlay (fondo oscuro)
+    // 3. Cerrar SOLO si se hace clic directamente en el overlay (fondo oscuro)
     overlay.addEventListener('click', function(e) {
-        // Importante: solo cerramos si el clic fue exactamente en el overlay
-        // (no en elementos hijos como el sidebar)
+        // Solo cerramos si el clic fue EXACTAMENTE en el overlay
+        // (no en el sidebar ni en ningún elemento hijo)
         if (e.target === overlay) {
             closeCart();
         }
     });
 
-    // ←←← Protección extra: evitamos que los clics dentro del sidebar lleguen al overlay
+    // 4. Bloqueamos la propagación de clics que salgan del sidebar hacia el overlay
     sidebar.addEventListener('click', function(e) {
-        e.stopPropagation();           // Detiene la propagación hacia arriba
-    }, true);  // true = usar capture phase (más efectivo en algunos casos)
+        e.stopPropagation();   // ← evita que llegue al overlay
+    }, { capture: true });     // capture phase → más efectivo
 
-    // Opcional pero muy recomendado: cerrar con tecla ESC
+    // 5. Cerrar con tecla ESC (muy útil)
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && sidebar.classList.contains('open')) {
             closeCart();
         }
     });
 
-    // Mantener los listeners internos del carrito
+    // Mantener los eventos internos del carrito (cambio de cantidad, etc.)
     document.getElementById('delivery-type').addEventListener('change', updateCartDisplay);
     document.getElementById('metodo-pago').addEventListener('change', updateCartDisplay);
-    document.getElementById('checkout-btn').addEventListener('click', checkout);
+    document.getElementById('checkout-btn').addEventListener('click', function(e) {
+        e.stopPropagation();   // importante para que no cierre al presionar "Realizar Pedido"
+        checkout();
+    });
 }
     function addToCart(menu) {
         if (!isLoggedIn) {
