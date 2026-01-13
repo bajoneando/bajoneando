@@ -130,54 +130,34 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-    /* Categorías más pequeñas */
-    /* Categorías - base */
-.categories {
+
+        .categories {
     display: flex;
-    flex-wrap: nowrap;
-    gap: 12px;
-    margin: 0 -15px 40px -15px;   /* compensa el padding del main */
-    padding: 0 15px 20px 15px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;
-    scrollbar-width: thin;
+    flex-wrap: nowrap;           /* ¡Importante! Evita que baje de línea */
+    gap: 14px;
+    margin-bottom: 40px;
+    padding: 0 15px;             /* espacio lateral */
+    overflow-x: auto;            /* activa el scroll horizontal */
+    scroll-behavior: smooth;     /* scroll suave al usar flechas o JS */
+    -webkit-overflow-scrolling: touch; /* scroll suave en iOS */
+    scrollbar-width: thin;       /* Firefox: scrollbar delgado */
     scrollbar-color: #d32f2f #ffebee;
 }
 
+/* Ocultar scrollbar en Webkit (Chrome, Safari, Edge) */
 .categories::-webkit-scrollbar {
     height: 6px;
 }
 .categories::-webkit-scrollbar-track {
     background: #ffebee;
+    border-radius: 10px;
 }
 .categories::-webkit-scrollbar-thumb {
     background: #d32f2f;
     border-radius: 10px;
 }
-
-.category {
-    flex: 0 0 110px;
-    height: 110px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 16px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    cursor: pointer;
-    transition: transform 0.3s ease;
-}
-
-/* En pantallas muy pequeñas se puede achicar un poco más */
-@media (max-width: 360px) {
-    .category {
-        flex: 0 0 95px;
-        height: 95px;
-    }
-    .category span {
-        font-size: 13px;
-    }
+.categories::-webkit-scrollbar-thumb:hover {
+    background: #b71c1c;
 }
         
     /* Sugerencias de locales ≈ mitad de tamaño */
@@ -1033,7 +1013,7 @@ body {
     </header>
     <main>
         <h1>¿Qué se te antoja?</h1>
-        <div class="categories">
+        <div class="categories-wrapper">
             <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
                 <span>Burguers</span>
             </div>
