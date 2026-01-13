@@ -130,35 +130,35 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-        
-    /* Contenedor principal de categorías - ahora con scroll horizontal */
-.categories-wrapper {
-    position: relative;
-    margin: 0 -15px;           /* para que toque los bordes en mobile */
-    padding: 0 15px;
-    overflow: hidden;
-}
-
+    /* Contenedor principal del carrusel de categorías */
 .categories {
-    display: flex;
-    flex-wrap: nowrap;          /* ¡clave! no permite que baje de línea */
-    gap: 14px;
-    overflow-x: auto;           /* permite el scroll horizontal */
-    scroll-behavior: smooth;    /* scroll suave */
-    padding: 12px 0;
-    margin: 0;
-    -webkit-overflow-scrolling: touch; /* mejor experiencia en iOS */
-    scrollbar-width: none;      /* oculta scrollbar en Firefox */
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 40px auto;
+    padding: 0 15px;
+    overflow: hidden;           /* evita que se vea contenido fuera */
 }
 
-/* Ocultar scrollbar en Chrome/Safari/Edge */
-.categories::-webkit-scrollbar {
+/* Contenedor que se desliza */
+.categories-scroller {
+    display: flex;
+    gap: 16px;                  /* más separación que antes */
+    overflow-x: auto;           /* permite scroll horizontal */
+    scroll-behavior: smooth;    /* scroll suave con JS o flechas */
+    padding: 12px 0;
+    scrollbar-width: none;      /* Firefox */
+    -ms-overflow-style: none;   /* IE/Edge */
+}
+
+/* Ocultar scrollbar en Chrome/Safari */
+.categories-scroller::-webkit-scrollbar {
     display: none;
 }
 
-/* Cada categoría mantiene su tamaño, pero ahora en fila */
+/* Cada categoría */
 .category {
-    flex: 0 0 130px;           /* ancho fijo - igual que antes */
+    flex: 0 0 130px;            /* ancho fijo - importante */
     height: 130px;
     background-size: cover;
     background-position: center;
@@ -167,14 +167,95 @@ body {
     overflow: hidden;
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    flex-shrink: 0;             /* no se achica */
 }
 
-/* Responsive - categorías más pequeñas en mobile */
+.category:hover,
+.category:active {
+    transform: scale(1.06);
+    box-shadow: 0 12px 35px rgba(0,0,0,0.22);
+}
+
+/* Gradiente inferior (texto legible) */
+.category::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 55%);
+    border-radius: 16px;
+    pointer-events: none;
+}
+
+.category span {
+    position: absolute;
+    bottom: 14px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: white;
+    font-weight: 600;
+    font-size: 15.5px;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    z-index: 1;
+}
+
+/* Flechas (opcional - muy recomendado en desktop) */
+.categories-nav {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+    padding: 0 8px;
+    z-index: 5;
+}
+
+.categories-nav button {
+    pointer-events: auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    border: none;
+    font-size: 22px;
+    color: #c62828;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.categories-nav button:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.categories-nav button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Mobile: menos ancho por item + snap */
 @media (max-width: 768px) {
+    .categories-scroller {
+        gap: 12px;
+        scroll-snap-type: x mandatory;
+    }
+    
     .category {
         flex: 0 0 110px;
         height: 110px;
+    }
+    
+    .category span {
+        font-size: 14px;
     }
 }
 
@@ -182,9 +263,6 @@ body {
     .category {
         flex: 0 0 100px;
         height: 100px;
-    }
-    .category span {
-        font-size: 14px;
     }
 }
         
@@ -1041,8 +1119,14 @@ body {
     </header>
     <main>
         <h1>¿Qué se te antoja?</h1>
-        
-        <div class="categories-wrapper">
+
+        <div class="categories">
+    <div class="categories-nav">
+        <button id="categories-prev" aria-label="Anterior">←</button>
+        <button id="categories-next" aria-label="Siguiente">→</button>
+    </div>
+    
+    <div class="categories-scroller" id="categories-scroller">
             <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
                 <span>Burguers</span>
             </div>
@@ -2163,6 +2247,42 @@ async function createConfirmedOrder(orderData) {
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
 }
+
+        // Control del carrusel de categorías
+function initCategoriesCarousel() {
+    const scroller = document.getElementById('categories-scroller');
+    const prevBtn = document.getElementById('categories-prev');
+    const nextBtn = document.getElementById('categories-next');
+    
+    if (!scroller || !prevBtn || !nextBtn) return;
+
+    function updateButtons() {
+        prevBtn.disabled = scroller.scrollLeft <= 0;
+        // Hay que calcular si estamos al final (con algo de margen)
+        const atEnd = Math.abs(scroller.scrollLeft + scroller.clientWidth - scroller.scrollWidth) < 10;
+        nextBtn.disabled = atEnd;
+    }
+
+    prevBtn.onclick = () => {
+        scroller.scrollBy({ left: -scroller.clientWidth * 0.8, behavior: 'smooth' });
+    };
+
+    nextBtn.onclick = () => {
+        scroller.scrollBy({ left: scroller.clientWidth * 0.8, behavior: 'smooth' });
+    };
+
+    scroller.addEventListener('scroll', updateButtons);
+    window.addEventListener('resize', updateButtons);
+
+    // Estado inicial
+    setTimeout(updateButtons, 300);
+}
+
+// Llamar después de cargar la página
+window.addEventListener('load', () => {
+    // ... tus otras inicializaciones ...
+    initCategoriesCarousel();
+});
     </script>
 </body>
 </html>
