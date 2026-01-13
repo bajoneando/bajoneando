@@ -131,29 +131,26 @@ body {
         margin: 30px 0 20px;
     }
    
-    /* Carrusel de categorías - una fila horizontal deslizable */
-/* Carrusel de categorías - una fila horizontal deslizable */
+    /* Solo categorías son deslizables */
 .categories-carousel {
     position: relative;
     width: 100%;
-    margin: 0 auto 40px;
-    overflow: hidden;               /* evita que se vea contenido fuera */
+    margin: 0 auto 40px auto;
+    overflow: hidden;
 }
 
 .categories-track {
     display: flex;
     flex-wrap: nowrap;
     gap: 14px;
-    transition: transform 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
-    will-change: transform;
-    padding: 12px 0;
-    touch-action: pan-x;            /* mejora el swipe horizontal en móviles */
-    -webkit-overflow-scrolling: touch; /* momentum scrolling en iOS */
+    transition: transform 0.4s ease;
+    padding: 10px 0;
+    touch-action: pan-x;               /* permite swipe horizontal */
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Tarjetas de categoría */
 .category {
-    flex: 0 0 120px;                /* base razonable - se ajusta en media queries */
+    flex: 0 0 120px;
     height: 120px;
     background-size: cover;
     background-position: center;
@@ -163,106 +160,67 @@ body {
     box-shadow: 0 6px 18px rgba(0,0,0,0.14);
     cursor: pointer;
     transition: transform 0.22s ease;
-    user-select: none;              /* evita selección de texto al tocar */
 }
 
 .category:active {
-    transform: scale(0.97);         /* feedback al tocar en móvil */
+    transform: scale(0.96);
 }
 
-/* Oscurecimiento + texto */
 .category::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.78), transparent 50%);
+    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 55%);
     border-radius: 16px;
 }
 
 .category span {
     position: absolute;
     bottom: 10px;
-    left: 0;
-    right: 0;
+    left: 0; right: 0;
     text-align: center;
     color: white;
     font-weight: 600;
-    font-size: 14.5px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.75);
+    font-size: 14px;
+    text-shadow: 0 2px 4px #0008;
     z-index: 1;
-    padding: 0 4px;
 }
 
-/* Botones de navegación (opcionales en móvil muy pequeño) */
+/* Botones navegación (visibles siempre, pero más discretos en móvil) */
 .carousel-nav {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     width: 36px;
     height: 36px;
-    background: rgba(211, 47, 47, 0.9);
+    background: rgba(200, 40, 40, 0.85);
     color: white;
     border: none;
     border-radius: 50%;
-    font-size: 19px;
+    font-size: 18px;
+    z-index: 5;
     cursor: pointer;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-    transition: all 0.18s;
 }
 
-.carousel-nav:hover:not(:disabled) {
-    background: #d32f2f;
-    transform: translateY(-50%) scale(1.08);
-}
-
-.carousel-nav.left  { left: 4px; }
-.carousel-nav.right { right: 4px; }
+.carousel-nav.left  { left: 6px; }
+.carousel-nav.right { right: 6px; }
 
 .carousel-nav:disabled {
-    opacity: 0.35;
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
-/* ── RESPONSIVE ─────────────────────────────────────── */
+/* Tamaños más pequeños en móvil */
 @media (max-width: 768px) {
-    .category {
-        flex: 0 0 105px;
-        height: 105px;
-    }
-    .category span {
-        font-size: 13.5px;
-        bottom: 8px;
-    }
-    .carousel-nav {
-        width: 32px;
-        height: 32px;
-        font-size: 17px;
-    }
+    .category { flex: 0 0 105px; height: 105px; }
+    .category span { font-size: 13px; }
 }
 
 @media (max-width: 480px) {
-    .category {
-        flex: 0 0 96px;           /* más pequeño en móviles estrechos */
-        height: 96px;
-    }
-    .category span {
-        font-size: 13px;
-        bottom: 7px;
-    }
-    .carousel-nav {
-        width: 30px;
-        height: 30px;
-        font-size: 16px;
-    }
-    /* En pantallas muy pequeñas podemos ocultar botones y confiar en swipe */
-    .carousel-nav {
-        opacity: 0.7;
-    }
+    .category { flex: 0 0 94px; height: 94px; }
+    .category span { font-size: 12.5px; bottom: 8px; }
 }
+        
     /* Sugerencias de locales ≈ mitad de tamaño */
 .suggestions {
     width: 100%;
@@ -2247,27 +2205,24 @@ async function createConfirmedOrder(orderData) {
     }
 }
 
-        // =============================================
-// Carrusel de categorías
-// =============================================
+        // Carrusel solo para categorías
 let currentCatIndex = 0;
 
 function updateCategoriesCarousel() {
     const track = document.getElementById('categories-track');
     if (!track) return;
-    
+
     const card = track.querySelector('.category');
     if (!card) return;
-    
-    const cardWidth = card.offsetWidth + 14; // + gap
+
+    const cardWidth = card.offsetWidth + 14; // gap
     const visibleWidth = track.parentElement.offsetWidth;
     const maxIndex = Math.max(0, track.children.length - Math.floor(visibleWidth / cardWidth));
-    
-    currentCatIndex = Math.min(currentCatIndex, maxIndex);
-    currentCatIndex = Math.max(0, currentCatIndex);
-    
+
+    currentCatIndex = Math.max(0, Math.min(currentCatIndex, maxIndex));
+
     track.style.transform = `translateX(-${currentCatIndex * cardWidth}px)`;
-    
+
     document.getElementById('prev-cat').disabled = currentCatIndex === 0;
     document.getElementById('next-cat').disabled = currentCatIndex >= maxIndex;
 }
@@ -2282,65 +2237,40 @@ document.getElementById('next-cat')?.addEventListener('click', () => {
     updateCategoriesCarousel();
 });
 
-// Actualizar al cargar y al redimensionar
-window.addEventListener('load', updateCategoriesCarousel);
-window.addEventListener('resize', updateCategoriesCarousel);
-
-        // =============================================
-// Mejora: Soporte para swipe/touch en el carrusel de categorías
-// =============================================
+// Swipe touch
 let isDragging = false;
 let startX = 0;
-let scrollLeft = 0;
+let scrollLeftPos = 0;
 
 const track = document.getElementById('categories-track');
-
 if (track) {
-    // Mouse drag (opcional, pero útil en desktop con mouse)
-    track.addEventListener('mousedown', (e) => {
+    const startDrag = (e) => {
         isDragging = true;
-        startX = e.pageX - track.offsetLeft;
-        scrollLeft = track.scrollLeft;
-        track.style.cursor = 'grabbing';
-    });
+        startX = (e.type === 'touchstart' ? e.touches[0] : e).pageX - track.offsetLeft;
+        scrollLeftPos = track.scrollLeft;
+    };
 
-    track.addEventListener('mouseleave', () => {
-        isDragging = false;
-        track.style.cursor = 'grab';
-    });
-
-    track.addEventListener('mouseup', () => {
-        isDragging = false;
-        track.style.cursor = 'grab';
-    });
-
-    track.addEventListener('mousemove', (e) => {
+    const moveDrag = (e) => {
         if (!isDragging) return;
         e.preventDefault();
-        const x = e.pageX - track.offsetLeft;
-        const walk = (x - startX) * 1.8; // velocidad del arrastre
-        track.scrollLeft = scrollLeft - walk;
-    });
+        const x = (e.type === 'touchmove' ? e.touches[0] : e).pageX - track.offsetLeft;
+        const walk = (x - startX) * 2;
+        track.scrollLeft = scrollLeftPos - walk;
+    };
 
-    // ── Touch swipe (lo más importante para móviles) ──
-    track.addEventListener('touchstart', (e) => {
-        isDragging = true;
-        startX = e.touches[0].pageX - track.offsetLeft;
-        scrollLeft = track.scrollLeft;
-    }, { passive: false });
+    track.addEventListener('mousedown', startDrag);
+    track.addEventListener('touchstart', startDrag, { passive: false });
 
-    track.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        e.preventDefault(); // evita scroll vertical mientras deslizas horizontal
-        const x = e.touches[0].pageX - track.offsetLeft;
-        const walk = (x - startX) * 2.0;
-        track.scrollLeft = scrollLeft - walk;
-    }, { passive: false });
+    track.addEventListener('mousemove', moveDrag);
+    track.addEventListener('touchmove', moveDrag, { passive: false });
 
-    track.addEventListener('touchend', () => {
-        isDragging = false;
-    });
+    track.addEventListener('mouseup mouseleave', () => isDragging = false);
+    track.addEventListener('touchend', () => isDragging = false);
 }
+
+// Inicializar
+window.addEventListener('load', updateCategoriesCarousel);
+window.addEventListener('resize', updateCategoriesCarousel);
         
     </script>
 </body>
