@@ -264,88 +264,85 @@ body {
         background-color: #b71c1c;
     }
     /* Carrito */
-    <!-- ==================== NUEVOS ESTILOS para el carrito lateral ==================== -->
-<style>
-  /* Fondo oscuro cuando el carrito está abierto */
-  #cart-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 1999;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  #cart-backdrop.active {
-    display: block;
-    opacity: 1;
-  }
+  .cart-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  pointer-events: none;
+}
 
-  /* Panel lateral derecho */
-  #cart-section {
-    position: fixed;
-    top: 0;
-    right: -420px;               /* empieza fuera de pantalla */
-    width: 420px;
-    max-width: 92vw;             /* evita desborde en móviles */
-    height: 100%;
-    background: white;
-    box-shadow: -6px 0 25px rgba(0,0,0,0.25);
-    z-index: 2000;
-    overflow-y: auto;
-    transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    padding: 0;
-    border-radius: 16px 0 0 16px;
-  }
+.cart-backdrop.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
 
-  #cart-section.active {
-    right: 0;
-  }
+.cart-sidebar {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  max-width: 420px;
+  height: 100%;
+  background: white;
+  z-index: 2000;
+  transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: -8px 0 30px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+}
 
-  /* Header del carrito dentro del panel */
-  .cart-header {
-    padding: 18px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #fff;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
+.cart-sidebar.active {
+  right: 0;
+}
 
-  .cart-header h2 {
-    margin: 0;
-    font-size: 1.4rem;
-    color: #c62828;
-  }
+.cart-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
 
-  .cart-close-btn {
-    background: none;
-    border: none;
-    font-size: 2rem;
-    color: #666;
-    cursor: pointer;
-    line-height: 1;
-  }
+.cart-header h2 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: #c62828;
+}
 
-  .cart-close-btn:hover {
-    color: #d32f2f;
-  }
+.cart-close {
+  background: none;
+  border: none;
+  font-size: 2.2rem;
+  line-height: 1;
+  color: #555;
+  cursor: pointer;
+}
 
-  /* Contenido con padding */
-  .cart-content {
-    padding: 20px;
-  }
+.cart-close:hover {
+  color: #d32f2f;
+}
 
-  /* Ajustes responsive */
-  @media (max-width: 480px) {
-    #cart-section {
-      width: 85vw;
-      right: -85vw;
-    }
+.cart-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* Mobile: más ancho */
+@media (max-width: 500px) {
+  .cart-sidebar {
+    max-width: 90%;
   }
+}
 
   /* Ocultamos el viejo botón de checkout si queremos más espacio */
   #checkout-form {
@@ -1098,17 +1095,18 @@ body {
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
         <div id="menu-display" style="display:none;"></div>
-        <!-- Reemplaza TODO el <div id="cart-section"> actual por esto -->
 
-<div id="cart-backdrop" onclick="closeCart()"></div>
+<!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
+<div id="cart-backdrop" class="cart-backdrop"></div>
 
-<div id="cart-section">
+<!-- 2. Reemplaza completamente el <div id="cart-section"> original por este bloque -->
+<div id="cart-section" class="cart-sidebar">
   <div class="cart-header">
     <h2>Tu Carrito</h2>
-    <button class="cart-close-btn" onclick="closeCart()">×</button>
+    <button type="button" class="cart-close" aria-label="Cerrar carrito">×</button>
   </div>
 
-  <div class="cart-content">
+  <div class="cart-body">
     <div class="delivery-option">
       <label for="delivery-type">Tipo de entrega</label>
       <select id="delivery-type">
@@ -1120,7 +1118,9 @@ body {
     <div class="cart-summary-panel">
       <div class="cart-items-list" id="cart-items"></div>
       <div class="price-summary">
-        <!-- Los precios se generan dinámicamente con JS -->
+        <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+        <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
+        <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
       </div>
       <div id="free-shipping-notice"></div>
     </div>
@@ -1142,7 +1142,7 @@ body {
         <option value="efectivo">Efectivo</option>
       </select>
 
-      <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 500px;"></div>
+      <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
       
       <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
       <button type="button" id="checkout-btn">Realizar Pedido</button>
