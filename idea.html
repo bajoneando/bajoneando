@@ -134,58 +134,47 @@ body {
     /* Categorías - base */
 .categories {
     display: flex;
-    flex-wrap: nowrap;           /* ← impide que salten de línea */
-    gap: 14px;
-    padding: 0 15px;
-    margin: 0 auto 40px auto;
-    overflow-x: auto;            /* ← habilita scroll horizontal */
-    scroll-behavior: smooth;     /* scroll suave al tocar flechas o deslizar */
-    -webkit-overflow-scrolling: touch; /* mejor experiencia en iOS */
-    scrollbar-width: none;       /* oculta scrollbar en Firefox */
+    flex-wrap: nowrap;
+    gap: 12px;
+    margin: 0 -15px 40px -15px;   /* compensa el padding del main */
+    padding: 0 15px 20px 15px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: #d32f2f #ffebee;
 }
 
-/* Ocultar scrollbar en Chrome/Safari/Edge */
 .categories::-webkit-scrollbar {
-    display: none;
+    height: 6px;
+}
+.categories::-webkit-scrollbar-track {
+    background: #ffebee;
+}
+.categories::-webkit-scrollbar-thumb {
+    background: #d32f2f;
+    border-radius: 10px;
 }
 
-/* Centrado en desktop (cuando hay espacio) */
-@media (min-width: 769px) {
-    .categories {
-        flex-wrap: wrap;         /* ← vuelve a wrap en pantallas grandes */
-        justify-content: center;
-        overflow-x: hidden;      /* sin scroll en desktop */
-        padding: 0;
-        max-width: 1000px;       /* opcional: limita ancho total */
-    }
+.category {
+    flex: 0 0 110px;
+    height: 110px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform 0.3s ease;
 }
 
-/* Ajustes mobile - más compacto */
-@media (max-width: 768px) {
-    .categories {
-        gap: 12px;
-        padding: 0 12px;
-    }
-    
+/* En pantallas muy pequeñas se puede achicar un poco más */
+@media (max-width: 360px) {
     .category {
-        width: 110px;
-        height: 110px;
-        flex: 0 0 110px;         /* fija ancho para que no se achique */
+        flex: 0 0 95px;
+        height: 95px;
     }
-    
-    .category span {
-        font-size: 14px;
-        bottom: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    .category {
-        width: 100px;
-        height: 100px;
-        flex: 0 0 100px;
-    }
-    
     .category span {
         font-size: 13px;
     }
