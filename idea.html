@@ -1017,53 +1017,52 @@ body {
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
-        <div id="menu-display" style="display:none;"></div>
-       <div id="cart-sidebar" class="cart-sidebar">
-    <div class="cart-sidebar-header">
-        <h2>Tu Carrito</h2>
-        <button class="close-cart">×</button>
-    </div>
-    
-    <div class="cart-sidebar-body">
-        <div class="delivery-option">
+        <!-- ── CARRITO LATERAL (side cart) ── -->
+    <div id="cart-sidebar" class="cart-sidebar">
+        <div class="cart-sidebar-header">
+            <h2>Tu Carrito</h2>
+            <button class="close-cart">×</button>
+        </div>
+        <div class="cart-sidebar-body">
+            <div class="delivery-option">
                 <label for="delivery-type">Tipo de entrega</label>
                 <select id="delivery-type">
                     <option value="envio">Con envío a domicilio</option>
                     <option value="retiro">Retirar en local</option>
                 </select>
             </div>
-            <div class="cart-summary-panel">
-                <div class="cart-items-list" id="cart-items"></div>
-                <div class="price-summary">
-                    <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
-                    <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
-                    <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
-                </div>
-                <div id="free-shipping-notice"></div>
+
+            <div class="cart-items-list" id="cart-items"></div>
+
+            <div class="price-summary">
+                <div class="price-line"><span>Subtotal productos</span><span id="subtotal">$0</span></div>
+                <div class="price-line"><span>Envío</span><span id="shipping-cost">$2.500</span></div>
+                <div class="price-line total"><span>Total a pagar</span><span id="final-total">$2.500</span></div>
             </div>
+
+            <div id="free-shipping-notice"></div>
+
             <div id="drinks-panel" class="drinks-panel" style="display:none;">
                 <h3>¡Agregá una bebida y obtené ENVÍO GRATIS!</h3>
-                <div class="drinks-carousel">
-                    <button class="carousel-btn left" id="prev-drink">←</button>
-                    <div class="drinks-container" id="drinks-container"></div>
-                    <button class="carousel-btn right" id="next-drink">→</button>
-                </div>
+                <div class="drinks-carousel">...</div>
             </div>
+
             <form id="checkout-form">
                 <input type="text" id="direccion" placeholder="Dirección de entrega (requerida si eliges envío)" required>
                 <select id="metodo-pago" required>
-    <option value="">Método de pago</option>
-    <option value="transferencia">Transferencia / Mercado Pago</option>
-    <option value="efectivo">Efectivo</option>
-</select>
-
-<!-- Contenedor donde se mostrará el checkout de MP -->
-<div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-                
+                    <option value="">Método de pago</option>
+                    <option value="transferencia">Transferencia / Mercado Pago</option>
+                    <option value="efectivo">Efectivo</option>
+                </select>
+                <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
         </div>
+    </div>
+
+    <!-- Overlay fondo oscuro -->
+    <div class="cart-overlay" id="cart-overlay"></div>
             
     </main>
     
