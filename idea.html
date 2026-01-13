@@ -132,54 +132,103 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-    /* Categorías - base (desktop) */
+        
+    /* Categorías*/
+.categories-wrapper {
+    margin: 0 -15px;           /* compensa el padding del main */
+    padding: 0 15px;
+    overflow: hidden;
+}
+
+/* Contenedor deslizable */
 .categories {
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;          /* ¡Importante! Evita que baje de línea */
     gap: 12px;
-    margin-bottom: 40px;
+    overflow-x: auto;           /* activa scroll horizontal */
+    scroll-behavior: smooth;    /* scroll suave al arrastrar o con botones */
+    padding: 15px 0;            /* espacio arriba/abajo */
+    margin: 20px 0 40px;
+    -webkit-overflow-scrolling: touch; /* scroll suave en iOS */
+    scrollbar-width: thin;      /* Firefox */
+    scrollbar-color: #d32f2f #ffebee;
 }
 
-/* Mobile: scroll horizontal + más pequeñas */
-@media (max-width: 768px) {
-    .categories {
-        flex-wrap: nowrap;           /* ¡Importante! Evita que salten de línea */
-        overflow-x: auto;            /* Activa scroll horizontal */
-        justify-content: flex-start; /* Empieza desde la izquierda */
-        padding: 0 15px;             /* Espacio lateral para no pegar al borde */
-        scroll-behavior: smooth;     /* Scroll más suave al tocar */
-        -webkit-overflow-scrolling: touch; /* Mejor experiencia en iOS */
-        gap: 10px;                   /* Espacio entre tarjetas más chico */
-    }
-
-    .category {
-        flex: 0 0 95px;             /* Ancho fijo más pequeño (antes 110px) */
-        height: 95px;               /* Altura también más chica */
-        min-width: 95px;            /* Evita que se achique demasiado */
-    }
-
-    .category span {
-        font-size: 13px;            /* Texto más pequeño para que quepa bien */
-        bottom: 8px;                /* Ajuste fino de posición */
-    }
-
-    /* Ocultar scrollbar en algunos navegadores (opcional pero queda más limpio) */
-    .categories::-webkit-scrollbar {
-        display: none;
-    }
-    .categories {
-        -ms-overflow-style: none;    /* IE y Edge */
-        scrollbar-width: none;       /* Firefox */
-    }
+/* Ocultar scrollbar en Webkit (Chrome, Safari, Edge) */
+.categories::-webkit-scrollbar {
+    height: 6px;
+}
+.categories::-webkit-scrollbar-track {
+    background: #ffebee;
+    border-radius: 10px;
+}
+.categories::-webkit-scrollbar-thumb {
+    background: #d32f2f;
+    border-radius: 10px;
+}
+.categories::-webkit-scrollbar-thumb:hover {
+    background: #b71c1c;
 }
 
-/* Móviles muy pequeños (ej: iPhone SE, < 400px aprox) */
+/* Cada categoría MÁS PEQUEÑA */
+.category {
+    flex: 0 0 100px;           /* ancho fijo más pequeño */
+    height: 100px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 14px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.category::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent 55%);
+    border-radius: 14px;
+}
+
+.category span {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;           /* texto más pequeño */
+    text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    z-index: 1;
+    padding: 0 6px;
+}
+
+/* Hover y active más sutil */
+.category:hover,
+.category:active {
+    transform: scale(1.06);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+}
+
+/* Responsive - aún más pequeño en móviles */
 @media (max-width: 480px) {
     .category {
-        flex: 0 0 85px;
-        height: 85px;
-        min-width: 85px;
+        flex: 0 0 90px;
+        height: 90px;
+    }
+    .category span {
+        font-size: 13px;
+        bottom: 8px;
+    }
+}
+
+@media (max-width: 360px) {
+    .category {
+        flex: 0 0 80px;
+        height: 80px;
     }
     .category span {
         font-size: 12px;
@@ -1081,7 +1130,7 @@ body {
     </header>
     <main>
         <h1>¿Qué se te antoja?</h1>
-        <div class="categories">
+        <div class="categories-wrapper">
             <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
                 <span>Burguers</span>
             </div>
