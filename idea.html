@@ -957,86 +957,45 @@ body {
     }
 }
 
-        /* Overlay de fondo oscuro */
-.cart-overlay {
+        .cart-overlay {
     display: none;
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.5);
-    z-index: 1999;
+    z-index: 1998;           /* <--- menor que el sidebar */
     opacity: 0;
     transition: opacity 0.3s ease;
+    pointer-events: auto;    /* importante */
 }
 
-/* Sidebar lateral (pop-up desde la derecha) */
 .cart-sidebar {
     position: fixed;
     top: 0;
-    right: -420px;               /* oculto inicialmente */
+    right: -420px;
     width: 420px;
     max-width: 90vw;
     height: 100%;
     background: white;
     box-shadow: -8px 0 25px rgba(0,0,0,0.25);
-    z-index: 2000;
+    z-index: 2000;           /* mayor que el overlay */
     transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
 }
 
-/* Header del sidebar */
-.cart-sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 20px;
-    border-bottom: 1px solid #eee;
-    background: #fafafa;
-}
-
-.cart-sidebar-header h2 {
-    margin: 0;
-    color: #c62828;
-    font-size: 1.5rem;
-}
-
-.cart-close-btn {
-    background: none;
-    border: none;
-    font-size: 2.2rem;
-    color: #666;
-    cursor: pointer;
-    line-height: 1;
-}
-
-.cart-close-btn:hover {
-    color: #d32f2f;
-}
-
-/* Contenido con scroll */
-.cart-sidebar-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-}
-
-/* Clase para abrir */
-.cart-sidebar.open {
-    right: 0;
-}
-
-.cart-overlay.show {
+.cart-sidebar.open ~ #cart-overlay,
+#cart-overlay.show {
     display: block;
     opacity: 1;
 }
 
-/* Responsive: en móviles ocupa casi toda la pantalla */
-@media (max-width: 480px) {
-    .cart-sidebar {
-        width: 100%;
-        max-width: 100%;
-        right: -100%;
-    }
+/* Asegurarse de que los botones dentro del sidebar sean clickeables */
+.cart-sidebar button,
+.cart-sidebar input,
+.cart-sidebar select,
+.cart-sidebar textarea {
+    position: relative;
+    z-index: 1;
 }
 </style>
 </head>
@@ -1163,18 +1122,17 @@ body {
     </div>
 </div>
 
-        <!-- Al FINAL del <body>, justo antes de </body> -->
+        <!-- Sidebar -->
 <div id="cart-sidebar" class="cart-sidebar">
     <div class="cart-sidebar-header">
         <h2>Tu Carrito</h2>
         <button class="cart-close-btn" onclick="closeCartSidebar()">×</button>
     </div>
-    
+   
     <div class="cart-sidebar-content">
-        <!-- Aquí va TODO el contenido que antes estaba en #cart-section -->
-        <div id="cart-section">
-            <h2>Tu Carrito</h2>
-            <div class="delivery-option">
+        <!-- YA NO uses #cart-section como contenedor -->
+        <!-- Mueve todo el contenido directamente aquí -->
+        <div class="delivery-option">
                 <label for="delivery-type">Tipo de entrega</label>
                 <select id="delivery-type">
                     <option value="envio">Con envío a domicilio</option>
@@ -1215,7 +1173,7 @@ body {
         </div>
     </div>
 
-<!-- Fondo oscuro cuando el sidebar está abierto -->
+<!-- Overlay → FUERA del sidebar, al mismo nivel o después -->
 <div id="cart-overlay" class="cart-overlay" onclick="closeCartSidebar()"></div>
    
     <script>
