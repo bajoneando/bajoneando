@@ -130,185 +130,174 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-    /* ────────────────────────────────────────
-   Categorías – Carrusel mobile + fila desktop
-───────────────────────────────────────── */
-.categories-wrapper {
-    position: relative;
-    margin: 0 -15px;               /* compensa padding del main */
-    padding: 0 15px;
-}
-
+        
+    /* Categorías más pequeñas */
+    /* Categorías - contenedor principal */
 .categories {
     display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;             /* ¡clave! nunca baja de línea */
-    gap: 16px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    padding: 12px 0;
-    scroll-snap-type: x proximity; /* snap suave, no mandatory */
+    flex-wrap: nowrap;           /* ← clave: nunca bajar a otra línea */
+    gap: 14px;
+    overflow-x: auto;            /* permite deslizar horizontalmente */
+    padding: 0 15px 20px 15px;   /* espacio lateral para que no pegue los bordes */
+    scroll-snap-type: x mandatory;   /* snap opcional, más fluido en mobile */
+    -webkit-overflow-scrolling: touch; /* scroll suave en iOS */
+    margin: 0 auto;
+    max-width: 1200px;
+    scrollbar-width: thin;       /* firefox */
+    scrollbar-color: #d32f2f #ffebee;
 }
 
-/* Ocultar scrollbar visualmente (pero sigue siendo funcional) */
+/* Ocultar scrollbar en WebKit (Chrome, Safari, Edge) */
 .categories::-webkit-scrollbar {
-    height: 5px;
+    height: 6px;
 }
 .categories::-webkit-scrollbar-track {
-    background: transparent;
-}
-.categories::-webkit-scrollbar-thumb {
-    background: rgba(211, 47, 47, 0.5);
+    background: #ffebee;
     border-radius: 10px;
 }
-.categories::-webkit-scrollbar-thumb:hover {
+.categories::-webkit-scrollbar-thumb {
     background: #d32f2f;
+    border-radius: 10px;
 }
 
-/* En pantallas grandes → centrado y sin scroll */
-@media (min-width: 900px) {
-    .categories {
-        justify-content: center;
-        overflow-x: hidden;           /* ya no se puede deslizar */
-        padding: 20px 0;
-        gap: 24px;
-    }
-    
-    /* Si querés que ocupe todo el ancho y se distribuyan mejor */
-    /* .categories { gap: 32px; padding: 20px 40px; } */
-}
-
-/* Tamaño de cada categoría (ajusta según diseño) */
+/* Cada categoría */
 .category {
-    flex: 0 0 110px;               /* ancho fijo */
-    height: 110px;
-    border-radius: 16px;
+    flex: 0 0 130px;             /* ancho fijo → importante para carrusel */
+    height: 130px;
     background-size: cover;
     background-position: center;
+    border-radius: 16px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     cursor: pointer;
-    transition: all 0.25s ease;
-    scroll-snap-align: start;
+    transition: transform 0.25s ease;
+    scroll-snap-align: start;    /* snap al inicio de cada card */
 }
 
-.category:hover {
+.category:hover,
+.category:active {
     transform: scale(1.06);
-    box-shadow: 0 10px 24px rgba(0,0,0,0.22);
 }
 
-.category span {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
-    color: white;
-    font-weight: 600;
-    font-size: 15px;
-    padding: 12px 8px 10px;
-    text-align: center;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+/* En pantallas grandes: centrado y sin scroll (una fila visible completa) */
+@media (min-width: 769px) {
+    .categories {
+        justify-content: center;
+        overflow-x: hidden;          /* sin scroll en desktop */
+        padding: 0 15px;
+        flex-wrap: wrap;             /* permite que se ajuste si son muchas */
+        gap: 16px;
+    }
+    
+    .category {
+        flex: 0 0 140px;             /* un poco más grandes en desktop */
+        height: 140px;
+    }
 }
 
-/* Mobile más pequeño */
+/* Mobile pequeño - tarjetas más compactas */
 @media (max-width: 480px) {
     .category {
-        flex: 0 0 100px;
-        height: 100px;
+        flex: 0 0 110px;
+        height: 110px;
     }
+    
     .category span {
         font-size: 14px;
-        padding: 10px 6px 8px;
+        bottom: 8px;
     }
 }
         
     /* Sugerencias de locales ≈ mitad de tamaño */
+.suggestions {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
 .suggestion-items {
     display: flex;
-    flex-wrap: wrap;               /* ← importante: permite bajar de línea */
     justify-content: center;
-    gap: 16px;                     /* un poco menos que 20px para móviles */
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
     padding: 20px 0;
     width: 100%;
 }
-
-/* En móviles pequeños → más compacto y centrado */
-@media (max-width: 768px) {
-    .suggestion-items {
-        gap: 12px;
-        padding: 12px 0;
-    }
-    .suggestion {
-        width: 80px;
-        height: 80px;
-    }
+.suggestion {
+    width: 120px;
+    height: 120px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-
-@media (max-width: 480px) {
-    .suggestion {
-        width: 70px;
-        height: 70px;
-    }
+.suggestion:hover, .suggestion:active {
+    transform: scale(1.1);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
 }
-        
-    /* Tarjetas de menú - versión desktop */
-    .menu-items {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 16px;
-    justify-content: center;
-    padding: 0 8px;
+.suggestion img {
     width: 100%;
-    margin: 0 auto;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
 }
-
-/* Mobile prioritario */
-@media (max-width: 768px) {
-    .menu-items {
-        grid-template-columns: repeat(2, 1fr);   /* 2 columnas en la mayoría de celulares */
-        gap: 12px;
-        padding: 0 10px;
-    }
+.suggestion:hover img {
+    transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
+}
+    /* Tarjetas de menú - versión desktop */
     .menu-item {
-        max-width: none;
         width: 100%;
+        max-width: 260px;
+        background: white;
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+    .menu-item:hover, .menu-item:active {
+        transform: translateY(-8px);
     }
     .menu-item img {
-        height: 110px;
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
     }
-}
-
-/* Celulares muy pequeños */
-@media (max-width: 400px) {
-    .menu-items {
-        grid-template-columns: 1fr;   /* solo 1 columna si es muy angosto */
+    .menu-item h3 {
+        margin: 10px 0 6px;
+        font-size: 1.1rem;
+        color: #333;
     }
-}
-
-/* Tablets y desktop */
-@media (min-width: 769px) {
-    .menu-items {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
-        padding: 0 15px;
+    .menu-item p {
+        color: #666;
+        margin: 4px 0;
+        font-size: 0.95rem;
     }
-}
-
-@media (min-width: 992px) {
-    .menu-items {
-        grid-template-columns: repeat(3, 1fr);
-        max-width: 1100px;
-        margin: 30px auto;
-        padding: 0 20px;
+    .menu-item p:last-of-type {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 8px 0;
     }
-    .menu-item img {
-        height: 200px;
+    .menu-item button {
+        width: 100%;
+        padding: 12px;
+        background-color: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
     }
-}
-        
+    .menu-item button:hover, .menu-item button:active {
+        background-color: #b71c1c;
+    }
     /* Carrito */
   .cart-backdrop {
   position: fixed;
@@ -885,7 +874,7 @@ body {
         width: 28px;
         height: 28px;
     }
-  
+   
     .profile-button {
         padding: 6px 10px;
         font-size: 0.9rem;
@@ -1025,11 +1014,11 @@ body {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 20px !important;
     }
-  
+   
     .menu-item img {
         height: 200px !important;
     }
-  
+   
     .fav-btn {
         width: 36px !important;
         height: 36px !important;
@@ -1037,7 +1026,7 @@ body {
         right: 10px !important;
     }
 }
-      
+       
 </style>
 </head>
 <body>
@@ -1057,7 +1046,7 @@ body {
                 class="profile-icon">
             <span>Mi Perfil</span>
         </div>
-      
+       
         <!-- Menú desplegable -->
         <div class="profile-dropdown" id="profile-dropdown">
     <a href="#" class="dropdown-item" onclick="openEditProfileModal()">Editar perfil</a>
@@ -1073,32 +1062,28 @@ body {
     </header>
     <main>
         <h1>¿Qué se te antoja?</h1>
-        
-        <!-- HTML -->
-<div class="categories-wrapper">
-    <div class="categories" id="categories-scroll">
-        <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
-            <span>Burguers</span>
-        </div>
-        <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
-            <span>Pizza</span>
-        </div>
-        <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
-            <span>Helados</span>
-        </div>
-        <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
-            <span>Postres</span>
-        </div>
-        <div class="category" data-type="Panadería" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
-            <span>Panadería</span>
-        </div>
-        <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
-            <span>Bebidas</span>
-        </div>
+        <div class="categories">
+    <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
+        <span>Burguers</span>
     </div>
+    <div class="category" data-type="Pizza" style="background-image: url('https://i.postimg.cc/4nC5DWt0/pizza-Mh3H4eany-BKEs-Stv1Ycl-PWTf9OUq-Ii.jpg');">
+        <span>Pizza</span>
+    </div>
+    <div class="category" data-type="Helados" style="background-image: url('https://i.postimg.cc/L54M5QM5/heladodechocolatecremoso.jpg');">
+        <span>Helados</span>
+    </div>
+    <div class="category" data-type="Postres" style="background-image: url('https://i.postimg.cc/HsZTcmnQ/tk-photo-2025-08-2025-2025-08-Chocotorta-Chocotorta-0395-0288d6-cropped.jpg');">
+        <span>Postres</span>
+    </div>
+    <div class="category" data-type="Panadería" style="background-image: url('https://i.postimg.cc/MKKWpH66/hq720.jpg');">
+        <span>Panadería</span>
+    </div>
+    <div class="category" data-type="Bebidas" style="background-image: url('https://i.postimg.cc/1zNz6zBH/290.webp');">
+        <span>Bebidas</span>
+    </div>
+    <!-- puedes agregar más categorías sin problema -->
 </div>
         
-        </div>
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
@@ -1146,13 +1131,13 @@ body {
 </select>
 <!-- Contenedor donde se mostrará el checkout de MP -->
 <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-              
+               
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
         </div>
     </main>
-  
+   
     <!-- Footer -->
     <footer class="text-center">
         <div class="container">
@@ -1191,16 +1176,16 @@ body {
     <div class="modal-content">
         <span class="close" onclick="closeModal('edit-profile-modal')">×</span>
         <h2>Editar Perfil</h2>
-      
+       
         <label for="edit-name">Nombre completo</label>
         <input type="text" id="edit-name" placeholder="Nombre completo" required>
-      
+       
         <label for="edit-email">Correo electrónico</label>
         <input type="email" id="edit-email" placeholder="Correo electrónico" required>
-      
+       
         <label for="edit-new-password">Nueva contraseña (opcional)</label>
         <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
-      
+       
         <button onclick="saveProfileChanges()">Guardar cambios</button>
     </div>
 </div>
@@ -1213,7 +1198,7 @@ body {
         <button onclick="saveAddressChange()">Guardar dirección</button>
     </div>
 </div>
- 
+  
     <script>
 const MP_ACCESS_TOKEN = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795";
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
@@ -1389,10 +1374,10 @@ function displayMenus(menus, title) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
-  
+   
     // Limpiamos caché anterior
     currentDisplayedMenus = {};
-  
+   
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
@@ -1407,10 +1392,10 @@ function displayMenus(menus, title) {
                 <h3>${menu.nombre}</h3>
                 <p>${menu.descripcion || 'Sin descripción'}</p>
                 <p>$${menu.precio}</p>
-             
+              
                 <!-- Botón agregar al carrito -->
                 <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
-             
+              
                 <!-- Botón favorito con imágenes (sin texto) -->
                 <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
                         data-menu-id="${menu.id}"
@@ -1422,13 +1407,13 @@ function displayMenus(menus, title) {
             itemsDiv.appendChild(div);
         });
     }
-  
+   
     container.style.display = 'block';
-  
+   
     // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
-      
+       
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1436,7 +1421,7 @@ function displayMenus(menus, title) {
         alert('Error: no se pudo encontrar el plato seleccionado');
         return;
     }
-  
+   
     // Ahora sí llamamos a addToCart con el objeto completo
     addToCart(menu);
 }
@@ -1496,7 +1481,7 @@ function loginUser() {
         setupCart();
         loadAllDrinks();
     });
-     
+      
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
@@ -1565,10 +1550,10 @@ function loginUser() {
                 .then(menus => displayMenus(menus, type || 'Local seleccionado'))
                 .catch(() => showError(container, 'Error al cargar menús'));
         }
-      
+       
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
- 
+  
     // Solo aplicamos display: block al contenedor de menús
     if (container.id === 'menu-display') {
         container.style.display = 'block';
@@ -1744,17 +1729,17 @@ function addToCart(menu) {
         // Modificar cantidad de un ítem en el carrito
 function changeQuantity(index, delta) {
     if (!cart[index]) return;
-  
+   
     const nuevaCantidad = cart[index].cantidad + delta;
-  
+   
     if (nuevaCantidad < 1) {
         // En lugar de dejar en 1, eliminamos directamente
         removeFromCart(index);
         return;
     }
-  
+   
     cart[index].cantidad = nuevaCantidad;
-  
+   
     updateCartCount();
     updateCartDisplay();
 }
@@ -1766,7 +1751,7 @@ function removeFromCart(index) {
         updateCartDisplay();
     }
 }
-      
+       
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
@@ -1967,7 +1952,7 @@ function startPaymentPolling(preferenceId, externalReference) { // ← agregamos
         }
     }, 5000);
 }
-      
+       
 async function finalizeOrderAfterPayment() {
     if (!pendingOrderData) return;
     // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
@@ -2020,23 +2005,23 @@ async function checkPaymentReturn() {
 // ==================== EDITAR PERFIL ====================
 function openEditProfileModal() {
     profileDropdown.classList.remove('active');
-  
+   
     // Precargamos los datos actuales
     document.getElementById('edit-name').value = localStorage.getItem('userName') || '';
     document.getElementById('edit-email').value = localStorage.getItem('userEmail') || '';
     document.getElementById('edit-new-password').value = ''; // siempre vacío al abrir
-  
+   
     showModal('edit-profile-modal');
 }
 function openChangeAddressModal() {
     profileDropdown.classList.remove('active');
-  
+   
     const addressInput = document.getElementById('edit-address');
     addressInput.value = userAddress || '';
-  
+   
     showModal('change-address-modal');
 }
-      
+       
 function saveProfileChanges() {
     const name = document.getElementById('edit-name').value.trim();
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
@@ -2046,12 +2031,12 @@ function saveProfileChanges() {
         alert('El nombre es obligatorio');
         return;
     }
-  
+   
     if (!email) {
         alert('El email es obligatorio');
         return;
     }
-  
+   
     if (newPassword && newPassword.length < 6) {
         alert('La nueva contraseña debe tener al menos 6 caracteres (o dejarla en blanco)');
         return;
@@ -2072,10 +2057,10 @@ function saveProfileChanges() {
                 // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-              
+               
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
-              
+               
                 // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
@@ -2087,7 +2072,7 @@ function saveProfileChanges() {
             alert('Error de conexión al intentar actualizar el perfil');
         });
 }
-      
+       
 function saveAddressChange() {
     const newAddress = document.getElementById('edit-address').value.trim();
     if (!newAddress) {
@@ -2103,11 +2088,11 @@ function saveAddressChange() {
             if (data.success) {
                 userAddress = newAddress;
                 localStorage.setItem('userAddress', newAddress);
-              
+               
                 // Actualizamos el campo de dirección del checkout si está visible
                 const checkoutDir = document.getElementById('direccion');
                 if (checkoutDir) checkoutDir.value = newAddress;
-              
+               
                 alert('Dirección actualizada correctamente');
                 closeModal('change-address-modal');
             } else {
@@ -2185,7 +2170,7 @@ async function createConfirmedOrder(orderData) {
             body: JSON.stringify(payload)
         });
         alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
-      
+       
         // Limpieza final
         cart = [];
         updateCartCount();
@@ -2194,31 +2179,12 @@ async function createConfirmedOrder(orderData) {
         document.getElementById('mercadopago-checkout').style.display = 'none';
         document.getElementById('checkout-btn').style.display = 'block';
         document.getElementById('checkout-form').reset();
-      
+       
     } catch (err) {
         console.error("Error registrando pedido pagado:", err);
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
 }
-
-        // Carrusel de categorías (opcional)
-document.addEventListener('DOMContentLoaded', () => {
-    const categories = document.querySelector('.categories');
-    const prevBtn = document.getElementById('prev-category');
-    const nextBtn = document.getElementById('next-category');
-
-    if (!categories || !prevBtn || !nextBtn) return;
-
-    const scrollAmount = 280; // ≈ ancho de 2 categorías + gap
-
-    prevBtn.addEventListener('click', () => {
-        categories.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-    });
-
-    nextBtn.addEventListener('click', () => {
-        categories.scrollBy({ left: +scrollAmount, behavior: 'smooth' });
-    });
-});
     </script>
 </body>
 </html>
