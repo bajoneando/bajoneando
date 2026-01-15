@@ -132,53 +132,54 @@ body {
     }
         
     .categories {
-    --cat-size: 130px;
-    --gap: 16px;
-    --side-space: 15px;
+    --cat-size: 120px;          /* tamaño base más conservador */
+    --gap: 12px;
+    --side: 12px;               /* espacio a los lados */
 
     display: flex;
     flex-wrap: nowrap;
     gap: var(--gap);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x proximity;     /* más natural que mandatory en muchos casos */
-    padding: 0 var(--side-space) 25px var(--side-space);
-    margin: 0 calc(-1 * var(--side-space)) 35px calc(-1 * var(--side-space));
-    scrollbar-width: none;              /* Firefox */
-    -ms-overflow-style: none;           /* IE/Edge legacy */
+    scroll-snap-type: x proximity;
+    padding: 0 var(--side) 20px var(--side);
+    margin: 0 calc(-1 * var(--side)) 30px calc(-1 * var(--side));
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
-/* Ocultar scrollbar en navegadores WebKit */
 .categories::-webkit-scrollbar {
     display: none;
 }
 
-/* Cada categoría */
 .category {
     flex: 0 0 var(--cat-size);
-    height: 130px;
+    height: calc(var(--cat-size) * 1.05); /* ligeramente más alto que ancho */
+    min-width: var(--cat-size);
     background-size: cover;
     background-position: center;
-    border-radius: 16px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.14);
     cursor: pointer;
-    transition: transform 0.25s ease;
+    transition: transform 0.22s ease;
     scroll-snap-align: start;
 }
 
 .category:hover,
 .category:active {
-    transform: scale(1.06);
+    transform: scale(1.05);
 }
 
-/* Desktop y tablets grandes → sin scroll horizontal */
-@media (min-width: 769px) {
+/* ================================================= */
+/* Reglas para pantallas grandes (desktop real)     */
+/* ================================================= */
+@media (min-width: 900px) {     /* ← subimos el breakpoint para dar más espacio */
     .categories {
         justify-content: center;
         overflow-x: hidden;
         margin: 0 auto 40px auto;
         padding: 0;
-        flex-wrap: wrap;               /* permite que se acomoden en varias filas si son muchas */
+        flex-wrap: wrap;
         gap: 20px;
     }
 
@@ -188,28 +189,54 @@ body {
     }
 }
 
-/* Móviles pequeños */
-@media (max-width: 480px) {
+/* ================================================= */
+/* Móviles y tablets (hasta 899px): SIEMPRE carrusel */
+/* ================================================= */
+@media (max-width: 899px) {
     .categories {
-        --cat-size: 110px;
-        --gap: 12px;
-        --side-space: 12px;
+        justify-content: flex-start;   /* empieza desde la izquierda */
     }
 
-    .category {
-        height: 110px;
+    /* Ajuste progresivo según el ancho */
+    @media (max-width: 700px) {
+        .categories {
+            --cat-size: 110px;
+            --gap: 10px;
+            --side: 10px;
+        }
+        .category {
+            height: 115px;
+        }
+        .category span {
+            font-size: 14px;
+        }
     }
 
-    .category span {
-        font-size: 14px;
-        bottom: 8px;
+    @media (max-width: 500px) {
+        .categories {
+            --cat-size: 100px;
+            --gap: 8px;
+            --side: 8px;
+        }
+        .category {
+            height: 105px;
+        }
+        .category span {
+            font-size: 13px;
+            bottom: 6px;
+        }
     }
 }
 
-/* Medida de emergencia: evitar que el body haga scroll horizontal */
-@media (max-width: 800px) {
-    html, body, main {
+/* Seguridad extra contra scroll global */
+@media (max-width: 820px) {
+    html, body {
         overflow-x: hidden;
+    }
+    main {
+        overflow-x: hidden;
+        padding-left: 0;
+        padding-right: 0;
     }
 }
         
