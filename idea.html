@@ -131,38 +131,35 @@ body {
         margin: 30px 0 20px;
     }
         
-    /* Categorías más pequeñas */
-    /* Categorías - contenedor principal */
+    /* Contenedor principal de categorías */
 .categories {
+    --category-width: 130px;
+    --gap: 14px;
+
     display: flex;
-    flex-wrap: nowrap;           /* ← clave: nunca bajar a otra línea */
-    gap: 14px;
-    overflow-x: auto;            /* permite deslizar horizontalmente */
-    padding: 0 15px 20px 15px;   /* espacio lateral para que no pegue los bordes */
-    scroll-snap-type: x mandatory;   /* snap opcional, más fluido en mobile */
-    -webkit-overflow-scrolling: touch; /* scroll suave en iOS */
-    margin: 0 auto;
-    max-width: 1200px;
-    scrollbar-width: thin;       /* firefox */
-    scrollbar-color: #d32f2f #ffebee;
+    flex-wrap: nowrap;
+    gap: var(--gap);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    padding: 0 15px 20px 15px;
+    margin: 0 -15px 30px -15px;     /* ← clave: compensa el padding del main */
+    scroll-padding-left: 15px;
+    scroll-padding-right: 15px;
 }
 
-/* Ocultar scrollbar en WebKit (Chrome, Safari, Edge) */
+/* Ocultar scrollbar (opcional pero recomendado en mobile) */
 .categories::-webkit-scrollbar {
-    height: 6px;
+    display: none;                    /* Chrome, Safari, Edge */
 }
-.categories::-webkit-scrollbar-track {
-    background: #ffebee;
-    border-radius: 10px;
-}
-.categories::-webkit-scrollbar-thumb {
-    background: #d32f2f;
-    border-radius: 10px;
+.categories {
+    scrollbar-width: none;            /* Firefox */
+    -ms-overflow-style: none;         /* IE y Edge antiguo */
 }
 
-/* Cada categoría */
+/* Cada tarjeta de categoría */
 .category {
-    flex: 0 0 130px;             /* ancho fijo → importante para carrusel */
+    flex: 0 0 var(--category-width);
     height: 130px;
     background-size: cover;
     background-position: center;
@@ -172,7 +169,7 @@ body {
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     cursor: pointer;
     transition: transform 0.25s ease;
-    scroll-snap-align: start;    /* snap al inicio de cada card */
+    scroll-snap-align: start;
 }
 
 .category:hover,
@@ -180,29 +177,44 @@ body {
     transform: scale(1.06);
 }
 
-/* En pantallas grandes: centrado y sin scroll (una fila visible completa) */
+.category span {
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+    z-index: 1;
+}
+
+/* Desktop / tablets grandes: todo visible sin scroll */
 @media (min-width: 769px) {
     .categories {
         justify-content: center;
-        overflow-x: hidden;          /* sin scroll en desktop */
-        padding: 0 15px;
-        flex-wrap: wrap;             /* permite que se ajuste si son muchas */
-        gap: 16px;
+        overflow-x: hidden;
+        margin: 0 auto 40px auto;     /* vuelve al centrado normal */
+        padding: 0;
+        flex-wrap: wrap;              /* permite wrap si hay muchas categorías */
+        gap: 20px;
     }
-    
+
     .category {
-        flex: 0 0 140px;             /* un poco más grandes en desktop */
+        flex: 0 0 140px;
         height: 140px;
     }
 }
 
-/* Mobile pequeño - tarjetas más compactas */
+/* Mobile muy pequeño */
 @media (max-width: 480px) {
+    :root {
+        --category-width: 110px;
+    }
     .category {
-        flex: 0 0 110px;
         height: 110px;
     }
-    
     .category span {
         font-size: 14px;
         bottom: 8px;
