@@ -131,41 +131,35 @@ body {
         margin: 30px 0 20px;
     }
         
-    /* Contenedor principal de categorías */
-.categories {
-    --category-width: 130px;
-    --gap: 14px;
+    .categories {
+    --cat-size: 130px;
+    --gap: 16px;
+    --side-space: 15px;
 
     display: flex;
     flex-wrap: nowrap;
     gap: var(--gap);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-    padding: 0 15px 20px 15px;
-    margin: 0 -15px 30px -15px;     /* ← clave: compensa el padding del main */
-    scroll-padding-left: 15px;
-    scroll-padding-right: 15px;
+    scroll-snap-type: x proximity;     /* más natural que mandatory en muchos casos */
+    padding: 0 var(--side-space) 25px var(--side-space);
+    margin: 0 calc(-1 * var(--side-space)) 35px calc(-1 * var(--side-space));
+    scrollbar-width: none;              /* Firefox */
+    -ms-overflow-style: none;           /* IE/Edge legacy */
 }
 
-/* Ocultar scrollbar (opcional pero recomendado en mobile) */
+/* Ocultar scrollbar en navegadores WebKit */
 .categories::-webkit-scrollbar {
-    display: none;                    /* Chrome, Safari, Edge */
-}
-.categories {
-    scrollbar-width: none;            /* Firefox */
-    -ms-overflow-style: none;         /* IE y Edge antiguo */
+    display: none;
 }
 
-/* Cada tarjeta de categoría */
+/* Cada categoría */
 .category {
-    flex: 0 0 var(--category-width);
+    flex: 0 0 var(--cat-size);
     height: 130px;
     background-size: cover;
     background-position: center;
     border-radius: 16px;
-    position: relative;
-    overflow: hidden;
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     cursor: pointer;
     transition: transform 0.25s ease;
@@ -177,27 +171,14 @@ body {
     transform: scale(1.06);
 }
 
-.category span {
-    position: absolute;
-    bottom: 12px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    color: white;
-    font-weight: bold;
-    font-size: 16px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.7);
-    z-index: 1;
-}
-
-/* Desktop / tablets grandes: todo visible sin scroll */
+/* Desktop y tablets grandes → sin scroll horizontal */
 @media (min-width: 769px) {
     .categories {
         justify-content: center;
         overflow-x: hidden;
-        margin: 0 auto 40px auto;     /* vuelve al centrado normal */
+        margin: 0 auto 40px auto;
         padding: 0;
-        flex-wrap: wrap;              /* permite wrap si hay muchas categorías */
+        flex-wrap: wrap;               /* permite que se acomoden en varias filas si son muchas */
         gap: 20px;
     }
 
@@ -207,17 +188,28 @@ body {
     }
 }
 
-/* Mobile muy pequeño */
+/* Móviles pequeños */
 @media (max-width: 480px) {
-    :root {
-        --category-width: 110px;
+    .categories {
+        --cat-size: 110px;
+        --gap: 12px;
+        --side-space: 12px;
     }
+
     .category {
         height: 110px;
     }
+
     .category span {
         font-size: 14px;
         bottom: 8px;
+    }
+}
+
+/* Medida de emergencia: evitar que el body haga scroll horizontal */
+@media (max-width: 800px) {
+    html, body, main {
+        overflow-x: hidden;
     }
 }
         
