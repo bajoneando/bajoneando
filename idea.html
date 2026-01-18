@@ -276,57 +276,68 @@ body {
 .suggestion:hover img {
     transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
 }
-    /* Tarjetas de menú - versión desktop */
-    .menu-item {
-        width: 100%;
-        max-width: 260px;
-        background: white;
-        border-radius: 18px;
-        padding: 12px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        text-align: center;
-        transition: transform 0.3s ease;
+    /* Añadir o modificar dentro de .menu-item */
+.menu-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;          /* más espacio entre elementos */
+    padding: 14px 14px 16px;
+    position: relative;
+}
+
+.menu-item .local-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 4px;
+    margin-bottom: 6px;
+}
+
+.menu-item .local-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ffebee;
+    background: white;
+    flex-shrink: 0;
+}
+
+.menu-item .local-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #444;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+}
+
+/* En desktop hacemos el logo un poco más grande */
+@media (min-width: 769px) {
+    .menu-item .local-logo {
+        width: 42px;
+        height: 42px;
     }
-    .menu-item:hover, .menu-item:active {
-        transform: translateY(-8px);
+    .menu-item .local-name {
+        font-size: 1.05rem;
+        max-width: 220px;
     }
-    .menu-item img {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-        border-radius: 12px;
+}
+
+/* Ajuste fino en móviles pequeños */
+@media (max-width: 480px) {
+    .menu-item .local-header {
+        gap: 8px;
     }
-    .menu-item h3 {
-        margin: 10px 0 6px;
-        font-size: 1.1rem;
-        color: #333;
+    .menu-item .local-logo {
+        width: 32px;
+        height: 32px;
     }
-    .menu-item p {
-        color: #666;
-        margin: 4px 0;
-        font-size: 0.95rem;
+    .menu-item .local-name {
+        font-size: 0.9rem;
     }
-    .menu-item p:last-of-type {
-        font-size: 1.4rem;
-        font-weight: bold;
-        color: #d32f2f;
-        margin: 8px 0;
-    }
-    .menu-item button {
-        width: 100%;
-        padding: 12px;
-        background-color: #d32f2f;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.3s;
-    }
-    .menu-item button:hover, .menu-item button:active {
-        background-color: #b71c1c;
-    }
+}
     /* Carrito */
 .cart-backdrop {
     position: fixed;
@@ -1623,24 +1634,34 @@ function displayMenus(menus, title) {
             const div = document.createElement('div');
             div.className = 'menu-item';
             div.innerHTML = `
-                <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
-                     alt="${menu.nombre}"
-                     onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
-                <h3>${menu.nombre}</h3>
-                <p>${menu.descripcion || 'Sin descripción'}</p>
-                <p>$${menu.precio}</p>
-             
-                <!-- Botón agregar al carrito -->
-                <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
-             
-                <!-- Botón favorito con imágenes (sin texto) -->
-                <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
-                        data-menu-id="${menu.id}"
-                        onclick="toggleFavorite('${menu.id}')">
-                    <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
-                    <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
-                </button>
-            `;
+    <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
+         alt="${menu.nombre}"
+         onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+
+    <!-- NUEVO: logo + nombre del local -->
+    <div class="local-header">
+        <img class="local-logo"
+             src="${menu.logo_url || 'https://placehold.co/80x80?text=Local'}"
+             alt="${menu.nombre_local || 'Local'}"
+             onerror="this.src='https://placehold.co/80x80?text=Local'">
+        <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
+    </div>
+
+    <h3>${menu.nombre}</h3>
+    <p>${menu.descripcion || 'Sin descripción'}</p>
+    <p>$${menu.precio}</p>
+
+    <!-- Botón agregar al carrito -->
+    <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+
+    <!-- Botón favorito -->
+    <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
+            data-menu-id="${menu.id}"
+            onclick="toggleFavorite('${menu.id}')">
+        <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
+        <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
+    </button>
+`;
             itemsDiv.appendChild(div);
         });
     }
