@@ -37,53 +37,49 @@
 body {
     padding-top: 140px; /* ← ajusta según la altura real del header en desktop */
 }
+/* Versión mobile (más pequeño) */
 @media (max-width: 768px) {
-
-    header {
-        padding: 6px 10px;
-        min-height: 52px;
-        gap: 6px;
-    }
-
-    .logo {
-        height: 46px;
-    }
-
-    .search-bar input {
-        height: 36px;
-        padding: 6px 12px;
-        font-size: 13.5px;
-        border-radius: 20px;
-    }
-
-    .cart-icon {
-        width: 34px;
-        height: 34px;
-    }
-
-    .cart-count {
-        min-width: 18px;
-        height: 18px;
-        font-size: 10px;
-        top: -4px;
-        right: -6px;
-    }
-
-    .profile-button {
-        padding: 4px 8px;
-        font-size: 12.5px;
-        gap: 5px;
-    }
-
-    .profile-icon {
-        width: 24px;
-        height: 24px;
-    }
-
     body {
-        padding-top: 60px !important;   /* muy ajustado */
+        padding-top: 110px; /* altura aproximada en mobile */
+    }
+    header {
+        padding: 10px 12px;
+        border-radius: 0;
     }
 }
+    .logo {
+        height: 90px; /* Logo más grande en desktop */
+    }
+    .logo img {
+        height: 100%;
+        object-fit: contain;
+    }
+    .search-bar {
+        flex: 1;
+        min-width: 200px;
+        max-width: 500px;
+        margin: 0 10px;
+    }
+    .search-bar input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ccc;
+        border-radius: 30px;
+        font-size: 15px;
+        outline: none;
+    }
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .profile {
+        font-size: 15px;
+        font-weight: 500;
+        color: #333;
+        white-space: nowrap;
+        cursor: pointer;
+    }
     /* Ícono de carrito con imagen */
     .cart-icon {
         position: relative;
@@ -694,7 +690,7 @@ body {
         .search-bar {
             order: 3;
             width: 100%;
-            margin: 10px 0 0;
+            margin: 0px 0 0;
             max-width: none;
         }
         .header-right {
