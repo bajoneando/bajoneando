@@ -131,55 +131,52 @@ body {
         margin: 30px 0 20px;
     }
         
-    /* Categorías - SIEMPRE en una sola fila, sin scroll horizontal, se adaptan al ancho disponible */
+    /* Categorías - siempre en una sola fila, sin scroll horizontal */
 .categories {
     display: flex;
     flex-wrap: nowrap;
-    justify-content: space-between;     /* distribuye el espacio disponible */
-    align-items: center;
-    gap: 10px;
-    padding: 0 8px 25px 8px;
-    margin: 0 auto 35px auto;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 10px 20px 10px;
+    margin: 0 auto 30px auto;
     width: 100%;
     max-width: 100%;
-    overflow: hidden;                   /* evita desborde visual */
     box-sizing: border-box;
+    overflow: hidden;
 }
 
-/* Cada categoría: crece/achica proporcionalmente según el espacio */
+/* Tarjetas de categoría - base */
 .category {
-    flex: 1 1 0;                        /* clave: permite que se achiquen y crezcan */
-    min-width: 80px;                    /* tamaño mínimo razonable en móviles */
-    max-width: 160px;                   /* límite superior para no crecer demasiado */
-    aspect-ratio: 1 / 1;                /* mantiene proporción cuadrada */
+    flex: 1 1 0;                    /* se reparten el espacio disponible */
+    min-width: 70px;                /* mínimo en celulares muy pequeños */
+    aspect-ratio: 1 / 1;            /* mantienen proporción cuadrada */
     background-size: cover;
     background-position: center;
-    border-radius: 14px;
+    border-radius: 12px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.14);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: transform 0.2s ease;
 }
 
 .category:hover,
 .category:active {
-    transform: scale(1.05);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.22);
+    transform: scale(1.04);
 }
 
 .category span {
     position: absolute;
-    bottom: 8px;
+    bottom: 6px;
     left: 0;
     right: 0;
     text-align: center;
     color: white;
     font-weight: 600;
-    font-size: clamp(12px, 2.5vw, 15px); /* tamaño de fuente responsivo */
-    text-shadow: 0 2px 5px rgba(0,0,0,0.7);
+    font-size: clamp(11px, 2.8vw, 14px);  /* texto responsivo */
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
     z-index: 1;
-    padding: 0 4px;
+    padding: 0 3px;
 }
 
 /* ================================================= */
@@ -188,74 +185,75 @@ body {
 @media (min-width: 900px) {
     .categories {
         justify-content: center;
-        gap: 20px;
+        gap: 16px;
         padding: 0 15px 30px 15px;
     }
     .category {
-        flex: 0 0 140px;                /* tamaño fijo grande */
+        flex: 0 0 140px;
         min-width: 140px;
         max-width: 140px;
     }
     .category span {
         font-size: 16px;
+        bottom: 10px;
     }
 }
 
 /* ================================================= */
-/* Tablets y móviles grandes (600–899px)            */
+/* Tablets y móviles grandes (hasta 899px)          */
 /* ================================================= */
 @media (max-width: 899px) {
     .categories {
         gap: 8px;
-        padding: 0 6px 20px 6px;
+        padding: 0 8px 20px 8px;
     }
     .category {
-        min-width: 90px;
-        max-width: 130px;
+        min-width: 95px;
+        max-width: 120px;
     }
     .category span {
-        font-size: clamp(12px, 2.8vw, 14px);
+        font-size: clamp(12px, 3vw, 14px);
     }
 }
 
 /* ================================================= */
-/* Celulares y móviles medianos/pequeños (< 600px)  */
+/* Celulares medianos y pequeños (hasta 600px)      */
 /* ================================================= */
 @media (max-width: 600px) {
     .categories {
         gap: 6px;
-        padding: 0 5px 15px 5px;
+        padding: 0 6px 15px 6px;
     }
     .category {
-        min-width: 85px;                /* mínimo para que quepan las 6 */
-        max-width: 110px;
+        min-width: 80px;           /* clave para que entren las 6 */
+        max-width: 100px;
     }
     .category span {
-        font-size: clamp(11px, 3vw, 13px);
-        bottom: 6px;
-    }
-}
-
-/* ================================================= */
-/* Móviles muy pequeños (< 400px)                   */
-/* ================================================= */
-@media (max-width: 400px) {
-    .categories {
-        gap: 5px;
-        padding: 0 4px 10px 4px;
-    }
-    .category {
-        min-width: 78px;
-        max-width: 95px;
-    }
-    .category span {
-        font-size: clamp(10px, 3.2vw, 12px);
+        font-size: clamp(10px, 3.2vw, 13px);
         bottom: 5px;
     }
 }
 
 /* ================================================= */
-/* Seguridad absoluta contra scroll horizontal      */
+/* Celulares muy pequeños (< 420px)                 */
+/* ================================================= */
+@media (max-width: 420px) {
+    .categories {
+        gap: 5px;
+        padding: 0 5px 12px 5px;
+    }
+    .category {
+        min-width: 70px;           /* mínimo razonable */
+        max-width: 85px;
+    }
+    .category span {
+        font-size: clamp(9px, 3.5vw, 11px);
+        bottom: 4px;
+    }
+}
+
+/* ================================================= */
+/* Bloqueo total de scroll horizontal no deseado     */
 /* ================================================= */
 @media (max-width: 820px) {
     html, body {
