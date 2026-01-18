@@ -1,3 +1,12 @@
+quiero añadir el logo del local en la tarjeta del plato y la logica para cargar el logo del local correspondiente,manten el estilo del codigo original pero añade el logo (columna F hoja Locales) pequeño en la esquina izquierda debajo de la imagen y al lado el nombre del local. debe quedar:
+ 
+imagen
+logo + nombre local
+titulo
+descripcion
+precio
+boton agregar
+ 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -130,7 +139,7 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-       
+      
     /* Categorías - siempre en una sola fila, sin scroll horizontal */
 .categories {
     display: flex;
@@ -236,7 +245,7 @@ body {
         width: 100vw !important;
     }
 }
-       
+      
     /* Sugerencias de locales ≈ mitad de tamaño */
 .suggestions {
     width: 100%;
@@ -276,93 +285,57 @@ body {
 .suggestion:hover img {
     transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
 }
-        
-    /* Ajustes para header de local en la tarjeta del plato */
-.menu-item {
-    position: relative;
-    padding: 12px;
-    overflow: hidden;
-}
-
-/* Contenedor logo + nombre (esquina superior izquierda) */
-.menu-item .local-info {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 12;               /* por encima de la imagen del plato */
-    background: rgba(255, 255, 255, 0.92);
-    padding: 6px 10px 6px 6px;
-    border-radius: 30px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    max-width: 75%;            /* evita que se salga en tarjetas angostas */
-}
-
-/* Logo pequeño circular */
-.menu-item .local-logo {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #fff;
-    background: #f8f8f8;
-    flex-shrink: 0;
-}
-
-/* Nombre del local */
-.menu-item .local-name {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #333;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 140px;
-}
-
-/* En desktop un poco más grande y legible */
-@media (min-width: 769px) {
-    .menu-item .local-info {
-        top: 14px;
-        left: 14px;
-        padding: 7px 12px 7px 7px;
+    /* Tarjetas de menú - versión desktop */
+    .menu-item {
+        width: 100%;
+        max-width: 260px;
+        background: white;
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        text-align: center;
+        transition: transform 0.3s ease;
     }
-    .menu-item .local-logo {
-        width: 38px;
-        height: 38px;
+    .menu-item:hover, .menu-item:active {
+        transform: translateY(-8px);
     }
-    .menu-item .local-name {
-        font-size: 0.9rem;
-        max-width: 180px;
+    .menu-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
     }
-}
-
-/* En móviles muy pequeños reducimos un poco */
-@media (max-width: 480px) {
-    .menu-item .local-info {
-        top: 10px;
-        left: 10px;
-        padding: 5px 8px 5px 5px;
+    .menu-item h3 {
+        margin: 10px 0 6px;
+        font-size: 1.1rem;
+        color: #333;
     }
-    .menu-item .local-logo {
-        width: 28px;
-        height: 28px;
+    .menu-item p {
+        color: #666;
+        margin: 4px 0;
+        font-size: 0.95rem;
     }
-    .menu-item .local-name {
-        font-size: 0.78rem;
-        max-width: 110px;
+    .menu-item p:last-of-type {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 8px 0;
     }
-}
-
-/* Aseguramos que el botón favorito quede en la esquina opuesta */
-.fav-btn {
-    top: 10px !important;
-    right: 10px !important;
-    z-index: 13 !important;
-}
-        
+    .menu-item button {
+        width: 100%;
+        padding: 12px;
+        background-color: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .menu-item button:hover, .menu-item button:active {
+        background-color: #b71c1c;
+    }
     /* Carrito */
 .cart-backdrop {
     position: fixed;
@@ -379,13 +352,12 @@ body {
     visibility: visible;
     pointer-events: auto;
 }
-
 .cart-sidebar {
     position: fixed;
     top: 0;
     right: -100%;
     width: 100%;
-    max-width: 420px;               /* ← mantenemos el ancho máximo original */
+    max-width: 420px; /* ← mantenemos el ancho máximo original */
     height: 100%;
     background: white;
     z-index: 2000;
@@ -394,11 +366,9 @@ body {
     display: flex;
     flex-direction: column;
 }
-
 .cart-sidebar.active {
     right: 0;
 }
-
 .cart-header {
     padding: 16px 20px;
     border-bottom: 1px solid #eee;
@@ -406,16 +376,14 @@ body {
     justify-content: space-between;
     align-items: center;
     background: #fff;
-    position: relative;             /* ← sin sticky para evitar conflictos */
+    position: relative; /* ← sin sticky para evitar conflictos */
     z-index: 5;
 }
-
 .cart-header h2 {
     margin: 0;
     font-size: 1.45rem;
     color: #c62828;
 }
-
 .cart-close {
     background: none;
     border: none;
@@ -424,57 +392,45 @@ body {
     color: #555;
     cursor: pointer;
 }
-
 .cart-close:hover {
     color: #d32f2f;
 }
-
 .cart-body {
     flex: 1;
     overflow-y: auto;
-    padding: 28px 20px 80px 20px;   /* ↑ más espacio arriba para compensar header fijo */
+    padding: 28px 20px 80px 20px; /* ↑ más espacio arriba para compensar header fijo */
 }
-
 /* ── Ajustes móviles ─────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .cart-sidebar {
-        max-width: 380px;           /* un poco más angosto en celular para no sentirse tan grande */
+        max-width: 380px; /* un poco más angosto en celular para no sentirse tan grande */
         /* NO ponemos max-width: 90% ni 100% → mantenemos el comportamiento original */
     }
-
     .cart-header {
-        padding: 14px 18px;         /* ligeramente más compacto */
+        padding: 14px 18px; /* ligeramente más compacto */
     }
-
     .cart-header h2 {
-        font-size: 1.38rem;         /* título un toque más pequeño */
+        font-size: 1.38rem; /* título un toque más pequeño */
     }
-
     .cart-close {
         font-size: 2.3rem;
     }
-
     .cart-body {
-        padding: 24px 16px 100px 16px;  /* más margen arriba y abajo en móvil */
+        padding: 24px 16px 100px 16px; /* más margen arriba y abajo en móvil */
     }
 }
-
 @media (max-width: 500px) {
     .cart-sidebar {
-        max-width: 340px;           /* aún más angosto en pantallas muy pequeñas */
+        max-width: 340px; /* aún más angosto en pantallas muy pequeñas */
     }
-
     .cart-header {
         padding: 12px 16px;
     }
-
     .cart-body {
         padding: 22px 14px 110px 14px;
     }
 }
-
 /* ── Resto de estilos (igual que antes) ───────────────────────────────────── */
-
 .delivery-option select {
     width: 100%;
     padding: 14px;
@@ -483,7 +439,6 @@ body {
     font-size: 16px;
     margin-bottom: 20px;
 }
-
 .cart-item {
     display: flex;
     flex-direction: column;
@@ -491,25 +446,21 @@ body {
     padding: 16px 0;
     border-bottom: 1px solid #eee;
 }
-
 .cart-item-left {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
 }
-
 .cart-item-name {
     font-weight: 500;
     font-size: 1.1rem;
 }
-
 .quantity-controls {
     display: flex;
     align-items: center;
     gap: 15px;
 }
-
 .quantity-btn {
     width: 40px;
     height: 40px;
@@ -520,19 +471,16 @@ body {
     font-size: 20px;
     cursor: pointer;
 }
-
 .quantity {
     font-size: 1.2rem;
     font-weight: bold;
     min-width: 50px;
     text-align: center;
 }
-
 .cart-item-price {
     font-weight: bold;
     font-size: 1.2rem;
 }
-
 .remove-btn {
     background: #ff5252;
     color: white;
@@ -541,14 +489,12 @@ body {
     border-radius: 8px;
     cursor: pointer;
 }
-
 .price-line {
     display: flex;
     justify-content: space-between;
     padding: 10px 0;
     font-size: 1.1rem;
 }
-
 .price-line.total {
     font-size: 1.6rem;
     font-weight: bold;
@@ -557,7 +503,6 @@ body {
     padding-top: 20px;
     margin-top: 15px;
 }
-
 .free-shipping-msg {
     background: #e8f5e8;
     color: #2e7d32;
@@ -568,7 +513,6 @@ body {
     margin: 15px 0;
     font-size: 1.1rem;
 }
-
         /* Loading */
 .loading {
     text-align: center;
@@ -576,7 +520,6 @@ body {
     color: #d32f2f;
     font-weight: 600;
 }
-
 .spinner {
     border: 4px solid #f3f3f3;
     border-top: 4px solid #d32f2f;
@@ -587,29 +530,24 @@ body {
     display: inline-block;
     margin: 0 10px;
 }
-
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
-
 /* Carousel de bebidas */
 .drinks-panel {
     margin: 30px 0;
 }
-
 .drinks-carousel {
     position: relative;
     overflow: hidden;
     border-radius: 12px;
 }
-
 .drinks-container {
     display: flex;
     transition: transform 0.4s ease;
     gap: 12px;
     padding: 10px 0;
 }
-
 .drink-card {
     flex: 0 0 calc(80% - 12px);
     background: white;
@@ -618,25 +556,21 @@ body {
     box-shadow: 0 6px 20px rgba(0,0,0,0.12);
     text-align: center;
 }
-
 .drink-card img {
     width: 100%;
     height: 140px;
     object-fit: cover;
 }
-
 .drink-card h4 {
     margin: 12px 10px 6px;
     font-size: 1rem;
 }
-
 .drink-card .price {
     font-size: 1.5rem;
     font-weight: bold;
     color: #d32f2f;
     margin: 10px 0;
 }
-
 .drink-card button {
     width: 90%;
     margin: 0 auto 15px;
@@ -648,7 +582,6 @@ body {
     font-weight: 600;
     cursor: pointer;
 }
-
 .carousel-btn {
     position: absolute;
     top: 50%;
@@ -663,10 +596,8 @@ body {
     cursor: pointer;
     z-index: 10;
 }
-
 .carousel-btn.left { left: 10px; }
 .carousel-btn.right { right: 10px; }
-
 /* Formulario checkout */
 #checkout-form input,
 #checkout-form select,
@@ -678,7 +609,6 @@ body {
     border-radius: 12px;
     font-size: 16px;
 }
-
 #checkout-btn {
     width: 100%;
     padding: 16px;
@@ -690,7 +620,6 @@ body {
     font-weight: 600;
     cursor: pointer;
 }
-
 #checkout-btn:hover, #checkout-btn:active {
     background: #b71c1c;
 }
@@ -735,7 +664,7 @@ body {
         .logo {
             height: 75px;
         }
-       
+      
         .suggestion {
             width: 75px;
             height: 75px;
@@ -787,7 +716,7 @@ body {
         .logo {
             height: 65px;
         }
-       
+      
         .suggestion {
             width: 70px;
             height: 70px;
@@ -860,6 +789,52 @@ body {
             font-size: 0.95rem;
         }
     }
+
+        /* Contenedor logo + nombre debajo de la imagen */
+.menu-item .local-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0 8px 0;
+    padding: 0 4px;
+    justify-content: flex-start;
+    font-size: 0.92rem;
+    color: #444;
+}
+
+.menu-item .local-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #eee;
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.menu-item .local-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;          /* evita que se desborde en tarjetas angostas */
+}
+
+/* Ajuste fino en móviles */
+@media (max-width: 768px) {
+    .menu-item .local-info {
+        margin: 8px 0 6px 0;
+        font-size: 0.85rem;
+    }
+    .menu-item .local-logo {
+        width: 32px;
+        height: 32px;
+    }
+    .menu-item .local-name {
+        max-width: 140px;
+    }
+}
+        
     /* Modal Styles */
     .modal {
         display: none;
@@ -989,7 +964,7 @@ body {
         width: 28px;
         height: 28px;
     }
-  
+ 
     .profile-button {
         padding: 6px 10px;
         font-size: 0.9rem;
@@ -1129,11 +1104,11 @@ body {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 20px !important;
     }
-  
+ 
     .menu-item img {
         height: 200px !important;
     }
-  
+ 
     .fav-btn {
         width: 36px !important;
         height: 36px !important;
@@ -1141,16 +1116,14 @@ body {
         right: 10px !important;
     }
 }
-
         /* Contenedor principal del carrusel de categorías */
 .categories-carousel-wrapper {
     position: relative;
     width: 100%;
     margin: 0 auto 30px auto;
-    padding: 0 20px;           /* espacio para botones */
+    padding: 0 20px; /* espacio para botones */
     box-sizing: border-box;
 }
-
 /* Contenedor que se desliza */
 .categories {
     display: flex;
@@ -1160,19 +1133,17 @@ body {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     padding: 10px 0;
-    margin: 0 -20px;           /* compensa el padding del wrapper */
-    scrollbar-width: none;     /* oculta scrollbar en Firefox */
+    margin: 0 -20px; /* compensa el padding del wrapper */
+    scrollbar-width: none; /* oculta scrollbar en Firefox */
 }
-
 .categories::-webkit-scrollbar {
-    display: none;             /* oculta scrollbar en Chrome/Safari */
+    display: none; /* oculta scrollbar en Chrome/Safari */
 }
-
 /* Tarjetas de categoría */
 .category {
     flex: 0 0 auto;
-    width:  clamp(80px,  22vw, 100px);
-    height: clamp(80px,  22vw, 100px);
+    width: clamp(80px, 22vw, 100px);
+    height: clamp(80px, 22vw, 100px);
     min-width: 80px;
     background-size: cover;
     background-position: center;
@@ -1183,12 +1154,10 @@ body {
     cursor: pointer;
     transition: transform 0.18s ease;
 }
-
 .category:hover,
 .category:active {
     transform: scale(1.05);
 }
-
 .category span {
     position: absolute;
     bottom: 6px;
@@ -1202,10 +1171,9 @@ body {
     z-index: 1;
     padding: 0 4px;
 }
-
 /* Botones de navegación (solo móviles) */
 .carousel-btn.categories-btn {
-    display: none;                    /* ocultos por defecto */
+    display: none; /* ocultos por defecto */
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -1221,17 +1189,13 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     transition: all 0.2s;
 }
-
 .carousel-btn.categories-btn:hover {
     background: rgba(211, 47, 47, 0.9);
     transform: translateY(-50%) scale(1.1);
 }
-
-.carousel-btn.left.categories-btn  { left:  8px; }
+.carousel-btn.left.categories-btn { left: 8px; }
 .carousel-btn.right.categories-btn { right: 8px; }
-
 /* ── Responsive ──────────────────────────────────────── */
-
 /* Mostrar botones SOLO en móviles / tablets pequeñas */
 @media (max-width: 820px) {
     .carousel-btn.categories-btn {
@@ -1239,11 +1203,11 @@ body {
         align-items: center;
         justify-content: center;
     }
-    
+   
     /* Ajuste fino en pantallas muy pequeñas */
     @media (max-width: 420px) {
         .category {
-            width:  clamp(70px, 21vw, 85px);
+            width: clamp(70px, 21vw, 85px);
             height: clamp(70px, 21vw, 85px);
         }
         .carousel-btn.categories-btn {
@@ -1253,7 +1217,6 @@ body {
         }
     }
 }
-
 /* En desktop → sin botones, centrado y más grande */
 @media (min-width: 821px) {
     .categories-carousel-wrapper {
@@ -1266,7 +1229,7 @@ body {
         padding: 15px 0;
     }
     .category {
-        width:  130px;
+        width: 130px;
         height: 130px;
     }
     .category span {
@@ -1274,25 +1237,22 @@ body {
         bottom: 10px;
     }
 }
-
     .categories-carousel-wrapper {
     position: relative;
-    margin-top: -70px;          /* valor base */
-    z-index: 5;                 /* por si acaso evita solapamientos raros */
+    margin-top: -70px; /* valor base */
+    z-index: 5; /* por si acaso evita solapamientos raros */
 }
-
 @media (max-width: 768px) {
     .categories-carousel-wrapper {
-        margin-top: -20px;;     /* ← aquí controlas cuánto sube en celular */
+        margin-top: -20px;; /* ← aquí controlas cuánto sube en celular */
     }
 }
-
 @media (min-width: 769px) {
     .categories-carousel-wrapper {
-        margin-top: -40px;      /* desktop más natural */
+        margin-top: -40px; /* desktop más natural */
     }
 }
-      
+     
 </style>
 </head>
 <body>
@@ -1312,7 +1272,7 @@ body {
                 class="profile-icon">
             <span>Mi Perfil</span>
         </div>
-      
+     
         <!-- Menú desplegable -->
         <div class="profile-dropdown" id="profile-dropdown">
     <a href="#" class="dropdown-item" onclick="openEditProfileModal()">Editar perfil</a>
@@ -1330,7 +1290,7 @@ body {
         <h1>¿Qué se te antoja?</h1>
         <div class="categories-carousel-wrapper">
     <button class="carousel-btn left categories-btn" id="prev-category" aria-label="Categoría anterior">←</button>
-    
+   
     <div class="categories" id="categories-container">
         <div class="category" data-type="Hamburguesa" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
             <span>Burguers</span>
@@ -1351,17 +1311,16 @@ body {
             <span>Bebidas</span>
         </div>
     </div>
-    
+   
     <button class="carousel-btn right categories-btn" id="next-category" aria-label="Siguiente categoría">→</button>
 </div>
-
         <div id="menu-display" style="display:none;"></div>
-        
+       
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
-    
+   
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
 <!-- 2. Reemplaza completamente el <div id="cart-section"> original por este bloque -->
@@ -1404,13 +1363,13 @@ body {
 </select>
 <!-- Contenedor donde se mostrará el checkout de MP -->
 <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-              
+             
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
         </div>
     </main>
-  
+ 
     <!-- Footer -->
     <footer class="text-center">
         <div class="container">
@@ -1449,16 +1408,16 @@ body {
     <div class="modal-content">
         <span class="close" onclick="closeModal('edit-profile-modal')">×</span>
         <h2>Editar Perfil</h2>
-      
+     
         <label for="edit-name">Nombre completo</label>
         <input type="text" id="edit-name" placeholder="Nombre completo" required>
-      
+     
         <label for="edit-email">Correo electrónico</label>
         <input type="email" id="edit-email" placeholder="Correo electrónico" required>
-      
+     
         <label for="edit-new-password">Nueva contraseña (opcional)</label>
         <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
-      
+     
         <button onclick="saveProfileChanges()">Guardar cambios</button>
     </div>
 </div>
@@ -1471,7 +1430,6 @@ body {
         <button onclick="saveAddressChange()">Guardar dirección</button>
     </div>
 </div>
- 
     <script>
 const MP_ACCESS_TOKEN = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795";
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
@@ -1647,10 +1605,10 @@ function displayMenus(menus, title) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
-  
+ 
     // Limpiamos caché anterior
     currentDisplayedMenus = {};
-  
+ 
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
@@ -1663,12 +1621,12 @@ function displayMenus(menus, title) {
          alt="${menu.nombre}"
          onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
 
-    <!-- Logo pequeño + nombre del local en esquina superior izquierda -->
+    <!-- NUEVO: logo + nombre del local -->
     <div class="local-info">
         <img class="local-logo"
-             src="${menu.logo_url || 'https://placehold.co/80x80/cccccc/ffffff?text=Logo'}"
+             src="${menu.logo_url || 'https://placehold.co/36x36?text=Local'}"
              alt="${menu.nombre_local || 'Local'}"
-             onerror="this.src='https://placehold.co/80x80/cccccc/ffffff?text=Logo'">
+             onerror="this.src='https://placehold.co/36x36?text=?'">
         <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
     </div>
 
@@ -1676,8 +1634,10 @@ function displayMenus(menus, title) {
     <p>${menu.descripcion || 'Sin descripción'}</p>
     <p>$${menu.precio}</p>
 
+    <!-- Botón agregar al carrito -->
     <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
 
+    <!-- Botón favorito -->
     <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
             data-menu-id="${menu.id}"
             onclick="toggleFavorite('${menu.id}')">
@@ -1688,13 +1648,13 @@ function displayMenus(menus, title) {
             itemsDiv.appendChild(div);
         });
     }
-  
+ 
     container.style.display = 'block';
-  
+ 
     // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
-      
+     
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1702,7 +1662,7 @@ function displayMenus(menus, title) {
         alert('Error: no se pudo encontrar el plato seleccionado');
         return;
     }
-  
+ 
     // Ahora sí llamamos a addToCart con el objeto completo
     addToCart(menu);
 }
@@ -1762,7 +1722,7 @@ function loginUser() {
         setupCart();
         loadAllDrinks();
     });
-     
+    
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
@@ -1831,10 +1791,9 @@ function loginUser() {
                 .then(menus => displayMenus(menus, type || 'Local seleccionado'))
                 .catch(() => showError(container, 'Error al cargar menús'));
         }
-      
+     
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
- 
     // Solo aplicamos display: block al contenedor de menús
     if (container.id === 'menu-display') {
         container.style.display = 'block';
@@ -2010,17 +1969,17 @@ function addToCart(menu) {
         // Modificar cantidad de un ítem en el carrito
 function changeQuantity(index, delta) {
     if (!cart[index]) return;
-  
+ 
     const nuevaCantidad = cart[index].cantidad + delta;
-  
+ 
     if (nuevaCantidad < 1) {
         // En lugar de dejar en 1, eliminamos directamente
         removeFromCart(index);
         return;
     }
-  
+ 
     cart[index].cantidad = nuevaCantidad;
-  
+ 
     updateCartCount();
     updateCartDisplay();
 }
@@ -2032,7 +1991,7 @@ function removeFromCart(index) {
         updateCartDisplay();
     }
 }
-      
+     
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
@@ -2233,7 +2192,7 @@ function startPaymentPolling(preferenceId, externalReference) { // ← agregamos
         }
     }, 5000);
 }
-      
+     
 async function finalizeOrderAfterPayment() {
     if (!pendingOrderData) return;
     // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
@@ -2286,23 +2245,23 @@ async function checkPaymentReturn() {
 // ==================== EDITAR PERFIL ====================
 function openEditProfileModal() {
     profileDropdown.classList.remove('active');
-  
+ 
     // Precargamos los datos actuales
     document.getElementById('edit-name').value = localStorage.getItem('userName') || '';
     document.getElementById('edit-email').value = localStorage.getItem('userEmail') || '';
     document.getElementById('edit-new-password').value = ''; // siempre vacío al abrir
-  
+ 
     showModal('edit-profile-modal');
 }
 function openChangeAddressModal() {
     profileDropdown.classList.remove('active');
-  
+ 
     const addressInput = document.getElementById('edit-address');
     addressInput.value = userAddress || '';
-  
+ 
     showModal('change-address-modal');
 }
-      
+     
 function saveProfileChanges() {
     const name = document.getElementById('edit-name').value.trim();
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
@@ -2312,12 +2271,12 @@ function saveProfileChanges() {
         alert('El nombre es obligatorio');
         return;
     }
-  
+ 
     if (!email) {
         alert('El email es obligatorio');
         return;
     }
-  
+ 
     if (newPassword && newPassword.length < 6) {
         alert('La nueva contraseña debe tener al menos 6 caracteres (o dejarla en blanco)');
         return;
@@ -2338,10 +2297,10 @@ function saveProfileChanges() {
                 // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-              
+             
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
-              
+             
                 // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
@@ -2353,7 +2312,7 @@ function saveProfileChanges() {
             alert('Error de conexión al intentar actualizar el perfil');
         });
 }
-      
+     
 function saveAddressChange() {
     const newAddress = document.getElementById('edit-address').value.trim();
     if (!newAddress) {
@@ -2369,11 +2328,11 @@ function saveAddressChange() {
             if (data.success) {
                 userAddress = newAddress;
                 localStorage.setItem('userAddress', newAddress);
-              
+             
                 // Actualizamos el campo de dirección del checkout si está visible
                 const checkoutDir = document.getElementById('direccion');
                 if (checkoutDir) checkoutDir.value = newAddress;
-              
+             
                 alert('Dirección actualizada correctamente');
                 closeModal('change-address-modal');
             } else {
@@ -2451,7 +2410,7 @@ async function createConfirmedOrder(orderData) {
             body: JSON.stringify(payload)
         });
         alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
-      
+     
         // Limpieza final
         cart = [];
         updateCartCount();
@@ -2460,53 +2419,51 @@ async function createConfirmedOrder(orderData) {
         document.getElementById('mercadopago-checkout').style.display = 'none';
         document.getElementById('checkout-btn').style.display = 'block';
         document.getElementById('checkout-form').reset();
-      
+     
     } catch (err) {
         console.error("Error registrando pedido pagado:", err);
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
 }
-
         // Carrusel de categorías (solo en móviles)
 function setupCategoriesCarousel() {
     const container = document.getElementById('categories-container');
-    const prevBtn   = document.getElementById('prev-category');
-    const nextBtn   = document.getElementById('next-category');
-    
+    const prevBtn = document.getElementById('prev-category');
+    const nextBtn = document.getElementById('next-category');
+   
     if (!container || !prevBtn || !nextBtn) return;
-    
+   
     function scrollLeft() {
         container.scrollBy({ left: -container.clientWidth * 0.7, behavior: 'smooth' });
     }
-    
+   
     function scrollRight() {
-        container.scrollBy({ left:  container.clientWidth * 0.7, behavior: 'smooth' });
+        container.scrollBy({ left: container.clientWidth * 0.7, behavior: 'smooth' });
     }
-    
+   
     prevBtn.addEventListener('click', scrollLeft);
     nextBtn.addEventListener('click', scrollRight);
-    
+   
     // Opcional: deshabilitar botones si no hay más para ver
     function updateButtons() {
         const atStart = container.scrollLeft <= 0;
-        const atEnd   = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
-        
+        const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
+       
         prevBtn.disabled = atStart;
         prevBtn.style.opacity = atStart ? '0.4' : '1';
-        prevBtn.style.cursor  = atStart ? 'default' : 'pointer';
-        
+        prevBtn.style.cursor = atStart ? 'default' : 'pointer';
+       
         nextBtn.disabled = atEnd;
         nextBtn.style.opacity = atEnd ? '0.4' : '1';
-        nextBtn.style.cursor  = atEnd ? 'default' : 'pointer';
+        nextBtn.style.cursor = atEnd ? 'default' : 'pointer';
     }
-    
+   
     container.addEventListener('scroll', updateButtons);
     window.addEventListener('resize', updateButtons);
-    
+   
     // Estado inicial
     setTimeout(updateButtons, 300);
 }
-
 // Llamar después de cargar la página
 window.addEventListener('load', () => {
     checkLoginStatus();
@@ -2514,7 +2471,7 @@ window.addEventListener('load', () => {
     setupSearch();
     setupCart();
     loadAllDrinks();
-    setupCategoriesCarousel();   // ← agregar esta línea
+    setupCategoriesCarousel(); // ← agregar esta línea
 });
     </script>
 </body>
