@@ -146,11 +146,11 @@ body {
     overflow: hidden;
 }
 
-/* Tarjetas base */
+/* Tarjetas base - controlamos el crecimiento */
 .category {
-    flex: 1 1 0;                    /* se reparten el espacio disponible */
-    min-width: 110px;               /* tamaño base (el de ~896px) */
-    max-width: 120px;
+    flex: 0 1 auto;                 /* no crecen más de lo necesario */
+    width: 110px;                   /* tamaño base (similar a 896px) */
+    max-width: 120px;               /* límite superior estricto */
     aspect-ratio: 1 / 1;
     background-size: cover;
     background-position: center;
@@ -175,7 +175,7 @@ body {
     text-align: center;
     color: white;
     font-weight: 600;
-    font-size: clamp(12px, 3vw, 14px);
+    font-size: clamp(12px, 2.5vw, 14px);
     text-shadow: 0 1px 4px rgba(0,0,0,0.8);
     z-index: 1;
     padding: 0 4px;
@@ -191,8 +191,7 @@ body {
         padding: 0 15px 30px 15px;
     }
     .category {
-        flex: 0 0 140px;
-        min-width: 140px;
+        width: 140px;               /* solo aquí se agrandan */
         max-width: 140px;
     }
     .category span {
@@ -202,17 +201,33 @@ body {
 }
 
 /* ================================================= */
-/* En TODAS las pantallas MÁS PEQUEÑAS que 900px    */
-/* Usamos el tamaño que tenías en ~896px            */
+/* Rango intermedio 820–900px: NO más grande que 896px */
 /* ================================================= */
-@media (max-width: 899px) {
+@media (max-width: 900px) and (min-width: 820px) {
+    .categories {
+        gap: 8px;
+        padding: 0 10px 20px 10px;
+    }
+    .category {
+        width: 115px;               /* ligeramente más pequeño que 896px */
+        max-width: 120px;           /* no permite crecer más */
+    }
+    .category span {
+        font-size: clamp(12px, 2.6vw, 14px);
+    }
+}
+
+/* ================================================= */
+/* Pantallas menores a 820px (móviles y tablets pequeñas) */
+/* ================================================= */
+@media (max-width: 819px) {
     .categories {
         gap: 6px;
         padding: 0 6px 18px 6px;
     }
     .category {
-        min-width: 110px;           /* ← mismo tamaño que pediste (el de ~896px) */
-        max-width: 120px;
+        width: 110px;               /* mismo tamaño base que ~896px */
+        max-width: 115px;           /* límite estricto */
     }
     .category span {
         font-size: clamp(11px, 2.9vw, 13px);
@@ -220,18 +235,15 @@ body {
     }
 }
 
-/* ================================================= */
-/* Celulares muy pequeños – mantenemos el tamaño    */
-/* pero reducimos gap y padding para que quepan     */
-/* ================================================= */
+/* Celulares muy pequeños – ajustamos solo si es necesario */
 @media (max-width: 480px) {
     .categories {
         gap: 5px;
         padding: 0 5px 15px 5px;
     }
     .category {
-        min-width: 105px;           /* un poco más pequeño solo si es necesario */
-        max-width: 115px;
+        width: 105px;
+        max-width: 110px;
     }
     .category span {
         font-size: clamp(10px, 3.2vw, 12px);
@@ -239,7 +251,7 @@ body {
     }
 }
 
-/* Bloqueo de scroll horizontal no deseado */
+/* Bloqueo de scroll horizontal */
 @media (max-width: 820px) {
     html, body {
         overflow-x: hidden !important;
