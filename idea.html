@@ -276,68 +276,93 @@ body {
 .suggestion:hover img {
     transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
 }
-    /* Añadir o modificar dentro de .menu-item */
+        
+    /* Ajustes para header de local en la tarjeta del plato */
 .menu-item {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;          /* más espacio entre elementos */
-    padding: 14px 14px 16px;
     position: relative;
+    padding: 12px;
+    overflow: hidden;
 }
 
-.menu-item .local-header {
+/* Contenedor logo + nombre (esquina superior izquierda) */
+.menu-item .local-info {
+    position: absolute;
+    top: 12px;
+    left: 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 0 4px;
-    margin-bottom: 6px;
+    gap: 8px;
+    z-index: 12;               /* por encima de la imagen del plato */
+    background: rgba(255, 255, 255, 0.92);
+    padding: 6px 10px 6px 6px;
+    border-radius: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    max-width: 75%;            /* evita que se salga en tarjetas angostas */
 }
 
+/* Logo pequeño circular */
 .menu-item .local-logo {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #ffebee;
-    background: white;
+    border: 2px solid #fff;
+    background: #f8f8f8;
     flex-shrink: 0;
 }
 
+/* Nombre del local */
 .menu-item .local-name {
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     font-weight: 600;
-    color: #444;
+    color: #333;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 180px;
+    max-width: 140px;
 }
 
-/* En desktop hacemos el logo un poco más grande */
+/* En desktop un poco más grande y legible */
 @media (min-width: 769px) {
-    .menu-item .local-logo {
-        width: 42px;
-        height: 42px;
-    }
-    .menu-item .local-name {
-        font-size: 1.05rem;
-        max-width: 220px;
-    }
-}
-
-/* Ajuste fino en móviles pequeños */
-@media (max-width: 480px) {
-    .menu-item .local-header {
-        gap: 8px;
+    .menu-item .local-info {
+        top: 14px;
+        left: 14px;
+        padding: 7px 12px 7px 7px;
     }
     .menu-item .local-logo {
-        width: 32px;
-        height: 32px;
+        width: 38px;
+        height: 38px;
     }
     .menu-item .local-name {
         font-size: 0.9rem;
+        max-width: 180px;
     }
 }
+
+/* En móviles muy pequeños reducimos un poco */
+@media (max-width: 480px) {
+    .menu-item .local-info {
+        top: 10px;
+        left: 10px;
+        padding: 5px 8px 5px 5px;
+    }
+    .menu-item .local-logo {
+        width: 28px;
+        height: 28px;
+    }
+    .menu-item .local-name {
+        font-size: 0.78rem;
+        max-width: 110px;
+    }
+}
+
+/* Aseguramos que el botón favorito quede en la esquina opuesta */
+.fav-btn {
+    top: 10px !important;
+    right: 10px !important;
+    z-index: 13 !important;
+}
+        
     /* Carrito */
 .cart-backdrop {
     position: fixed;
@@ -1638,12 +1663,12 @@ function displayMenus(menus, title) {
          alt="${menu.nombre}"
          onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
 
-    <!-- NUEVO: logo + nombre del local -->
-    <div class="local-header">
+    <!-- Logo pequeño + nombre del local en esquina superior izquierda -->
+    <div class="local-info">
         <img class="local-logo"
-             src="${menu.logo_url || 'https://placehold.co/80x80?text=Local'}"
+             src="${menu.logo_url || 'https://placehold.co/80x80/cccccc/ffffff?text=Logo'}"
              alt="${menu.nombre_local || 'Local'}"
-             onerror="this.src='https://placehold.co/80x80?text=Local'">
+             onerror="this.src='https://placehold.co/80x80/cccccc/ffffff?text=Logo'">
         <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
     </div>
 
@@ -1651,10 +1676,8 @@ function displayMenus(menus, title) {
     <p>${menu.descripcion || 'Sin descripción'}</p>
     <p>$${menu.precio}</p>
 
-    <!-- Botón agregar al carrito -->
     <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
 
-    <!-- Botón favorito -->
     <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
             data-menu-id="${menu.id}"
             onclick="toggleFavorite('${menu.id}')">
