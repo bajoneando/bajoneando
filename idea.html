@@ -1,22 +1,28 @@
-<style>
-* { box-sizing: border-box; }
-body {
-    font-family: 'Poppins', sans-serif;
-    margin: 0;
-    padding: 0;
-    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Header */
-header {
-    position: fixed;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weep - Plataforma de Comidas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    /* Header */
+    header {
+    position: fixed; /* ← clave */
     top: 0;
     left: 0;
     right: 0;
-    z-index: 1000;
+    z-index: 1000; /* para que quede por encima de todo */
     background-color: #fff;
     padding: 12px 15px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.12);
@@ -27,154 +33,105 @@ header {
     flex-wrap: wrap;
     gap: 10px;
 }
-
 /* Importante: compensar el espacio que ocupa el header fijo */
 body {
-    padding-top: 140px;
+    padding-top: 140px; /* ← ajusta según la altura real del header en desktop */
 }
-
+/* Versión mobile (más pequeño) */
 @media (max-width: 768px) {
     body {
-        padding-top: 100px;           /* ← reducido de 110px */
+        padding-top: 110px; /* altura aproximada en mobile */
     }
     header {
-        padding: 8px 12px;            /* ← un poco menos padding vertical */
+        padding: 10px 12px;
         border-radius: 0;
-        gap: 6px;                     /* ← reduce separación general en mobile */
     }
 }
-
-.logo {
-    height: 90px;
-}
-.logo img {
-    height: 100%;
-    object-fit: contain;
-}
-
-.search-bar {
-    flex: 1;
-    min-width: 200px;
-    max-width: 500px;
-    margin: 0 10px;
-}
-
-.search-bar input {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #ccc;
-    border-radius: 30px;
-    font-size: 15px;
-    outline: none;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.profile {
-    font-size: 15px;
-    font-weight: 500;
-    color: #333;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-/* Ícono de carrito con imagen */
-.cart-icon {
-    position: relative;
-    cursor: pointer;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.cart-icon img {
-    width: 85%;
-    height: 85%;
-    object-fit: contain;
-}
-.cart-count {
-    position: absolute;
-    top: -6px;
-    right: -8px;
-    background: #d32f2f;
-    color: white;
-    border-radius: 50%;
-    min-width: 22px;
-    height: 22px;
-    font-size: 12px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 5px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
-
-main {
-    flex: 1;
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 15px;
-}
-
-h1 {
-    text-align: center;
-    color: #c62828;
-    font-size: 1.8rem;
-    margin: 20px 0;
-}
-
-h2 {
-    text-align: center;
-    color: #c62828;
-    font-size: 1.5rem;
-    margin: 30px 0 20px;
-}
-
-/* Ajustes específicos para mobile (lo que pediste) */
-@media (max-width: 768px) {
-
-    /* 1. Reducir distancia entre buscador y logo → menos margen en .search-bar */
+    .logo {
+        height: 90px; /* Logo más grande en desktop */
+    }
+    .logo img {
+        height: 100%;
+        object-fit: contain;
+    }
     .search-bar {
-        margin: 4px 6px;           /* ← antes 10px → mucho más apretado */
+        flex: 1;
+        min-width: 200px;
+        max-width: 500px;
+        margin: 0 10px;
     }
-
-    /* 2. "Qué se te antoja" más pequeño */
+    .search-bar input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ccc;
+        border-radius: 30px;
+        font-size: 15px;
+        outline: none;
+    }
+    .header-right {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .profile {
+        font-size: 15px;
+        font-weight: 500;
+        color: #333;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    /* Ícono de carrito con imagen */
+    .cart-icon {
+        position: relative;
+        cursor: pointer;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cart-icon img {
+        width: 85%;
+        height: 85%;
+        object-fit: contain;
+    }
+    .cart-count {
+        position: absolute;
+        top: -6px;
+        right: -8px;
+        background: #d32f2f;
+        color: white;
+        border-radius: 50%;
+        min-width: 22px;
+        height: 22px;
+        font-size: 12px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 5px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    main {
+        flex: 1;
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 15px;
+    }
     h1 {
-        font-size: 1.35rem;        /* ← antes 1.6rem en mobile */
-        margin: 12px 0;            /* menos margen vertical */
-    }
-
-    /* 3. Reducir espacio entre categorías y "Sugerencias de Locales" */
-    .categories {
-        margin-bottom: 14px;       /* ← antes 30px auto, ahora mucho menos */
-        padding-bottom: 10px;      /* reduce padding inferior */
+        text-align: center;
+        color: #c62828;
+        font-size: 1.8rem;
+        margin: 20px 0;
     }
     h2 {
-        margin: 10px 0 12px;       /* ← antes 30px 0 20px → mucho más compacto */
+        text-align: center;
+        color: #c62828;
+        font-size: 1.5rem;
+        margin: 30px 0 20px;
     }
-
-    /* 4. Reducir distancia entre título "Sugerencias de Locales" y las imágenes */
-    .suggestions {
-        margin-top: 0;             /* por si acaso */
-    }
-    .suggestion-items {
-        padding: 8px 0;            /* ← antes 15px 0 → reducido */
-        gap: 10px;                 /* ← antes 14px → más apretado */
-    }
-
-    .suggestion {
-        width: 75px;
-        height: 75px;
-    }
-}
-
-/* Categorías - siempre en una sola fila, sin scroll horizontal */
+       
+    /* Categorías - siempre en una sola fila, sin scroll horizontal */
 .categories {
     display: flex;
     flex-wrap: nowrap;
@@ -188,11 +145,10 @@ h2 {
     box-sizing: border-box;
     overflow: hidden;
 }
-
 /* Tarjetas de categoría base */
 .category {
     flex: 0 0 auto;
-    width: 120px;
+    width: 120px; /* tamaño desktop base */
     height: 120px;
     background-size: cover;
     background-position: center;
@@ -220,7 +176,6 @@ h2 {
     z-index: 1;
     padding: 0 4px;
 }
-
 /* Desktop y tablets grandes */
 @media (min-width: 900px) {
     .categories {
@@ -237,15 +192,14 @@ h2 {
         bottom: 10px;
     }
 }
-
-/* Celulares y móviles */
+/* Celulares y móviles (mismo tamaño que .suggestion) */
 @media (max-width: 768px) {
     .categories {
         gap: 6px;
         padding: 0 6px 15px 6px;
     }
     .category {
-        width: 75px;
+        width: 75px; /* ← IGUAL que .suggestion en 768px */
         height: 75px;
     }
     .category span {
@@ -253,14 +207,14 @@ h2 {
         bottom: 5px;
     }
 }
-
+/* Móviles muy pequeños (mismo tamaño que .suggestion) */
 @media (max-width: 480px) {
     .categories {
         gap: 5px;
         padding: 0 5px 12px 5px;
     }
     .category {
-        width: 70px;
+        width: 70px; /* ← IGUAL que .suggestion en 480px */
         height: 70px;
     }
     .category span {
@@ -268,7 +222,6 @@ h2 {
         bottom: 4px;
     }
 }
-
 /* Bloqueo de scroll horizontal no deseado */
 @media (max-width: 820px) {
     html, body {
@@ -281,8 +234,8 @@ h2 {
         width: 100vw !important;
     }
 }
-
-/* Sugerencias de locales */
+       
+    /* Sugerencias de locales ≈ mitad de tamaño */
 .suggestions {
     width: 100%;
     max-width: 1200px;
@@ -306,45 +259,6 @@ h2 {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
     cursor: pointer;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.suggestion:hover, .suggestion:active {
-    transform: scale(1.1);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
-}
-.suggestion img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-.suggestion:hover img {
-    transform: scale(1.15);
-}
-
-/* Resto de estilos (sin cambios) */
-@media (max-width: 768px) {
-    .search-bar {
-        order: 3;
-        width: 100%;
-        margin: 10px 0 0;
-        max-width: none;
-    }
-    .header-right {
-        gap: 12px;
-    }
-    .logo {
-        height: 75px;
-    }
-    .suggestion {
-        width: 75px;
-        height: 75px;
-    }
-    .suggestion-items {
-        gap: 14px;
-        padding: 15px 0;
-    }
-    h1 { font-size: 1.6rem; }
-    h2 { font-size: 1.4rem; }
 }
 .suggestion:hover, .suggestion:active {
     transform: scale(1.1);
@@ -718,7 +632,7 @@ h2 {
         .logo {
             height: 75px;
         }
-        
+       
         .suggestion {
             width: 75px;
             height: 75px;
@@ -770,7 +684,7 @@ h2 {
         .logo {
             height: 65px;
         }
-        
+       
         .suggestion {
             width: 70px;
             height: 70px;
@@ -972,7 +886,7 @@ h2 {
         width: 28px;
         height: 28px;
     }
-   
+  
     .profile-button {
         padding: 6px 10px;
         font-size: 0.9rem;
@@ -1112,11 +1026,11 @@ h2 {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 20px !important;
     }
-   
+  
     .menu-item img {
         height: 200px !important;
     }
-   
+  
     .fav-btn {
         width: 36px !important;
         height: 36px !important;
@@ -1124,7 +1038,7 @@ h2 {
         right: 10px !important;
     }
 }
-       
+      
 </style>
 </head>
 <body>
@@ -1144,7 +1058,7 @@ h2 {
                 class="profile-icon">
             <span>Mi Perfil</span>
         </div>
-       
+      
         <!-- Menú desplegable -->
         <div class="profile-dropdown" id="profile-dropdown">
     <a href="#" class="dropdown-item" onclick="openEditProfileModal()">Editar perfil</a>
@@ -1181,7 +1095,7 @@ h2 {
     </div>
     <!-- puedes agregar más categorías sin problema -->
 </div>
-        
+       
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
@@ -1229,13 +1143,13 @@ h2 {
 </select>
 <!-- Contenedor donde se mostrará el checkout de MP -->
 <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-               
+              
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
         </div>
     </main>
-   
+  
     <!-- Footer -->
     <footer class="text-center">
         <div class="container">
@@ -1274,16 +1188,16 @@ h2 {
     <div class="modal-content">
         <span class="close" onclick="closeModal('edit-profile-modal')">×</span>
         <h2>Editar Perfil</h2>
-       
+      
         <label for="edit-name">Nombre completo</label>
         <input type="text" id="edit-name" placeholder="Nombre completo" required>
-       
+      
         <label for="edit-email">Correo electrónico</label>
         <input type="email" id="edit-email" placeholder="Correo electrónico" required>
-       
+      
         <label for="edit-new-password">Nueva contraseña (opcional)</label>
         <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
-       
+      
         <button onclick="saveProfileChanges()">Guardar cambios</button>
     </div>
 </div>
@@ -1296,7 +1210,7 @@ h2 {
         <button onclick="saveAddressChange()">Guardar dirección</button>
     </div>
 </div>
-  
+ 
     <script>
 const MP_ACCESS_TOKEN = "APP_USR-595288641172928-010710-d915bce4137b3ee26e0c6e04873f1ac1-695835795";
 const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
@@ -1472,10 +1386,10 @@ function displayMenus(menus, title) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
-   
+  
     // Limpiamos caché anterior
     currentDisplayedMenus = {};
-   
+  
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
@@ -1490,10 +1404,10 @@ function displayMenus(menus, title) {
                 <h3>${menu.nombre}</h3>
                 <p>${menu.descripcion || 'Sin descripción'}</p>
                 <p>$${menu.precio}</p>
-              
+             
                 <!-- Botón agregar al carrito -->
                 <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
-              
+             
                 <!-- Botón favorito con imágenes (sin texto) -->
                 <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
                         data-menu-id="${menu.id}"
@@ -1505,13 +1419,13 @@ function displayMenus(menus, title) {
             itemsDiv.appendChild(div);
         });
     }
-   
+  
     container.style.display = 'block';
-   
+  
     // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
-       
+      
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1519,7 +1433,7 @@ function displayMenus(menus, title) {
         alert('Error: no se pudo encontrar el plato seleccionado');
         return;
     }
-   
+  
     // Ahora sí llamamos a addToCart con el objeto completo
     addToCart(menu);
 }
@@ -1579,7 +1493,7 @@ function loginUser() {
         setupCart();
         loadAllDrinks();
     });
-      
+     
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
@@ -1648,10 +1562,10 @@ function loginUser() {
                 .then(menus => displayMenus(menus, type || 'Local seleccionado'))
                 .catch(() => showError(container, 'Error al cargar menús'));
         }
-       
+      
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
-  
+ 
     // Solo aplicamos display: block al contenedor de menús
     if (container.id === 'menu-display') {
         container.style.display = 'block';
@@ -1827,17 +1741,17 @@ function addToCart(menu) {
         // Modificar cantidad de un ítem en el carrito
 function changeQuantity(index, delta) {
     if (!cart[index]) return;
-   
+  
     const nuevaCantidad = cart[index].cantidad + delta;
-   
+  
     if (nuevaCantidad < 1) {
         // En lugar de dejar en 1, eliminamos directamente
         removeFromCart(index);
         return;
     }
-   
+  
     cart[index].cantidad = nuevaCantidad;
-   
+  
     updateCartCount();
     updateCartDisplay();
 }
@@ -1849,7 +1763,7 @@ function removeFromCart(index) {
         updateCartDisplay();
     }
 }
-       
+      
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
@@ -2050,7 +1964,7 @@ function startPaymentPolling(preferenceId, externalReference) { // ← agregamos
         }
     }, 5000);
 }
-       
+      
 async function finalizeOrderAfterPayment() {
     if (!pendingOrderData) return;
     // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
@@ -2103,23 +2017,23 @@ async function checkPaymentReturn() {
 // ==================== EDITAR PERFIL ====================
 function openEditProfileModal() {
     profileDropdown.classList.remove('active');
-   
+  
     // Precargamos los datos actuales
     document.getElementById('edit-name').value = localStorage.getItem('userName') || '';
     document.getElementById('edit-email').value = localStorage.getItem('userEmail') || '';
     document.getElementById('edit-new-password').value = ''; // siempre vacío al abrir
-   
+  
     showModal('edit-profile-modal');
 }
 function openChangeAddressModal() {
     profileDropdown.classList.remove('active');
-   
+  
     const addressInput = document.getElementById('edit-address');
     addressInput.value = userAddress || '';
-   
+  
     showModal('change-address-modal');
 }
-       
+      
 function saveProfileChanges() {
     const name = document.getElementById('edit-name').value.trim();
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
@@ -2129,12 +2043,12 @@ function saveProfileChanges() {
         alert('El nombre es obligatorio');
         return;
     }
-   
+  
     if (!email) {
         alert('El email es obligatorio');
         return;
     }
-   
+  
     if (newPassword && newPassword.length < 6) {
         alert('La nueva contraseña debe tener al menos 6 caracteres (o dejarla en blanco)');
         return;
@@ -2155,10 +2069,10 @@ function saveProfileChanges() {
                 // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-               
+              
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
-               
+              
                 // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
@@ -2170,7 +2084,7 @@ function saveProfileChanges() {
             alert('Error de conexión al intentar actualizar el perfil');
         });
 }
-       
+      
 function saveAddressChange() {
     const newAddress = document.getElementById('edit-address').value.trim();
     if (!newAddress) {
@@ -2186,11 +2100,11 @@ function saveAddressChange() {
             if (data.success) {
                 userAddress = newAddress;
                 localStorage.setItem('userAddress', newAddress);
-               
+              
                 // Actualizamos el campo de dirección del checkout si está visible
                 const checkoutDir = document.getElementById('direccion');
                 if (checkoutDir) checkoutDir.value = newAddress;
-               
+              
                 alert('Dirección actualizada correctamente');
                 closeModal('change-address-modal');
             } else {
@@ -2268,7 +2182,7 @@ async function createConfirmedOrder(orderData) {
             body: JSON.stringify(payload)
         });
         alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
-       
+      
         // Limpieza final
         cart = [];
         updateCartCount();
@@ -2277,7 +2191,7 @@ async function createConfirmedOrder(orderData) {
         document.getElementById('mercadopago-checkout').style.display = 'none';
         document.getElementById('checkout-btn').style.display = 'block';
         document.getElementById('checkout-form').reset();
-       
+      
     } catch (err) {
         console.error("Error registrando pedido pagado:", err);
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
