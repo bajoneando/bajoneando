@@ -789,40 +789,27 @@ body {
     margin: 10px 0 8px 0;
     padding: 0 4px;
     justify-content: flex-start;
-    font-size: 0.92rem;
-    color: #444;
 }
 
 .menu-item .local-logo {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    object-fit: cover;
+    object-fit: contain;           /* ← cambio clave: contain en vez de cover */
+    background-color: #f8f8f8;     /* fondo claro para logos transparentes o con bordes blancos */
     border: 1px solid #eee;
     flex-shrink: 0;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    padding: 4px;                  /* espacio interno → evita que toque el borde circular */
+    box-sizing: border-box;
 }
 
-.menu-item .local-name {
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 180px;          /* evita que se desborde en tarjetas angostas */
-}
-
-/* Ajuste fino en móviles */
+/* En móviles reducimos un poco */
 @media (max-width: 768px) {
-    .menu-item .local-info {
-        margin: 8px 0 6px 0;
-        font-size: 0.85rem;
-    }
     .menu-item .local-logo {
         width: 32px;
         height: 32px;
-    }
-    .menu-item .local-name {
-        max-width: 140px;
+        padding: 3px;
     }
 }
         
