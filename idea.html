@@ -1174,6 +1174,24 @@ body {
         bottom: 10px;
     }
 }
+
+    .categories-carousel-wrapper {
+    position: relative;
+    margin-top: -70px;          /* valor base */
+    z-index: 5;                 /* por si acaso evita solapamientos raros */
+}
+
+@media (max-width: 768px) {
+    .categories-carousel-wrapper {
+        margin-top: -110px;     /* ← aquí controlas cuánto sube en celular */
+    }
+}
+
+@media (min-width: 769px) {
+    .categories-carousel-wrapper {
+        margin-top: -40px;      /* desktop más natural */
+    }
+}
       
 </style>
 </head>
