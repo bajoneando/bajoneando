@@ -131,24 +131,27 @@ body {
         margin: 30px 0 20px;
     }
         
-    /* Categorías - SIEMPRE en una sola fila, sin scroll horizontal */
+    /* Categorías - SIEMPRE en una sola fila, sin scroll horizontal, se adaptan al ancho disponible */
 .categories {
     display: flex;
-    flex-wrap: nowrap;               /* impide que bajen a otra línea */
-    justify-content: space-between;  /* distribuye el espacio disponible */
-    gap: 12px;
-    padding: 0 10px 25px 10px;
+    flex-wrap: nowrap;
+    justify-content: space-between;     /* distribuye el espacio disponible */
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 25px 8px;
     margin: 0 auto 35px auto;
+    width: 100%;
     max-width: 100%;
-    overflow: hidden;                /* evita cualquier desborde */
+    overflow: hidden;                   /* evita desborde visual */
+    box-sizing: border-box;
 }
 
-/* Cada tarjeta de categoría */
+/* Cada categoría: crece/achica proporcionalmente según el espacio */
 .category {
-    flex: 1 1 auto;                  /* permite que crezcan y se achiquen proporcionalmente */
-    min-width: 90px;                 /* tamaño mínimo en móviles */
-    max-width: 140px;                /* tamaño máximo en desktop */
-    aspect-ratio: 1 / 1;             /* mantiene proporción cuadrada */
+    flex: 1 1 0;                        /* clave: permite que se achiquen y crezcan */
+    min-width: 80px;                    /* tamaño mínimo razonable en móviles */
+    max-width: 160px;                   /* límite superior para no crecer demasiado */
+    aspect-ratio: 1 / 1;                /* mantiene proporción cuadrada */
     background-size: cover;
     background-position: center;
     border-radius: 14px;
@@ -167,15 +170,16 @@ body {
 
 .category span {
     position: absolute;
-    bottom: 10px;
+    bottom: 8px;
     left: 0;
     right: 0;
     text-align: center;
     color: white;
     font-weight: 600;
-    font-size: 15px;
+    font-size: clamp(12px, 2.5vw, 15px); /* tamaño de fuente responsivo */
     text-shadow: 0 2px 5px rgba(0,0,0,0.7);
     z-index: 1;
+    padding: 0 4px;
 }
 
 /* ================================================= */
@@ -188,7 +192,7 @@ body {
         padding: 0 15px 30px 15px;
     }
     .category {
-        flex: 0 0 140px;             /* tamaño fijo grande */
+        flex: 0 0 140px;                /* tamaño fijo grande */
         min-width: 140px;
         max-width: 140px;
     }
@@ -198,40 +202,37 @@ body {
 }
 
 /* ================================================= */
-/* Tablets medianas y móviles grandes (600–899px)   */
+/* Tablets y móviles grandes (600–899px)            */
 /* ================================================= */
 @media (max-width: 899px) {
     .categories {
-        gap: 10px;
-        padding: 0 8px 20px 8px;
+        gap: 8px;
+        padding: 0 6px 20px 6px;
     }
     .category {
-        flex: 1 1 110px;             /* crece o achica según espacio */
-        min-width: 100px;
-        max-width: 120px;
+        min-width: 90px;
+        max-width: 130px;
     }
     .category span {
-        font-size: 14px;
-        bottom: 8px;
+        font-size: clamp(12px, 2.8vw, 14px);
     }
 }
 
 /* ================================================= */
-/* Celulares y móviles pequeños (< 600px)           */
+/* Celulares y móviles medianos/pequeños (< 600px)  */
 /* ================================================= */
 @media (max-width: 600px) {
     .categories {
-        gap: 8px;
-        padding: 0 6px 15px 6px;
+        gap: 6px;
+        padding: 0 5px 15px 5px;
     }
     .category {
-        min-width: 90px;
-        max-width: 100px;
+        min-width: 85px;                /* mínimo para que quepan las 6 */
+        max-width: 110px;
     }
     .category span {
-        font-size: 13px;
+        font-size: clamp(11px, 3vw, 13px);
         bottom: 6px;
-        padding: 0 4px;
     }
 }
 
@@ -240,28 +241,31 @@ body {
 /* ================================================= */
 @media (max-width: 400px) {
     .categories {
-        gap: 6px;
-        padding: 0 5px 10px 5px;
+        gap: 5px;
+        padding: 0 4px 10px 4px;
     }
     .category {
-        min-width: 80px;
-        max-width: 90px;
+        min-width: 78px;
+        max-width: 95px;
     }
     .category span {
-        font-size: 12px;
+        font-size: clamp(10px, 3.2vw, 12px);
         bottom: 5px;
     }
 }
 
-/* Seguridad extra: evitar scroll horizontal global */
+/* ================================================= */
+/* Seguridad absoluta contra scroll horizontal      */
+/* ================================================= */
 @media (max-width: 820px) {
     html, body {
-        overflow-x: hidden;
+        overflow-x: hidden !important;
     }
     main {
-        overflow-x: hidden;
-        padding-left: 0;
-        padding-right: 0;
+        overflow-x: hidden !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100vw !important;
     }
 }
         
