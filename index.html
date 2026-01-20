@@ -1358,7 +1358,19 @@ body {
 }
      
 </style>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Mejora para iOS / Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="/icon-192x192.png">
+
+    <!-- Opcional: tema color para la barra de estado en móviles -->
+    <meta name="theme-color" content="#c62828">
 </head>
+    
 <body>
     <header>
         <div class="logo">
@@ -2764,5 +2776,16 @@ window.addEventListener('load', () => {
     setTimeout(updateButtons, 300);
 }
     </script>
+
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Service Worker registrado OK!', reg))
+        .catch(err => console.log('Error al registrar SW:', err));
+    });
+  }
+</script>
+    
 </body>
 </html>
