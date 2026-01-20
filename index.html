@@ -1359,16 +1359,17 @@ body {
      
 </style>
 
-    <!-- PWA Manifest -->
+        <!-- PWA - Manifest -->
     <link rel="manifest" href="/manifest.json">
 
-    <!-- Mejora para iOS / Safari -->
+    <!-- Mejoras para iOS / Safari (muy importante) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="apple-touch-icon" href="/icon-192x192.png">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/ZnBXJHJC/web-app-manifest-192x192.png">
 
-    <!-- Opcional: tema color para la barra de estado en móviles -->
+    <!-- Color de la barra de estado en móviles -->
     <meta name="theme-color" content="#c62828">
+    
 </head>
     
 <body>
@@ -2777,12 +2778,17 @@ window.addEventListener('load', () => {
 }
     </script>
 
-    <script>
+    <!-- Registro del Service Worker para PWA -->
+<script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
+    window.addEventListener('load', function() {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('Service Worker registrado OK!', reg))
-        .catch(err => console.log('Error al registrar SW:', err));
+        .then(function(registration) {
+          console.log('Service Worker registrado con éxito:', registration.scope);
+        })
+        .catch(function(error) {
+          console.log('Fallo al registrar el Service Worker:', error);
+        });
     });
   }
 </script>
