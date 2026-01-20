@@ -1489,6 +1489,18 @@ function closeModal(modalId) {
         modal.style.display = 'none';
     }
 }
+
+        // ==================== CAMBIAR ENTRE LOGIN Y REGISTRO ====================
+function switchToRegister() {
+    closeModal('login-modal');
+    showModal('register-modal');
+}
+
+function switchToLogin() {
+    closeModal('register-modal');
+    showModal('login-modal');
+}
+        
 // ==================== CARGAR FAVORITOS DEL USUARIO ====================
 function loadUserFavorites() {
     if (!userId) return;
