@@ -2816,8 +2816,8 @@ window.addEventListener('appinstalled', () => {
   console.log('¡App instalada!');
   document.getElementById('installBtn').style.display = 'none';
 });
-    
-<script>
+
+        // Service worker
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
       navigator.serviceWorker.register('/sw.js')
