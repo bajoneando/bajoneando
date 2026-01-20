@@ -1714,7 +1714,7 @@ function loginUser() {
         loadAllDrinks();
     });
 
-        // Función para registrar un nuevo usuario
+        // Función para registrar un nuevo usuario (usando GET para evitar CORS)
 async function registerUser() {
     // Leemos los valores directamente desde los inputs del modal
     const nombre    = document.getElementById('register-name')?.value?.trim()    || '';
@@ -1741,21 +1741,19 @@ async function registerUser() {
     btn.disabled = true;
     btn.textContent = 'Registrando...';
 
-    const payload = {
-        action: 'register',
-        nombre,
-        email,
-        password,
-        direccion
-    };
-
     try {
-        const response = await fetch(scriptUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
+        // Construimos la URL con parámetros GET
+        const url = `${scriptUrl}?action=register` +
+            `&nombre=${encodeURIComponent(nombre)}` +
+            `&email=${encodeURIComponent(email)}` +
+            `&password=${encodeURIComponent(password)}` +
+            `&direccion=${encodeURIComponent(direccion)}`;
+
+        console.log("Enviando registro vía GET:", url);
+
+        const response = await fetch(url, {
+            method: 'GET',
+            cache: 'no-cache',
             redirect: 'follow'
         });
 
@@ -1778,13 +1776,13 @@ async function registerUser() {
             closeModal('register-modal');
             checkLoginStatus();
 
-            // Opcional: redirigir o limpiar formulario
-            document.getElementById('register-modal').querySelector('form')?.reset?.();
+            // Limpieza opcional del formulario
+            document.querySelector('#register-modal').querySelectorAll('input').forEach(input => input.value = '');
         } else {
             alert(result.message || 'Error al registrar usuario');
         }
     } catch (error) {
-        console.error('Error en registerUser:', error);
+        console.error('Error en registerUser (GET):', error);
         alert('Error de conexión: ' + (error.message || 'Intenta nuevamente'));
     } finally {
         // Restauramos el botón siempre
