@@ -1700,7 +1700,116 @@ function loginUser() {
         setupCart();
         loadAllDrinks();
     });
-    
+
+        // ==================== REGISTRO DE USUARIO ====================
+function registerUser() {
+    // Obtenemos los valores del formulario de registro
+    const name = document.getElementById('register-name')?.value.trim();
+    const email = document.getElementById('register-email')?.value.trim().toLowerCase();
+    const password = document.getElementById('register-password')?.value.trim();
+    const address = document.getElementById('register-address')?.value.trim() || '';
+
+    // Validaciones básicas en frontend
+    if (!name) {
+        alert('Por favor ingresa tu nombre completo');
+        return;
+    }
+    if (!email) {
+        alert('El correo electrónico es obligatorio');
+        return;
+    }
+    if (!password) {
+        alert('La contraseña es obligatoria');
+        return;
+    }
+    if (password.length < 6) {
+        alert('La contraseña debe tener al menos 6 caracteres');
+        return;
+    }
+
+    // Expresión regular simple para validar email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        alert('Por favor ingresa un correo electrónico válido');
+        return;
+    }
+
+    // Deshabilitamos el botón mientras se procesa
+    const registerBtn = document.querySelector('#register-modal button');
+    if (registerBtn) {
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'Registrando...';
+    }
+
+    // Preparamos los datos para enviar al backend
+    const params = {
+        action: 'register',
+        name: name,
+        email: email,
+        password: password,
+        address: address  // opcional
+    };
+
+    // URL de tu Google Apps Script Web App
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbxMjHVmcLEazSyDYA-xPnuuLzOcK6ejTojKLdLGuUzuRgSh2JYqOSUvryqd7fwwzjpG/exec';
+
+    fetch(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',           // Necesario para Google Apps Script
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params)
+    })
+    .then(response => response.text())  // recibimos texto plano
+    .then(text => {
+        try {
+            const result = JSON.parse(text);
+
+            if (result.success) {
+                alert('¡Registro exitoso! Ahora puedes iniciar sesión.');
+                
+                // Guardamos datos básicos en localStorage
+                localStorage.setItem('userId', result.userId);
+                localStorage.setItem('userName', name);
+                localStorage.setItem('userEmail', email);
+                localStorage.setItem('userAddress', address);
+
+                // Cerramos modal de registro
+                closeModal('register-modal');
+
+                // Actualizamos el estado de sesión
+                checkLoginStatus();
+
+                // Limpiamos el formulario
+                document.getElementById('register-name').value = '';
+                document.getElementById('register-email').value = '';
+                document.getElementById('register-password').value = '';
+                document.getElementById('register-address').value = '';
+
+                // Opcional: redirigir o mostrar mensaje
+                // alert(`¡Bienvenido! Tu ID de usuario es: ${result.userId}`);
+            } else {
+                alert(result.message || 'Error al registrar usuario');
+            }
+        } catch (e) {
+            console.error('Error parseando respuesta:', e, text);
+            alert('Error al procesar la respuesta del servidor');
+        }
+    })
+    .catch(error => {
+        console.error('Error en la solicitud de registro:', error);
+        alert('Error al conectar con el servidor. Intenta nuevamente más tarde.');
+    })
+    .finally(() => {
+        // Restauramos botón
+        if (registerBtn) {
+            registerBtn.disabled = false;
+            registerBtn.textContent = 'Registrarse';
+        }
+    });
+}
+        
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
