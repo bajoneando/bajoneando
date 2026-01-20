@@ -2779,6 +2779,46 @@ window.addEventListener('load', () => {
     loadAllDrinks();
     setupCategoriesCarousel(); // ← agregar esta línea
 });
+
+        // Carrusel horizontal de menús (solo móviles)
+function setupMenuCarousel() {
+    const container = document.getElementById('menu-items-container');
+    const prevBtn = document.getElementById('prev-menu');
+    const nextBtn = document.getElementById('next-menu');
+
+    if (!container || !prevBtn || !nextBtn) return;
+
+    function scrollLeft() {
+        container.scrollBy({ left: -container.clientWidth * 0.75, behavior: 'smooth' });
+    }
+
+    function scrollRight() {
+        container.scrollBy({ left: container.clientWidth * 0.75, behavior: 'smooth' });
+    }
+
+    prevBtn.addEventListener('click', scrollLeft);
+    nextBtn.addEventListener('click', scrollRight);
+
+    // Actualizar estado de botones (deshabilitar cuando no se puede desplazar más)
+    function updateButtons() {
+        const atStart = container.scrollLeft <= 0;
+        const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
+
+        prevBtn.disabled = atStart;
+        prevBtn.style.opacity = atStart ? '0.4' : '1';
+        prevBtn.style.cursor = atStart ? 'default' : 'pointer';
+
+        nextBtn.disabled = atEnd;
+        nextBtn.style.opacity = atEnd ? '0.4' : '1';
+        nextBtn.style.cursor = atEnd ? 'default' : 'pointer';
+    }
+
+    container.addEventListener('scroll', updateButtons);
+    window.addEventListener('resize', updateButtons);
+
+    // Estado inicial
+    setTimeout(updateButtons, 300);
+}
     </script>
 </body>
 </html>
