@@ -1795,6 +1795,11 @@ function displayMenus(menus, title) {
     const itemsDiv = document.getElementById('menu-items-container');
     currentDisplayedMenus = {};
 
+    // Aseguramos que menus sea un array (por si el backend lo devuelve directamente)
+    if (!Array.isArray(menus)) {
+        menus = menus.menus || menus.data || menus.result || [];
+    }
+
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:60px 20px;">No se encontraron menús.</p>';
     } else {
@@ -1803,7 +1808,7 @@ function displayMenus(menus, title) {
             const div = document.createElement('div');
             div.className = 'menu-item';
             div.innerHTML = `
-                <img src="${menu.imagen_url || 'https://placehold.co/340x220?text=Sin+Imagen'}" 
+                <img src="${menu.imagen_url || 'https://placehold.co/340x220?text=Sin+Imagen'}"
                      alt="${menu.nombre}"
                      onerror="this.src='https://placehold.co/340x220?text=Sin+Imagen'">
                 
@@ -1835,7 +1840,7 @@ function displayMenus(menus, title) {
     container.style.display = 'block';
     updateFavoriteButtons();
 
-    // Inicializamos los controles del carrusel de menús
+    // ¡Aquí llamamos al carrusel!
     setupMenuCarousel();
 }
      
