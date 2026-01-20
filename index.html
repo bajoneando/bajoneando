@@ -276,70 +276,199 @@ body {
 .suggestion:hover img {
     transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
 }
-function displayMenus(menus, title) {
-    const container = document.getElementById('menu-display');
-    container.innerHTML = `
-        <h2>${title}</h2>
-        <div class="menu-display-wrapper">
-            <button class="carousel-btn left menu-btn" id="prev-menu">←</button>
-            
-            <div class="menu-items" id="menu-items-container"></div>
-            
-            <button class="carousel-btn right menu-btn" id="next-menu">→</button>
-        </div>
-    `;
+/* ============================================= */
+/* TARJETAS DE MENÚ - DISEÑO HORIZONTAL (CARRUSEL) */
+/* ============================================= */
 
-    const itemsDiv = document.getElementById('menu-items-container');
-    currentDisplayedMenus = {};
+/* Contenedor principal del carrusel */
+.menu-display-wrapper {
+    position: relative;
+    width: 100%;
+    margin: 20px 0 40px 0;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
 
-    // Aseguramos que menus sea un array
-    if (!Array.isArray(menus)) {
-        menus = menus.menus || menus.data || menus.result || [];
+/* Contenedor deslizable */
+.menu-items {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding: 15px 0;
+    margin: 0 -15px;
+    scrollbar-width: none;
+}
+.menu-items::-webkit-scrollbar {
+    display: none;
+}
+
+/* Tarjeta individual */
+.menu-item {
+    flex: 0 0 320px;
+    width: 320px;
+    max-width: 340px;
+    background: white;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.menu-item:hover,
+.menu-item:active {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+}
+
+/* Imagen grande arriba */
+.menu-item img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 12px;
+}
+
+/* Logo + nombre del local */
+.menu-item .local-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 12px 0;
+}
+.menu-item .local-logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: contain;
+    background: #f8f8f8;
+    border: 2px solid #eee;
+    padding: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.menu-item .local-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Título + precio en la misma línea */
+.menu-item .title-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 0 10px 0;
+}
+.menu-item h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #222;
+}
+.menu-item .price {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #d32f2f;
+    white-space: nowrap;
+}
+
+/* Descripción */
+.menu-item .description {
+    color: #555;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    margin: 0 0 16px 0;
+}
+
+/* Botón agregar */
+.menu-item button.add-to-cart {
+    width: 100%;
+    padding: 14px;
+    background: #d32f2f;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.menu-item button.add-to-cart:hover {
+    background: #b71c1c;
+}
+
+/* Botón favorito */
+.fav-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    background: rgba(255,255,255,0.92);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    transition: all 0.25s ease;
+    z-index: 15;
+    padding: 6px;
+}
+.fav-btn:hover {
+    transform: scale(1.15);
+    background: white;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+.fav-btn img {
+    width: 80%;
+    height: 80%;
+}
+
+/* Flechas del carrusel (solo móviles) */
+.carousel-btn.menu-btn {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    background: rgba(211,47,47,0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+}
+.carousel-btn.menu-btn:hover {
+    background: rgba(211,47,47,1);
+}
+.carousel-btn.left.menu-btn  { left: 8px; }
+.carousel-btn.right.menu-btn { right: 8px; }
+
+@media (max-width: 820px) {
+    .carousel-btn.menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
+}
 
-    if (menus.length === 0) {
-        itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:60px 20px;">No se encontraron menús.</p>';
-    } else {
-        menus.forEach((menu) => {
-            currentDisplayedMenus[menu.id] = menu;
-            const div = document.createElement('div');
-            div.className = 'menu-item';
-            div.innerHTML = `
-                <img src="${menu.imagen_url || 'https://placehold.co/340x220?text=Sin+Imagen'}" 
-                     alt="${menu.nombre}"
-                     onerror="this.src='https://placehold.co/340x220?text=Sin+Imagen'">
-                
-                <div class="local-info">
-                    <img class="local-logo"
-                         src="${menu.logo_url || 'https://placehold.co/48x48?text=Local'}"
-                         alt="${menu.nombre_local || 'Local'}"
-                         onerror="this.src='https://placehold.co/48x48?text=?'">
-                    <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
-                </div>
-                
-                <div class="title-price">
-                    <h3>${menu.nombre}</h3>
-                    <span class="price">$${menu.precio}</span>
-                </div>
-                
-                <p class="description">${menu.descripcion || 'Sin descripción'}</p>
-                
-                <button class="add-to-cart" onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
-                
-                <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
-                        data-menu-id="${menu.id}"
-                        onclick="toggleFavorite('${menu.id}')">
-                    <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
-                    <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
-                </button>
-            `;
-            itemsDiv.appendChild(div);
-        });
-    }
-
-    container.style.display = 'block';
-    updateFavoriteButtons();
-    setupMenuCarousel(); // ¡No olvides esta línea!
+/* Desktop: más grandes */
+@media (min-width: 821px) {
+    .menu-display-wrapper { padding: 0 30px; }
+    .menu-items { gap: 24px; padding: 20px 0; margin: 0; }
+    .menu-item { flex: 0 0 340px; max-width: 360px; }
+    .menu-item img { height: 240px; }
+    .menu-item h3 { font-size: 1.35rem; }
+    .menu-item .price { font-size: 1.7rem; }
 }
     
     /* Carrito */
