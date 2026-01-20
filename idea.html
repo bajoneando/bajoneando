@@ -1377,6 +1377,7 @@ body {
         <input type="email" id="register-email" placeholder="Correo electrónico" required>
         <input type="password" id="register-password" placeholder="Contraseña" required>
         <input type="text" id="register-address" placeholder="Dirección (opcional)">
+        <!-- El botón se queda SIN parámetros -->
         <button onclick="registerUser()">Registrarse</button>
         <p>¿Ya tienes cuenta? <a onclick="switchToLogin()">Inicia sesión</a></p>
     </div>
@@ -1713,61 +1714,67 @@ function loginUser() {
         loadAllDrinks();
     });
 
-        // Función para registrar un nuevo usuario
-async function registerUser(userData) {
-  // Datos que se enviarán al backend
-  const payload = {
-    action: 'register',          // o 'registerUser' si prefieres
-    nombre: userData.nombre?.trim() || '',
-    email: userData.email?.trim().toLowerCase() || '',
-    password: userData.password?.trim() || '',
-    direccion: userData.direccion?.trim() || ''   // opcional
-  };
+        async function registerUser() {
+    // Leemos los valores directamente del DOM
+    const nombre = document.getElementById('register-name')?.value?.trim() || '';
+    const email = document.getElementById('register-email')?.value?.trim().toLowerCase() || '';
+    const password = document.getElementById('register-password')?.value?.trim() || '';
+    const direccion = document.getElementById('register-address')?.value?.trim() || '';
 
-  // Validación básica en frontend
-  if (!payload.nombre) {
-    throw new Error('El nombre es obligatorio');
-  }
-  if (!payload.email) {
-    throw new Error('El email es obligatorio');
-  }
-  if (!payload.password || payload.password.length < 6) {
-    throw new Error('La contraseña debe tener al menos 6 caracteres');
-  }
-
-  try {
-    const response = await fetch(
-      'https://script.google.com/macros/s/TU_SCRIPT_ID/exec', // ← Cambia por tu URL real
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        redirect: 'follow' // importante para GAS
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
+    // Validaciones básicas en frontend
+    if (!nombre) {
+        alert('El nombre es obligatorio');
+        return;
+    }
+    if (!email) {
+        alert('El email es obligatorio');
+        return;
+    }
+    if (!password || password.length < 6) {
+        alert('La contraseña debe tener al menos 6 caracteres');
+        return;
     }
 
-    const result = await response.json();
+    const payload = {
+        action: 'register',
+        nombre,
+        email,
+        password,
+        direccion
+    };
 
-    if (result.success) {
-      console.log('Registro exitoso:', result);
-      // Ejemplo: guardar el userId en localStorage
-      localStorage.setItem('userId', result.userId);
-      return result; // { success: true, userId: "...", message: "Registro exitoso" }
-    } else {
-      console.error('Error del backend:', result.message);
-      throw new Error(result.message || 'Error al registrar usuario');
+    try {
+        const response = await fetch(scriptUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            redirect: 'follow'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('¡Registro exitoso! Bienvenid@ ' + nombre);
+            localStorage.setItem('userId', result.userId);
+            localStorage.setItem('userName', nombre);
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('userAddress', direccion);
+            
+            closeModal('register-modal');
+            checkLoginStatus(); // actualiza el header
+        } else {
+            alert(result.message || 'Error al registrar usuario');
+        }
+    } catch (error) {
+        console.error('Error en registerUser:', error);
+        alert('Error de conexión: ' + error.message);
     }
-
-  } catch (error) {
-    console.error('Error en registerUser:', error);
-    throw error; // para que lo manejes en el componente
-  }
 }
         
         function loadAllDrinks() {
