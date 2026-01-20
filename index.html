@@ -277,72 +277,70 @@ body {
     transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
 }
 /* ============================================= */
-/* TARJETAS DE MENÚ - DISEÑO HORIZONTAL (CARRUSEL) */
+/* TARJETAS DE MENÚ - UNA COLUMNA + IMAGEN A LA IZQUIERDA */
 /* ============================================= */
 
-/* Contenedor principal del carrusel */
-.menu-display-wrapper {
-    position: relative;
-    width: 100%;
-    margin: 20px 0 40px 0;
-    padding: 0 15px;
-    box-sizing: border-box;
+/* Contenedor principal (ya no es carrusel) */
+#menu-display {
+    padding: 20px 15px;
 }
 
-/* Contenedor deslizable */
+/* Lista de tarjetas (una columna) */
 .menu-items {
     display: flex;
-    flex-wrap: nowrap;
-    gap: 16px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    padding: 15px 0;
-    margin: 0 -15px;
-    scrollbar-width: none;
-}
-.menu-items::-webkit-scrollbar {
-    display: none;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 800px; /* límite para que no se estire demasiado en pantallas grandes */
+    margin: 0 auto;
 }
 
 /* Tarjeta individual */
 .menu-item {
-    flex: 0 0 320px;
-    width: 320px;
-    max-width: 340px;
+    display: flex;
     background: white;
-    border-radius: 20px;
-    padding: 16px;
+    border-radius: 18px;
+    overflow: hidden;
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     transition: all 0.3s ease;
     position: relative;
-    overflow: hidden;
 }
-.menu-item:hover,
-.menu-item:active {
-    transform: translateY(-8px);
+
+.menu-item:hover {
+    transform: translateY(-6px);
     box-shadow: 0 15px 40px rgba(0,0,0,0.25);
 }
 
-/* Imagen grande arriba */
+/* Imagen a la izquierda */
+.menu-item .menu-image {
+    width: 40%;
+    min-width: 160px;
+    max-width: 220px;
+}
 .menu-item img {
     width: 100%;
-    height: 220px;
+    height: 100%;
     object-fit: cover;
-    border-radius: 16px;
-    margin-bottom: 12px;
+}
+
+/* Contenido a la derecha */
+.menu-item .menu-content {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 /* Logo + nombre del local */
 .menu-item .local-info {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin: 8px 0 12px 0;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 .menu-item .local-logo {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     object-fit: contain;
     background: #f8f8f8;
@@ -351,7 +349,7 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 .menu-item .local-name {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 600;
     color: #333;
 }
@@ -360,20 +358,22 @@ body {
 .menu-item .title-price {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin: 8px 0 10px 0;
+    align-items: flex-start;
+    margin-bottom: 8px;
 }
 .menu-item h3 {
     margin: 0;
     font-size: 1.3rem;
     font-weight: 600;
     color: #222;
+    flex: 1;
 }
 .menu-item .price {
     font-size: 1.6rem;
     font-weight: 700;
     color: #d32f2f;
     white-space: nowrap;
+    margin-left: 12px;
 }
 
 /* Descripción */
@@ -382,16 +382,17 @@ body {
     font-size: 0.95rem;
     line-height: 1.4;
     margin: 0 0 16px 0;
+    flex-grow: 1;
 }
 
 /* Botón agregar */
 .menu-item button.add-to-cart {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
     background: #d32f2f;
     color: white;
     border: none;
-    border-radius: 14px;
+    border-radius: 12px;
     font-size: 1.05rem;
     font-weight: 600;
     cursor: pointer;
@@ -401,16 +402,16 @@ body {
     background: #b71c1c;
 }
 
-/* Botón favorito */
+/* Botón favorito (corazón) */
 .fav-btn {
     position: absolute;
-    top: 18px;
-    right: 18px;
+    top: 12px;
+    right: 12px;
     background: rgba(255,255,255,0.92);
     border: none;
     border-radius: 50%;
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -430,45 +431,26 @@ body {
     height: 80%;
 }
 
-/* Flechas del carrusel (solo móviles) */
-.carousel-btn.menu-btn {
-    display: none;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 48px;
-    height: 48px;
-    background: rgba(211,47,47,0.85);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 24px;
-    cursor: pointer;
-    z-index: 10;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.3);
-}
-.carousel-btn.menu-btn:hover {
-    background: rgba(211,47,47,1);
-}
-.carousel-btn.left.menu-btn  { left: 8px; }
-.carousel-btn.right.menu-btn { right: 8px; }
-
-@media (max-width: 820px) {
-    .carousel-btn.menu-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+/* Ajustes en móviles pequeños */
+@media (max-width: 480px) {
+    .menu-item {
+        flex-direction: column;
     }
-}
-
-/* Desktop: más grandes */
-@media (min-width: 821px) {
-    .menu-display-wrapper { padding: 0 30px; }
-    .menu-items { gap: 24px; padding: 20px 0; margin: 0; }
-    .menu-item { flex: 0 0 340px; max-width: 360px; }
-    .menu-item img { height: 240px; }
-    .menu-item h3 { font-size: 1.35rem; }
-    .menu-item .price { font-size: 1.7rem; }
+    .menu-item .menu-image {
+        width: 100%;
+        min-width: auto;
+        max-width: none;
+        height: 180px;
+    }
+    .menu-item .menu-content {
+        padding: 14px;
+    }
+    .menu-item h3 {
+        font-size: 1.2rem;
+    }
+    .menu-item .price {
+        font-size: 1.5rem;
+    }
 }
     
     /* Carrito */
@@ -1752,13 +1734,7 @@ function displayMenus(menus, title) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `
         <h2>${title}</h2>
-        <div class="menu-display-wrapper">
-            <button class="carousel-btn left menu-btn" id="prev-menu">←</button>
-            
-            <div class="menu-items" id="menu-items-container"></div>
-            
-            <button class="carousel-btn right menu-btn" id="next-menu">→</button>
-        </div>
+        <div class="menu-items" id="menu-items-container"></div>
     `;
 
     const itemsDiv = document.getElementById('menu-items-container');
@@ -1777,33 +1753,37 @@ function displayMenus(menus, title) {
             const div = document.createElement('div');
             div.className = 'menu-item';
             div.innerHTML = `
-                <img src="${menu.imagen_url || 'https://placehold.co/340x220?text=Sin+Imagen'}" 
-                     alt="${menu.nombre}"
-                     onerror="this.src='https://placehold.co/340x220?text=Sin+Imagen'">
-                
-                <div class="local-info">
-                    <img class="local-logo"
-                         src="${menu.logo_url || 'https://placehold.co/48x48?text=Local'}"
-                         alt="${menu.nombre_local || 'Local'}"
-                         onerror="this.src='https://placehold.co/48x48?text=?'">
-                    <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
+                <div class="menu-image">
+                    <img src="${menu.imagen_url || 'https://placehold.co/220x220?text=Sin+Imagen'}" 
+                         alt="${menu.nombre}"
+                         onerror="this.src='https://placehold.co/220x220?text=Sin+Imagen'">
                 </div>
                 
-                <div class="title-price">
-                    <h3>${menu.nombre}</h3>
-                    <span class="price">$${menu.precio}</span>
+                <div class="menu-content">
+                    <div class="local-info">
+                        <img class="local-logo"
+                             src="${menu.logo_url || 'https://placehold.co/40x40?text=Local'}"
+                             alt="${menu.nombre_local || 'Local'}"
+                             onerror="this.src='https://placehold.co/40x40?text=?'">
+                        <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
+                    </div>
+                    
+                    <div class="title-price">
+                        <h3>${menu.nombre}</h3>
+                        <span class="price">$${menu.precio}</span>
+                    </div>
+                    
+                    <p class="description">${menu.descripcion || 'Sin descripción'}</p>
+                    
+                    <button class="add-to-cart" onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+                    
+                    <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
+                            data-menu-id="${menu.id}"
+                            onclick="toggleFavorite('${menu.id}')">
+                        <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
+                        <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
+                    </button>
                 </div>
-                
-                <p class="description">${menu.descripcion || 'Sin descripción'}</p>
-                
-                <button class="add-to-cart" onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
-                
-                <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
-                        data-menu-id="${menu.id}"
-                        onclick="toggleFavorite('${menu.id}')">
-                    <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
-                    <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
-                </button>
             `;
             itemsDiv.appendChild(div);
         });
@@ -1811,7 +1791,6 @@ function displayMenus(menus, title) {
 
     container.style.display = 'block';
     updateFavoriteButtons();
-    setupMenuCarousel(); // ¡No olvides esta línea!
 }
      
         function addToCartById(menuId) {
