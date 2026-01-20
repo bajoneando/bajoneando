@@ -2042,16 +2042,56 @@ async function registerUser() {
                 .catch(() => showError(container, 'Error en búsqueda'));
         }
         function fetchMenus(type, local) {
-            const container = document.getElementById('menu-display');
-            showLoading(container);
-            let url = `${scriptUrl}?action=getMenus`;
-            if (type) url += `&type=${encodeURIComponent(type)}`;
-            if (local) url += `&local=${encodeURIComponent(local)}`;
-            fetch(url)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
-                .catch(() => showError(container, 'Error al cargar menús'));
-        }
+    const container = document.getElementById('menu-display');
+    showLoading(container);
+
+    let url = `${scriptUrl}?action=getMenus`;
+    if (type) url += `&type=${encodeURIComponent(type)}`;
+    if (local) url += `&local=${encodeURIComponent(local)}`;
+
+    console.log("Intentando cargar menús desde:", url); // ← Útil para depurar
+
+    fetch(url)
+        .then(r => {
+            if (!r.ok) {
+                throw new Error(`Error HTTP ${r.status}: ${r.statusText}`);
+            }
+            return r.json();
+        })
+        .then(data => {
+            console.log("Respuesta completa del backend:", data); // ← IMPORANTE: mira esto en la consola
+
+            let menus = [];
+
+            // Posibles estructuras que puede devolver tu backend
+            if (Array.isArray(data)) {
+                menus = data;
+            } else if (data && Array.isArray(data.menus)) {
+                menus = data.menus;
+            } else if (data && Array.isArray(data.data)) {
+                menus = data.data;
+            } else if (data && data.success && Array.isArray(data.result)) {
+                menus = data.result;
+            } else {
+                console.warn("Formato inesperado de respuesta:", data);
+                throw new Error("Formato de respuesta no reconocido");
+            }
+
+            if (menus.length === 0) {
+                showError(container, 'No hay menús disponibles en esta categoría/local');
+            } else {
+                displayMenus(menus, type || 'Local seleccionado');
+            }
+        })
+        .catch(err => {
+            console.error("Error al cargar menús:", err);
+            let msg = 'Error al cargar los menús. Intenta de nuevo.';
+            if (err.message.includes('HTTP')) {
+                msg += ` (Código: ${err.message})`;
+            }
+            showError(container, msg);
+        });
+}
      
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
