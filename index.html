@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weep - Plataforma de Comidas</title>
+    <title>Weep - Plataforma de Pedidos y Delivery</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
     * { box-sizing: border-box; }
@@ -124,7 +124,6 @@ body {
         font-size: 1.8rem;
         margin: 30px 0;
     }
-        
     h2 {
         text-align: center;
         color: #c62828;
@@ -277,183 +276,57 @@ body {
 .suggestion:hover img {
     transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
 }
-/* ============================================= */
-/* TARJETAS DE MENÚ - UNA COLUMNA + IMAGEN A LA IZQUIERDA */
-/* ============================================= */
-
-/* Contenedor principal (ya no es carrusel) */
-#menu-display {
-    padding: 20px 15px;
-}
-
-/* Lista de tarjetas (una columna) */
-.menu-items {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    max-width: 800px; /* límite para que no se estire demasiado en pantallas grandes */
-    margin: 0 auto;
-}
-
-/* Tarjeta individual */
-.menu-item {
-    display: flex;
-    background: white;
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.menu-item:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
-}
-
-/* Imagen a la izquierda */
-.menu-item .menu-image {
-    width: 40%;
-    min-width: 160px;
-    max-width: 220px;
-}
-.menu-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* Contenido a la derecha */
-.menu-item .menu-content {
-    flex: 1;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-/* Logo + nombre del local */
-.menu-item .local-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-.menu-item .local-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: contain;
-    background: #f8f8f8;
-    border: 2px solid #eee;
-    padding: 4px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-.menu-item .local-name {
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #333;
-}
-
-/* Título + precio en la misma línea */
-.menu-item .title-price {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-}
-.menu-item h3 {
-    margin: 0;
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #222;
-    flex: 1;
-}
-.menu-item .price {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #d32f2f;
-    white-space: nowrap;
-    margin-left: 12px;
-}
-
-/* Descripción */
-.menu-item .description {
-    color: #555;
-    font-size: 0.95rem;
-    line-height: 1.4;
-    margin: 0 0 16px 0;
-    flex-grow: 1;
-}
-
-/* Botón agregar */
-.menu-item button.add-to-cart {
-    width: 100%;
-    padding: 12px;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.05rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-.menu-item button.add-to-cart:hover {
-    background: #b71c1c;
-}
-
-/* Botón favorito (corazón) */
-.fav-btn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: rgba(255,255,255,0.92);
-    border: none;
-    border-radius: 50%;
-    width: 42px;
-    height: 42px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
-    transition: all 0.25s ease;
-    z-index: 15;
-    padding: 6px;
-}
-.fav-btn:hover {
-    transform: scale(1.15);
-    background: white;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.3);
-}
-.fav-btn img {
-    width: 80%;
-    height: 80%;
-}
-
-/* Ajustes en móviles pequeños */
-@media (max-width: 480px) {
+    /* Tarjetas de menú - versión desktop */
     .menu-item {
-        flex-direction: column;
-    }
-    .menu-item .menu-image {
         width: 100%;
-        min-width: auto;
-        max-width: none;
-        height: 180px;
+        max-width: 260px;
+        background: white;
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        text-align: center;
+        transition: transform 0.3s ease;
     }
-    .menu-item .menu-content {
-        padding: 14px;
+    .menu-item:hover, .menu-item:active {
+        transform: translateY(-8px);
+    }
+    .menu-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 12px;
     }
     .menu-item h3 {
-        font-size: 1.2rem;
+        margin: 10px 0 6px;
+        font-size: 1.1rem;
+        color: #333;
     }
-    .menu-item .price {
-        font-size: 1.5rem;
+    .menu-item p {
+        color: #666;
+        margin: 4px 0;
+        font-size: 0.95rem;
     }
-}
-    
+    .menu-item p:last-of-type {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 8px 0;
+    }
+    .menu-item button {
+        width: 100%;
+        padding: 12px;
+        background-color: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    .menu-item button:hover, .menu-item button:active {
+        background-color: #b71c1c;
+    }
     /* Carrito */
 .cart-backdrop {
     position: fixed;
@@ -1360,7 +1233,7 @@ body {
      
 </style>
 
-        <!-- PWA - Manifest -->
+<!-- PWA - Manifest -->
 <link rel="manifest" href="/manifest.json">
 
 <!-- Favicon -->
@@ -1378,7 +1251,6 @@ body {
     <meta name="theme-color" content="#c62828">
     
 </head>
-    
 <body>
     <header>
         <div class="logo">
@@ -1411,10 +1283,6 @@ body {
 </div>
     </header>
     <main>
-        <button id="installBtn" style="display: none; margin: 20px auto; padding: 12px 24px; font-size: 1.1rem; background: #d32f2f; color: white; border: none; border-radius: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-  Instalar Weep App
-</button>
-        
         <h1>¿Qué se te antoja?</h1>
         <div class="categories-carousel-wrapper">
     <button class="carousel-btn left categories-btn" id="prev-category" aria-label="Categoría anterior">←</button>
@@ -1442,19 +1310,7 @@ body {
    
     <button class="carousel-btn right categories-btn" id="next-category" aria-label="Siguiente categoría">→</button>
 </div>
-        <!-- Reemplazar todo el bloque del menú-display -->
-<div id="menu-display" style="display:none;">
-    <div class="menu-display-wrapper">
-        <!-- Botones de navegación (solo móviles) -->
-        <button class="carousel-btn left menu-btn" id="prev-menu">←</button>
-        
-        <div class="menu-items" id="menu-items-container">
-            <!-- Aquí se insertarán las tarjetas con JS -->
-        </div>
-        
-        <button class="carousel-btn right menu-btn" id="next-menu">→</button>
-    </div>
-</div>
+        <div id="menu-display" style="display:none;"></div>
        
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
@@ -1756,65 +1612,56 @@ function showMyFavorites() {
 }
 function displayMenus(menus, title) {
     const container = document.getElementById('menu-display');
-    container.innerHTML = `
-        <h2>${title}</h2>
-        <div class="menu-items" id="menu-items-container"></div>
-    `;
-
-    const itemsDiv = document.getElementById('menu-items-container');
+    container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
+    const itemsDiv = container.querySelector('.menu-items');
+ 
+    // Limpiamos caché anterior
     currentDisplayedMenus = {};
-
-    // Aseguramos que menus sea un array
-    if (!Array.isArray(menus)) {
-        menus = menus.menus || menus.data || menus.result || [];
-    }
-
+ 
     if (menus.length === 0) {
-        itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:60px 20px;">No se encontraron menús.</p>';
+        itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
-        menus.forEach((menu) => {
+        menus.forEach((menu, index) => {
             currentDisplayedMenus[menu.id] = menu;
             const div = document.createElement('div');
             div.className = 'menu-item';
             div.innerHTML = `
-                <div class="menu-image">
-                    <img src="${menu.imagen_url || 'https://placehold.co/220x220?text=Sin+Imagen'}" 
-                         alt="${menu.nombre}"
-                         onerror="this.src='https://placehold.co/220x220?text=Sin+Imagen'">
-                </div>
-                
-                <div class="menu-content">
-                    <div class="local-info">
-                        <img class="local-logo"
-                             src="${menu.logo_url || 'https://placehold.co/40x40?text=Local'}"
-                             alt="${menu.nombre_local || 'Local'}"
-                             onerror="this.src='https://placehold.co/40x40?text=?'">
-                        <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
-                    </div>
-                    
-                    <div class="title-price">
-                        <h3>${menu.nombre}</h3>
-                        <span class="price">$${menu.precio}</span>
-                    </div>
-                    
-                    <p class="description">${menu.descripcion || 'Sin descripción'}</p>
-                    
-                    <button class="add-to-cart" onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
-                    
-                    <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
-                            data-menu-id="${menu.id}"
-                            onclick="toggleFavorite('${menu.id}')">
-                        <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
-                        <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
-                    </button>
-                </div>
-            `;
+    <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
+         alt="${menu.nombre}"
+         onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+
+    <!-- NUEVO: logo + nombre del local -->
+    <div class="local-info">
+        <img class="local-logo"
+             src="${menu.logo_url || 'https://placehold.co/36x36?text=Local'}"
+             alt="${menu.nombre_local || 'Local'}"
+             onerror="this.src='https://placehold.co/36x36?text=?'">
+        <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
+    </div>
+
+    <h3>${menu.nombre}</h3>
+    <p>${menu.descripcion || 'Sin descripción'}</p>
+    <p>$${menu.precio}</p>
+
+    <!-- Botón agregar al carrito -->
+    <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+
+    <!-- Botón favorito -->
+    <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
+            data-menu-id="${menu.id}"
+            onclick="toggleFavorite('${menu.id}')">
+        <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
+        <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
+    </button>
+`;
             itemsDiv.appendChild(div);
         });
     }
-
+ 
     container.style.display = 'block';
-    updateFavoriteButtons();
+ 
+    // Actualizamos visual de favoritos
+    setTimeout(updateFavoriteButtons, 100);
 }
      
         function addToCartById(menuId) {
@@ -2020,56 +1867,16 @@ async function registerUser() {
                 .catch(() => showError(container, 'Error en búsqueda'));
         }
         function fetchMenus(type, local) {
-    const container = document.getElementById('menu-display');
-    showLoading(container);
-
-    let url = `${scriptUrl}?action=getMenus`;
-    if (type) url += `&type=${encodeURIComponent(type)}`;
-    if (local) url += `&local=${encodeURIComponent(local)}`;
-
-    console.log("Intentando cargar menús desde:", url); // ← Útil para depurar
-
-    fetch(url)
-        .then(r => {
-            if (!r.ok) {
-                throw new Error(`Error HTTP ${r.status}: ${r.statusText}`);
-            }
-            return r.json();
-        })
-        .then(data => {
-            console.log("Respuesta completa del backend:", data); // ← IMPORANTE: mira esto en la consola
-
-            let menus = [];
-
-            // Posibles estructuras que puede devolver tu backend
-            if (Array.isArray(data)) {
-                menus = data;
-            } else if (data && Array.isArray(data.menus)) {
-                menus = data.menus;
-            } else if (data && Array.isArray(data.data)) {
-                menus = data.data;
-            } else if (data && data.success && Array.isArray(data.result)) {
-                menus = data.result;
-            } else {
-                console.warn("Formato inesperado de respuesta:", data);
-                throw new Error("Formato de respuesta no reconocido");
-            }
-
-            if (menus.length === 0) {
-                showError(container, 'No hay menús disponibles en esta categoría/local');
-            } else {
-                displayMenus(menus, type || 'Local seleccionado');
-            }
-        })
-        .catch(err => {
-            console.error("Error al cargar menús:", err);
-            let msg = 'Error al cargar los menús. Intenta de nuevo.';
-            if (err.message.includes('HTTP')) {
-                msg += ` (Código: ${err.message})`;
-            }
-            showError(container, msg);
-        });
-}
+            const container = document.getElementById('menu-display');
+            showLoading(container);
+            let url = `${scriptUrl}?action=getMenus`;
+            if (type) url += `&type=${encodeURIComponent(type)}`;
+            if (local) url += `&local=${encodeURIComponent(local)}`;
+            fetch(url)
+                .then(r => r.ok ? r.json() : Promise.reject())
+                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
+                .catch(() => showError(container, 'Error al cargar menús'));
+        }
      
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
@@ -2753,71 +2560,6 @@ window.addEventListener('load', () => {
     setupCategoriesCarousel(); // ← agregar esta línea
 });
 
-        function setupMenuCarousel() {
-    const container = document.getElementById('menu-items-container');
-    const prevBtn = document.getElementById('prev-menu');
-    const nextBtn = document.getElementById('next-menu');
-
-    if (!container || !prevBtn || !nextBtn) return;
-
-    function scrollLeft() {
-        container.scrollBy({ left: -container.clientWidth * 0.75, behavior: 'smooth' });
-    }
-
-    function scrollRight() {
-        container.scrollBy({ left: container.clientWidth * 0.75, behavior: 'smooth' });
-    }
-
-    prevBtn.addEventListener('click', scrollLeft);
-    nextBtn.addEventListener('click', scrollRight);
-
-    function updateButtons() {
-        const atStart = container.scrollLeft <= 0;
-        const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
-
-        prevBtn.disabled = atStart;
-        prevBtn.style.opacity = atStart ? '0.4' : '1';
-
-        nextBtn.disabled = atEnd;
-        nextBtn.style.opacity = atEnd ? '0.4' : '1';
-    }
-
-    container.addEventListener('scroll', updateButtons);
-    window.addEventListener('resize', updateButtons);
-
-    setTimeout(updateButtons, 300);
-}
-
-// Código para mostrar el botón de instalación manual
-window.addEventListener('beforeinstallprompt', (e) => {
-  // Prevenir que Chrome muestre el banner automático
-  e.preventDefault();
-  // Guardar el evento para usarlo después
-  deferredPrompt = e;
-  // Mostrar nuestro botón personalizado
-  document.getElementById('installBtn').style.display = 'block';
-});
-
-document.getElementById('installBtn').addEventListener('click', async () => {
-  if (deferredPrompt) {
-    // Mostrar el diálogo de instalación
-    deferredPrompt.prompt();
-    // Esperar a que el usuario responda
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`Usuario respondió: ${outcome}`);
-    // Limpiar el prompt
-    deferredPrompt = null;
-    // Ocultar el botón
-    document.getElementById('installBtn').style.display = 'none';
-  }
-});
-
-// Si ya está instalada, ocultar el botón
-window.addEventListener('appinstalled', () => {
-  console.log('¡App instalada!');
-  document.getElementById('installBtn').style.display = 'none';
-});
-
         // Service worker
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
@@ -2830,7 +2572,6 @@ window.addEventListener('appinstalled', () => {
         });
     });
   }
-</script>
-    
+    </script>
 </body>
 </html>
