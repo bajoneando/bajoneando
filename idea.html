@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weep - Plataforma de Comidas</title>
+    <title>Weep - Plataforma de Pedidos y Delivery</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
     * { box-sizing: border-box; }
@@ -16,44 +16,47 @@
         display: flex;
         flex-direction: column;
     }
+
     /* Header */
     header {
-    position: fixed; /* ← clave */
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 1000; /* para que quede por encima de todo */
-    background-color: #fff;
-    padding: 12px 15px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-    border-radius: 0 0 20px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-/* Importante: compensar el espacio que ocupa el header fijo */
-body {
-    padding-top: 140px; /* ← ajusta según la altura real del header en desktop */
-}
-/* Versión mobile (más pequeño) */
-@media (max-width: 768px) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background-color: #fff;
+        padding: 12px 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        border-radius: 0 0 20px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
     body {
-        padding-top: 110px; /* altura aproximada en mobile */
+        padding-top: 140px;
     }
-    header {
-        padding: 10px 12px;
-        border-radius: 0;
+
+    @media (max-width: 768px) {
+        body {
+            padding-top: 110px;
+        }
+        header {
+            padding: 10px 12px;
+            border-radius: 0;
+        }
     }
-}
+
     .logo {
-        height: 90px; /* Logo más grande en desktop */
+        height: 90px;
     }
     .logo img {
         height: 100%;
         object-fit: contain;
     }
+
     .search-bar {
         flex: 1;
         min-width: 200px;
@@ -68,19 +71,13 @@ body {
         font-size: 15px;
         outline: none;
     }
+
     .header-right {
         display: flex;
         align-items: center;
         gap: 15px;
     }
-    .profile {
-        font-size: 15px;
-        font-weight: 500;
-        color: #333;
-        white-space: nowrap;
-        cursor: pointer;
-    }
-    /* Ícono de carrito con imagen */
+
     .cart-icon {
         position: relative;
         cursor: pointer;
@@ -112,12 +109,14 @@ body {
         padding: 0 5px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
+
     main {
         flex: 1;
         max-width: 1200px;
         margin: 20px auto;
         padding: 0 15px;
     }
+
     h1 {
         text-align: center;
         color: #c62828;
@@ -130,490 +129,662 @@ body {
         font-size: 1.5rem;
         margin: 30px 0 20px;
     }
-      
-    /* Categorías - siempre en una sola fila, sin scroll horizontal */
-.categories {
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    padding: 0 10px 20px 10px;
-    margin: -100px auto 80px auto;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-}
-/* Tarjetas de categoría base */
-.category {
-    flex: 0 0 auto;
-    width: 120px; /* tamaño desktop base */
-    height: 120px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 12px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-.category:hover,
-.category:active {
-    transform: scale(1.04);
-}
-.category span {
-    position: absolute;
-    bottom: 8px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    color: white;
-    font-weight: 600;
-    font-size: clamp(11px, 3vw, 14px);
-    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-    z-index: 1;
-    padding: 0 4px;
-}
-/* Desktop y tablets grandes */
-@media (min-width: 900px) {
-    .categories {
-        justify-content: center;
+
+    /* === TARJETAS DE MENÚ HORIZONTALES (única versión actual) === */
+    .menu-items {
+        display: flex;
+        flex-direction: column;
         gap: 16px;
-        padding: 0 15px 30px 15px;
+        padding: 0 10px;
+        max-width: 900px;
+        margin: 0 auto;
     }
-    .category {
-        width: 140px;
-        height: 140px;
-    }
-    .category span {
-        font-size: 16px;
-        bottom: 10px;
-    }
-}
-/* Celulares y móviles (mismo tamaño que .suggestion) */
-@media (max-width: 768px) {
-    .categories {
-        gap: 6px;
-        padding: 0 6px 15px 6px;
-        margin-top: 0px;
-    }
-    .category {
-        width: 75px; /* ← IGUAL que .suggestion en 768px */
-        height: 75px;
-    }
-    .category span {
-        font-size: 12px;
-        bottom: 5px;
-    }
-}
-/* Móviles muy pequeños (mismo tamaño que .suggestion) */
-@media (max-width: 480px) {
-    .categories {
-        gap: 5px;
-        padding: 0 5px 12px 5px;
-        margin-top: -45px;
-    }
-    .category {
-        width: 70px; /* ← IGUAL que .suggestion en 480px */
-        height: 70px;
-    }
-    .category span {
-        font-size: 11px;
-        bottom: 4px;
-    }
-}
-/* Bloqueo de scroll horizontal no deseado */
-@media (max-width: 820px) {
-    html, body {
-        overflow-x: hidden !important;
-    }
-    main {
-        overflow-x: hidden !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        width: 100vw !important;
-    }
-}
-      
-    /* Sugerencias de locales ≈ mitad de tamaño */
-.suggestions {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
-.suggestion-items {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    padding: 20px 0;
-    width: 100%;
-    margin-top: -20px;
-}
-.suggestion {
-    width: 120px;
-    height: 120px;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.suggestion:hover, .suggestion:active {
-    transform: scale(1.1);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
-}
-.suggestion img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-.suggestion:hover img {
-    transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
-}
-    /* Tarjetas de menú - versión desktop */
+
     .menu-item {
-        width: 100%;
-        max-width: 260px;
+        display: flex;
+        align-items: center;
         background: white;
-        border-radius: 18px;
-        padding: 12px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        text-align: center;
-        transition: transform 0.3s ease;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        transition: all 0.3s ease;
+        position: relative;
     }
-    .menu-item:hover, .menu-item:active {
-        transform: translateY(-8px);
+
+    .menu-item:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 15px 35px rgba(211,47,47,0.25);
     }
+
     .menu-item img {
-        width: 100%;
-        height: 150px;
+        width: 120px;
+        height: 120px;
         object-fit: cover;
-        border-radius: 12px;
+        flex-shrink: 0;
     }
+
+    .menu-item .card-body-horizontal {
+        padding: 1.2rem 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .menu-item .local-info {
+        margin-bottom: 8px;
+    }
+
     .menu-item h3 {
-        margin: 10px 0 6px;
-        font-size: 1.1rem;
+        font-size: 1.25rem;
+        margin: 0 0 6px 0;
+        font-weight: 600;
         color: #333;
     }
+
     .menu-item p {
-        color: #666;
         margin: 4px 0;
+        color: #555;
         font-size: 0.95rem;
+        line-height: 1.4;
     }
-    .menu-item p:last-of-type {
-        font-size: 1.4rem;
+
+    .menu-item .precio {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #d32f2f;
+        margin: 8px 0 12px 0;
+    }
+
+    .menu-item .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+    }
+
+    .menu-item button {
+        padding: 10px 16px;
+        font-size: 0.95rem;
+        min-width: 140px;
+    }
+
+    /* Responsive móviles: pasa a vertical */
+    @media (max-width: 576px) {
+        .menu-item {
+            flex-direction: column;
+            text-align: center;
+        }
+        .menu-item img {
+            width: 100%;
+            height: 160px;
+            border-radius: 0;
+        }
+        .menu-item .card-body-horizontal {
+            padding: 1rem;
+        }
+        .menu-item .actions {
+            flex-direction: column;
+            gap: 10px;
+        }
+        .menu-item button {
+            width: 100%;
+        }
+    }
+
+    /* Botón favorito siempre en esquina superior derecha */
+    .menu-item .fav-btn {
+        position: absolute !important;
+        top: 12px !important;
+        right: 12px !important;
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.8) !important;
+        border: none !important;
+        border-radius: 50% !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+        transition: all 0.2s !important;
+        z-index: 10 !important;
+        overflow: hidden;
+        padding: 4px;
+    }
+
+    .fav-btn:hover {
+        transform: scale(1.15) !important;
+        background: white !important;
+    }
+
+    .fav-btn img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        position: absolute;
+        inset: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    .fav-btn .fav-empty { opacity: 1; }
+    .fav-btn.active .fav-empty { opacity: 0; }
+    .fav-btn .fav-filled { opacity: 0; }
+    .fav-btn.active .fav-filled { opacity: 1; }
+
+    /* Categorías */
+    .categories-carousel-wrapper {
+        position: relative;
+        width: 100%;
+        margin: 0 auto 30px auto;
+        padding: 0 20px;
+        box-sizing: border-box;
+    }
+
+    .categories {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 10px;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        padding: 10px 0;
+        margin: 0 -20px;
+        scrollbar-width: none;
+    }
+    .categories::-webkit-scrollbar { display: none; }
+
+    .category {
+        flex: 0 0 auto;
+        width: clamp(80px, 22vw, 100px);
+        height: clamp(80px, 22vw, 100px);
+        min-width: 80px;
+        background-size: cover;
+        background-position: center;
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: transform 0.18s ease;
+    }
+
+    .category:hover, .category:active { transform: scale(1.05); }
+
+    .category span {
+        position: absolute;
+        bottom: 6px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: white;
+        font-weight: 600;
+        font-size: clamp(10px, 3.1vw, 13px);
+        text-shadow: 0 1px 4px #000;
+        z-index: 1;
+        padding: 0 4px;
+    }
+
+    .carousel-btn.categories-btn {
+        display: none;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 38px;
+        height: 38px;
+        background: rgba(211, 47, 47, 0.75);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    .carousel-btn.categories-btn:hover {
+        background: rgba(211, 47, 47, 0.9);
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    .carousel-btn.left.categories-btn { left: 8px; }
+    .carousel-btn.right.categories-btn { right: 8px; }
+
+    @media (max-width: 820px) {
+        .carousel-btn.categories-btn { display: flex; }
+    }
+
+    @media (max-width: 420px) {
+        .category {
+            width: clamp(70px, 21vw, 85px);
+            height: clamp(70px, 21vw, 85px);
+        }
+        .carousel-btn.categories-btn {
+            width: 34px;
+            height: 34px;
+            font-size: 18px;
+        }
+    }
+
+    @media (min-width: 821px) {
+        .categories-carousel-wrapper { padding: 0; }
+        .categories {
+            justify-content: center;
+            gap: 16px;
+            margin: 0;
+            padding: 15px 0;
+        }
+        .category {
+            width: 130px;
+            height: 130px;
+        }
+        .category span {
+            font-size: 15px;
+            bottom: 10px;
+        }
+    }
+
+    .categories-carousel-wrapper {
+        position: relative;
+        margin-top: -70px;
+        z-index: 5;
+    }
+
+    @media (max-width: 768px) {
+        .categories-carousel-wrapper { margin-top: -20px; }
+    }
+
+    @media (min-width: 769px) {
+        .categories-carousel-wrapper { margin-top: -40px; }
+    }
+
+    /* Sugerencias / Locales */
+    .suggestions {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+
+    .suggestion-items {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        padding: 20px 0;
+        width: 100%;
+        margin-top: -20px;
+    }
+
+    .suggestion {
+        width: 120px;
+        height: 120px;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .suggestion:hover, .suggestion:active {
+        transform: scale(1.1);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .suggestion img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+    }
+
+    .suggestion:hover img {
+        transform: scale(1.15);
+    }
+
+    .suggestion-categoria {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 12px 8px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        transition: all 0.25s ease;
+        width: 140px;
+        height: auto;
+        min-height: 160px;
+    }
+
+    .suggestion-categoria:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    }
+
+    .suggestion-categoria img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        border-radius: 50%;
+        border: 3px solid #ffebee;
+        background: #fff;
+        padding: 4px;
+        margin-bottom: 10px;
+    }
+
+    .suggestion-categoria .suggestion-info { width: 100%; }
+
+    .suggestion-categoria .local-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #333;
+        margin-bottom: 6px;
+        line-height: 1.2;
+    }
+
+    .suggestion-categoria .categoria-precio {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.85rem;
+    }
+
+    .suggestion-categoria .cat {
+        color: #d32f2f;
+        font-weight: 500;
+        background: #ffebee;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+
+    .suggestion-categoria .precio-min {
+        color: #2e7d32;
+        font-weight: 700;
+    }
+
+    /* Carrito */
+    .cart-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1998;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+        pointer-events: none;
+    }
+    .cart-backdrop.active {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .cart-sidebar {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 100%;
+        max-width: 420px;
+        height: 100%;
+        background: white;
+        z-index: 2000;
+        transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: -8px 0 30px rgba(0,0,0,0.25);
+        display: flex;
+        flex-direction: column;
+    }
+    .cart-sidebar.active { right: 0; }
+
+    .cart-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fff;
+        position: relative;
+        z-index: 5;
+    }
+
+    .cart-header h2 {
+        margin: 0;
+        font-size: 1.45rem;
+        color: #c62828;
+    }
+
+    .cart-close {
+        background: none;
+        border: none;
+        font-size: 2.2rem;
+        line-height: 1;
+        color: #555;
+        cursor: pointer;
+    }
+    .cart-close:hover { color: #d32f2f; }
+
+    .cart-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 28px 20px 80px 20px;
+    }
+
+    @media (max-width: 768px) {
+        .cart-sidebar { max-width: 380px; }
+        .cart-header { padding: 14px 18px; }
+        .cart-header h2 { font-size: 1.38rem; }
+        .cart-close { font-size: 2.3rem; }
+        .cart-body { padding: 24px 16px 100px 16px; }
+    }
+
+    @media (max-width: 500px) {
+        .cart-sidebar { max-width: 340px; }
+        .cart-header { padding: 12px 16px; }
+        .cart-body { padding: 22px 14px 110px 14px; }
+    }
+
+    .delivery-option select {
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .cart-item {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .cart-item-left {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .cart-item-name { font-weight: 500; font-size: 1.1rem; }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .quantity-btn {
+        width: 40px;
+        height: 40px;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 20px;
+        cursor: pointer;
+    }
+
+    .quantity {
+        font-size: 1.2rem;
+        font-weight: bold;
+        min-width: 50px;
+        text-align: center;
+    }
+
+    .cart-item-price { font-weight: bold; font-size: 1.2rem; }
+
+    .remove-btn {
+        background: #ff5252;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .price-line {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        font-size: 1.1rem;
+    }
+
+    .price-line.total {
+        font-size: 1.6rem;
         font-weight: bold;
         color: #d32f2f;
-        margin: 8px 0;
+        border-top: 2px solid #ddd;
+        padding-top: 20px;
+        margin-top: 15px;
     }
-    .menu-item button {
+
+    .free-shipping-msg {
+        background: #e8f5e8;
+        color: #2e7d32;
+        padding: 16px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 600;
+        margin: 15px 0;
+        font-size: 1.1rem;
+    }
+
+    /* Loading */
+    .loading {
+        text-align: center;
+        padding: 50px 0;
+        color: #d32f2f;
+        font-weight: 600;
+    }
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #d32f2f;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        margin: 0 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Carousel de bebidas */
+    .drinks-panel { margin: 30px 0; }
+    .drinks-carousel {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+    .drinks-container {
+        display: flex;
+        transition: transform 0.4s ease;
+        gap: 12px;
+        padding: 10px 0;
+    }
+    .drink-card {
+        flex: 0 0 calc(80% - 12px);
+        background: white;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+    .drink-card img {
         width: 100%;
+        height: 140px;
+        object-fit: cover;
+    }
+    .drink-card h4 {
+        margin: 12px 10px 6px;
+        font-size: 1rem;
+    }
+    .drink-card .price {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #d32f2f;
+        margin: 10px 0;
+    }
+    .drink-card button {
+        width: 90%;
+        margin: 0 auto 15px;
         padding: 12px;
-        background-color: #d32f2f;
+        background: #d32f2f;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .carousel-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(211,47,47,0.8);
+        color: white;
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        font-size: 22px;
+        cursor: pointer;
+        z-index: 10;
+    }
+    .carousel-btn.left { left: 10px; }
+    .carousel-btn.right { right: 10px; }
+
+    /* Formulario checkout */
+    #checkout-form input,
+    #checkout-form select,
+    #checkout-form textarea {
+        width: 100%;
+        padding: 14px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 12px;
+        font-size: 16px;
+    }
+    #checkout-btn {
+        width: 100%;
+        padding: 16px;
+        background: #d32f2f;
         color: white;
         border: none;
         border-radius: 12px;
-        font-size: 1rem;
+        font-size: 1.2rem;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.3s;
     }
-    .menu-item button:hover, .menu-item button:active {
-        background-color: #b71c1c;
+    #checkout-btn:hover, #checkout-btn:active {
+        background: #b71c1c;
     }
-    /* Carrito */
-.cart-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 1998;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-    pointer-events: none;
-}
-.cart-backdrop.active {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-}
-.cart-sidebar {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: 100%;
-    max-width: 420px; /* ← mantenemos el ancho máximo original */
-    height: 100%;
-    background: white;
-    z-index: 2000;
-    transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: -8px 0 30px rgba(0,0,0,0.25);
-    display: flex;
-    flex-direction: column;
-}
-.cart-sidebar.active {
-    right: 0;
-}
-.cart-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #fff;
-    position: relative; /* ← sin sticky para evitar conflictos */
-    z-index: 5;
-}
-.cart-header h2 {
-    margin: 0;
-    font-size: 1.45rem;
-    color: #c62828;
-}
-.cart-close {
-    background: none;
-    border: none;
-    font-size: 2.2rem;
-    line-height: 1;
-    color: #555;
-    cursor: pointer;
-}
-.cart-close:hover {
-    color: #d32f2f;
-}
-.cart-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 28px 20px 80px 20px; /* ↑ más espacio arriba para compensar header fijo */
-}
-/* ── Ajustes móviles ─────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-    .cart-sidebar {
-        max-width: 380px; /* un poco más angosto en celular para no sentirse tan grande */
-        /* NO ponemos max-width: 90% ni 100% → mantenemos el comportamiento original */
-    }
-    .cart-header {
-        padding: 14px 18px; /* ligeramente más compacto */
-    }
-    .cart-header h2 {
-        font-size: 1.38rem; /* título un toque más pequeño */
-    }
-    .cart-close {
-        font-size: 2.3rem;
-    }
-    .cart-body {
-        padding: 24px 16px 100px 16px; /* más margen arriba y abajo en móvil */
-    }
-}
-@media (max-width: 500px) {
-    .cart-sidebar {
-        max-width: 340px; /* aún más angosto en pantallas muy pequeñas */
-    }
-    .cart-header {
-        padding: 12px 16px;
-    }
-    .cart-body {
-        padding: 22px 14px 110px 14px;
-    }
-}
-/* ── Resto de estilos (igual que antes) ───────────────────────────────────── */
-.delivery-option select {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    margin-bottom: 20px;
-}
-.cart-item {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding: 16px 0;
-    border-bottom: 1px solid #eee;
-}
-.cart-item-left {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-.cart-item-name {
-    font-weight: 500;
-    font-size: 1.1rem;
-}
-.quantity-controls {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-.quantity-btn {
-    width: 40px;
-    height: 40px;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 20px;
-    cursor: pointer;
-}
-.quantity {
-    font-size: 1.2rem;
-    font-weight: bold;
-    min-width: 50px;
-    text-align: center;
-}
-.cart-item-price {
-    font-weight: bold;
-    font-size: 1.2rem;
-}
-.remove-btn {
-    background: #ff5252;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-.price-line {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    font-size: 1.1rem;
-}
-.price-line.total {
-    font-size: 1.6rem;
-    font-weight: bold;
-    color: #d32f2f;
-    border-top: 2px solid #ddd;
-    padding-top: 20px;
-    margin-top: 15px;
-}
-.free-shipping-msg {
-    background: #e8f5e8;
-    color: #2e7d32;
-    padding: 16px;
-    border-radius: 12px;
-    text-align: center;
-    font-weight: 600;
-    margin: 15px 0;
-    font-size: 1.1rem;
-}
-        /* Loading */
-.loading {
-    text-align: center;
-    padding: 50px 0;
-    color: #d32f2f;
-    font-weight: 600;
-}
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #d32f2f;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: spin 1s linear infinite;
-    display: inline-block;
-    margin: 0 10px;
-}
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-/* Carousel de bebidas */
-.drinks-panel {
-    margin: 30px 0;
-}
-.drinks-carousel {
-    position: relative;
-    overflow: hidden;
-    border-radius: 12px;
-}
-.drinks-container {
-    display: flex;
-    transition: transform 0.4s ease;
-    gap: 12px;
-    padding: 10px 0;
-}
-.drink-card {
-    flex: 0 0 calc(80% - 12px);
-    background: white;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-    text-align: center;
-}
-.drink-card img {
-    width: 100%;
-    height: 140px;
-    object-fit: cover;
-}
-.drink-card h4 {
-    margin: 12px 10px 6px;
-    font-size: 1rem;
-}
-.drink-card .price {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #d32f2f;
-    margin: 10px 0;
-}
-.drink-card button {
-    width: 90%;
-    margin: 0 auto 15px;
-    padding: 12px;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-}
-.carousel-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(211,47,47,0.8);
-    color: white;
-    border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    font-size: 22px;
-    cursor: pointer;
-    z-index: 10;
-}
-.carousel-btn.left { left: 10px; }
-.carousel-btn.right { right: 10px; }
-/* Formulario checkout */
-#checkout-form input,
-#checkout-form select,
-#checkout-form textarea {
-    width: 100%;
-    padding: 14px;
-    margin-bottom: 15px;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    font-size: 16px;
-}
-#checkout-btn {
-    width: 100%;
-    padding: 16px;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.2rem;
-    font-weight: 600;
-    cursor: pointer;
-}
-#checkout-btn:hover, #checkout-btn:active {
-    background: #b71c1c;
-}
+
     /* Footer */
     footer {
         background-color: #c62828;
@@ -626,22 +797,20 @@ body {
         margin: 8px 0;
         color: #ffffff;
     }
-    footer p strong {
-        color: #ffffff;
-    }
+    footer p strong { color: #ffffff; }
     footer a {
         color: #ffffff;
         text-decoration: none;
         margin: 0 10px;
     }
-    footer a:hover {
-        text-decoration: underline;
-    }
+    footer a:hover { text-decoration: underline; }
+
     .container {
         max-width: 1200px;
         margin: 0 auto;
     }
-        /* ====================== RESPONSIVE ====================== */
+
+    /* Responsive general */
     @media (max-width: 768px) {
         .search-bar {
             order: 3;
@@ -649,170 +818,32 @@ body {
             margin: -10px 0 0;
             max-width: none;
         }
-        .header-right {
-            gap: 12px;
-        }
-        .logo {
-            height: 75px;
-        }
-      
+        .header-right { gap: 12px; }
+        .logo { height: 75px; }
         .suggestion {
             width: 75px;
             height: 75px;
         }
         .suggestion-items {
-        gap: 14px;
-        padding: 15px 0;
-    }
-}
+            gap: 14px;
+            padding: 15px 0;
+        }
         h1 { font-size: 1.6rem; }
         h2 { font-size: 1.4rem; }
-        .drink-card {
-            flex: 0 0 calc(75% - 12px);
-        }
-        /* Menú en 2 columnas */
-        .menu-items {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            padding: 0 10px;
-            justify-content: center;
-        }
-        .menu-item {
-            max-width: none;
-            padding: 10px;
-        }
-        .menu-item img {
-            height: 110px; /* Más pequeña que antes (era 120px) */
-            border-radius: 10px;
-        }
-        .menu-item h3 {
-            font-size: 0.95rem;
-            margin: 8px 0 4px;
-        }
-        .menu-item p {
-            font-size: 0.85rem;
-            margin: 3px 0;
-        }
-        .menu-item p:last-of-type {
-            font-size: 1.2rem;
-            margin: 6px 0;
-        }
-        .menu-item button {
-            padding: 9px;
-            font-size: 0.9rem;
-        }
     }
+
     @media (max-width: 480px) {
-        .logo {
-            height: 65px;
-        }
-      
+        .logo { height: 65px; }
         .suggestion {
             width: 70px;
             height: 70px;
         }
         .suggestion-items {
-        gap: 12px;
-        padding: 10px 0;
-    }
-}
-        .menu-item img {
-            height: 100px; /* Aún más compacta en móviles pequeños */
-        }
-        .drink-card {
-            flex: 0 0 calc(85% - 12px);
-        }
-        .carousel-btn {
-            width: 36px;
-            height: 36px;
-            font-size: 20px;
-        }
-        .menu-items {
             gap: 12px;
-            padding: 0 8px;
-        }
-        .menu-item {
-            padding: 8px;
-        }
-        .menu-item h3 {
-            font-size: 0.9rem;
-        }
-        .menu-item p {
-            font-size: 0.8rem;
-        }
-        .menu-item p:last-of-type {
-            font-size: 1.15rem;
-        }
-        .menu-item button {
-            padding: 8px;
-            font-size: 0.85rem;
-        }
-    }
-    @media (min-width: 769px) {
-        .menu-items {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 18px;
-        }
-        /* Tarjetas de platos más pequeñas en desktop */
-        .menu-item {
-            max-width: 230px; /* Antes era 260px → ahora más compactas */
-            padding: 10px;
-        }
-        .menu-item img {
-            height: 130px; /* Antes 150px → más pequeña */
-            border-radius: 12px;
-        }
-        .menu-item h3 {
-            font-size: 1.05rem;
-            margin: 10px 0 6px;
-        }
-        .menu-item p {
-            font-size: 0.9rem;
-        }
-        .menu-item p:last-of-type {
-            font-size: 1.35rem;
-        }
-        .menu-item button {
-            padding: 11px;
-            font-size: 0.95rem;
+            padding: 10px 0;
         }
     }
 
-        /* Contenedor logo + nombre debajo de la imagen */
-.menu-item .local-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 10px 0 8px 0;
-    padding: 0 4px;
-    justify-content: flex-start;
-}
-
-.menu-item .local-logo {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    object-fit: contain;           /* ← cambio clave: contain en vez de cover */
-    background-color: #f8f8f8;     /* fondo claro para logos transparentes o con bordes blancos */
-    border: 1px solid #eee;
-    flex-shrink: 0;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    padding: 4px;                  /* espacio interno → evita que toque el borde circular */
-    box-sizing: border-box;
-}
-
-/* En móviles reducimos un poco */
-@media (max-width: 768px) {
-    .menu-item .local-logo {
-        width: 32px;
-        height: 32px;
-        padding: 3px;
-    }
-}
-        
     /* Modal Styles */
     .modal {
         display: none;
@@ -854,9 +885,7 @@ body {
         border-radius: 8px;
         cursor: pointer;
     }
-    .modal-content button:hover {
-        background: #b71c1c;
-    }
+    .modal-content button:hover { background: #b71c1c; }
     .modal-content p {
         text-align: center;
         margin-top: 10px;
@@ -871,367 +900,94 @@ body {
         font-size: 28px;
         font-weight: bold;
     }
-    .close:hover,
-    .close:focus {
+    .close:hover, .close:focus {
         color: black;
         text-decoration: none;
         cursor: pointer;
     }
-        /* Contenedor del perfil */
-.profile-container {
-    position: relative;
-    display: inline-block;
-}
-/* Botón principal de perfil */
-.profile-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 30px;
-    background-color: #f5f5f5;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    white-space: nowrap;
-}
-.profile-button:hover {
-    background-color: #e0e0e0;
-}
-.profile-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #d32f2f;
-}
-/* Menú desplegable */
-.profile-dropdown {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 100%;
-    background: white;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.18);
-    border-radius: 12px;
-    min-width: 180px;
-    z-index: 1000;
-    overflow: hidden;
-    margin-top: 8px;
-}
-.profile-dropdown.active {
-    display: block;
-}
-.dropdown-item {
-    display: block;
-    padding: 12px 18px;
-    color: #333;
-    text-decoration: none;
-    font-size: 0.95rem;
-    transition: background 0.2s;
-}
-.dropdown-item:hover {
-    background-color: #ffebee;
-}
-.dropdown-item.logout {
-    color: #d32f2f;
-    border-top: 1px solid #eee;
-}
-/* Responsive: evita que se desborde en móviles pequeños */
-@media (max-width: 480px) {
-    .profile-icon {
-        width: 28px;
-        height: 28px;
-    }
- 
+
+    /* Perfil */
+    .profile-container { position: relative; display: inline-block; }
     .profile-button {
-        padding: 6px 10px;
-        font-size: 0.9rem;
-    }
-}
-        .modal-content label {
-    display: block;
-    margin: 12px 0 6px;
-    font-weight: 500;
-    color: #444;
-}
-.modal-content input[type="password"] {
-    margin-bottom: 8px;
-}
-.menu-item {
-    position: relative !important;
-    padding: 12px;
-    overflow: hidden;
-}
-.fav-btn {
-    position: absolute !important;
-    top: 10px !important;
-    right: 10px !important;
-    background: rgba(255, 255, 255, 0.8) !important;
-    border: none !important;
-    border-radius: 50% !important;
-    width: 40px !important;
-    height: 40px !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-    transition: all 0.2s !important;
-    z-index: 10 !important;
-    overflow: hidden; /* importante para las imágenes */
-    padding: 4px; /* pequeño margen interno */
-}
-.fav-btn:hover {
-    transform: scale(1.15) !important;
-    background: white !important;
-}
-/* Las dos imágenes se superponen y cambian con opacidad */
-.fav-btn img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    position: absolute;
-    inset: 0;
-    transition: opacity 0.25s ease;
-}
-.fav-btn .fav-empty {
-    opacity: 1;
-}
-.fav-btn.active .fav-empty {
-    opacity: 0;
-}
-.fav-btn .fav-filled {
-    opacity: 0;
-}
-.fav-btn.active .fav-filled {
-    opacity: 1;
-}
-        /* ============================================= */
-/* DESKTOP - 3 columnas + ajustes */
-/* ============================================= */
-@media (min-width: 992px) {
-    .menu-items {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 24px !important; /* un poco menos espacio que 28px */
-        max-width: 1200px; /* ancho total más controlado */
-        margin: 30px auto !important;
-        padding: 0 15px;
-    }
-    .menu-item {
-        max-width: none !important;
-        width: 100%; /* ocupa todo el espacio de la celda */
-        background: white;
-        border-radius: 16px;
-        padding: 12px !important; /* ← menos padding = tarjeta más compacta */
-        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-        position: relative;
-        overflow: hidden;
-    }
-    /* Imagen más pequeña y proporcionada */
-    .menu-item img {
-        width: 100%;
-        height: 220px !important; /* ← bajamos de 280px → más equilibrado */
-        object-fit: cover;
-        border-radius: 12px;
-    }
-    /* Aseguramos que el botón favorito esté bien posicionado y visible */
-    .fav-btn {
-        position: absolute !important;
-        top: 12px !important;
-        right: 12px !important;
-        width: 38px !important; /* ← un poco más pequeño */
-        height: 38px !important;
-        background: rgba(255, 255, 255, 0.92) !important;
-        border-radius: 50% !important;
-        padding: 6px !important;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
-        z-index: 15 !important; /* más arriba que la mayoría de elementos */
-        transition: all 0.2s ease !important;
-    }
-    .fav-btn:hover {
-        transform: scale(1.12) !important;
-        background: white !important;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
-    }
-    /* Íconos dentro del botón favorito más pequeños también */
-    .fav-btn img {
-        width: 80% !important;
-        height: 80% !important;
-    }
-    /* Opcional: texto un poco más pequeño para mantener proporción */
-    .menu-item h3 {
-        font-size: 1.15rem !important;
-        margin: 12px 0 6px !important;
-    }
-    .menu-item p {
-        font-size: 0.92rem !important;
-    }
-    .menu-item p:last-of-type {
-        font-size: 1.4rem !important;
-        margin: 10px 0 !important;
-    }
-    .menu-item button { /* botón "Agregar al carrito" */
-        padding: 11px !important;
-        font-size: 0.98rem !important;
-    }
-}
-/* Para que no se rompa en tablets grandes */
-@media (min-width: 768px) and (max-width: 991px) {
-    .menu-items {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 20px !important;
-    }
- 
-    .menu-item img {
-        height: 200px !important;
-    }
- 
-    .fav-btn {
-        width: 36px !important;
-        height: 36px !important;
-        top: 10px !important;
-        right: 10px !important;
-    }
-}
-        /* Contenedor principal del carrusel de categorías */
-.categories-carousel-wrapper {
-    position: relative;
-    width: 100%;
-    margin: 0 auto 30px auto;
-    padding: 0 20px; /* espacio para botones */
-    box-sizing: border-box;
-}
-/* Contenedor que se desliza */
-.categories {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 10px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    padding: 10px 0;
-    margin: 0 -20px; /* compensa el padding del wrapper */
-    scrollbar-width: none; /* oculta scrollbar en Firefox */
-}
-.categories::-webkit-scrollbar {
-    display: none; /* oculta scrollbar en Chrome/Safari */
-}
-/* Tarjetas de categoría */
-.category {
-    flex: 0 0 auto;
-    width: clamp(80px, 22vw, 100px);
-    height: clamp(80px, 22vw, 100px);
-    min-width: 80px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 12px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    cursor: pointer;
-    transition: transform 0.18s ease;
-}
-.category:hover,
-.category:active {
-    transform: scale(1.05);
-}
-.category span {
-    position: absolute;
-    bottom: 6px;
-    left: 0;
-    right: 0;
-    text-align: center;
-    color: white;
-    font-weight: 600;
-    font-size: clamp(10px, 3.1vw, 13px);
-    text-shadow: 0 1px 4px #000;
-    z-index: 1;
-    padding: 0 4px;
-}
-/* Botones de navegación (solo móviles) */
-.carousel-btn.categories-btn {
-    display: none; /* ocultos por defecto */
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 38px;
-    height: 38px;
-    background: rgba(211, 47, 47, 0.75);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 20px;
-    cursor: pointer;
-    z-index: 10;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    transition: all 0.2s;
-}
-.carousel-btn.categories-btn:hover {
-    background: rgba(211, 47, 47, 0.9);
-    transform: translateY(-50%) scale(1.1);
-}
-.carousel-btn.left.categories-btn { left: 8px; }
-.carousel-btn.right.categories-btn { right: 8px; }
-/* ── Responsive ──────────────────────────────────────── */
-/* Mostrar botones SOLO en móviles / tablets pequeñas */
-@media (max-width: 820px) {
-    .carousel-btn.categories-btn {
         display: flex;
         align-items: center;
-        justify-content: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 30px;
+        background-color: #f5f5f5;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        white-space: nowrap;
     }
-   
-    /* Ajuste fino en pantallas muy pequeñas */
-    @media (max-width: 420px) {
-        .category {
-            width: clamp(70px, 21vw, 85px);
-            height: clamp(70px, 21vw, 85px);
-        }
-        .carousel-btn.categories-btn {
-            width: 34px;
-            height: 34px;
-            font-size: 18px;
-        }
+    .profile-button:hover { background-color: #e0e0e0; }
+    .profile-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #d32f2f;
     }
-}
-/* En desktop → sin botones, centrado y más grande */
-@media (min-width: 821px) {
-    .categories-carousel-wrapper {
-        padding: 0;
+    .profile-dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: white;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+        border-radius: 12px;
+        min-width: 180px;
+        z-index: 1000;
+        overflow: hidden;
+        margin-top: 8px;
     }
-    .categories {
-        justify-content: center;
-        gap: 16px;
-        margin: 0;
-        padding: 15px 0;
+    .profile-dropdown.active { display: block; }
+    .dropdown-item {
+        display: block;
+        padding: 12px 18px;
+        color: #333;
+        text-decoration: none;
+        font-size: 0.95rem;
+        transition: background 0.2s;
     }
-    .category {
-        width: 130px;
-        height: 130px;
+    .dropdown-item:hover { background-color: #ffebee; }
+    .dropdown-item.logout {
+        color: #d32f2f;
+        border-top: 1px solid #eee;
     }
-    .category span {
-        font-size: 15px;
-        bottom: 10px;
+
+    @media (max-width: 480px) {
+        .profile-icon { width: 28px; height: 28px; }
+        .profile-button { padding: 6px 10px; font-size: 0.9rem; }
     }
-}
-    .categories-carousel-wrapper {
-    position: relative;
-    margin-top: -70px; /* valor base */
-    z-index: 5; /* por si acaso evita solapamientos raros */
-}
-@media (max-width: 768px) {
-    .categories-carousel-wrapper {
-        margin-top: -20px;; /* ← aquí controlas cuánto sube en celular */
+
+    .modal-content label {
+        display: block;
+        margin: 12px 0 6px;
+        font-weight: 500;
+        color: #444;
     }
-}
-@media (min-width: 769px) {
-    .categories-carousel-wrapper {
-        margin-top: -40px; /* desktop más natural */
-    }
-}
-     
+    .modal-content input[type="password"] { margin-bottom: 8px; }
+
+    /* Loading y spinner ya están definidos arriba */
 </style>
+
+    <!-- PWA - Manifest -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="https://i.postimg.cc/ZnBXJHJC/web-app-manifest-192x192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="https://i.postimg.cc/ZnBXJHJC/web-app-manifest-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="https://i.postimg.cc/ZnBXJHJC/web-app-manifest-192x192.png">
+
+<!-- Mejoras para iOS -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#c62828">
+
+    <!-- Color de la barra de estado en móviles -->
+    <meta name="theme-color" content="#c62828">
+    
 </head>
 <body>
     <header>
@@ -1292,12 +1048,13 @@ body {
    
     <button class="carousel-btn right categories-btn" id="next-category" aria-label="Siguiente categoría">→</button>
 </div>
-        <div id="menu-display" style="display:none;"></div>
-       
+        
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
+        
+        <div id="menu-display" style="display:none;"></div>
    
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
@@ -1422,6 +1179,7 @@ let userId = null;
 let userAddress = '';
 let currentPreferenceId = null; // para saber qué preferencia estamos esperando
 let pendingOrderData = null; // guardamos temporalmente los datos del pedido
+let ultimaCategoriaSeleccionada = null;  // ← nueva variable global
 // === NUEVA VARIABLE GLOBAL PARA FAVORITOS ===
 let userFavorites = []; // array de menuIds favoritos del usuario actual
         // Caché de menús mostrados actualmente (para acceder rápido al hacer clic)
@@ -1592,57 +1350,63 @@ function showMyFavorites() {
         })
         .catch(() => showError(container, 'Error al cargar tus favoritos'));
 }
-function displayMenus(menus, title) {
+function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
- 
-    // Limpiamos caché anterior
     currentDisplayedMenus = {};
- 
+
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
-        menus.forEach((menu, index) => {
+        menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
             const div = document.createElement('div');
             div.className = 'menu-item';
+
+            // Resaltar si coincide con la categoría
+            const esDeCategoria = categoriaDestacada &&
+                menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
+            if (esDeCategoria) {
+                div.classList.add('destacado-categoria');
+            }
+
             div.innerHTML = `
-    <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
-         alt="${menu.nombre}"
-         onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+                <img src="${menu.imagen_url || 'https://placehold.co/120x120?text=Sin+Imagen'}"
+                     alt="${menu.nombre}"
+                     onerror="this.src='https://placehold.co/120x120?text=Sin+Imagen'">
 
-    <!-- NUEVO: logo + nombre del local -->
-    <div class="local-info">
-        <img class="local-logo"
-             src="${menu.logo_url || 'https://placehold.co/36x36?text=Local'}"
-             alt="${menu.nombre_local || 'Local'}"
-             onerror="this.src='https://placehold.co/36x36?text=?'">
-        <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
-    </div>
+                <div class="card-body-horizontal">
+                    <div class="local-info">
+                        <img class="local-logo"
+                             src="${menu.logo_url || 'https://placehold.co/36x36?text=Local'}"
+                             alt="${menu.nombre_local || 'Local'}"
+                             onerror="this.src='https://placehold.co/36x36?text=?'}">
+                        <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
+                    </div>
 
-    <h3>${menu.nombre}</h3>
-    <p>${menu.descripcion || 'Sin descripción'}</p>
-    <p>$${menu.precio}</p>
+                    <h3>${menu.nombre}</h3>
+                    <p>${menu.descripcion || 'Sin descripción'}</p>
 
-    <!-- Botón agregar al carrito -->
-    <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+                    <div class="precio">$${Number(menu.precio).toLocaleString('es-AR')}</div>
 
-    <!-- Botón favorito -->
-    <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
-            data-menu-id="${menu.id}"
-            onclick="toggleFavorite('${menu.id}')">
-        <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
-        <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
-    </button>
-`;
+                    <div class="actions">
+                        <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+                        <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
+                                data-menu-id="${menu.id}"
+                                onclick="toggleFavorite('${menu.id}')">
+                            <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
+                            <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
+                        </button>
+                    </div>
+                </div>
+            `;
+
             itemsDiv.appendChild(div);
         });
     }
- 
+
     container.style.display = 'block';
- 
-    // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
      
@@ -1823,10 +1587,7 @@ async function registerUser() {
                 })
                 .catch(() => showError(container, 'Error al cargar locales'));
         }
-        document.querySelector('.categories').addEventListener('click', e => {
-            const cat = e.target.closest('.category');
-            if (cat) fetchMenus(cat.dataset.type, null);
-        });
+        
         function setupSearch() {
             const input = document.getElementById('search-input');
             let timeout;
@@ -1848,17 +1609,129 @@ async function registerUser() {
                 .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
                 .catch(() => showError(container, 'Error en búsqueda'));
         }
-        function fetchMenus(type, local) {
-            const container = document.getElementById('menu-display');
-            showLoading(container);
-            let url = `${scriptUrl}?action=getMenus`;
-            if (type) url += `&type=${encodeURIComponent(type)}`;
-            if (local) url += `&local=${encodeURIComponent(local)}`;
-            fetch(url)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
-                .catch(() => showError(container, 'Error al cargar menús'));
-        }
+        // 1. Cambiamos el nombre de la función para que sea más clara su intención
+//    y creamos una versión específica para categorías
+
+document.querySelector('.categories').addEventListener('click', e => {
+    const cat = e.target.closest('.category');
+    if (!cat) return;
+    
+    const categoria = cat.dataset.type;
+    ultimaCategoriaSeleccionada = categoria;
+    
+    fetchLocalesByCategoria(categoria);
+});
+        
+// Nueva función dedicada
+function fetchLocalesByCategoria(categoria) {
+    const container = document.getElementById('menu-display');
+    const suggestionContainer = document.getElementById('suggestion-items');
+    
+    // Ocultamos menú de platos y mostramos sección de locales
+    container.style.display = 'none';
+    suggestionContainer.innerHTML = ''; // limpiamos sugerencias normales
+    
+    showLoading(suggestionContainer);   // ← reutilizamos loading
+    
+    const url = `${scriptUrl}?action=getLocalesByCategoria&type=${encodeURIComponent(categoria)}`;
+    
+    fetch(url)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+            const locales = data.locales || [];
+            displayLocalesConCategoria(locales, categoria);
+        })
+        .catch(() => {
+            showError(suggestionContainer, 'No pudimos cargar los locales con esa categoría');
+        });
+}
+
+function displayLocalesConCategoria(locales, categoria) {
+    const container = document.getElementById('suggestion-items');
+    const suggestionsSection = document.querySelector('.suggestions');
+
+    // Limpiamos el contenedor
+    container.innerHTML = '';
+
+    // Opcional: agregamos una clase al contenedor padre para poder ajustar estilos específicos
+    // si es necesario (por ejemplo más espacio, centrado diferente, etc.)
+    suggestionsSection.classList.add('mostrando-por-categoria');
+
+    if (locales.length === 0) {
+        container.innerHTML = `
+            <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
+                No encontramos locales con <strong>${categoria}</strong> en este momento.
+            </p>`;
+        return;
+    }
+
+    locales.forEach(local => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-categoria';
+        div.dataset.local = local.local_id;
+
+        // Estructura con el nuevo estilo
+        div.innerHTML = `
+            <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
+                 alt="${local.nombre_local}"
+                 onerror="this.src='https://placehold.co/120x120?text=Local'">
+
+            <div class="suggestion-info">
+                <div class="local-name">${local.nombre_local}</div>
+                <div class="categoria-precio">
+                    <span class="cat">${categoria}</span>
+                    <span class="precio-min">
+                        desde $${Number(local.precio_min_categoria).toLocaleString('es-AR')}
+                    </span>
+                </div>
+            </div>
+        `;
+
+        // Acción al hacer clic: cargar menú del local con la categoría seleccionada
+        div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
+
+        container.appendChild(div);
+    });
+
+    // Cambiamos el título de la sección para que sea más claro
+    document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
+}
+
+        function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
+    const container = document.getElementById('menu-display');
+    showLoading(container);
+
+    let url = `${scriptUrl}?action=getMenus`;
+    if (tipoCategoria) url += `&type=${encodeURIComponent(tipoCategoria)}`;
+    if (localId)       url += `&local=${encodeURIComponent(localId)}`;
+
+    fetch(url)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+            let menus = data || [];  // asumimos que viene un array directamente
+
+            // Si venimos de seleccionar un local desde "Locales con [categoría]"
+            // → FILTRAMOS SOLO los platos de esa categoría
+            if (filtroCategoriaInicial && localId) {
+                const catLower = filtroCategoriaInicial.toLowerCase().trim();
+                menus = menus.filter(menu => 
+                    menu.categoria && 
+                    menu.categoria.toLowerCase().trim().includes(catLower)
+                );
+            }
+
+            // Título descriptivo
+            let titulo = 'Menú del local';
+            if (filtroCategoriaInicial && localId) {
+                titulo = `${filtroCategoriaInicial} - ${menus[0]?.nombre_local || 'Local'}`;
+            } else if (tipoCategoria) {
+                titulo = tipoCategoria;
+            }
+
+            displayMenus(menus, titulo, filtroCategoriaInicial);
+        })
+        .catch(() => showError(container, 'Error al cargar menús'));
+}
      
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
@@ -2541,6 +2414,19 @@ window.addEventListener('load', () => {
     loadAllDrinks();
     setupCategoriesCarousel(); // ← agregar esta línea
 });
+
+        // Service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js')
+        .then(function(registration) {
+          console.log('Service Worker registrado con éxito:', registration.scope);
+        })
+        .catch(function(error) {
+          console.log('Fallo al registrar el Service Worker:', error);
+        });
+    });
+  }
     </script>
 </body>
 </html>
