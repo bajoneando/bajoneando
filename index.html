@@ -1068,9 +1068,7 @@ main {
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
-      
-        <div id="menu-display" style="display:none;"></div>
-      
+
         <!-- Dentro de displayMenus, después de crear .menu-items -->
 <div class="ver-todo-categoria" id="ver-todo-categoria-btn" style="display:none; text-align:center; margin: 30px 0 40px;">
     <button style="
@@ -1091,6 +1089,9 @@ main {
         Ver todo <span id="categoria-ver-todo"></span>
     </button>
 </div>
+        
+        <div id="menu-display" style="display:none;"></div>
+      
  
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
@@ -1711,23 +1712,43 @@ function fetchLocalesByCategoria(categoria) {
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
+    const btnContainer = document.getElementById('ver-todo-categoria-btn');
+    const spanCategoria = document.getElementById('categoria-ver-todo');
+    const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
+
     // Limpiamos el contenedor
     container.innerHTML = '';
-    // Opcional: agregamos una clase al contenedor padre para poder ajustar estilos específicos
-    // si es necesario (por ejemplo más espacio, centrado diferente, etc.)
+
     suggestionsSection.classList.add('mostrando-por-categoria');
+
+    // Configuramos el botón "Ver todo"
+    if (categoria) {
+        spanCategoria.textContent = categoria;
+        btnContainer.style.display = 'block';
+
+        // Acción del botón: mostrar TODOS los menús de esa categoría
+        btnVerTodo.onclick = () => {
+            fetchMenus(categoria, null, null);  // ← sin localId = todos los locales
+            // Opcional: cambiar título de la sección de menús
+            // document.querySelector('#menu-display h2').textContent = `Todos los ${categoria}`;
+        };
+    } else {
+        btnContainer.style.display = 'none';
+    }
+
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
+        btnContainer.style.display = 'none'; // ocultamos si no hay resultados
         return;
     }
+
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-        // Estructura con el nuevo estilo
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1742,13 +1763,14 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
-        // Acción al hacer clic: cargar menú del local con la categoría seleccionada
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         container.appendChild(div);
     });
-    // Cambiamos el título de la sección para que sea más claro
+
+    // Actualizamos título
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
 }
+        
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
     showLoading(container);
