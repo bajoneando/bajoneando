@@ -1683,27 +1683,20 @@ function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
     
-    // Limpiamos el contenedor de sugerencias/locales
+    // Limpiamos todo lo anterior
     container.innerHTML = '';
-    
-    // Agregamos clase para poder diferenciar este estado en CSS si es necesario
     suggestionsSection.classList.add('mostrando-por-categoria');
-    
-    // Actualizamos el título de la sección
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
-    
-    // Caso: no hay locales con esa categoría
+
+    // Eliminamos cualquier botón anterior que pudiera haber quedado
+    const oldBtn = document.querySelector('.ver-todo-categoria-dinamica');
+    if (oldBtn) oldBtn.remove();
+
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
-        
-        // Ocultamos el botón si no hay resultados
-        const btnContainer = document.getElementById('ver-todo-categoria-btn');
-        if (btnContainer) {
-            btnContainer.style.display = 'none';
-        }
         return;
     }
 
@@ -1728,49 +1721,44 @@ function displayLocalesConCategoria(locales, categoria) {
             </div>
         `;
         
-        // Al hacer clic → mostramos el menú del local filtrado por la categoría actual
-        div.onclick = () => {
-            fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
-        };
-        
+        div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         container.appendChild(div);
     });
 
-    // ────────────────────────────────────────────────────────────────
-    // Configuramos y mostramos el botón "Ver todo [categoría]"
-    // ────────────────────────────────────────────────────────────────
-    const btnContainer = document.getElementById('ver-todo-categoria-btn');
-    const spanCategoria = document.getElementById('categoria-ver-todo');
-    const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
+    // Creamos y añadimos el botón dinámicamente
+    const btnContainer = document.createElement('div');
+    btnContainer.className = 'ver-todo-categoria dinamica';
+    btnContainer.style.cssText = 'text-align:center; margin: 30px 0 50px;';
 
-    if (btnContainer && btnVerTodo) {
-        // Actualizamos el texto del botón
-        if (spanCategoria) {
-            spanCategoria.textContent = categoria;
-        }
-        
-        // Mostramos el botón
-        btnContainer.style.display = 'block';
+    btnContainer.innerHTML = `
+        <button style="
+            background: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(211,47,47,0.3);
+            transition: all 0.2s;
+        "
+        onmouseover="this.style.transform='scale(1.04)'; this.style.boxShadow='0 6px 18px rgba(211,47,47,0.4)'"
+        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211,47,47,0.3)'"
+        >
+            Ver todo ${categoria}
+        </button>
+    `;
 
-        // Limpiamos cualquier evento anterior para evitar duplicados
-        btnVerTodo.onclick = null;
+    const button = btnContainer.querySelector('button');
+    button.onclick = function() {
+        console.log(`Botón "Ver todo ${categoria}" presionado`);
+        ultimaCategoriaSeleccionada = categoria;
+        fetchMenus(categoria, null, null);
+        // Opcional: btnContainer.remove(); si quieres que desaparezca después de clic
+    };
 
-        // Asignamos la acción correcta
-        btnVerTodo.onclick = function() {
-            console.log(`Clic en "Ver todo ${categoria}" → cargando todos los menús de la categoría`);
-            
-            // Guardamos para consistencia
-            ultimaCategoriaSeleccionada = categoria;
-            
-            // Llamamos a fetchMenus sin localId → todos los menús de la categoría
-            fetchMenus(categoria, null, null);
-            
-            // Opcional: ocultar el botón después de usarlo
-            // btnContainer.style.display = 'none';
-        };
-    } else {
-        console.warn("No se encontró el botón 'ver-todo-categoria-btn' en el DOM");
-    }
+    container.appendChild(btnContainer);
 }
     
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
