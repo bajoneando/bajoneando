@@ -1386,7 +1386,7 @@ function showMyFavorites() {
        
 function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
-   
+
     // Limpiamos y preparamos la estructura
     container.innerHTML = `
         <h2>${title}</h2>
@@ -1411,23 +1411,27 @@ function displayMenus(menus, title, categoriaDestacada = null) {
             </button>
         </div>
     `;
+
     const itemsDiv = container.querySelector('.menu-items');
     currentDisplayedMenus = {};
+
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center; color:#999; padding:50px 20px; font-size:1.1rem;">No se encontraron menús en este momento.</p>';
+        hideVerTodoButton();
     } else {
         menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
-           
+
             const div = document.createElement('div');
             div.className = 'menu-item';
-           
+
             // Resaltar si coincide con la categoría destacada
             const esDeCategoria = categoriaDestacada &&
                 menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
             if (esDeCategoria) {
                 div.classList.add('destacado-categoria');
             }
+
             div.innerHTML = `
                 <img src="${menu.imagen_url || 'https://placehold.co/120x120?text=Sin+Imagen'}"
                      alt="${menu.nombre}"
@@ -1454,36 +1458,66 @@ function displayMenus(menus, title, categoriaDestacada = null) {
                     </div>
                 </div>
             `;
-           
+
             itemsDiv.appendChild(div);
         });
     }
+
     // ────────────────────────────────────────────────────────────────
-// Lógica del botón "Ver todo [categoría]"
-// ────────────────────────────────────────────────────────────────
-const btnContainer = document.getElementById('ver-todo-categoria-btn');
-const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
-const spanCategoria = document.getElementById('categoria-ver-todo');
-if (ultimaCategoriaSeleccionada && categoriaDestacada) {
-   
-    spanCategoria.textContent = ultimaCategoriaSeleccionada;
-    btnContainer.style.display = 'block';
-    // CAMBIO IMPORTANTE AQUÍ
-    btnVerTodo.onclick = () => {
-        // Mostrar TODOS los menús de esa categoría (sin importar local)
-        fetchMenus(ultimaCategoriaSeleccionada, null, null);
-       
-        // Opcional: cambiar título para que sea más claro
-        // document.querySelector('#menu-display h2').textContent =
-        // `Todos los ${ultimaCategoriaSeleccionada}`;
-    };
-} else {
-    btnContainer.style.display = 'none';
-}
+    // Lógica para decidir si mostramos el botón "Ver todo [categoría]"
+    // ────────────────────────────────────────────────────────────────
+    const mostrarVerTodo = 
+        ultimaCategoriaSeleccionada &&               // Existe categoría seleccionada
+        categoriaDestacada &&                        // Estamos filtrando por categoría
+        !title.toLowerCase().includes("todos los");  // No estamos ya en "ver todo"
+
+    if (mostrarVerTodo) {
+        showVerTodoButton(ultimaCategoriaSeleccionada, "platos");
+    } else {
+        hideVerTodoButton();
+    }
+
     // Mostramos el contenedor de menús
     container.style.display = 'block';
-    // Actualizamos visual de favoritos (por si acaso)
+
+    // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
+}
+
+        function showVerTodoButton(categoria, contexto = "platos") {
+    const btnContainer = document.getElementById('ver-todo-categoria-btn');
+    const spanCategoria = document.getElementById('categoria-ver-todo');
+    const btn = document.getElementById('btn-ver-todo-categoria');
+
+    if (!btnContainer || !spanCategoria || !btn) return;
+
+    spanCategoria.textContent = categoria;
+    btnContainer.style.display = 'block';
+
+    // Limpiamos eventos anteriores
+    btn.onclick = null;
+
+    if (contexto === "locales") {
+        // Caso 1: estamos viendo locales → Ver todo lleva a TODOS los platos de la categoría
+        btn.onclick = () => {
+            fetchMenus(categoria, null, null);
+            // Opcional: cambiar título
+            document.querySelector('#menu-display h2').textContent = `Todos los ${categoria}`;
+        };
+    } else {
+        // Caso 2: estamos viendo platos de un local (filtrado por cat) → Ver todo igual lleva a TODOS
+        btn.onclick = () => {
+            fetchMenus(categoria, null, null);
+            document.querySelector('#menu-display h2').textContent = `Todos los ${categoria}`;
+        };
+    }
+}
+
+function hideVerTodoButton() {
+    const btnContainer = document.getElementById('ver-todo-categoria-btn');
+    if (btnContainer) {
+        btnContainer.style.display = 'none';
+    }
 }
     
         function addToCartById(menuId) {
@@ -1708,26 +1742,30 @@ function fetchLocalesByCategoria(categoria) {
             showError(suggestionContainer, 'No pudimos cargar los locales con esa categoría');
         });
 }
+        
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
+
     // Limpiamos el contenedor
     container.innerHTML = '';
-    // Opcional: agregamos una clase al contenedor padre para poder ajustar estilos específicos
-    // si es necesario (por ejemplo más espacio, centrado diferente, etc.)
     suggestionsSection.classList.add('mostrando-por-categoria');
+
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
+        hideVerTodoButton(); // Ocultamos el botón si no hay resultados
         return;
     }
+
+    // Creamos las tarjetas de locales
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-        // Estructura con el nuevo estilo
+
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1742,13 +1780,20 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
-        // Acción al hacer clic: cargar menú del local con la categoría seleccionada
+
+        // Al hacer clic → mostramos los menús del local filtrados por la categoría
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
+
         container.appendChild(div);
     });
-    // Cambiamos el título de la sección para que sea más claro
+
+    // Actualizamos el título de la sección
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
+
+    // Mostramos el botón "Ver todo [categoría]" debajo de los locales
+    showVerTodoButton(categoria, "locales");
 }
+        
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
     showLoading(container);
