@@ -1449,18 +1449,17 @@ function displayMenus(menus, title, categoriaDestacada = null) {
 // Lógica para botón "Ver todo el menú" (solo si filtrado por categoría y es un local específico)
 let showFullMenuButton = false;
 let currentLocalId = null;
-let currentLocalName = '';
+
 if (categoriaDestacada && menus.length > 0) {
     currentLocalId = menus[0].local_id;
-    currentLocalName = menus[0].nombre_local || 'Local';
     if (currentLocalId && menus.every(menu => menu.local_id === currentLocalId)) {
         showFullMenuButton = true;
     }
 }
+
 if (showFullMenuButton) {
-    // Agregar botón después del de categoría (reutiliza estilo similar)
     container.innerHTML += `
-        <div class="ver-todo-menu" style="display:block; text-align:center; margin: 30px 0 40px;">
+        <div class="ver-todo-menu" style="text-align:center; margin: 30px 0 50px;">
             <button style="
                 background: #d32f2f;
                 color: white;
@@ -1471,20 +1470,18 @@ if (showFullMenuButton) {
                 font-weight: 600;
                 cursor: pointer;
                 box-shadow: 0 4px 12px rgba(211,47,47,0.3);
-                transition: all 0.2s;
             "
             onmouseover="this.style.transform='scale(1.04)'; this.style.boxShadow='0 6px 18px rgba(211,47,47,0.4)'"
             onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211,47,47,0.3)'"
             >
-                Ver todo el menú
+                Ver todo el menú de ${menus[0].nombre_local || 'este local'}
             </button>
         </div>
     `;
-    // Asignar evento (usa variables locales para closure)
+
     const fullMenuBtn = container.querySelector('.ver-todo-menu button');
     fullMenuBtn.onclick = () => {
-        fetchMenus(null, currentLocalId, null); // Carga menú completo del local sin filtro
-        // Opcional: actualizar título en el fetch, pero el actual maneja "Menú del local"
+        fetchMenus(null, currentLocalId, null);
     };
 }
     
