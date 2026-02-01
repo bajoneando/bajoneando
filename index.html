@@ -1803,51 +1803,54 @@ function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
-
     currentDisplayedMenus = {};
 
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
-        menus.forEach((menu, index) => {
+        menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
             const div = document.createElement('div');
             div.className = 'menu-item';
-            
-            // Resaltamos si coincide con la categoría destacada
-            const esDeCategoria = categoriaDestacada && 
+
+            // Resaltar si coincide con la categoría
+            const esDeCategoria = categoriaDestacada &&
                 menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
-            
             if (esDeCategoria) {
-                div.classList.add('destacado-categoria');  // ← clase para resaltar
+                div.classList.add('destacado-categoria');
             }
 
             div.innerHTML = `
-    <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" 
-         alt="${menu.nombre}"
-         onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
+                <img src="${menu.imagen_url || 'https://placehold.co/120x120?text=Sin+Imagen'}"
+                     alt="${menu.nombre}"
+                     onerror="this.src='https://placehold.co/120x120?text=Sin+Imagen'">
 
-    <div class="local-info">
-        <img class="local-logo"
-             src="${menu.logo_url || 'https://placehold.co/36x36?text=Local'}"
-             alt="${menu.nombre_local || 'Local'}"
-             onerror="this.src='https://placehold.co/36x36?text=?'}">
-        <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
-    </div>
+                <div class="card-body-horizontal">
+                    <div class="local-info">
+                        <img class="local-logo"
+                             src="${menu.logo_url || 'https://placehold.co/36x36?text=Local'}"
+                             alt="${menu.nombre_local || 'Local'}"
+                             onerror="this.src='https://placehold.co/36x36?text=?'}">
+                        <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
+                    </div>
 
-    <h3>${menu.nombre}</h3>
-    <p>${menu.descripcion || 'Sin descripción'}</p>
-    <p>$${menu.precio}</p>
+                    <h3>${menu.nombre}</h3>
+                    <p>${menu.descripcion || 'Sin descripción'}</p>
 
-    <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+                    <div class="precio">$${Number(menu.precio).toLocaleString('es-AR')}</div>
 
-    <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
-            data-menu-id="${menu.id}"
-            onclick="toggleFavorite('${menu.id}')">
-        <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
-        <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
-    </button>
-`;
+                    <div class="actions">
+                        <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+                        <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
+                                data-menu-id="${menu.id}"
+                                onclick="toggleFavorite('${menu.id}')">
+                            <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
+                            <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
+                        </button>
+                    </div>
+                </div>
+            `;
+
             itemsDiv.appendChild(div);
         });
     }
