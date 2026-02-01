@@ -274,40 +274,40 @@ main {
     .menu-item {
         min-height: 90px; /* aún más bajo en celular */
     }
-  
+ 
     .menu-item img {
         width: 90px; /* imagen más chica en pantallas pequeñas */
         height: 90px;
     }
-  
+ 
     .menu-item .card-body-horizontal {
         padding: 8px 10px; /* menos padding interno */
     }
-  
+ 
     .menu-item .local-logo {
         width: 26px;
         height: 26px;
     }
-  
+ 
     .menu-item h3 {
         font-size: 1rem;
     }
-  
+ 
     .menu-item p {
         font-size: 0.78rem;
         -webkit-line-clamp: 2;
     }
-  
+ 
     .menu-item .precio {
         font-size: 1.25rem;
     }
-  
+ 
     .menu-item button.add-to-cart {
         padding: 7px 10px;
         font-size: 0.85rem;
         min-width: 110px;
     }
-  
+ 
     .menu-item .actions {
         gap: 6px;
     }
@@ -1002,7 +1002,7 @@ main {
 <meta name="theme-color" content="#c62828">
     <!-- Color de la barra de estado en móviles -->
     <meta name="theme-color" content="#c62828">
-  
+ 
 </head>
 <body>
     <header>
@@ -1021,7 +1021,7 @@ main {
                 class="profile-icon">
             <span>Mi Perfil</span>
         </div>
-   
+  
         <!-- Menú desplegable -->
         <div class="profile-dropdown" id="profile-dropdown">
     <a href="#" class="dropdown-item" onclick="openEditProfileModal()">Editar perfil</a>
@@ -1039,7 +1039,6 @@ main {
         <h1>¿Qué se te antoja?</h1>
         <div class="categories-carousel-wrapper">
     <button class="carousel-btn left categories-btn" id="prev-category" aria-label="Categoría anterior">←</button>
- 
     <div class="categories" id="categories-container">
         <div class="category" data-type="Hamburguesas" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
             <span>Burguers</span>
@@ -1060,10 +1059,9 @@ main {
             <span>Bebidas</span>
         </div>
     </div>
- 
     <button class="carousel-btn right categories-btn" id="next-category" aria-label="Siguiente categoría">→</button>
 </div>
-      
+     
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
@@ -1089,10 +1087,9 @@ main {
         Ver todo <span id="categoria-ver-todo"></span>
     </button>
 </div>
-        
+     
         <div id="menu-display" style="display:none;"></div>
-      
- 
+     
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
 <!-- 2. Reemplaza completamente el <div id="cart-section"> original por este bloque -->
@@ -1135,7 +1132,7 @@ main {
 </select>
 <!-- Contenedor donde se mostrará el checkout de MP -->
 <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-           
+          
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
@@ -1180,16 +1177,16 @@ main {
     <div class="modal-content">
         <span class="close" onclick="closeModal('edit-profile-modal')">×</span>
         <h2>Editar Perfil</h2>
-   
+  
         <label for="edit-name">Nombre completo</label>
         <input type="text" id="edit-name" placeholder="Nombre completo" required>
-   
+  
         <label for="edit-email">Correo electrónico</label>
         <input type="email" id="edit-email" placeholder="Correo electrónico" required>
-   
+  
         <label for="edit-new-password">Nueva contraseña (opcional)</label>
         <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
-   
+  
         <button onclick="saveProfileChanges()">Guardar cambios</button>
     </div>
 </div>
@@ -1293,7 +1290,7 @@ function switchToLogin() {
     closeModal('register-modal');
     showModal('login-modal');
 }
-      
+     
 // ==================== CARGAR FAVORITOS DEL USUARIO ====================
 function loadUserFavorites() {
     if (!userId) return;
@@ -1384,10 +1381,10 @@ function showMyFavorites() {
         })
         .catch(() => showError(container, 'Error al cargar tus favoritos'));
 }
-      
+     
 function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
-  
+ 
     // Limpiamos y preparamos la estructura
     container.innerHTML = `
         <h2>${title}</h2>
@@ -1419,10 +1416,10 @@ function displayMenus(menus, title, categoriaDestacada = null) {
     } else {
         menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
-          
+         
             const div = document.createElement('div');
             div.className = 'menu-item';
-          
+         
             // Resaltar si coincide con la categoría destacada
             const esDeCategoria = categoriaDestacada &&
                 menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
@@ -1455,7 +1452,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
                     </div>
                 </div>
             `;
-          
+         
             itemsDiv.appendChild(div);
         });
     }
@@ -1466,14 +1463,14 @@ const btnContainer = document.getElementById('ver-todo-categoria-btn');
 const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
 const spanCategoria = document.getElementById('categoria-ver-todo');
 if (ultimaCategoriaSeleccionada && categoriaDestacada) {
-  
+ 
     spanCategoria.textContent = ultimaCategoriaSeleccionada;
     btnContainer.style.display = 'block';
     // CAMBIO IMPORTANTE AQUÍ
     btnVerTodo.onclick = () => {
         // Mostrar TODOS los menús de esa categoría (sin importar local)
         fetchMenus(ultimaCategoriaSeleccionada, null, null);
-      
+     
         // Opcional: cambiar título para que sea más claro
         // document.querySelector('#menu-display h2').textContent =
         // `Todos los ${ultimaCategoriaSeleccionada}`;
@@ -1486,7 +1483,7 @@ if (ultimaCategoriaSeleccionada && categoriaDestacada) {
     // Actualizamos visual de favoritos (por si acaso)
     setTimeout(updateFavoriteButtons, 100);
 }
-   
+  
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1596,7 +1593,7 @@ async function registerUser() {
         const result = await response.json();
         if (result.success) {
             alert('¡Registro exitoso! Bienvenid@ ' + nombre);
-          
+         
             // Guardamos datos en localStorage
             localStorage.setItem('userId', result.userId);
             localStorage.setItem('userName', nombre);
@@ -1619,7 +1616,7 @@ async function registerUser() {
         btn.textContent = 'Registrarse';
     }
 }
-      
+     
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
@@ -1652,7 +1649,7 @@ async function registerUser() {
                 })
                 .catch(() => showError(container, 'Error al cargar locales'));
         }
-      
+     
         function setupSearch() {
             const input = document.getElementById('search-input');
             let timeout;
@@ -1679,26 +1676,26 @@ async function registerUser() {
 document.querySelector('.categories').addEventListener('click', e => {
     const cat = e.target.closest('.category');
     if (!cat) return;
-  
+ 
     const categoria = cat.dataset.type;
     ultimaCategoriaSeleccionada = categoria;
-  
+ 
     fetchLocalesByCategoria(categoria);
 });
-      
+     
 // Nueva función dedicada
 function fetchLocalesByCategoria(categoria) {
     const container = document.getElementById('menu-display');
     const suggestionContainer = document.getElementById('suggestion-items');
-  
+ 
     // Ocultamos menú de platos y mostramos sección de locales
     container.style.display = 'none';
     suggestionContainer.innerHTML = ''; // limpiamos sugerencias normales
-  
+ 
     showLoading(suggestionContainer); // ← reutilizamos loading
-  
+ 
     const url = `${scriptUrl}?action=getLocalesByCategoria&type=${encodeURIComponent(categoria)}`;
-  
+ 
     fetch(url)
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
@@ -1712,43 +1709,23 @@ function fetchLocalesByCategoria(categoria) {
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
-    const btnContainer = document.getElementById('ver-todo-categoria-btn');
-    const spanCategoria = document.getElementById('categoria-ver-todo');
-    const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
-
     // Limpiamos el contenedor
     container.innerHTML = '';
-
+    // Opcional: agregamos una clase al contenedor padre para poder ajustar estilos específicos
+    // si es necesario (por ejemplo más espacio, centrado diferente, etc.)
     suggestionsSection.classList.add('mostrando-por-categoria');
-
-    // Configuramos el botón "Ver todo"
-    if (categoria) {
-        spanCategoria.textContent = categoria;
-        btnContainer.style.display = 'block';
-
-        // Acción del botón: mostrar TODOS los menús de esa categoría
-        btnVerTodo.onclick = () => {
-            fetchMenus(categoria, null, null);  // ← sin localId = todos los locales
-            // Opcional: cambiar título de la sección de menús
-            // document.querySelector('#menu-display h2').textContent = `Todos los ${categoria}`;
-        };
-    } else {
-        btnContainer.style.display = 'none';
-    }
-
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
-        btnContainer.style.display = 'none'; // ocultamos si no hay resultados
         return;
     }
-
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
+        // Estructura con el nuevo estilo
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1763,14 +1740,13 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
+        // Acción al hacer clic: cargar menú del local con la categoría seleccionada
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         container.appendChild(div);
     });
-
-    // Actualizamos título
+    // Cambiamos el título de la sección para que sea más claro
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
 }
-        
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
     showLoading(container);
@@ -1791,7 +1767,7 @@ function displayLocalesConCategoria(locales, categoria) {
             }
             // Título más inteligente según el caso
             let titulo = 'Menú del local';
-          
+         
             if (tipoCategoria && !localId) {
                 titulo = `Todos los ${tipoCategoria}`;
             }
@@ -1805,7 +1781,7 @@ function displayLocalesConCategoria(locales, categoria) {
         })
         .catch(() => showError(container, 'Error al cargar menús'));
 }
-   
+  
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
     // Solo aplicamos display: block al contenedor de menús
@@ -1970,7 +1946,7 @@ function showAddedToCartToast(nombreProducto) {
         }
     }, 4000);
 }
-      
+     
     function updateCartCount() {
         const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
         document.getElementById('cart-count').textContent = total;
@@ -2087,7 +2063,7 @@ function removeFromCart(index) {
         updateCartDisplay();
     }
 }
-   
+  
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
@@ -2288,7 +2264,7 @@ function startPaymentPolling(preferenceId, externalReference) { // ← agregamos
         }
     }, 5000);
 }
-   
+  
 async function finalizeOrderAfterPayment() {
     if (!pendingOrderData) return;
     // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
@@ -2353,7 +2329,7 @@ function openChangeAddressModal() {
     addressInput.value = userAddress || '';
     showModal('change-address-modal');
 }
-   
+  
 function saveProfileChanges() {
     const name = document.getElementById('edit-name').value.trim();
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
@@ -2387,10 +2363,10 @@ function saveProfileChanges() {
                 // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-           
+          
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
-           
+          
                 // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
@@ -2402,7 +2378,7 @@ function saveProfileChanges() {
             alert('Error de conexión al intentar actualizar el perfil');
         });
 }
-   
+  
 function saveAddressChange() {
     const newAddress = document.getElementById('edit-address').value.trim();
     if (!newAddress) {
@@ -2418,11 +2394,11 @@ function saveAddressChange() {
             if (data.success) {
                 userAddress = newAddress;
                 localStorage.setItem('userAddress', newAddress);
-           
+          
                 // Actualizamos el campo de dirección del checkout si está visible
                 const checkoutDir = document.getElementById('direccion');
                 if (checkoutDir) checkoutDir.value = newAddress;
-           
+          
                 alert('Dirección actualizada correctamente');
                 closeModal('change-address-modal');
             } else {
@@ -2500,7 +2476,7 @@ async function createConfirmedOrder(orderData) {
             body: JSON.stringify(payload)
         });
         alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
-   
+  
         // Limpieza final
         cart = [];
         updateCartCount();
@@ -2509,7 +2485,7 @@ async function createConfirmedOrder(orderData) {
         document.getElementById('mercadopago-checkout').style.display = 'none';
         document.getElementById('checkout-btn').style.display = 'block';
         document.getElementById('checkout-form').reset();
-   
+  
     } catch (err) {
         console.error("Error registrando pedido pagado:", err);
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
@@ -2520,37 +2496,30 @@ function setupCategoriesCarousel() {
     const container = document.getElementById('categories-container');
     const prevBtn = document.getElementById('prev-category');
     const nextBtn = document.getElementById('next-category');
- 
     if (!container || !prevBtn || !nextBtn) return;
- 
     function scrollLeft() {
         container.scrollBy({ left: -container.clientWidth * 0.7, behavior: 'smooth' });
     }
- 
     function scrollRight() {
         container.scrollBy({ left: container.clientWidth * 0.7, behavior: 'smooth' });
     }
- 
     prevBtn.addEventListener('click', scrollLeft);
     nextBtn.addEventListener('click', scrollRight);
- 
     // Opcional: deshabilitar botones si no hay más para ver
     function updateButtons() {
         const atStart = container.scrollLeft <= 0;
         const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
-     
+    
         prevBtn.disabled = atStart;
         prevBtn.style.opacity = atStart ? '0.4' : '1';
         prevBtn.style.cursor = atStart ? 'default' : 'pointer';
-     
+    
         nextBtn.disabled = atEnd;
         nextBtn.style.opacity = atEnd ? '0.4' : '1';
         nextBtn.style.cursor = atEnd ? 'default' : 'pointer';
     }
- 
     container.addEventListener('scroll', updateButtons);
     window.addEventListener('resize', updateButtons);
- 
     // Estado inicial
     setTimeout(updateButtons, 300);
 }
