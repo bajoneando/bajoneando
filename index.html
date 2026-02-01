@@ -1917,10 +1917,7 @@ async function registerUser() {
                 })
                 .catch(() => showError(container, 'Error al cargar locales'));
         }
-        document.querySelector('.categories').addEventListener('click', e => {
-            const cat = e.target.closest('.category');
-            if (cat) fetchMenus(cat.dataset.type, null);
-        });
+        
         function setupSearch() {
             const input = document.getElementById('search-input');
             let timeout;
