@@ -1711,27 +1711,23 @@ function fetchLocalesByCategoria(categoria) {
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
-
     // Limpiamos el contenedor
     container.innerHTML = '';
-
+    // Opcional: agregamos una clase al contenedor padre para poder ajustar estilos específicos
+    // si es necesario (por ejemplo más espacio, centrado diferente, etc.)
     suggestionsSection.classList.add('mostrando-por-categoria');
-
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
-        // Ocultamos el botón si no hay resultados
-        const btnContainer = document.getElementById('ver-todo-categoria-btn');
-        if (btnContainer) btnContainer.style.display = 'none';
         return;
     }
-
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
+        // Estructura con el nuevo estilo
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1746,37 +1742,13 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
+        // Acción al hacer clic: cargar menú del local con la categoría seleccionada
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         container.appendChild(div);
     });
-
-    // Cambiamos el título
+    // Cambiamos el título de la sección para que sea más claro
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
-
-    // ────────────────────────────────────────────────────────────────
-    // Mostrar el botón "Ver todo [categoría]" debajo de los locales
-    // ────────────────────────────────────────────────────────────────
-    const btnContainer = document.getElementById('ver-todo-categoria-btn');
-    const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
-    const spanCategoria = document.getElementById('categoria-ver-todo');
-
-    if (ultimaCategoriaSeleccionada) {
-        spanCategoria.textContent = ultimaCategoriaSeleccionada;
-        btnContainer.style.display = 'block';
-
-        // Acción: mostrar TODOS los menús de esa categoría (sin importar local)
-        btnVerTodo.onclick = () => {
-            fetchMenus(ultimaCategoriaSeleccionada, null, null);
-        };
-    } else {
-        btnContainer.style.display = 'none';
-    }
-
-    // Movemos el botón al final del contenedor de sugerencias/locales
-    // (esto evita que quede flotando en otra sección)
-    container.parentNode.insertBefore(btnContainer, null);
 }
-        
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
     showLoading(container);
