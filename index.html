@@ -2037,12 +2037,23 @@ function displayLocalesConCategoria(locales, categoria) {
 
     fetch(url)
         .then(r => r.ok ? r.json() : Promise.reject())
-        .then(menus => {
-            // Si venimos desde la selección de categoría + local,
-            // podemos pasar el título más descriptivo
+        .then(data => {
+            let menus = data || [];  // asumimos que viene un array directamente
+
+            // Si venimos de seleccionar un local desde "Locales con [categoría]"
+            // → FILTRAMOS SOLO los platos de esa categoría
+            if (filtroCategoriaInicial && localId) {
+                const catLower = filtroCategoriaInicial.toLowerCase().trim();
+                menus = menus.filter(menu => 
+                    menu.categoria && 
+                    menu.categoria.toLowerCase().trim().includes(catLower)
+                );
+            }
+
+            // Título descriptivo
             let titulo = 'Menú del local';
-            if (filtroCategoriaInicial) {
-                titulo = `Menú - ${filtroCategoriaInicial}`;
+            if (filtroCategoriaInicial && localId) {
+                titulo = `${filtroCategoriaInicial} - ${menus[0]?.nombre_local || 'Local'}`;
             } else if (tipoCategoria) {
                 titulo = tipoCategoria;
             }
@@ -2051,7 +2062,6 @@ function displayLocalesConCategoria(locales, categoria) {
         })
         .catch(() => showError(container, 'Error al cargar menús'));
 }
-
      
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
