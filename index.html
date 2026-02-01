@@ -1458,28 +1458,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
             itemsDiv.appendChild(div);
         });
     }
-    // Dentro de displayMenus, reemplaza toda la sección del botón por esto:
 
-// ────────────────────────────────────────────────────────────────
-// Lógica del botón "Ver todo [categoría]"
-// ────────────────────────────────────────────────────────────────
-const btnContainer = document.getElementById('ver-todo-categoria-btn');
-const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
-const spanCategoria = document.getElementById('categoria-ver-todo');
-
-if (ultimaCategoriaSeleccionada) {
-    
-    spanCategoria.textContent = ultimaCategoriaSeleccionada;
-    btnContainer.style.display = 'block';
-
-    btnVerTodo.onclick = () => {
-        // Siempre mostramos TODOS los platos de la categoría seleccionada
-        fetchMenus(ultimaCategoriaSeleccionada, null, null);
-    };
-
-} else {
-    btnContainer.style.display = 'none';
-}
     
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
