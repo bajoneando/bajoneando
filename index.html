@@ -1445,27 +1445,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
             itemsDiv.appendChild(div);
         });
     }
-    // ────────────────────────────────────────────────────────────────
-// Lógica del botón "Ver todo [categoría]"
-// ────────────────────────────────────────────────────────────────
-const btnContainer = document.getElementById('ver-todo-categoria-btn');
-const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
-const spanCategoria = document.getElementById('categoria-ver-todo');
-if (ultimaCategoriaSeleccionada && categoriaDestacada) {
-    spanCategoria.textContent = ultimaCategoriaSeleccionada;
-    btnContainer.style.display = 'block';
-    // CAMBIO IMPORTANTE AQUÍ
-    btnVerTodo.onclick = () => {
-        // Mostrar TODOS los menús de esa categoría (sin importar local)
-        fetchMenus(ultimaCategoriaSeleccionada, null, null);
     
-        // Opcional: cambiar título para que sea más claro
-        // document.querySelector('#menu-display h2').textContent =
-        // `Todos los ${ultimaCategoriaSeleccionada}`;
-    };
-} else {
-    btnContainer.style.display = 'none';
-}
 // Lógica para botón "Ver todo el menú" (solo si filtrado por categoría y es un local específico)
 let showFullMenuButton = false;
 let currentLocalId = null;
@@ -1784,27 +1764,33 @@ function displayLocalesConCategoria(locales, categoria) {
     });
 
     // ────────────────────────────────────────────────────────────────
-    // Mostrar botón "Ver todo [categoría]" debajo de los locales
-    // Usamos el contenedor estático que ya existe en el HTML
-    // ────────────────────────────────────────────────────────────────
-    const btnContainer = document.getElementById('ver-todo-categoria-btn');
-    const spanCategoria = document.getElementById('categoria-ver-todo');
-    const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
+// Mostrar y configurar botón "Ver todo [categoría]"
+// ────────────────────────────────────────────────────────────────
+const btnContainer = document.getElementById('ver-todo-categoria-btn');
+const spanCategoria = document.getElementById('categoria-ver-todo');
+const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
 
-    if (btnContainer && spanCategoria && btnVerTodo) {
+if (btnContainer && btnVerTodo) {
+    if (spanCategoria) {
         spanCategoria.textContent = categoria;
-        btnContainer.style.display = 'block';
-
-        // Asignamos la acción: mostrar TODOS los menús de esa categoría (sin filtro de local)
-        btnVerTodo.onclick = () => {
-            ultimaCategoriaSeleccionada = categoria; // mantenemos consistencia
-            fetchMenus(categoria, null, null);
-            
-            // Opcional: ocultar el botón después de hacer clic (para que no quede flotando)
-            // btnContainer.style.display = 'none';
-        };
     }
+    btnContainer.style.display = 'block';
+
+    // Limpiamos eventos anteriores para evitar duplicados
+    btnVerTodo.onclick = null;
+    
+    btnVerTodo.onclick = function() {
+        console.log("Clic en Ver todo → cargando todos los", categoria);
+        ultimaCategoriaSeleccionada = categoria;
+        fetchMenus(categoria, null, null);
+        
+        // Opcional: ocultar después de usar (puedes quitar si prefieres que permanezca)
+        // btnContainer.style.display = 'none';
+    };
+} else {
+    console.warn("No se encontró el contenedor del botón Ver todo");
 }
+    
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
     
