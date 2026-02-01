@@ -1566,33 +1566,30 @@ function displayMenus(menus, title, categoriaDestacada = null) {
     }
 
     // ────────────────────────────────────────────────────────────────
-    // Lógica del botón "Ver todo [categoría]"
-    // ────────────────────────────────────────────────────────────────
-    const btnContainer = document.getElementById('ver-todo-categoria-btn');
-    const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
-    const spanCategoria = document.getElementById('categoria-ver-todo');
+// Lógica del botón "Ver todo [categoría]"
+// ────────────────────────────────────────────────────────────────
+const btnContainer = document.getElementById('ver-todo-categoria-btn');
+const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
+const spanCategoria = document.getElementById('categoria-ver-todo');
 
-    // Solo mostramos el botón si:
-    // 1. Hay una categoría seleccionada previamente
-    // 2. Estamos mostrando menús de un local específico
-    // 3. Hay al menos un menú (para tener local_id)
-    if (ultimaCategoriaSeleccionada && 
-        menus.length > 0 && 
-        menus[0]?.local_id && 
-        categoriaDestacada) {   // ← importante: solo cuando venimos filtrados
+if (ultimaCategoriaSeleccionada && categoriaDestacada) {
+    
+    spanCategoria.textContent = ultimaCategoriaSeleccionada;
+    btnContainer.style.display = 'block';
+
+    // CAMBIO IMPORTANTE AQUÍ
+    btnVerTodo.onclick = () => {
+        // Mostrar TODOS los menús de esa categoría (sin importar local)
+        fetchMenus(ultimaCategoriaSeleccionada, null, null);
         
-        spanCategoria.textContent = ultimaCategoriaSeleccionada;
-        btnContainer.style.display = 'block';
+        // Opcional: cambiar título para que sea más claro
+        // document.querySelector('#menu-display h2').textContent = 
+        //     `Todos los ${ultimaCategoriaSeleccionada}`;
+    };
 
-        // Acción al hacer clic: mostrar TODOS los menús del mismo local (sin filtro)
-        btnVerTodo.onclick = () => {
-            if (menus[0]?.local_id) {
-                fetchMenus(null, menus[0].local_id, null);  // null = sin filtro de categoría
-            }
-        };
-    } else {
-        btnContainer.style.display = 'none';
-    }
+} else {
+    btnContainer.style.display = 'none';
+}
 
     // Mostramos el contenedor de menús
     container.style.display = 'block';
@@ -1899,11 +1896,10 @@ function displayLocalesConCategoria(locales, categoria) {
     fetch(url)
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
-            let menus = data || [];  // asumimos que viene un array directamente
+            let menus = data || [];
 
-            // Si venimos de seleccionar un local desde "Locales con [categoría]"
-            // → FILTRAMOS SOLO los platos de esa categoría
-            if (filtroCategoriaInicial && localId) {
+            // Filtrado adicional en frontend (por si el backend no lo hace bien)
+            if (filtroCategoriaInicial && !tipoCategoria) {
                 const catLower = filtroCategoriaInicial.toLowerCase().trim();
                 menus = menus.filter(menu => 
                     menu.categoria && 
@@ -1911,15 +1907,20 @@ function displayLocalesConCategoria(locales, categoria) {
                 );
             }
 
-            // Título descriptivo
+            // Título más inteligente según el caso
             let titulo = 'Menú del local';
-            if (filtroCategoriaInicial && localId) {
+            
+            if (tipoCategoria && !localId) {
+                titulo = `Todos los ${tipoCategoria}`;
+            }
+            else if (filtroCategoriaInicial && localId) {
                 titulo = `${filtroCategoriaInicial} - ${menus[0]?.nombre_local || 'Local'}`;
-            } else if (tipoCategoria) {
+            }
+            else if (tipoCategoria) {
                 titulo = tipoCategoria;
             }
 
-            displayMenus(menus, titulo, filtroCategoriaInicial);
+            displayMenus(menus, titulo, tipoCategoria || filtroCategoriaInicial);
         })
         .catch(() => showError(container, 'Error al cargar menús'));
 }
