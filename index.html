@@ -1464,26 +1464,19 @@ function displayMenus(menus, title, categoriaDestacada = null) {
 const btnContainer = document.getElementById('ver-todo-categoria-btn');
 const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
 const spanCategoria = document.getElementById('categoria-ver-todo');
-if (ultimaCategoriaSeleccionada && categoriaDestacada) {
-   
+
+// Mostramos el botón SOLO si hay una categoría seleccionada
+if (ultimaCategoriaSeleccionada) {
+    
     spanCategoria.textContent = ultimaCategoriaSeleccionada;
     btnContainer.style.display = 'block';
-    // CAMBIO IMPORTANTE AQUÍ
+
+    // Acción: SIEMPRE carga TODOS los platos de la categoría (sin importar local)
     btnVerTodo.onclick = () => {
-        // Mostrar TODOS los menús de esa categoría (sin importar local)
         fetchMenus(ultimaCategoriaSeleccionada, null, null);
-       
-        // Opcional: cambiar título para que sea más claro
-        // document.querySelector('#menu-display h2').textContent =
-        // `Todos los ${ultimaCategoriaSeleccionada}`;
     };
 } else {
     btnContainer.style.display = 'none';
-}
-    // Mostramos el contenedor de menús
-    container.style.display = 'block';
-    // Actualizamos visual de favoritos (por si acaso)
-    setTimeout(updateFavoriteButtons, 100);
 }
     
         function addToCartById(menuId) {
@@ -1687,9 +1680,6 @@ document.querySelector('.categories').addEventListener('click', e => {
        
 // Nueva función dedicada
 function fetchLocalesByCategoria(categoria) {
-    // Limpiar botón anterior si existe
-    const oldBtn = document.getElementById('ver-todo-categoria-btn');
-    if (oldBtn) oldBtn.remove();
     const container = document.getElementById('menu-display');
     const suggestionContainer = document.getElementById('suggestion-items');
    
@@ -1711,57 +1701,11 @@ function fetchLocalesByCategoria(categoria) {
             showError(suggestionContainer, 'No pudimos cargar los locales con esa categoría');
         });
 }
-
-        // Coloca esto lo más arriba posible dentro del <script>, después de las variables globales
-function agregarBotonVerTodoCategoria(containerElement, categoria) {
-    // Evitamos duplicados
-    const existingBtn = document.getElementById('ver-todo-categoria-btn');
-    if (existingBtn) {
-        existingBtn.remove(); // eliminamos el anterior si existe
-    }
-
-    const btnHTML = `
-        <div class="ver-todo-categoria" id="ver-todo-categoria-btn" style="text-align:center; margin: 35px 0 50px;">
-            <button id="btn-ver-todo-categoria" style="
-                background: #d32f2f;
-                color: white;
-                border: none;
-                border-radius: 50px;
-                padding: 14px 32px;
-                font-size: 1.05rem;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 4px 14px rgba(211, 47, 47, 0.35);
-                transition: all 0.22s ease;
-            "
-            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(211,47,47,0.45)'"
-            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.35)'"
-            >
-                Ver todo <span>${categoria}</span>
-            </button>
-        </div>
-    `;
-
-    // Insertamos después del contenido
-    containerElement.insertAdjacentHTML('beforeend', btnHTML);
-
-    // Asignamos la acción
-    const btn = document.getElementById('btn-ver-todo-categoria');
-    if (btn) {
-        btn.onclick = () => {
-            fetchMenus(categoria, null, null);
-        };
-    }
-}
-
-        
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
 
-    // Limpiamos el contenedor
     container.innerHTML = '';
-
     suggestionsSection.classList.add('mostrando-por-categoria');
 
     if (locales.length === 0) {
@@ -1776,7 +1720,6 @@ function displayLocalesConCategoria(locales, categoria) {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1791,18 +1734,40 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
-
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         container.appendChild(div);
     });
 
-    // Cambiamos el título
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
 
-    // ← AQUÍ AGREGAMOS EL BOTÓN "VER TODO" DEBAJO DE LOS LOCALES
-    if (ultimaCategoriaSeleccionada) {
-        agregarBotonVerTodoCategoria(container, ultimaCategoriaSeleccionada);
-    }
+    // Botón "Ver todo [categoría]" debajo de los locales
+    const verTodoDiv = document.createElement('div');
+    verTodoDiv.style.cssText = 'text-align: center; margin: 40px 0 60px;';
+    verTodoDiv.innerHTML = `
+        <button id="btn-ver-todo-categoria-locales" style="
+            background: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 14px 32px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(211,47,47,0.35);
+            transition: all 0.22s;
+        "
+        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(211,47,47,0.45)'"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.35)'"
+        >
+            Ver todo ${categoria}
+        </button>
+    `;
+    container.appendChild(verTodoDiv);
+
+    // Acción: siempre carga TODOS los platos de la categoría
+    document.getElementById('btn-ver-todo-categoria-locales').onclick = () => {
+        fetchMenus(categoria, null, null);
+    };
 }
         
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
@@ -2549,7 +2514,6 @@ async function createConfirmedOrder(orderData) {
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
 }
-        
         // Carrusel de categorías (solo en móviles)
 function setupCategoriesCarousel() {
     const container = document.getElementById('categories-container');
@@ -2610,7 +2574,6 @@ window.addEventListener('load', () => {
         });
     });
   }
-
     </script>
 </body>
 </html>
