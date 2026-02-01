@@ -110,13 +110,6 @@
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
 
-    main {
-        flex: 1;
-        max-width: 1200px;
-        margin: 20px auto;
-        padding: 0 15px;
-    }
-
     h1 {
         text-align: center;
         color: #c62828;
@@ -130,15 +123,76 @@
         margin: 30px 0 20px;
     }
 
-    /* === TARJETAS DE MENÚ HORIZONTALES SIEMPRE (incluso en mobile) === */
+        /* Contenedor principal más inteligente */
+main {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;                /* base */
+    width: 100%;                    /* ocupa todo el ancho disponible */
+    box-sizing: border-box;
+}
+
+/* Ajustes progresivos para mejor centrado en tablets y mobile grande */
+@media (max-width: 992px) {
+    main {
+        padding: 0 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 0 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    main {
+        padding: 0 8px;
+    }
+}
+
+/* Aseguramos que los bloques internos se centren bien */
+.menu-items,
+.suggestions,
+.categories-carousel-wrapper {
+    width: 100%;
+    max-width: 100%;               /* evita que se desborden */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Para .menu-items específicamente (donde más se nota el problema) */
 .menu-items {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 0 8px;           /* menos padding lateral en mobile */
-    max-width: 1000px;
-    margin: 0 auto 30px;
+    padding: 0;                    /* quitamos padding lateral aquí */
+    margin: 0 auto;
+    width: 100%;
+    max-width: 900px;              /* limita el ancho máximo */
+    box-sizing: border-box;
 }
+
+/* En mobile, permitimos que ocupe casi todo el ancho */
+@media (max-width: 768px) {
+    .menu-items {
+        max-width: 100%;
+        padding: 0 4px;            /* muy poco padding para que se vea centrado */
+    }
+}
+
+/* Lo mismo para sugerencias y categorías */
+.suggestions {
+    padding: 0 4px;                /* ajustado */
+}
+
+.categories-carousel-wrapper {
+    padding: 0 8px;                /* menos en mobile */
+    margin: 0 auto;
+}
+
+    /* === TARJETAS DE MENÚ HORIZONTALES SIEMPRE (incluso en mobile) === */
 
 .menu-item {
     display: flex;
