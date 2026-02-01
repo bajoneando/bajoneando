@@ -980,6 +980,91 @@ main {
     }
     .modal-content input[type="password"] { margin-bottom: 8px; }
     /* Loading y spinner ya están definidos arriba */
+
+        /* Contenedor del carrusel de locales */
+.suggestions-carousel-wrapper {
+    position: relative;
+    width: 100%;
+    margin: 20px auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+/* Lista de locales en carrusel */
+#suggestion-items {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 0;
+    margin: 0 -20px;
+    scrollbar-width: none;
+}
+
+#suggestion-items::-webkit-scrollbar {
+    display: none;
+}
+
+/* Cada tarjeta de local ahora se comporta como ítem de carrusel */
+.suggestion-categoria {
+    flex: 0 0 auto;
+    width: clamp(160px, 38vw, 220px);
+    min-width: 160px;
+    height: auto;
+    min-height: 180px;
+    /* el resto de estilos que ya tenías se mantienen */
+}
+
+/* Botones de navegación (igual estilo que categorías) */
+.carousel-btn.suggestions-btn {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    background: rgba(211, 47, 47, 0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+}
+
+.carousel-btn.suggestions-btn:hover {
+    background: rgba(211, 47, 47, 0.95);
+    transform: translateY(-50%) scale(1.08);
+}
+
+.carousel-btn.left.suggestions-btn { left: 8px; }
+.carousel-btn.right.suggestions-btn { right: 8px; }
+
+/* Mostrar botones en pantallas medianas/grandes */
+@media (min-width: 821px) {
+    .carousel-btn.suggestions-btn {
+        display: flex;
+    }
+    .suggestions-carousel-wrapper {
+        padding: 0 50px;
+    }
+    #suggestion-items {
+        justify-content: flex-start;
+        margin: 0;
+        padding: 15px 0;
+    }
+}
+
+/* En móviles muy pequeños ajustamos tamaño */
+@media (max-width: 420px) {
+    .suggestion-categoria {
+        width: clamp(140px, 42vw, 170px);
+        min-width: 140px;
+    }
+}
 </style>
     <!-- PWA - Manifest -->
 <link rel="manifest" href="/manifest.json">
@@ -1053,9 +1138,18 @@ main {
 </div>
    
         <div class="suggestions">
-            <h2>Sugerencias de Locales</h2>
-            <div class="suggestion-items" id="suggestion-items"></div>
+    <h2 id="suggestions-title">Sugerencias de Locales</h2>
+    
+    <div class="suggestions-carousel-wrapper">
+        <button class="carousel-btn left suggestions-btn" id="prev-suggestion">←</button>
+        
+        <div class="suggestion-items" id="suggestion-items">
+            <!-- aquí van las tarjetas -->
         </div>
+        
+        <button class="carousel-btn right suggestions-btn" id="next-suggestion">→</button>
+    </div>
+</div>
    
         <div id="menu-display" style="display:none;"></div>
    
@@ -2550,14 +2644,15 @@ function setupCategoriesCarousel() {
     // Estado inicial
     setTimeout(updateButtons, 300);
 }
-// Llamar después de cargar la página
+        
 window.addEventListener('load', () => {
     checkLoginStatus();
     loadFilters();
     setupSearch();
     setupCart();
     loadAllDrinks();
-    setupCategoriesCarousel(); // ← agregar esta línea
+    setupCategoriesCarousel();
+    setupSuggestionsCarousel();   // ← agregar esta línea
 });
         // Service worker
   if ('serviceWorker' in navigator) {
@@ -2571,6 +2666,45 @@ window.addEventListener('load', () => {
         });
     });
   }
+
+        function setupSuggestionsCarousel() {
+    const container = document.getElementById('suggestion-items');
+    const prevBtn = document.getElementById('prev-suggestion');
+    const nextBtn = document.getElementById('next-suggestion');
+    
+    if (!container || !prevBtn || !nextBtn) return;
+
+    function scrollLeft() {
+        container.scrollBy({ left: -container.clientWidth * 0.75, behavior: 'smooth' });
+    }
+
+    function scrollRight() {
+        container.scrollBy({ left: container.clientWidth * 0.75, behavior: 'smooth' });
+    }
+
+    prevBtn.addEventListener('click', scrollLeft);
+    nextBtn.addEventListener('click', scrollRight);
+
+    // Habilitar/deshabilitar botones según posición
+    function updateButtons() {
+        const atStart = container.scrollLeft <= 0;
+        const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
+
+        prevBtn.disabled = atStart;
+        prevBtn.style.opacity = atStart ? '0.4' : '1';
+        prevBtn.style.cursor = atStart ? 'default' : 'pointer';
+
+        nextBtn.disabled = atEnd;
+        nextBtn.style.opacity = atEnd ? '0.4' : '1';
+        nextBtn.style.cursor = atEnd ? 'default' : 'pointer';
+    }
+
+    container.addEventListener('scroll', updateButtons);
+    window.addEventListener('resize', updateButtons);
+
+    // Estado inicial
+    setTimeout(updateButtons, 300);
+}
     </script>
 </body>
 </html>
