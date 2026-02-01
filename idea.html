@@ -1747,27 +1747,23 @@ function fetchLocalesByCategoria(categoria) {
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
-    
-    // Limpiar
+    // Limpiamos todo lo anterior
     container.innerHTML = '';
+ 
+    // Actualizamos título y clase visual
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
     suggestionsSection.classList.add('mostrando-por-categoria');
-
-    const wrapper = document.getElementById('suggestions-carousel-wrapper');
-    if (!wrapper) return;
-
-    // Limpiar botones previos si existieran
-    wrapper.classList.remove('few-items');
-
+    // Eliminamos cualquier botón "Ver todo" anterior que pudiera existir
+    const previousBtn = document.querySelector('.ver-todo-categoria-dinamica');
+    if (previousBtn) previousBtn.remove();
     if (locales.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:40px; color:#666; font-size:1.1rem; width:100%;">
-            No encontramos locales con <strong>${categoria}</strong> en este momento.
-        </p>`;
-        wrapper.classList.add('few-items');
+        container.innerHTML = `
+            <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
+                No encontramos locales con <strong>${categoria}</strong> en este momento.
+            </p>`;
         return;
     }
-
-    // Insertar tarjetas
+    // Mostramos los locales
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
@@ -1780,18 +1776,18 @@ function displayLocalesConCategoria(locales, categoria) {
                 <div class="local-name">${local.nombre_local}</div>
                 <div class="categoria-precio">
                     <span class="cat">${categoria}</span>
-                    <span class="precio-min">desde $${Number(local.precio_min_categoria || 0).toLocaleString('es-AR')}</span>
+                    <span class="precio-min">
+                        desde $${Number(local.precio_min_categoria || 0).toLocaleString('es-AR')}
+                    </span>
                 </div>
             </div>
         `;
-        div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
+        div.onclick = () => {
+            fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
+        };
         container.appendChild(div);
     });
-
-    // Decidir si centrar (pocas tarjetas)
-    if (locales.length <= 3) {  // ajusta según cuántas tarjetas consideres "pocas"
-        wrapper.classList.add('few-items');
-    }
+    
     // Creamos el botón "Ver todo [categoría]" dinámicamente
     const btnContainer = document.createElement('div');
     btnContainer.className = 'ver-todo-categoria dinamica';
