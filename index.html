@@ -1466,6 +1466,7 @@ let userId = null;
 let userAddress = '';
 let currentPreferenceId = null; // para saber qué preferencia estamos esperando
 let pendingOrderData = null; // guardamos temporalmente los datos del pedido
+let ultimaCategoriaSeleccionada = null;  // ← nueva variable global
 // === NUEVA VARIABLE GLOBAL PARA FAVORITOS ===
 let userFavorites = []; // array de menuIds favoritos del usuario actual
         // Caché de menús mostrados actualmente (para acceder rápido al hacer clic)
@@ -1636,14 +1637,13 @@ function showMyFavorites() {
         })
         .catch(() => showError(container, 'Error al cargar tus favoritos'));
 }
-function displayMenus(menus, title) {
+function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
     container.innerHTML = `<h2>${title}</h2><div class="menu-items"></div>`;
     const itemsDiv = container.querySelector('.menu-items');
- 
-    // Limpiamos caché anterior
+
     currentDisplayedMenus = {};
- 
+
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">No se encontraron menús.</p>';
     } else {
@@ -1651,17 +1651,25 @@ function displayMenus(menus, title) {
             currentDisplayedMenus[menu.id] = menu;
             const div = document.createElement('div');
             div.className = 'menu-item';
+            
+            // Resaltamos si coincide con la categoría destacada
+            const esDeCategoria = categoriaDestacada && 
+                menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
+            
+            if (esDeCategoria) {
+                div.classList.add('destacado-categoria');  // ← clase para resaltar
+            }
+
             div.innerHTML = `
-    <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}"
+    <img src="${menu.imagen_url || 'https://placehold.co/300x180?text=Sin+Imagen'}" 
          alt="${menu.nombre}"
          onerror="this.src='https://placehold.co/300x180?text=Sin+Imagen'">
 
-    <!-- NUEVO: logo + nombre del local -->
     <div class="local-info">
         <img class="local-logo"
              src="${menu.logo_url || 'https://placehold.co/36x36?text=Local'}"
              alt="${menu.nombre_local || 'Local'}"
-             onerror="this.src='https://placehold.co/36x36?text=?'">
+             onerror="this.src='https://placehold.co/36x36?text=?'}">
         <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
     </div>
 
@@ -1669,10 +1677,8 @@ function displayMenus(menus, title) {
     <p>${menu.descripcion || 'Sin descripción'}</p>
     <p>$${menu.precio}</p>
 
-    <!-- Botón agregar al carrito -->
     <button onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
 
-    <!-- Botón favorito -->
     <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
             data-menu-id="${menu.id}"
             onclick="toggleFavorite('${menu.id}')">
@@ -1683,10 +1689,8 @@ function displayMenus(menus, title) {
             itemsDiv.appendChild(div);
         });
     }
- 
+
     container.style.display = 'block';
- 
-    // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
      
@@ -1900,6 +1904,8 @@ document.querySelector('.categories').addEventListener('click', e => {
     if (!cat) return;
     
     const categoria = cat.dataset.type;
+    ultimaCategoriaSeleccionada = categoria;   // ← ¡guardamos aquí!
+    
     fetchLocalesByCategoria(categoria);
 });
 
@@ -1961,7 +1967,7 @@ function displayLocalesConCategoria(locales, categoria) {
         `;
         
         // Click → mostrar menú completo del local (como antes)
-        div.onclick = () => fetchMenus(null, local.local_id);
+        div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         
         container.appendChild(div);
     });
@@ -1969,6 +1975,32 @@ function displayLocalesConCategoria(locales, categoria) {
     // Opcional: cambiar título
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
 }
+
+        function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
+    const container = document.getElementById('menu-display');
+    showLoading(container);
+
+    let url = `${scriptUrl}?action=getMenus`;
+    if (tipoCategoria) url += `&type=${encodeURIComponent(tipoCategoria)}`;
+    if (localId)       url += `&local=${encodeURIComponent(localId)}`;
+
+    fetch(url)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(menus => {
+            // Si venimos desde la selección de categoría + local,
+            // podemos pasar el título más descriptivo
+            let titulo = 'Menú del local';
+            if (filtroCategoriaInicial) {
+                titulo = `Menú - ${filtroCategoriaInicial}`;
+            } else if (tipoCategoria) {
+                titulo = tipoCategoria;
+            }
+
+            displayMenus(menus, titulo, filtroCategoriaInicial);
+        })
+        .catch(() => showError(container, 'Error al cargar menús'));
+}
+
      
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
