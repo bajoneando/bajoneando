@@ -557,39 +557,64 @@ main {
 .carousel-wrapper {
     position: relative;
     width: 100%;
-    margin: 20px auto;
-    padding: 0 10px;
-    box-sizing: border-box;
+    margin: 20px auto 40px;
     overflow: hidden;
 }
 
+/* Fila horizontal scrollable */
 .carousel-container {
     display: flex;
-    flex-wrap: nowrap;
-    gap: 16px;
+    flex-wrap: nowrap;               /* ← clave: NO wrap */
+    gap: 20px;                       /* mismo gap que tenías */
     overflow-x: auto;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    padding: 12px 0;
-    justify-content: flex-start;   /* importante para scroll */
-    transition: transform 0.3s ease;
+    padding: 20px 0;
+    justify-content: flex-start;     /* para que empiece desde la izquierda */
 }
 
 .carousel-container::-webkit-scrollbar {
     display: none;
 }
 
-/* Tarjetas dentro del carrusel */
-.carousel-container .suggestion,
-.carousel-container .suggestion-categoria {
-    flex: 0 0 auto;
-    /* El ancho se puede ajustar según gustes */
-    width: clamp(130px, 28vw, 160px);
-    /* Mantener proporciones razonables en mobile */
+/* Las tarjetas dentro del carrusel mantienen su tamaño original */
+.carousel-container .suggestion {
+    flex: 0 0 auto;                  /* no crecen ni se achican */
+    width: 120px;
+    height: 120px;
 }
 
-/* Botones de navegación (igual estilo que categorías) */
+/* Responsive: más chico en móvil (como ya tenías) */
+@media (max-width: 768px) {
+    .carousel-container .suggestion {
+        width: 75px;
+        height: 75px;
+    }
+    .carousel-container {
+        gap: 14px;
+        padding: 15px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .carousel-container .suggestion {
+        width: 70px;
+        height: 70px;
+    }
+    .carousel-container {
+        gap: 12px;
+        padding: 10px 0;
+    }
+}
+
+/* Centrado cuando hay pocas tarjetas */
+.carousel-wrapper.few-items .carousel-container {
+    justify-content: center !important;
+    padding: 20px;
+}
+
+/* Botones (mismo estilo que categorías) */
 .carousel-btn {
     display: none;
     position: absolute;
@@ -597,38 +622,29 @@ main {
     transform: translateY(-50%);
     width: 42px;
     height: 42px;
-    background: rgba(211, 47, 47, 0.8);
+    background: rgba(211, 47, 47, 0.75);
     color: white;
     border: none;
     border-radius: 50%;
     font-size: 22px;
     cursor: pointer;
     z-index: 10;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
-    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
 
 .carousel-btn:hover {
-    background: rgba(211, 47, 47, 0.95);
-    transform: translateY(-50%) scale(1.08);
+    background: rgba(211, 47, 47, 0.9);
 }
 
 .carousel-btn.left  { left: 8px; }
 .carousel-btn.right { right: 8px; }
 
-/* Mostrar botones en mobile o cuando hay overflow */
 @media (max-width: 920px) {
     .carousel-btn {
         display: flex;
         align-items: center;
         justify-content: center;
     }
-}
-
-/* Cuando hay pocas tarjetas → centrar todo */
-.carousel-wrapper.few-items .carousel-container {
-    justify-content: center !important;
-    padding: 12px 20px;
 }
     /* Carrito */
     .cart-backdrop {
@@ -1137,13 +1153,14 @@ main {
     <div class="carousel-wrapper" id="suggestions-carousel-wrapper">
         <button class="carousel-btn left" id="prev-suggestion">←</button>
         
-        <div class="carousel-container suggestion-items" id="suggestion-items">
-            <!-- aquí van las tarjetas .suggestion o .suggestion-categoria -->
+        <div class="carousel-container" id="suggestion-items">
+            <!-- las .suggestion se insertan aquí -->
         </div>
         
         <button class="carousel-btn right" id="next-suggestion">→</button>
     </div>
 </div>
+        
         <div id="menu-display" style="display:none;"></div>
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
