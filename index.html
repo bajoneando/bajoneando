@@ -1984,7 +1984,7 @@ function addToCart(menu) {
         return;
     }
 
-    // Crear el objeto del ítem (esta es la estructura que ya usabas)
+    // Crear el ítem
     const item = {
         idLocal: menu.local_id,
         nombreLocal: menu.nombre_local || 'Local desconocido',
@@ -1995,23 +1995,21 @@ function addToCart(menu) {
         categoria: menu.categoria || ''
     };
 
-    // ── Lógica de agregar / incrementar cantidad ────────────────────────
+    // Agregar o incrementar cantidad
     const existingIndex = cart.findIndex(i => i.idProducto === item.idProducto);
-
     if (existingIndex !== -1) {
-        // Ya existe → incrementar cantidad
         cart[existingIndex].cantidad += 1;
     } else {
-        // Es nuevo → agregar al carrito
         cart.push(item);
     }
 
-    // ── Actualizaciones de UI ───────────────────────────────────────────
-    updateCartCount();        // actualiza el número en el ícono del carrito
-    updateCartDisplay();      // refresca el contenido del sidebar (si está abierto)
+    // Actualizar interfaz
+    updateCartCount();
+    updateCartDisplay();
 
-    // Mostrar toast de éxito (no bloqueante)
+    // Mostrar toast con botón
     showAddedToCartToast(menu.nombre);
+}
 
     // Opcional: pequeño feedback visual extra en el botón (si quieres)
     // const btn = event.target; // si lo llamas desde onclick del botón
@@ -2021,9 +2019,8 @@ function addToCart(menu) {
 
 // Nueva función auxiliar
 function showAddedToCartToast(nombreProducto) {
-    // Opción A: toast muy simple con CSS puro
+    // Crear el contenedor del toast
     const toast = document.createElement('div');
-    toast.textContent = `¡${nombreProducto} agregado al carrito! ✓`;
     toast.style.cssText = `
         position: fixed;
         bottom: 30px;
@@ -2031,31 +2028,79 @@ function showAddedToCartToast(nombreProducto) {
         transform: translateX(-50%);
         background: #2e7d32;
         color: white;
-        padding: 14px 28px;
-        border-radius: 50px;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         z-index: 9999;
         font-weight: 600;
         font-size: 1.05rem;
         opacity: 0;
         transition: all 0.4s ease;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        min-width: 320px;
+        max-width: 90%;
+        justify-content: space-between;
+        pointer-events: auto;
+    `;
+
+    // Contenido del toast
+    toast.innerHTML = `
+        <span>¡${nombreProducto} agregado al carrito! ✓</span>
+        <button id="toast-ver-carrito-btn" style="
+            background: white;
+            color: #2e7d32;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        ">
+            Ver carrito
+        </button>
     `;
 
     document.body.appendChild(toast);
 
-    // Aparecer
+    // Animación de entrada
     setTimeout(() => {
         toast.style.opacity = '1';
         toast.style.bottom = '40px';
     }, 100);
 
-    // Desaparecer después de 3 segundos
-    setTimeout(() => {
-        toast.style.opacity = '0';
+    // Evento del botón "Ver carrito"
+    const verCarritoBtn = toast.querySelector('#toast-ver-carrito-btn');
+    verCarritoBtn.addEventListener('click', () => {
+        openCart();                    // abre el sidebar del carrito
+        toast.style.opacity = '0';     // desaparece el toast inmediatamente
         toast.style.bottom = '20px';
         setTimeout(() => toast.remove(), 400);
-    }, 2800);
+    });
+
+    // También se puede hacer clic fuera del botón para cerrar (opcional)
+    toast.addEventListener('click', (e) => {
+        if (e.target !== verCarritoBtn) {
+            toast.style.opacity = '0';
+            toast.style.bottom = '20px';
+            setTimeout(() => toast.remove(), 400);
+        }
+    });
+
+    // Desaparecer automáticamente después de 4 segundos si no se interactúa
+    setTimeout(() => {
+        if (document.body.contains(toast)) {
+            toast.style.opacity = '0';
+            toast.style.bottom = '20px';
+            setTimeout(() => {
+                if (document.body.contains(toast)) toast.remove();
+            }, 500);
+        }
+    }, 4000);
 }
+        
     function updateCartCount() {
         const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
         document.getElementById('cart-count').textContent = total;
