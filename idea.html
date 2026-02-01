@@ -130,41 +130,42 @@
         margin: 30px 0 20px;
     }
 
-    /* === TARJETAS DE MENÚ HORIZONTALES (única versión actual) === */
+    /* === TARJETAS DE MENÚ HORIZONTALES COMPACTAS === */
     .menu-items {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;           /* menos espacio entre tarjetas */
         padding: 0 10px;
         max-width: 900px;
-        margin: 0 auto;
+        margin: 0 auto 30px;
     }
 
     .menu-item {
         display: flex;
-        align-items: center;
+        align-items: stretch;   /* para que la imagen ocupe toda la altura */
         background: white;
-        border-radius: 16px;
+        border-radius: 14px;
         overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-        transition: all 0.3s ease;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        transition: all 0.25s ease;
         position: relative;
+        min-height: 110px;      /* altura mínima más baja */
     }
 
     .menu-item:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 15px 35px rgba(211,47,47,0.25);
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(211,47,47,0.22);
     }
 
     .menu-item img {
-        width: 120px;
-        height: 120px;
+        width: 110px;           /* un poco más chica para compactar */
+        height: 110px;
         object-fit: cover;
         flex-shrink: 0;
     }
 
     .menu-item .card-body-horizontal {
-        padding: 1.2rem 1.5rem;
+        padding: 10px 14px;     /* menos padding interno */
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -172,105 +173,144 @@
     }
 
     .menu-item .local-info {
-        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;     /* menos espacio debajo */
+    }
+
+    .menu-item .local-logo {
+        width: 32px;            /* tamaño original como en index viejo */
+        height: 32px;
+        border-radius: 50%;
+        object-fit: contain;
+        background: #f8f8f8;
+        border: 1px solid #eee;
+        padding: 3px;
+        flex-shrink: 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .menu-item .local-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #444;
     }
 
     .menu-item h3 {
-        font-size: 1.25rem;
-        margin: 0 0 6px 0;
+        font-size: 1.1rem;      /* más chico para compactar */
+        margin: 2px 0 4px 0;
         font-weight: 600;
-        color: #333;
+        color: #222;
+        line-height: 1.2;
     }
 
     .menu-item p {
-        margin: 4px 0;
-        color: #555;
-        font-size: 0.95rem;
-        line-height: 1.4;
+        margin: 2px 0 6px 0;    /* menos margen */
+        color: #666;
+        font-size: 0.85rem;     /* descripción más pequeña */
+        line-height: 1.3;
     }
 
     .menu-item .precio {
-        font-size: 1.6rem;
+        font-size: 1.45rem;     /* grande pero no exagerado */
         font-weight: 700;
         color: #d32f2f;
-        margin: 8px 0 12px 0;
+        margin: 4px 0 8px 0;
     }
 
     .menu-item .actions {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 8px;
+        margin-top: 4px;
     }
 
-    .menu-item button {
-        padding: 10px 16px;
-        font-size: 0.95rem;
-        min-width: 140px;
+    .menu-item button.add-to-cart {
+        background: #d32f2f;            /* rojo como la versión original */
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        min-width: 130px;
     }
 
-    /* Responsive móviles: pasa a vertical */
+    .menu-item button.add-to-cart:hover {
+        background: #b71c1c;
+    }
+
+    /* Responsive móviles: vertical + compacto */
     @media (max-width: 576px) {
         .menu-item {
             flex-direction: column;
-            text-align: center;
+            min-height: auto;
         }
         .menu-item img {
             width: 100%;
-            height: 160px;
+            height: 140px;
             border-radius: 0;
         }
         .menu-item .card-body-horizontal {
-            padding: 1rem;
+            padding: 10px 12px;
         }
         .menu-item .actions {
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: row;
+            justify-content: space-between;
+            gap: 0;
         }
-        .menu-item button {
-            width: 100%;
+        .menu-item button.add-to-cart {
+            width: auto;
+            flex: 1;
+            margin-right: 8px;
         }
     }
 
-    /* Botón favorito siempre en esquina superior derecha */
+    /* Botón favorito circular (reforzado) */
     .menu-item .fav-btn {
         position: absolute !important;
-        top: 12px !important;
-        right: 12px !important;
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.8) !important;
+        top: 8px !important;
+        right: 8px !important;
+        width: 38px !important;
+        height: 38px !important;
+        background: rgba(255, 255, 255, 0.92) !important;
         border: none !important;
         border-radius: 50% !important;
         cursor: pointer !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-        transition: all 0.2s !important;
-        z-index: 10 !important;
-        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.18) !important;
+        transition: all 0.2s ease !important;
+        z-index: 15 !important;
         padding: 4px;
+        overflow: hidden;
     }
 
     .fav-btn:hover {
-        transform: scale(1.15) !important;
+        transform: scale(1.14) !important;
         background: white !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
     }
 
     .fav-btn img {
-        width: 100%;
-        height: 100%;
+        width: 85% !important;
+        height: 85% !important;
         object-fit: contain;
         position: absolute;
         inset: 0;
-        transition: opacity 0.25s ease;
+        margin: auto;
+        transition: opacity 0.2s ease;
     }
 
     .fav-btn .fav-empty { opacity: 1; }
     .fav-btn.active .fav-empty { opacity: 0; }
     .fav-btn .fav-filled { opacity: 0; }
     .fav-btn.active .fav-filled { opacity: 1; }
+
 
     /* Categorías */
     .categories-carousel-wrapper {
