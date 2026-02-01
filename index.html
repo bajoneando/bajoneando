@@ -237,44 +237,70 @@ body {
     }
 }
       
-    /* Sugerencias de locales ≈ mitad de tamaño */
-.suggestions {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
-.suggestion-items {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    padding: 20px 0;
-    width: 100%;
-    margin-top: -20px;
-}
+    /* Dentro de .suggestions o como clase nueva .suggestion-categoria */
+
 .suggestion {
-    width: 120px;
-    height: 120px;
-    border-radius: 20px;
+    position: relative;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-    cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 8px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    transition: all 0.25s ease;
 }
-.suggestion:hover, .suggestion:active {
-    transform: scale(1.1);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+
+.suggestion:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
 }
+
 .suggestion img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    border-radius: 50%;
+    border: 3px solid #ffebee;
+    background: #fff;
+    padding: 4px;
+    margin-bottom: 8px;
 }
-.suggestion:hover img {
-    transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
+
+.suggestion-info {
+    width: 100%;
+}
+
+.local-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #333;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+.categoria-precio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.82rem;
+}
+
+.cat {
+    color: #d32f2f;
+    font-weight: 500;
+    background: #ffebee;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+}
+
+.precio-min {
+    color: #2e7d32;
+    font-weight: 700;
 }
     /* Tarjetas de menú - versión desktop */
     .menu-item {
@@ -1866,17 +1892,83 @@ async function registerUser() {
                 .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
                 .catch(() => showError(container, 'Error en búsqueda'));
         }
-        function fetchMenus(type, local) {
-            const container = document.getElementById('menu-display');
-            showLoading(container);
-            let url = `${scriptUrl}?action=getMenus`;
-            if (type) url += `&type=${encodeURIComponent(type)}`;
-            if (local) url += `&local=${encodeURIComponent(local)}`;
-            fetch(url)
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(menus => displayMenus(menus, type || 'Local seleccionado'))
-                .catch(() => showError(container, 'Error al cargar menús'));
-        }
+        // 1. Cambiamos el nombre de la función para que sea más clara su intención
+//    y creamos una versión específica para categorías
+
+document.querySelector('.categories').addEventListener('click', e => {
+    const cat = e.target.closest('.category');
+    if (!cat) return;
+    
+    const categoria = cat.dataset.type;
+    fetchLocalesByCategoria(categoria);
+});
+
+// Nueva función dedicada
+function fetchLocalesByCategoria(categoria) {
+    const container = document.getElementById('menu-display');
+    const suggestionContainer = document.getElementById('suggestion-items');
+    
+    // Ocultamos menú de platos y mostramos sección de locales
+    container.style.display = 'none';
+    suggestionContainer.innerHTML = ''; // limpiamos sugerencias normales
+    
+    showLoading(suggestionContainer);   // ← reutilizamos loading
+    
+    const url = `${scriptUrl}?action=getLocalesByCategoria&type=${encodeURIComponent(categoria)}`;
+    
+    fetch(url)
+        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(data => {
+            const locales = data.locales || [];
+            displayLocalesConCategoria(locales, categoria);
+        })
+        .catch(() => {
+            showError(suggestionContainer, 'No pudimos cargar los locales con esa categoría');
+        });
+}
+
+// 2. Nueva función de renderizado (parecida a suggestion pero con precio)
+function displayLocalesConCategoria(locales, categoria) {
+    const container = document.getElementById('suggestion-items');
+    container.innerHTML = '';
+    
+    if (locales.length === 0) {
+        container.innerHTML = `<p style="text-align:center; padding:40px; color:#666;">
+            No encontramos locales con <strong>${categoria}</strong> en este momento.
+        </p>`;
+        return;
+    }
+    
+    locales.forEach(local => {
+        const div = document.createElement('div');
+        div.className = 'suggestion';
+        div.dataset.local = local.local_id;
+        
+        // Estructura sugerida
+        div.innerHTML = `
+            <div class="suggestion-content">
+                <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}" 
+                     alt="${local.nombre_local}"
+                     onerror="this.src='https://placehold.co/120x120?text=?'">
+                <div class="suggestion-info">
+                    <div class="local-name">${local.nombre_local}</div>
+                    <div class="categoria-precio">
+                        <span class="cat">${categoria}</span>
+                        <span class="precio-min">desde $${Number(local.precio_min_categoria).toLocaleString('es-AR')}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Click → mostrar menú completo del local (como antes)
+        div.onclick = () => fetchMenus(null, local.local_id);
+        
+        container.appendChild(div);
+    });
+    
+    // Opcional: cambiar título
+    document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
+}
      
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
