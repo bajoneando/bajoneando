@@ -130,42 +130,40 @@
         margin: 30px 0 20px;
     }
 
-    /* === TARJETAS DE MENÚ HORIZONTALES COMPACTAS === */
+    /* TARJETAS DE MENÚ – versión compacta y moderna */
     .menu-items {
         display: flex;
         flex-direction: column;
-        gap: 12px;           /* menos espacio entre tarjetas */
-        padding: 0 10px;
-        max-width: 900px;
-        margin: 0 auto 30px;
+        gap: 12px;
+        padding: 0 8px;
+        max-width: 920px;
+        margin: 0 auto 40px;
     }
 
     .menu-item {
         display: flex;
-        align-items: stretch;   /* para que la imagen ocupe toda la altura */
         background: white;
-        border-radius: 14px;
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-        transition: all 0.25s ease;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        transition: all 0.28s ease;
         position: relative;
-        min-height: 110px;      /* altura mínima más baja */
     }
 
     .menu-item:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 30px rgba(211,47,47,0.22);
+        transform: translateY(-6px);
+        box-shadow: 0 14px 32px rgba(230,57,70,0.18);
     }
 
     .menu-item img {
-        width: 110px;           /* un poco más chica para compactar */
+        width: 110px;
         height: 110px;
         object-fit: cover;
         flex-shrink: 0;
     }
 
     .menu-item .card-body-horizontal {
-        padding: 10px 14px;     /* menos padding interno */
+        padding: 10px 14px;
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -176,11 +174,11 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-bottom: 4px;     /* menos espacio debajo */
+        margin-bottom: 4px;
     }
 
     .menu-item .local-logo {
-        width: 32px;            /* tamaño original como en index viejo */
+        width: 32px;
         height: 32px;
         border-radius: 50%;
         object-fit: contain;
@@ -198,24 +196,24 @@
     }
 
     .menu-item h3 {
-        font-size: 1.1rem;      /* más chico para compactar */
+        font-size: 1.08rem;
         margin: 2px 0 4px 0;
         font-weight: 600;
         color: #222;
-        line-height: 1.2;
+        line-height: 1.25;
     }
 
     .menu-item p {
-        margin: 2px 0 6px 0;    /* menos margen */
+        margin: 2px 0 6px 0;
         color: #666;
-        font-size: 0.85rem;     /* descripción más pequeña */
+        font-size: 0.84rem;
         line-height: 1.3;
     }
 
     .menu-item .precio {
-        font-size: 1.45rem;     /* grande pero no exagerado */
+        font-size: 1.42rem;
         font-weight: 700;
-        color: #d32f2f;
+        color: #e63946;
         margin: 4px 0 8px 0;
     }
 
@@ -226,79 +224,106 @@
         margin-top: 4px;
     }
 
+    /* Botón Añadir al carrito – rojo moderno */
     .menu-item button.add-to-cart {
-        background: #d32f2f;            /* rojo como la versión original */
+        background: #e63946;
         color: white;
         border: none;
-        border-radius: 10px;
-        padding: 8px 14px;
-        font-size: 0.9rem;
+        border-radius: 12px;
+        padding: 9px 16px;
+        font-size: 0.92rem;
         font-weight: 600;
         cursor: pointer;
-        transition: background 0.2s;
-        min-width: 130px;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(230,57,70,0.3);
+        min-width: 135px;
     }
 
     .menu-item button.add-to-cart:hover {
-        background: #b71c1c;
+        background: #d00000;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(208,0,0,0.35);
     }
 
-    /* Responsive móviles: vertical + compacto */
+    /* Responsive – muy optimizado para celulares */
     @media (max-width: 576px) {
+        .menu-items {
+            gap: 10px;
+            padding: 0 6px;
+        }
+
         .menu-item {
             flex-direction: column;
-            min-height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
         }
+
         .menu-item img {
             width: 100%;
-            height: 140px;
-            border-radius: 0;
+            height: 135px;
+            border-radius: 12px 12px 0 0;
         }
+
         .menu-item .card-body-horizontal {
-            padding: 10px 12px;
+            padding: 10px 12px 12px;
         }
+
+        .menu-item h3 { font-size: 1.05rem; margin: 4px 0 6px; }
+        .menu-item p   { font-size: 0.82rem; margin: 2px 0 8px; }
+        .menu-item .precio { font-size: 1.38rem; margin: 4px 0 10px; }
+
         .menu-item .actions {
             flex-direction: row;
-            justify-content: space-between;
-            gap: 0;
+            align-items: center;
+            gap: 8px;
         }
+
         .menu-item button.add-to-cart {
-            width: auto;
             flex: 1;
-            margin-right: 8px;
+            padding: 10px;
+            font-size: 0.9rem;
+            min-width: auto;
+            border-radius: 10px;
+        }
+
+        .menu-item .fav-btn {
+            top: 8px !important;
+            right: 8px !important;
+            width: 36px !important;
+            height: 36px !important;
         }
     }
 
-    /* Botón favorito circular (reforzado) */
+    /* Botón favorito – circular y discreto */
     .menu-item .fav-btn {
         position: absolute !important;
         top: 8px !important;
         right: 8px !important;
         width: 38px !important;
         height: 38px !important;
-        background: rgba(255, 255, 255, 0.92) !important;
+        background: rgba(255,255,255,0.92) !important;
         border: none !important;
         border-radius: 50% !important;
         cursor: pointer !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.18) !important;
-        transition: all 0.2s ease !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+        transition: all 0.22s ease !important;
         z-index: 15 !important;
-        padding: 4px;
+        padding: 5px;
         overflow: hidden;
     }
 
     .fav-btn:hover {
-        transform: scale(1.14) !important;
+        transform: scale(1.12) !important;
         background: white !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.28) !important;
     }
 
     .fav-btn img {
-        width: 85% !important;
-        height: 85% !important;
+        width: 82% !important;
+        height: 82% !important;
         object-fit: contain;
         position: absolute;
         inset: 0;
