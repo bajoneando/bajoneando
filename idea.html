@@ -455,134 +455,181 @@ main {
         .categories-carousel-wrapper { margin-top: -40px; }
     }
     /* Sugerencias / Locales */
-    /* Contenedor general del carrusel */
-.horizontal-carousel-wrapper {
+    .suggestions {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 15px;
+    }
+    .suggestion-items {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        padding: 20px 0;
+        width: 100%;
+        margin-top: -20px;
+    }
+    .suggestion {
+        width: 120px;
+        height: 120px;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .suggestion:hover, .suggestion:active {
+        transform: scale(1.1);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+    }
+    .suggestion img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+    }
+    .suggestion:hover img {
+        transform: scale(1.15);
+    }
+    .suggestion-categoria {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 12px 8px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        transition: all 0.25s ease;
+        width: 140px;
+        height: auto;
+        min-height: 160px;
+    }
+    .suggestion-categoria:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    }
+    .suggestion-categoria img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        border-radius: 50%;
+        border: 3px solid #ffebee;
+        background: #fff;
+        padding: 4px;
+        margin-bottom: 10px;
+    }
+    .suggestion-categoria .suggestion-info { width: 100%; }
+    .suggestion-categoria .local-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #333;
+        margin-bottom: 6px;
+        line-height: 1.2;
+    }
+    .suggestion-categoria .categoria-precio {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.85rem;
+    }
+    .suggestion-categoria .cat {
+        color: #d32f2f;
+        font-weight: 500;
+        background: #ffebee;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+    .suggestion-categoria .precio-min {
+        color: #2e7d32;
+        font-weight: 700;
+    }
+
+        /* ────────────────────────────────────────────────
+   CARRUSEL GENÉRICO CENTRADO (usado por sugerencias y locales por categoría)
+───────────────────────────────────────────────── */
+.carousel-wrapper {
     position: relative;
     width: 100%;
-    padding: 0 16px;           /* margen lateral en mobile */
+    margin: 20px auto;
+    padding: 0 10px;
     box-sizing: border-box;
-    margin: 20px 0;
+    overflow: hidden;
 }
 
-/* El contenedor que hace scroll */
-.horizontal-carousel {
+.carousel-container {
     display: flex;
     flex-wrap: nowrap;
     gap: 16px;
     overflow-x: auto;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;           /* Firefox */
+    scrollbar-width: none;
     padding: 12px 0;
-    margin: 0 -16px;                 /* compensa el padding del wrapper */
+    justify-content: flex-start;   /* importante para scroll */
+    transition: transform 0.3s ease;
 }
 
-.horizontal-carousel::-webkit-scrollbar {
-    display: none;                   /* Chrome/Safari */
+.carousel-container::-webkit-scrollbar {
+    display: none;
 }
 
-/* Centrado automático cuando hay pocos elementos */
-.horizontal-carousel {
-    justify-content: flex-start;     /* por defecto scroll desde izq */
+/* Tarjetas dentro del carrusel */
+.carousel-container .suggestion,
+.carousel-container .suggestion-categoria {
+    flex: 0 0 auto;
+    /* El ancho se puede ajustar según gustes */
+    width: clamp(130px, 28vw, 160px);
+    /* Mantener proporciones razonables en mobile */
 }
 
-/* En pantallas grandes → centramos si hay pocos items */
-@media (min-width: 768px) {
-    .horizontal-carousel {
-        justify-content: center;
-        gap: 24px;
-        padding: 20px 0;
-        margin: 0;
-    }
-    
-    /* Si hay muy pocos → más espacio */
-    .horizontal-carousel:has(> *:nth-child(1):nth-last-child(1)),
-    .horizontal-carousel:has(> *:nth-child(2):nth-last-child(2)) {
-        justify-content: center;
-    }
-}
-
-/* Tarjetas comunes (tanto .suggestion como .suggestion-categoria) */
-/* Contenedor general de sugerencias (tanto normales como por categoría) */
-.suggestions {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
-
-.suggestion-carousel-wrapper {
-    position: relative;
-    width: 100%;
-    margin: 20px auto 40px;
-    padding: 0 20px;           /* espacio para botones laterales si aparecen */
-    box-sizing: border-box;
-    overflow: hidden;           /* importante para que no se vea el scroll feo */
-}
-
-.suggestion-items {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 20px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    padding: 20px 0;
-    margin: 0 -20px;            /* compensa el padding del wrapper */
-    scrollbar-width: none;      /* oculta scrollbar en Firefox */
-}
-
-.suggestion-items::-webkit-scrollbar {
-    display: none;              /* oculta scrollbar en Chrome/Safari */
-}
-
-/* Centrado inteligente cuando hay pocas tarjetas */
-.suggestion-items.centered-few {
-    justify-content: center;
-    margin: 0 auto;
-    max-width: 900px;           /* ajusta según cuántas tarjetas caben bien */
-}
-
-/* Tarjetas mantienen su tamaño original */
-.suggestion,
-.suggestion-categoria {
-    flex: 0 0 auto;             /* ¡importante! no crecen ni se achican */
-    /* el resto de estilos se mantienen iguales */
-}
-
-/* Botones de navegación (igual que categorías) */
-.carousel-btn.suggestions-btn {
+/* Botones de navegación (igual estilo que categorías) */
+.carousel-btn {
     display: none;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
-    background: rgba(211, 47, 47, 0.75);
+    width: 42px;
+    height: 42px;
+    background: rgba(211, 47, 47, 0.8);
     color: white;
     border: none;
     border-radius: 50%;
-    font-size: 24px;
+    font-size: 22px;
     cursor: pointer;
     z-index: 10;
     box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    transition: all 0.2s;
 }
 
-.carousel-btn.suggestions-btn:hover {
-    background: rgba(211, 47, 47, 0.92);
+.carousel-btn:hover {
+    background: rgba(211, 47, 47, 0.95);
     transform: translateY(-50%) scale(1.08);
 }
 
-.carousel-btn.left.suggestions-btn  { left: 8px; }
-.carousel-btn.right.suggestions-btn { right: 8px; }
+.carousel-btn.left  { left: 8px; }
+.carousel-btn.right { right: 8px; }
 
-/* Mostrar botones en mobile / tablet */
+/* Mostrar botones en mobile o cuando hay overflow */
 @media (max-width: 920px) {
-    .carousel-btn.suggestions-btn {
+    .carousel-btn {
         display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }
-        
+
+/* Cuando hay pocas tarjetas → centrar todo */
+.carousel-wrapper.few-items .carousel-container {
+    justify-content: center !important;
+    padding: 12px 20px;
+}
     /* Carrito */
     .cart-backdrop {
         position: fixed;
@@ -1084,28 +1131,11 @@ main {
     </div>
     <button class="carousel-btn right categories-btn" id="next-category" aria-label="Siguiente categoría">→</button>
 </div>
- 
-        <!-- Sugerencias de Locales (siempre visible al inicio) -->
-<!-- Sugerencias normales -->
-<div class="suggestions">
-    <h2>Sugerencias de Locales</h2>
-    <div class="suggestion-carousel-wrapper">
-        <button class="carousel-btn left suggestions-btn" id="prev-suggestion">←</button>
-        <div class="suggestion-items" id="suggestion-items"></div>
-        <button class="carousel-btn right suggestions-btn" id="next-suggestion">→</button>
-    </div>
-</div>
-
-<!-- Cuando filtras por categoría (en displayLocalesConCategoria) -->
-<!-- Solo cambia el contenedor -->
-<div class="suggestion-carousel-wrapper">
-    <button class="carousel-btn left suggestions-btn" id="prev-suggestion-cat">←</button>
-    <div class="suggestion-items" id="suggestion-items"></div>
-    <button class="carousel-btn right suggestions-btn" id="next-suggestion-cat">→</button>
-</div>
- 
+        <div class="suggestions">
+            <h2>Sugerencias de Locales</h2>
+            <div class="suggestion-items" id="suggestion-items"></div>
+        </div>
         <div id="menu-display" style="display:none;"></div>
- 
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
 <!-- 2. Reemplaza completamente el <div id="cart-section"> original por este bloque -->
@@ -1148,7 +1178,7 @@ main {
 </select>
 <!-- Contenedor donde se mostrará el checkout de MP -->
 <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-      
+     
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
@@ -1302,7 +1332,6 @@ function switchToLogin() {
     closeModal('register-modal');
     showModal('login-modal');
 }
- 
 // ==================== CARGAR FAVORITOS DEL USUARIO ====================
 function loadUserFavorites() {
     if (!userId) return;
@@ -1393,16 +1422,15 @@ function showMyFavorites() {
         })
         .catch(() => showError(container, 'Error al cargar tus favoritos'));
 }
- 
 function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
-  
+ 
     // Limpiamos y preparamos la estructura básica
     container.innerHTML = `
         <h2>${title}</h2>
         <div class="menu-items"></div>
     `;
-  
+ 
     const itemsDiv = container.querySelector('.menu-items');
     currentDisplayedMenus = {}; // Limpiamos caché de menús mostrados
     // Caso: no hay menús
@@ -1412,17 +1440,17 @@ function displayMenus(menus, title, categoriaDestacada = null) {
         // Mostramos cada plato
         menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
-          
+         
             const div = document.createElement('div');
             div.className = 'menu-item';
-          
+         
             // Resaltar si coincide con la categoría destacada
             const esDeCategoria = categoriaDestacada &&
                 menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
             if (esDeCategoria) {
                 div.classList.add('destacado-categoria');
             }
-          
+         
             div.innerHTML = `
                 <img src="${menu.imagen_url || 'https://placehold.co/120x120?text=Sin+Imagen'}"
                      alt="${menu.nombre}"
@@ -1449,7 +1477,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
                     </div>
                 </div>
             `;
-          
+         
             itemsDiv.appendChild(div);
         });
     }
@@ -1462,7 +1490,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
     if (categoriaDestacada && menus.length > 0) {
         currentLocalId = menus[0].local_id;
         localName = menus[0].nombre_local || 'este local';
-      
+     
         // Verificamos que TODOS los menús sean del mismo local
         if (currentLocalId && menus.every(menu => menu.local_id === currentLocalId)) {
             showFullMenuButton = true;
@@ -1502,7 +1530,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
     // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
-      
+     
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1612,7 +1640,7 @@ async function registerUser() {
         const result = await response.json();
         if (result.success) {
             alert('¡Registro exitoso! Bienvenid@ ' + nombre);
-     
+    
             // Guardamos datos en localStorage
             localStorage.setItem('userId', result.userId);
             localStorage.setItem('userName', nombre);
@@ -1635,7 +1663,6 @@ async function registerUser() {
         btn.textContent = 'Registrarse';
     }
 }
- 
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
@@ -1668,7 +1695,6 @@ async function registerUser() {
                 })
                 .catch(() => showError(container, 'Error al cargar locales'));
         }
- 
         function setupSearch() {
             const input = document.getElementById('search-input');
             let timeout;
@@ -1699,7 +1725,6 @@ document.querySelector('.categories').addEventListener('click', e => {
     ultimaCategoriaSeleccionada = categoria;
     fetchLocalesByCategoria(categoria);
 });
- 
 // Nueva función dedicada
 function fetchLocalesByCategoria(categoria) {
     const container = document.getElementById('menu-display');
@@ -1720,49 +1745,33 @@ function fetchLocalesByCategoria(categoria) {
         });
 }
 function displayLocalesConCategoria(locales, categoria) {
-    // 1. Obtenemos los contenedores importantes
+    const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
-    const categoryResultsSection = document.getElementById('category-results-section');
-    const categoryTitle = document.getElementById('category-title');
-    const carouselContainer = document.getElementById('category-locales-carousel');
+    
+    // Limpiar
+    container.innerHTML = '';
+    document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
+    suggestionsSection.classList.add('mostrando-por-categoria');
 
-    // 2. Limpiamos el carrusel anterior
-    if (carouselContainer) {
-        carouselContainer.innerHTML = '';
-    }
+    const wrapper = document.getElementById('suggestions-carousel-wrapper');
+    if (!wrapper) return;
 
-    // 3. Actualizamos título
-    if (categoryTitle) {
-        categoryTitle.textContent = `Locales con ${categoria}`;
-    }
+    // Limpiar botones previos si existieran
+    wrapper.classList.remove('few-items');
 
-    // 4. Ocultamos las sugerencias normales y mostramos la sección de categoría
-    if (suggestionsSection) {
-        suggestionsSection.style.display = 'none';
-    }
-    if (categoryResultsSection) {
-        categoryResultsSection.style.display = 'block';
-    }
-
-    // 5. Caso: no hay locales
     if (locales.length === 0) {
-        if (carouselContainer) {
-            carouselContainer.innerHTML = `
-                <div style="width:100%; text-align:center; padding:60px 20px; color:#777; font-size:1.1rem;">
-                    No encontramos locales que ofrezcan <strong>${categoria}</strong> en este momento.
-                </div>
-            `;
-        }
+        container.innerHTML = `<p style="text-align:center; padding:40px; color:#666; font-size:1.1rem; width:100%;">
+            No encontramos locales con <strong>${categoria}</strong> en este momento.
+        </p>`;
+        wrapper.classList.add('few-items');
         return;
     }
 
-    // 6. Creamos las tarjetas en formato carrusel
+    // Insertar tarjetas
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-
-        // Estructura de la tarjeta (mismo estilo que antes, pero optimizado para carrusel)
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1771,74 +1780,58 @@ function displayLocalesConCategoria(locales, categoria) {
                 <div class="local-name">${local.nombre_local}</div>
                 <div class="categoria-precio">
                     <span class="cat">${categoria}</span>
-                    <span class="precio-min">
-                        desde $${Number(local.precio_min_categoria || 0).toLocaleString('es-AR')}
-                    </span>
+                    <span class="precio-min">desde $${Number(local.precio_min_categoria || 0).toLocaleString('es-AR')}</span>
                 </div>
             </div>
         `;
-
-        // Click → mostrar menú filtrado por esa categoría del local
-        div.onclick = () => {
-            ultimaCategoriaSeleccionada = categoria;
-            fetchMenus(null, local.local_id, categoria);
-        };
-
-        // Agregamos al carrusel
-        if (carouselContainer) {
-            carouselContainer.appendChild(div);
-        }
+        div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
+        container.appendChild(div);
     });
 
-    // 7. Botón "Ver todo [categoría]" (ahora fuera del carrusel, centrado abajo)
-    // Removemos cualquier botón anterior
-    const existingBtn = document.querySelector('.ver-todo-categoria-dinamica');
-    if (existingBtn) existingBtn.remove();
-
+    // Decidir si centrar (pocas tarjetas)
+    if (locales.length <= 3) {  // ajusta según cuántas tarjetas consideres "pocas"
+        wrapper.classList.add('few-items');
+    }
+    // Creamos el botón "Ver todo [categoría]" dinámicamente
     const btnContainer = document.createElement('div');
     btnContainer.className = 'ver-todo-categoria dinamica';
     btnContainer.style.cssText = `
         text-align: center;
-        margin: 40px 0 60px;
-        padding: 0 20px;
+        margin: 30px 0 50px;
     `;
-
     btnContainer.innerHTML = `
         <button style="
             background: #d32f2f;
             color: white;
             border: none;
             border-radius: 12px;
-            padding: 14px 32px;
+            padding: 14px 28px;
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(211,47,47,0.3);
-            transition: all 0.25s;
+            box-shadow: 0 4px 12px rgba(211,47,47,0.3);
+            transition: all 0.2s;
         "
-        onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 24px rgba(211,47,47,0.4)'"
-        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.3)'"
+        onmouseover="this.style.transform='scale(1.04)'; this.style.boxShadow='0 6px 18px rgba(211,47,47,0.4)'"
+        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211,47,47,0.3)'"
         >
-            Ver todos los locales con ${categoria}
+            Ver todo ${categoria}
         </button>
     `;
-
+    // Asignamos la acción al botón
     const button = btnContainer.querySelector('button');
-    button.onclick = () => {
+    button.onclick = function () {
+        console.log(`Clic en "Ver todo ${categoria}" → cargando todos los menús`);
         ultimaCategoriaSeleccionada = categoria;
-        fetchMenus(categoria, null, null);  // ← todos los menús de esa categoría (sin filtro de local)
+        fetchMenus(categoria, null, null);
+        // Opcional: btnContainer.remove(); // si quieres que desaparezca tras clic
     };
-
-    // Lo insertamos después del carrusel
-    const wrapper = document.querySelector('#category-results-section .horizontal-carousel-wrapper');
-    if (wrapper && wrapper.parentNode) {
-        wrapper.parentNode.insertBefore(btnContainer, wrapper.nextSibling);
-    }
+    // Lo agregamos al final de los locales
+    container.appendChild(btnContainer);
 }
-  
+ 
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
- 
     // Ocultamos el botón estático "Ver todo [categoría]" cuando entramos a ver menús
     // (ya que ahora se usa solo debajo de los locales, no dentro del menú)
     const verTodoCategoriaBtn = document.getElementById('ver-todo-categoria-btn');
@@ -2044,7 +2037,6 @@ function showAddedToCartToast(nombreProducto) {
         }
     }, 4000);
 }
- 
     function updateCartCount() {
         const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
         document.getElementById('cart-count').textContent = total;
@@ -2458,10 +2450,10 @@ function saveProfileChanges() {
                 // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-      
+     
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
-      
+     
                 // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
@@ -2488,11 +2480,11 @@ function saveAddressChange() {
             if (data.success) {
                 userAddress = newAddress;
                 localStorage.setItem('userAddress', newAddress);
-      
+     
                 // Actualizamos el campo de dirección del checkout si está visible
                 const checkoutDir = document.getElementById('direccion');
                 if (checkoutDir) checkoutDir.value = newAddress;
-      
+     
                 alert('Dirección actualizada correctamente');
                 closeModal('change-address-modal');
             } else {
@@ -2635,78 +2627,45 @@ window.addEventListener('load', () => {
     });
   }
 
-        function setupLocalesCarousels() {
-    setupOneCarousel('suggestions-carousel', 'suggestions-prev', 'suggestions-next');
-    setupOneCarousel('category-locales-carousel', 'category-prev', 'category-next');
-}
-
-function setupSuggestionsCarousel() {
-    const normalPrev = document.getElementById('prev-suggestion');
-    const normalNext = document.getElementById('next-suggestion');
-    const catPrev    = document.getElementById('prev-suggestion-cat');
-    const catNext    = document.getElementById('next-suggestion-cat');
-    const container  = document.getElementById('suggestion-items');
-
-    if (!container) return;
-
-    function scrollLeft() {
-        container.scrollBy({ left: -container.clientWidth * 0.75, behavior: 'smooth' });
-    }
-
-    function scrollRight() {
-        container.scrollBy({ left: container.clientWidth * 0.75, behavior: 'smooth' });
-    }
-
-    if (normalPrev) normalPrev.onclick = scrollLeft;
-    if (normalNext) normalNext.onclick = scrollRight;
-    if (catPrev)    catPrev.onclick    = scrollLeft;
-    if (catNext)    catNext.onclick    = scrollRight;
-
-    // Centrado inteligente cuando hay pocas tarjetas
-    function updateLayout() {
-        const count = container.children.length;
-        const wrapper = container.closest('.suggestion-carousel-wrapper');
-        
-        if (count <= 4) {  // ajusta este número según diseño
-            container.classList.add('centered-few');
-            if (wrapper) {
-                wrapper.style.padding = '0 40px'; // más espacio lateral
-            }
-        } else {
-            container.classList.remove('centered-few');
-            if (wrapper) {
-                wrapper.style.padding = '0 20px';
-            }
-        }
-
-        // Actualizar visibilidad de botones
-        const atStart = container.scrollLeft <= 0;
-        const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
-        
-        [normalPrev, catPrev].forEach(btn => {
-            if (btn) btn.disabled = atStart;
-        });
-        [normalNext, catNext].forEach(btn => {
-            if (btn) btn.disabled = atEnd;
-        });
-    }
-
-    container.addEventListener('scroll', updateLayout);
-    window.addEventListener('resize', updateLayout);
+        function setupGenericCarousel(wrapperId, containerId, prevId, nextId) {
+    const wrapper = document.getElementById(wrapperId);
+    const container = document.getElementById(containerId);
+    const prev = document.getElementById(prevId);
+    const next = document.getElementById(nextId);
     
-    // Primera ejecución
-    setTimeout(updateLayout, 300);
+    if (!container || !prev || !next) return;
+
+    function scrollLeft()  { container.scrollBy({ left: -container.clientWidth * 0.75, behavior: 'smooth' }); }
+    function scrollRight() { container.scrollBy({ left:  container.clientWidth * 0.75, behavior: 'smooth' }); }
+
+    prev.onclick = scrollLeft;
+    next.onclick = scrollRight;
+
+    function updateButtons() {
+        const atStart = container.scrollLeft <= 1;
+        const atEnd   = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
+        
+        prev.disabled = atStart;
+        prev.style.opacity = atStart ? '0.35' : '1';
+        next.disabled  = atEnd;
+        next.style.opacity = atEnd ? '0.35' : '1';
+    }
+
+    container.addEventListener('scroll', updateButtons);
+    window.addEventListener('resize', updateButtons);
+    
+    // Estado inicial
+    setTimeout(updateButtons, 400);
 }
 
-// Llamar después de cargar
+// Llamar para ambos carruseles
 window.addEventListener('load', () => {
-    // ... tus otros setups
-    setupSuggestionsCarousel();
+    // ... tus otras inicializaciones ...
+    
+    setupGenericCarousel('suggestions-carousel-wrapper', 'suggestion-items', 'prev-suggestion', 'next-suggestion');
+    
+    // Si más adelante creas otro carrusel, solo llamas de nuevo la función
 });
-
-// También llamar después de cargar locales por categoría
-// en displayLocalesConCategoria() al final:
-setupSuggestionsCarousel();
     </script>
 </body>
 </html>
