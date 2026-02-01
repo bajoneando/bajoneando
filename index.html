@@ -1682,15 +1682,17 @@ function fetchLocalesByCategoria(categoria) {
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
-    
+
     // Limpiamos todo lo anterior
     container.innerHTML = '';
-    suggestionsSection.classList.add('mostrando-por-categoria');
+    
+    // Actualizamos título y clase visual
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
+    suggestionsSection.classList.add('mostrando-por-categoria');
 
-    // Eliminamos cualquier botón anterior que pudiera haber quedado
-    const oldBtn = document.querySelector('.ver-todo-categoria-dinamica');
-    if (oldBtn) oldBtn.remove();
+    // Eliminamos cualquier botón "Ver todo" anterior que pudiera existir
+    const previousBtn = document.querySelector('.ver-todo-categoria-dinamica');
+    if (previousBtn) previousBtn.remove();
 
     if (locales.length === 0) {
         container.innerHTML = `
@@ -1705,7 +1707,7 @@ function displayLocalesConCategoria(locales, categoria) {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-        
+
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1720,15 +1722,21 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
-        
-        div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
+
+        div.onclick = () => {
+            fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
+        };
+
         container.appendChild(div);
     });
 
-    // Creamos y añadimos el botón dinámicamente
+    // Creamos el botón "Ver todo [categoría]" dinámicamente
     const btnContainer = document.createElement('div');
     btnContainer.className = 'ver-todo-categoria dinamica';
-    btnContainer.style.cssText = 'text-align:center; margin: 30px 0 50px;';
+    btnContainer.style.cssText = `
+        text-align: center;
+        margin: 30px 0 50px;
+    `;
 
     btnContainer.innerHTML = `
         <button style="
@@ -1750,14 +1758,16 @@ function displayLocalesConCategoria(locales, categoria) {
         </button>
     `;
 
+    // Asignamos la acción al botón
     const button = btnContainer.querySelector('button');
-    button.onclick = function() {
-        console.log(`Botón "Ver todo ${categoria}" presionado`);
+    button.onclick = function () {
+        console.log(`Clic en "Ver todo ${categoria}" → cargando todos los menús`);
         ultimaCategoriaSeleccionada = categoria;
         fetchMenus(categoria, null, null);
-        // Opcional: btnContainer.remove(); si quieres que desaparezca después de clic
+        // Opcional: btnContainer.remove();  // si quieres que desaparezca tras clic
     };
 
+    // Lo agregamos al final de los locales
     container.appendChild(btnContainer);
 }
     
