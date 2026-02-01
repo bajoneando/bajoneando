@@ -1945,7 +1945,6 @@ async function registerUser() {
         // 1. Cambiamos el nombre de la función para que sea más clara su intención
 //    y creamos una versión específica para categorías
 
-// ESTE SÍ debe quedarse (es el correcto para la nueva lógica)
 document.querySelector('.categories').addEventListener('click', e => {
     const cat = e.target.closest('.category');
     if (!cat) return;
