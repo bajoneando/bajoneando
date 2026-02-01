@@ -1012,7 +1012,6 @@ main {
                 class="profile-icon">
             <span>Mi Perfil</span>
         </div>
- 
         <!-- Menú desplegable -->
         <div class="profile-dropdown" id="profile-dropdown">
     <a href="#" class="dropdown-item" onclick="openEditProfileModal()">Editar perfil</a>
@@ -1052,7 +1051,7 @@ main {
     </div>
     <button class="carousel-btn right categories-btn" id="next-category" aria-label="Siguiente categoría">→</button>
 </div>
-    
+   
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
@@ -1077,9 +1076,9 @@ main {
         Ver todo <span id="categoria-ver-todo"></span>
     </button>
 </div>
-    
+   
         <div id="menu-display" style="display:none;"></div>
-    
+   
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
 <!-- 2. Reemplaza completamente el <div id="cart-section"> original por este bloque -->
@@ -1122,7 +1121,7 @@ main {
 </select>
 <!-- Contenedor donde se mostrará el checkout de MP -->
 <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-         
+        
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
@@ -1167,16 +1166,12 @@ main {
     <div class="modal-content">
         <span class="close" onclick="closeModal('edit-profile-modal')">×</span>
         <h2>Editar Perfil</h2>
- 
         <label for="edit-name">Nombre completo</label>
         <input type="text" id="edit-name" placeholder="Nombre completo" required>
- 
         <label for="edit-email">Correo electrónico</label>
         <input type="email" id="edit-email" placeholder="Correo electrónico" required>
- 
         <label for="edit-new-password">Nueva contraseña (opcional)</label>
         <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
- 
         <button onclick="saveProfileChanges()">Guardar cambios</button>
     </div>
 </div>
@@ -1280,7 +1275,7 @@ function switchToLogin() {
     closeModal('register-modal');
     showModal('login-modal');
 }
-    
+   
 // ==================== CARGAR FAVORITOS DEL USUARIO ====================
 function loadUserFavorites() {
     if (!userId) return;
@@ -1371,7 +1366,7 @@ function showMyFavorites() {
         })
         .catch(() => showError(container, 'Error al cargar tus favoritos'));
 }
-    
+   
 function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
     // Limpiamos y preparamos la estructura
@@ -1405,10 +1400,10 @@ function displayMenus(menus, title, categoriaDestacada = null) {
     } else {
         menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
-        
+       
             const div = document.createElement('div');
             div.className = 'menu-item';
-        
+       
             // Resaltar si coincide con la categoría destacada
             const esDeCategoria = categoriaDestacada &&
                 menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
@@ -1441,7 +1436,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
                     </div>
                 </div>
             `;
-        
+       
             itemsDiv.appendChild(div);
         });
     }
@@ -1449,17 +1444,18 @@ function displayMenus(menus, title, categoriaDestacada = null) {
 // Lógica para botón "Ver todo el menú" (solo si filtrado por categoría y es un local específico)
 let showFullMenuButton = false;
 let currentLocalId = null;
-
+let currentLocalName = '';
 if (categoriaDestacada && menus.length > 0) {
     currentLocalId = menus[0].local_id;
+    currentLocalName = menus[0].nombre_local || 'Local';
     if (currentLocalId && menus.every(menu => menu.local_id === currentLocalId)) {
         showFullMenuButton = true;
     }
 }
-
 if (showFullMenuButton) {
+    // Agregar botón después del de categoría (reutiliza estilo similar)
     container.innerHTML += `
-        <div class="ver-todo-menu" style="text-align:center; margin: 30px 0 50px;">
+        <div class="ver-todo-menu" style="display:block; text-align:center; margin: 30px 0 40px;">
             <button style="
                 background: #d32f2f;
                 color: white;
@@ -1470,27 +1466,28 @@ if (showFullMenuButton) {
                 font-weight: 600;
                 cursor: pointer;
                 box-shadow: 0 4px 12px rgba(211,47,47,0.3);
+                transition: all 0.2s;
             "
             onmouseover="this.style.transform='scale(1.04)'; this.style.boxShadow='0 6px 18px rgba(211,47,47,0.4)'"
             onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211,47,47,0.3)'"
             >
-                Ver todo el menú de ${menus[0].nombre_local || 'este local'}
+                Ver todo el menú
             </button>
         </div>
     `;
-
+    // Asignar evento (usa variables locales para closure)
     const fullMenuBtn = container.querySelector('.ver-todo-menu button');
     fullMenuBtn.onclick = () => {
-        fetchMenus(null, currentLocalId, null);
+        fetchMenus(null, currentLocalId, null); // Carga menú completo del local sin filtro
+        // Opcional: actualizar título en el fetch, pero el actual maneja "Menú del local"
     };
 }
-    
+   
     // Mostramos el contenedor de menús
     container.style.display = 'block';
     // Actualizamos visual de favoritos (por si acaso)
     setTimeout(updateFavoriteButtons, 100);
 }
- 
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1600,7 +1597,7 @@ async function registerUser() {
         const result = await response.json();
         if (result.success) {
             alert('¡Registro exitoso! Bienvenid@ ' + nombre);
-        
+       
             // Guardamos datos en localStorage
             localStorage.setItem('userId', result.userId);
             localStorage.setItem('userName', nombre);
@@ -1623,7 +1620,7 @@ async function registerUser() {
         btn.textContent = 'Registrarse';
     }
 }
-    
+   
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
@@ -1656,7 +1653,7 @@ async function registerUser() {
                 })
                 .catch(() => showError(container, 'Error al cargar locales'));
         }
-    
+   
         function setupSearch() {
             const input = document.getElementById('search-input');
             let timeout;
@@ -1687,7 +1684,7 @@ document.querySelector('.categories').addEventListener('click', e => {
     ultimaCategoriaSeleccionada = categoria;
     fetchLocalesByCategoria(categoria);
 });
-    
+   
 // Nueva función dedicada
 function fetchLocalesByCategoria(categoria) {
     const container = document.getElementById('menu-display');
@@ -1710,33 +1707,32 @@ function fetchLocalesByCategoria(categoria) {
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
-    
+   
     // Limpiamos el contenedor de sugerencias
     container.innerHTML = '';
-    
+   
     // Agregamos una clase para poder estilizar específicamente cuando mostramos por categoría
     suggestionsSection.classList.add('mostrando-por-categoria');
-    
+   
     // Cambiamos el título de la sección para que sea más claro
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
-    
+   
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
-        
+       
         // Ocultamos el botón "Ver todo" si no hay resultados
         document.getElementById('ver-todo-categoria-btn').style.display = 'none';
         return;
     }
-
     // Mostramos cada local
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-        
+       
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1751,15 +1747,18 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
-        
+       
         // Al hacer clic en el local → cargamos el menú filtrado por la categoría seleccionada
         div.onclick = () => {
             fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         };
-        
+       
         container.appendChild(div);
     });
-
+    // ────────────────────────────────────────────────────────────────
+    // Mostrar botón "Ver todo [categoría]" debajo de los locales
+    // Usamos el contenedor estático que ya existe en el HTML
+    // ────────────────────────────────────────────────────────────────
     // ────────────────────────────────────────────────────────────────
 // Mostrar y configurar botón "Ver todo [categoría]"
 // ────────────────────────────────────────────────────────────────
@@ -1790,25 +1789,21 @@ if (btnContainer && btnVerTodo) {
     
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
-    
+   
     // Ocultamos el botón estático "Ver todo [categoría]" cuando entramos a ver menús
     // (ya que ahora se usa solo debajo de los locales, no dentro del menú)
     const verTodoCategoriaBtn = document.getElementById('ver-todo-categoria-btn');
     if (verTodoCategoriaBtn) {
         verTodoCategoriaBtn.style.display = 'none';
     }
-
     showLoading(container);
-
     let url = `${scriptUrl}?action=getMenus`;
     if (tipoCategoria) url += `&type=${encodeURIComponent(tipoCategoria)}`;
     if (localId) url += `&local=${encodeURIComponent(localId)}`;
-
     fetch(url)
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
             let menus = data || [];
-
             // Filtrado adicional en frontend (por si el backend no filtra perfectamente)
             if (filtroCategoriaInicial && !tipoCategoria) {
                 const catLower = filtroCategoriaInicial.toLowerCase().trim();
@@ -1817,10 +1812,8 @@ if (btnContainer && btnVerTodo) {
                     menu.categoria.toLowerCase().trim().includes(catLower)
                 );
             }
-
             // Determinamos el título según el contexto
             let titulo = 'Menú del local';
-
             if (tipoCategoria && !localId) {
                 titulo = `Todos los ${tipoCategoria}`;
             }
@@ -1830,7 +1823,6 @@ if (btnContainer && btnVerTodo) {
             else if (tipoCategoria) {
                 titulo = tipoCategoria;
             }
-
             // Mostramos los menús
             displayMenus(menus, titulo, tipoCategoria || filtroCategoriaInicial);
         })
@@ -1839,7 +1831,6 @@ if (btnContainer && btnVerTodo) {
             showError(container, 'No pudimos cargar el menú en este momento');
         });
 }
- 
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
     // Solo aplicamos display: block al contenedor de menús
@@ -2004,7 +1995,7 @@ function showAddedToCartToast(nombreProducto) {
         }
     }, 4000);
 }
-    
+   
     function updateCartCount() {
         const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
         document.getElementById('cart-count').textContent = total;
@@ -2121,7 +2112,6 @@ function removeFromCart(index) {
         updateCartDisplay();
     }
 }
- 
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
@@ -2322,7 +2312,6 @@ function startPaymentPolling(preferenceId, externalReference) { // ← agregamos
         }
     }, 5000);
 }
- 
 async function finalizeOrderAfterPayment() {
     if (!pendingOrderData) return;
     // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
@@ -2387,7 +2376,6 @@ function openChangeAddressModal() {
     addressInput.value = userAddress || '';
     showModal('change-address-modal');
 }
- 
 function saveProfileChanges() {
     const name = document.getElementById('edit-name').value.trim();
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
@@ -2421,10 +2409,10 @@ function saveProfileChanges() {
                 // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-         
+        
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
-         
+        
                 // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
@@ -2436,7 +2424,6 @@ function saveProfileChanges() {
             alert('Error de conexión al intentar actualizar el perfil');
         });
 }
- 
 function saveAddressChange() {
     const newAddress = document.getElementById('edit-address').value.trim();
     if (!newAddress) {
@@ -2452,11 +2439,11 @@ function saveAddressChange() {
             if (data.success) {
                 userAddress = newAddress;
                 localStorage.setItem('userAddress', newAddress);
-         
+        
                 // Actualizamos el campo de dirección del checkout si está visible
                 const checkoutDir = document.getElementById('direccion');
                 if (checkoutDir) checkoutDir.value = newAddress;
-         
+        
                 alert('Dirección actualizada correctamente');
                 closeModal('change-address-modal');
             } else {
@@ -2534,7 +2521,6 @@ async function createConfirmedOrder(orderData) {
             body: JSON.stringify(payload)
         });
         alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
- 
         // Limpieza final
         cart = [];
         updateCartCount();
@@ -2543,7 +2529,6 @@ async function createConfirmedOrder(orderData) {
         document.getElementById('mercadopago-checkout').style.display = 'none';
         document.getElementById('checkout-btn').style.display = 'block';
         document.getElementById('checkout-form').reset();
- 
     } catch (err) {
         console.error("Error registrando pedido pagado:", err);
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
@@ -2567,11 +2552,11 @@ function setupCategoriesCarousel() {
     function updateButtons() {
         const atStart = container.scrollLeft <= 0;
         const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
-   
+  
         prevBtn.disabled = atStart;
         prevBtn.style.opacity = atStart ? '0.4' : '1';
         prevBtn.style.cursor = atStart ? 'default' : 'pointer';
-   
+  
         nextBtn.disabled = atEnd;
         nextBtn.style.opacity = atEnd ? '0.4' : '1';
         nextBtn.style.cursor = atEnd ? 'default' : 'pointer';
