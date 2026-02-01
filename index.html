@@ -1,3 +1,7 @@
+el boton Ver todo "categoría" debe aparecer debajo de los locales al seleccionar una categoria y tambien luego de los platos cargados al presionar el local con categoria
+
+debe cumplir la funcion de mostrar todos los platos filtrados por la categoria seleccionada sin importar el local
+ 
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1458,23 +1462,25 @@ function displayMenus(menus, title, categoriaDestacada = null) {
             itemsDiv.appendChild(div);
         });
     }
-    // ────────────────────────────────────────────────────────────────
+    // Dentro de displayMenus, reemplaza toda la sección del botón por esto:
+
+// ────────────────────────────────────────────────────────────────
 // Lógica del botón "Ver todo [categoría]"
 // ────────────────────────────────────────────────────────────────
 const btnContainer = document.getElementById('ver-todo-categoria-btn');
 const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
 const spanCategoria = document.getElementById('categoria-ver-todo');
 
-// Mostramos el botón SOLO si hay una categoría seleccionada
 if (ultimaCategoriaSeleccionada) {
     
     spanCategoria.textContent = ultimaCategoriaSeleccionada;
     btnContainer.style.display = 'block';
 
-    // Acción: SIEMPRE carga TODOS los platos de la categoría (sin importar local)
     btnVerTodo.onclick = () => {
+        // Siempre mostramos TODOS los platos de la categoría seleccionada
         fetchMenus(ultimaCategoriaSeleccionada, null, null);
     };
+
 } else {
     btnContainer.style.display = 'none';
 }
@@ -1706,6 +1712,7 @@ function displayLocalesConCategoria(locales, categoria) {
     const suggestionsSection = document.querySelector('.suggestions');
 
     container.innerHTML = '';
+
     suggestionsSection.classList.add('mostrando-por-categoria');
 
     if (locales.length === 0) {
@@ -1738,34 +1745,35 @@ function displayLocalesConCategoria(locales, categoria) {
         container.appendChild(div);
     });
 
+    // Cambiamos el título
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
 
-    // Botón "Ver todo [categoría]" debajo de los locales
+    // ── AGREGAMOS EL BOTÓN "VER TODO" DEBAJO DE LOS LOCALES ───────────────
     const verTodoDiv = document.createElement('div');
     verTodoDiv.style.cssText = 'text-align: center; margin: 40px 0 60px;';
     verTodoDiv.innerHTML = `
-        <button id="btn-ver-todo-categoria-locales" style="
+        <button id="btn-ver-todo-locales" style="
             background: #d32f2f;
             color: white;
             border: none;
             border-radius: 50px;
-            padding: 14px 32px;
-            font-size: 1.05rem;
+            padding: 14px 36px;
+            font-size: 1.08rem;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 14px rgba(211,47,47,0.35);
-            transition: all 0.22s;
+            box-shadow: 0 5px 15px rgba(211,47,47,0.35);
+            transition: all 0.25s ease;
         "
-        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(211,47,47,0.45)'"
-        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.35)'"
+        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 22px rgba(211,47,47,0.5)'"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 5px 15px rgba(211,47,47,0.35)'"
         >
             Ver todo ${categoria}
         </button>
     `;
     container.appendChild(verTodoDiv);
 
-    // Acción: siempre carga TODOS los platos de la categoría
-    document.getElementById('btn-ver-todo-categoria-locales').onclick = () => {
+    // Acción del botón
+    document.getElementById('btn-ver-todo-locales').onclick = () => {
         fetchMenus(categoria, null, null);
     };
 }
