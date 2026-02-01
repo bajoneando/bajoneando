@@ -1462,18 +1462,18 @@ function displayMenus(menus, title, categoriaDestacada = null) {
 const btnContainer = document.getElementById('ver-todo-categoria-btn');
 const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
 const spanCategoria = document.getElementById('categoria-ver-todo');
-if (ultimaCategoriaSeleccionada && categoriaDestacada) {
- 
+
+if (vieneDeCategoria && ultimaCategoriaSeleccionada) {
     spanCategoria.textContent = ultimaCategoriaSeleccionada;
     btnContainer.style.display = 'block';
-    // CAMBIO IMPORTANTE AQUÍ
+    
     btnVerTodo.onclick = () => {
-        // Mostrar TODOS los menús de esa categoría (sin importar local)
+        // Volver a mostrar TODOS los menús de la categoría (sin local)
         fetchMenus(ultimaCategoriaSeleccionada, null, null);
-     
-        // Opcional: cambiar título para que sea más claro
-        // document.querySelector('#menu-display h2').textContent =
-        // `Todos los ${ultimaCategoriaSeleccionada}`;
+        
+        // Opcional: actualizar título
+        // document.querySelector('#menu-display h2').textContent = 
+        //     `Todos los ${ultimaCategoriaSeleccionada}`;
     };
 } else {
     btnContainer.style.display = 'none';
@@ -1709,23 +1709,29 @@ function fetchLocalesByCategoria(categoria) {
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
+    const btnContainer = document.getElementById('ver-todo-categoria-btn');
+    const spanCategoria = document.getElementById('categoria-ver-todo');
+    const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
+
     // Limpiamos el contenedor
     container.innerHTML = '';
-    // Opcional: agregamos una clase al contenedor padre para poder ajustar estilos específicos
-    // si es necesario (por ejemplo más espacio, centrado diferente, etc.)
+
     suggestionsSection.classList.add('mostrando-por-categoria');
+
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
+        btnContainer.style.display = 'none'; // ocultamos botón si no hay resultados
         return;
     }
+
+    // Mostramos los locales
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-        // Estructura con el nuevo estilo
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1740,13 +1746,29 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
-        // Acción al hacer clic: cargar menú del local con la categoría seleccionada
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         container.appendChild(div);
     });
-    // Cambiamos el título de la sección para que sea más claro
+
+    // Actualizamos título
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
+
+    // ── Mostramos el botón "Ver todo [categoría]" ────────────────────────
+    if (btnContainer && spanCategoria && btnVerTodo) {
+        spanCategoria.textContent = categoria;
+        btnContainer.style.display = 'block';
+
+        // Limpiamos cualquier listener anterior para evitar duplicados
+        btnVerTodo.onclick = null;
+        btnVerTodo.onclick = () => {
+            // Mostrar TODOS los menús de esa categoría
+            fetchMenus(categoria, null, null);
+            // Opcional: cambiar título de la sección de menús
+            // document.querySelector('#menu-display h2').textContent = `Todos los ${categoria}`;
+        };
+    }
 }
+        
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
     showLoading(container);
