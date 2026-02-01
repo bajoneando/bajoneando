@@ -279,26 +279,30 @@ body {
     transform: scale(1.15); /* Efecto zoom suave en la imagen al pasar el mouse */
 }
         
-.suggestion {
+/* Locales con Categoría seleccionada */
+.suggestion-categoria {
     position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 8px;
+    padding: 12px 8px;
     background: white;
     border-radius: 16px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
     transition: all 0.25s ease;
+    width: 140px;          /* un poco más ancho que las sugerencias iniciales */
+    height: auto;          /* altura flexible por el texto */
+    min-height: 160px;
 }
 
-.suggestion:hover {
+.suggestion-categoria:hover {
     transform: translateY(-6px);
     box-shadow: 0 12px 30px rgba(0,0,0,0.18);
 }
 
-.suggestion img {
+.suggestion-categoria img {
     width: 80px;
     height: 80px;
     object-fit: contain;
@@ -306,42 +310,43 @@ body {
     border: 3px solid #ffebee;
     background: #fff;
     padding: 4px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
-.suggestion-info {
+.suggestion-categoria .suggestion-info {
     width: 100%;
 }
 
-.local-name {
+.suggestion-categoria .local-name {
     font-weight: 600;
     font-size: 0.95rem;
     color: #333;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     line-height: 1.2;
 }
 
-.categoria-precio {
+.suggestion-categoria .categoria-precio {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    font-size: 0.82rem;
+    gap: 4px;
+    font-size: 0.85rem;
 }
 
-.cat {
+.suggestion-categoria .cat {
     color: #d32f2f;
     font-weight: 500;
     background: #ffebee;
-    padding: 2px 10px;
+    padding: 3px 10px;
     border-radius: 12px;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
 }
 
-.precio-min {
+.suggestion-categoria .precio-min {
     color: #2e7d32;
     font-weight: 700;
 }
+        
     /* Tarjetas de menú - versión desktop */
     .menu-item {
         width: 100%;
@@ -1974,46 +1979,54 @@ function fetchLocalesByCategoria(categoria) {
         });
 }
 
-// 2. Nueva función de renderizado (parecida a suggestion pero con precio)
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
+    const suggestionsSection = document.querySelector('.suggestions');
+
+    // Limpiamos el contenedor
     container.innerHTML = '';
-    
+
+    // Opcional: agregamos una clase al contenedor padre para poder ajustar estilos específicos
+    // si es necesario (por ejemplo más espacio, centrado diferente, etc.)
+    suggestionsSection.classList.add('mostrando-por-categoria');
+
     if (locales.length === 0) {
-        container.innerHTML = `<p style="text-align:center; padding:40px; color:#666;">
-            No encontramos locales con <strong>${categoria}</strong> en este momento.
-        </p>`;
+        container.innerHTML = `
+            <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
+                No encontramos locales con <strong>${categoria}</strong> en este momento.
+            </p>`;
         return;
     }
-    
+
     locales.forEach(local => {
         const div = document.createElement('div');
-        div.className = 'suggestion';
+        div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-        
-        // Estructura sugerida
+
+        // Estructura con el nuevo estilo
         div.innerHTML = `
-            <div class="suggestion-content">
-                <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}" 
-                     alt="${local.nombre_local}"
-                     onerror="this.src='https://placehold.co/120x120?text=?'">
-                <div class="suggestion-info">
-                    <div class="local-name">${local.nombre_local}</div>
-                    <div class="categoria-precio">
-                        <span class="cat">${categoria}</span>
-                        <span class="precio-min">desde $${Number(local.precio_min_categoria).toLocaleString('es-AR')}</span>
-                    </div>
+            <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
+                 alt="${local.nombre_local}"
+                 onerror="this.src='https://placehold.co/120x120?text=Local'">
+
+            <div class="suggestion-info">
+                <div class="local-name">${local.nombre_local}</div>
+                <div class="categoria-precio">
+                    <span class="cat">${categoria}</span>
+                    <span class="precio-min">
+                        desde $${Number(local.precio_min_categoria).toLocaleString('es-AR')}
+                    </span>
                 </div>
             </div>
         `;
-        
-        // Click → mostrar menú completo del local (como antes)
+
+        // Acción al hacer clic: cargar menú del local con la categoría seleccionada
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
-        
+
         container.appendChild(div);
     });
-    
-    // Opcional: cambiar título
+
+    // Cambiamos el título de la sección para que sea más claro
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
 }
 
