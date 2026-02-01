@@ -1775,33 +1775,36 @@ function fetchLocalesByCategoria(categoria) {
 }
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
-    const suggestionsSection = document.querySelector('.suggestions');
-
-    // Limpiamos todo lo anterior
+    const titleElement = document.getElementById('suggestions-title');
+    
+    // Limpiamos el contenedor
     container.innerHTML = '';
     
-    // Actualizamos título y clase visual
-    document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
-    suggestionsSection.classList.add('mostrando-por-categoria');
-
-    // Eliminamos cualquier botón "Ver todo" anterior que pudiera existir
-    const previousBtn = document.querySelector('.ver-todo-categoria-dinamica');
-    if (previousBtn) previousBtn.remove();
-
+    // Actualizamos el título
+    if (titleElement) {
+        titleElement.textContent = `Locales con ${categoria}`;
+    }
+    
+    // Caso: no hay locales
     if (locales.length === 0) {
         container.innerHTML = `
-            <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
+            <p style="text-align:center; padding:60px 20px; color:#666; font-size:1.1rem; width:100%;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
+        
+        // Actualizamos botones del carrusel (quedarán deshabilitados)
+        setTimeout(() => {
+            if (typeof updateButtons === 'function') updateButtons();
+        }, 100);
         return;
     }
-
-    // Mostramos los locales
+    
+    // Creamos las tarjetas de locales
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-
+        
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1816,22 +1819,26 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
-
+        
+        // Evento de clic para ver el menú del local (filtrado por la categoría seleccionada)
         div.onclick = () => {
-            fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
+            ultimaCategoriaSeleccionada = categoria;
+            fetchMenus(null, local.local_id, categoria);
         };
-
+        
         container.appendChild(div);
     });
-
-    // Creamos el botón "Ver todo [categoría]" dinámicamente
+    
+    // Botón "Ver todo [categoría]"
     const btnContainer = document.createElement('div');
     btnContainer.className = 'ver-todo-categoria dinamica';
     btnContainer.style.cssText = `
         text-align: center;
         margin: 30px 0 50px;
+        flex: 0 0 auto;
+        min-width: 220px;
     `;
-
+    
     btnContainer.innerHTML = `
         <button style="
             background: #d32f2f;
@@ -1851,18 +1858,25 @@ function displayLocalesConCategoria(locales, categoria) {
             Ver todo ${categoria}
         </button>
     `;
-
-    // Asignamos la acción al botón
+    
+    // Acción del botón "Ver todo"
     const button = btnContainer.querySelector('button');
     button.onclick = function () {
-        console.log(`Clic en "Ver todo ${categoria}" → cargando todos los menús`);
         ultimaCategoriaSeleccionada = categoria;
         fetchMenus(categoria, null, null);
-        // Opcional: btnContainer.remove();  // si quieres que desaparezca tras clic
+        // Opcional: puedes remover el botón después de hacer clic si prefieres
+        // btnContainer.remove();
     };
-
-    // Lo agregamos al final de los locales
+    
+    // Agregamos el botón al final del carrusel
     container.appendChild(btnContainer);
+    
+    // Damos un pequeño tiempo para que el DOM se actualice y luego actualizamos los botones del carrusel
+    setTimeout(() => {
+        if (typeof updateButtons === 'function') {
+            updateButtons();
+        }
+    }, 150);
 }
     
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
