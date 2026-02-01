@@ -1708,65 +1708,13 @@ function fetchLocalesByCategoria(categoria) {
             showError(suggestionContainer, 'No pudimos cargar los locales con esa categoría');
         });
 }
-
-        function mostrarBotonVerTodoCategoria() {
-    const categoria = ultimaCategoriaSeleccionada;
-    if (!categoria) return;
-
-    // Si ya existe el contenedor, lo reutilizamos
-    let btnContainer = document.getElementById('ver-todo-categoria-btn');
-
-    // Si no existe, lo creamos
-    if (!btnContainer) {
-        btnContainer = document.createElement('div');
-        btnContainer.id = 'ver-todo-categoria-btn';
-        btnContainer.style.cssText = `
-            display: none;
-            text-align: center;
-            margin: 35px 0 50px;
-        `;
-        
-        btnContainer.innerHTML = `
-            <button id="btn-ver-todo-categoria" style="
-                background: #d32f2f;
-                color: white;
-                border: none;
-                border-radius: 50px;
-                padding: 14px 32px;
-                font-size: 1.05rem;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 4px 14px rgba(211, 47, 47, 0.35);
-                transition: all 0.22s ease;
-            "
-            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(211,47,47,0.45)'"
-            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.35)'"
-            >
-                Ver todo <span id="categoria-ver-todo"></span>
-            </button>
-        `;
-    }
-
-    const span = btnContainer.querySelector('#categoria-ver-todo');
-    const btn = btnContainer.querySelector('#btn-ver-todo-categoria');
-
-    span.textContent = categoria;
-    
-    // Acción del botón: siempre mostrar TODOS los menús de la categoría
-    btn.onclick = () => {
-        fetchMenus(categoria, null, null);
-    };
-
-    btnContainer.style.display = 'block';
-
-    return btnContainer;
-}
-        
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
 
+    // Limpiamos el contenedor
     container.innerHTML = '';
+
     suggestionsSection.classList.add('mostrando-por-categoria');
 
     if (locales.length === 0) {
@@ -1774,6 +1722,9 @@ function displayLocalesConCategoria(locales, categoria) {
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
+        // Ocultamos el botón si no hay resultados
+        const btnContainer = document.getElementById('ver-todo-categoria-btn');
+        if (btnContainer) btnContainer.style.display = 'none';
         return;
     }
 
@@ -1799,11 +1750,31 @@ function displayLocalesConCategoria(locales, categoria) {
         container.appendChild(div);
     });
 
+    // Cambiamos el título
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
 
-    // ← Agregamos el botón debajo de los locales
-    const boton = mostrarBotonVerTodoCategoria();
-    container.parentNode.insertBefore(boton, container.nextSibling);
+    // ────────────────────────────────────────────────────────────────
+    // Mostrar el botón "Ver todo [categoría]" debajo de los locales
+    // ────────────────────────────────────────────────────────────────
+    const btnContainer = document.getElementById('ver-todo-categoria-btn');
+    const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
+    const spanCategoria = document.getElementById('categoria-ver-todo');
+
+    if (ultimaCategoriaSeleccionada) {
+        spanCategoria.textContent = ultimaCategoriaSeleccionada;
+        btnContainer.style.display = 'block';
+
+        // Acción: mostrar TODOS los menús de esa categoría (sin importar local)
+        btnVerTodo.onclick = () => {
+            fetchMenus(ultimaCategoriaSeleccionada, null, null);
+        };
+    } else {
+        btnContainer.style.display = 'none';
+    }
+
+    // Movemos el botón al final del contenedor de sugerencias/locales
+    // (esto evita que quede flotando en otra sección)
+    container.parentNode.insertBefore(btnContainer, null);
 }
         
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
@@ -1843,15 +1814,12 @@ function displayLocalesConCategoria(locales, categoria) {
     
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
+    // Solo aplicamos display: block al contenedor de menús
     if (container.id === 'menu-display') {
         container.style.display = 'block';
     }
-    
-    // Ocultamos el botón cuando se está cargando algo nuevo
-    const btn = document.getElementById('ver-todo-categoria-btn');
-    if (btn) btn.style.display = 'none';
+    // Para suggestion-items (y cualquier otro), no hacemos nada → mantiene su flex + center
 }
-        
         function showError(container, msg) {
             container.innerHTML = `<p style="text-align:center;color:#d32f2f;padding:40px;">¡Ups! ${msg}</p>`;
         }
