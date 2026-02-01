@@ -1068,9 +1068,7 @@ main {
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
-       
-        <div id="menu-display" style="display:none;"></div>
-       
+
         <!-- Dentro de displayMenus, después de crear .menu-items -->
 <div class="ver-todo-categoria" id="ver-todo-categoria-btn" style="display:none; text-align:center; margin: 30px 0 40px;">
     <button style="
@@ -1091,6 +1089,9 @@ main {
         Ver todo <span id="categoria-ver-todo"></span>
     </button>
 </div>
+       
+        <div id="menu-display" style="display:none;"></div>
+       
   
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
@@ -1466,10 +1467,11 @@ function displayMenus(menus, title, categoriaDestacada = null) {
     // ────────────────────────────────────────────────────────────────
     // Lógica para decidir si mostramos el botón "Ver todo [categoría]"
     // ────────────────────────────────────────────────────────────────
-    const mostrarVerTodo = 
-        ultimaCategoriaSeleccionada &&               // Existe categoría seleccionada
-        categoriaDestacada &&                        // Estamos filtrando por categoría
-        !title.toLowerCase().includes("todos los");  // No estamos ya en "ver todo"
+    // Decidimos si mostramos el botón
+    const mostrarVerTodo =
+        ultimaCategoriaSeleccionada &&
+        categoriaDestacada &&
+        !title.toLowerCase().includes("todos los");
 
     if (mostrarVerTodo) {
         showVerTodoButton(ultimaCategoriaSeleccionada, "platos");
@@ -1477,10 +1479,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
         hideVerTodoButton();
     }
 
-    // Mostramos el contenedor de menús
     container.style.display = 'block';
-
-    // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
 
@@ -1747,7 +1746,6 @@ function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
 
-    // Limpiamos el contenedor
     container.innerHTML = '';
     suggestionsSection.classList.add('mostrando-por-categoria');
 
@@ -1756,41 +1754,22 @@ function displayLocalesConCategoria(locales, categoria) {
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
-        hideVerTodoButton(); // Ocultamos el botón si no hay resultados
+        hideVerTodoButton();
         return;
     }
 
-    // Creamos las tarjetas de locales
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-
-        div.innerHTML = `
-            <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
-                 alt="${local.nombre_local}"
-                 onerror="this.src='https://placehold.co/120x120?text=Local'">
-            <div class="suggestion-info">
-                <div class="local-name">${local.nombre_local}</div>
-                <div class="categoria-precio">
-                    <span class="cat">${categoria}</span>
-                    <span class="precio-min">
-                        desde $${Number(local.precio_min_categoria).toLocaleString('es-AR')}
-                    </span>
-                </div>
-            </div>
-        `;
-
-        // Al hacer clic → mostramos los menús del local filtrados por la categoría
+        div.innerHTML = `...`;  // ← tu HTML actual
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
-
         container.appendChild(div);
     });
 
-    // Actualizamos el título de la sección
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
 
-    // Mostramos el botón "Ver todo [categoría]" debajo de los locales
+    // Mostramos el botón debajo de los locales
     showVerTodoButton(categoria, "locales");
 }
         
