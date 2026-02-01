@@ -274,40 +274,40 @@ main {
     .menu-item {
         min-height: 90px; /* aún más bajo en celular */
     }
-   
+  
     .menu-item img {
         width: 90px; /* imagen más chica en pantallas pequeñas */
         height: 90px;
     }
-   
+  
     .menu-item .card-body-horizontal {
         padding: 8px 10px; /* menos padding interno */
     }
-   
+  
     .menu-item .local-logo {
         width: 26px;
         height: 26px;
     }
-   
+  
     .menu-item h3 {
         font-size: 1rem;
     }
-   
+  
     .menu-item p {
         font-size: 0.78rem;
         -webkit-line-clamp: 2;
     }
-   
+  
     .menu-item .precio {
         font-size: 1.25rem;
     }
-   
+  
     .menu-item button.add-to-cart {
         padding: 7px 10px;
         font-size: 0.85rem;
         min-width: 110px;
     }
-   
+  
     .menu-item .actions {
         gap: 6px;
     }
@@ -1002,7 +1002,7 @@ main {
 <meta name="theme-color" content="#c62828">
     <!-- Color de la barra de estado en móviles -->
     <meta name="theme-color" content="#c62828">
-   
+  
 </head>
 <body>
     <header>
@@ -1021,7 +1021,7 @@ main {
                 class="profile-icon">
             <span>Mi Perfil</span>
         </div>
-    
+   
         <!-- Menú desplegable -->
         <div class="profile-dropdown" id="profile-dropdown">
     <a href="#" class="dropdown-item" onclick="openEditProfileModal()">Editar perfil</a>
@@ -1039,7 +1039,7 @@ main {
         <h1>¿Qué se te antoja?</h1>
         <div class="categories-carousel-wrapper">
     <button class="carousel-btn left categories-btn" id="prev-category" aria-label="Categoría anterior">←</button>
-  
+ 
     <div class="categories" id="categories-container">
         <div class="category" data-type="Hamburguesas" style="background-image: url('https://i.postimg.cc/wxrb5Vt2/hamburguesa-sencilla.jpg');">
             <span>Burguers</span>
@@ -1060,39 +1060,34 @@ main {
             <span>Bebidas</span>
         </div>
     </div>
-  
+ 
     <button class="carousel-btn right categories-btn" id="next-category" aria-label="Siguiente categoría">→</button>
 </div>
-       
+      
         <div class="suggestions">
             <h2>Sugerencias de Locales</h2>
             <div class="suggestion-items" id="suggestion-items"></div>
         </div>
+      
+        <div id="menu-display" style="display:none;"></div>
+      
 
-        <!-- Dentro de displayMenus, después de crear .menu-items -->
-<div class="ver-todo-categoria" id="ver-todo-categoria-btn" style="display:none; text-align:center; margin: 30px 0 40px;">
-    <button style="
-        background: #d32f2f;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 14px 28px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(211,47,47,0.3);
-        transition: all 0.2s;
-    "
-    onmouseover="this.style.transform='scale(1.04)'; this.style.boxShadow='0 6px 18px rgba(211,47,47,0.4)'"
-    onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211,47,47,0.3)'"
-    >
-        Ver todo <span id="categoria-ver-todo"></span>
+<!-- Botón para ver TODOS los platos de una categoría (sin importar local) -->
+<div id="ver-todo-categoria-container" style="display:none; text-align:center; margin: 35px 0 50px;">
+    <button id="btn-ver-todo-categoria"
+            style="background:#d32f2f; color:white; border:none; border-radius:50px; padding:14px 32px; font-size:1.08rem; font-weight:600; cursor:pointer; box-shadow:0 4px 14px rgba(211,47,47,0.4);">
+        Ver todo <span id="span-categoria-ver-todo"></span>
     </button>
 </div>
-       
-        <div id="menu-display" style="display:none;"></div>
-       
-  
+
+<!-- Botón para ver TODO el menú de un local -->
+<div id="ver-todo-menu-local-container" style="display:none; text-align:center; margin: 35px 0 60px;">
+    <button id="btn-ver-todo-menu-local"
+            style="background:#c62828; color:white; border:none; border-radius:50px; padding:14px 36px; font-size:1.08rem; font-weight:600; cursor:pointer; box-shadow:0 4px 16px rgba(198,40,40,0.35);">
+        Ver todo el Menú
+    </button>
+</div>
+ 
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
 <!-- 2. Reemplaza completamente el <div id="cart-section"> original por este bloque -->
@@ -1135,7 +1130,7 @@ main {
 </select>
 <!-- Contenedor donde se mostrará el checkout de MP -->
 <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-            
+           
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
@@ -1180,16 +1175,16 @@ main {
     <div class="modal-content">
         <span class="close" onclick="closeModal('edit-profile-modal')">×</span>
         <h2>Editar Perfil</h2>
-    
+   
         <label for="edit-name">Nombre completo</label>
         <input type="text" id="edit-name" placeholder="Nombre completo" required>
-    
+   
         <label for="edit-email">Correo electrónico</label>
         <input type="email" id="edit-email" placeholder="Correo electrónico" required>
-    
+   
         <label for="edit-new-password">Nueva contraseña (opcional)</label>
         <input type="password" id="edit-new-password" placeholder="Dejar en blanco si no deseas cambiarla">
-    
+   
         <button onclick="saveProfileChanges()">Guardar cambios</button>
     </div>
 </div>
@@ -1215,7 +1210,8 @@ let userId = null;
 let userAddress = '';
 let currentPreferenceId = null; // para saber qué preferencia estamos esperando
 let pendingOrderData = null; // guardamos temporalmente los datos del pedido
-let ultimaCategoriaSeleccionada = null; // ← nueva variable global
+let ultimaCategoriaSeleccionada = null;
+let ultimoLocalSeleccionado = null;     // ← nueva variable importante
 // === NUEVA VARIABLE GLOBAL PARA FAVORITOS ===
 let userFavorites = []; // array de menuIds favoritos del usuario actual
         // Caché de menús mostrados actualmente (para acceder rápido al hacer clic)
@@ -1293,7 +1289,7 @@ function switchToLogin() {
     closeModal('register-modal');
     showModal('login-modal');
 }
-       
+      
 // ==================== CARGAR FAVORITOS DEL USUARIO ====================
 function loadUserFavorites() {
     if (!userId) return;
@@ -1384,10 +1380,10 @@ function showMyFavorites() {
         })
         .catch(() => showError(container, 'Error al cargar tus favoritos'));
 }
-       
+      
 function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
-
+  
     // Limpiamos y preparamos la estructura
     container.innerHTML = `
         <h2>${title}</h2>
@@ -1412,27 +1408,23 @@ function displayMenus(menus, title, categoriaDestacada = null) {
             </button>
         </div>
     `;
-
     const itemsDiv = container.querySelector('.menu-items');
     currentDisplayedMenus = {};
-
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center; color:#999; padding:50px 20px; font-size:1.1rem;">No se encontraron menús en este momento.</p>';
-        hideVerTodoButton();
     } else {
         menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
-
+          
             const div = document.createElement('div');
             div.className = 'menu-item';
-
+          
             // Resaltar si coincide con la categoría destacada
             const esDeCategoria = categoriaDestacada &&
                 menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
             if (esDeCategoria) {
                 div.classList.add('destacado-categoria');
             }
-
             div.innerHTML = `
                 <img src="${menu.imagen_url || 'https://placehold.co/120x120?text=Sin+Imagen'}"
                      alt="${menu.nombre}"
@@ -1459,66 +1451,38 @@ function displayMenus(menus, title, categoriaDestacada = null) {
                     </div>
                 </div>
             `;
-
+          
             itemsDiv.appendChild(div);
         });
     }
-
     // ────────────────────────────────────────────────────────────────
-    // Lógica para decidir si mostramos el botón "Ver todo [categoría]"
-    // ────────────────────────────────────────────────────────────────
-    // Decidimos si mostramos el botón
-    const mostrarVerTodo =
-        ultimaCategoriaSeleccionada &&
-        categoriaDestacada &&
-        !title.toLowerCase().includes("todos los");
-
-    if (mostrarVerTodo) {
-        showVerTodoButton(ultimaCategoriaSeleccionada, "platos");
-    } else {
-        hideVerTodoButton();
-    }
-
+// Lógica del botón "Ver todo [categoría]"
+// ────────────────────────────────────────────────────────────────
+const btnContainer = document.getElementById('ver-todo-categoria-btn');
+const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
+const spanCategoria = document.getElementById('categoria-ver-todo');
+if (ultimaCategoriaSeleccionada && categoriaDestacada) {
+  
+    spanCategoria.textContent = ultimaCategoriaSeleccionada;
+    btnContainer.style.display = 'block';
+    // CAMBIO IMPORTANTE AQUÍ
+    btnVerTodo.onclick = () => {
+        // Mostrar TODOS los menús de esa categoría (sin importar local)
+        fetchMenus(ultimaCategoriaSeleccionada, null, null);
+      
+        // Opcional: cambiar título para que sea más claro
+        // document.querySelector('#menu-display h2').textContent =
+        // `Todos los ${ultimaCategoriaSeleccionada}`;
+    };
+} else {
+    btnContainer.style.display = 'none';
+}
+    // Mostramos el contenedor de menús
     container.style.display = 'block';
+    // Actualizamos visual de favoritos (por si acaso)
     setTimeout(updateFavoriteButtons, 100);
 }
-
-        function showVerTodoButton(categoria, contexto = "platos") {
-    const btnContainer = document.getElementById('ver-todo-categoria-btn');
-    const spanCategoria = document.getElementById('categoria-ver-todo');
-    const btn = document.getElementById('btn-ver-todo-categoria');
-
-    if (!btnContainer || !spanCategoria || !btn) return;
-
-    spanCategoria.textContent = categoria;
-    btnContainer.style.display = 'block';
-
-    // Limpiamos eventos anteriores
-    btn.onclick = null;
-
-    if (contexto === "locales") {
-        // Caso 1: estamos viendo locales → Ver todo lleva a TODOS los platos de la categoría
-        btn.onclick = () => {
-            fetchMenus(categoria, null, null);
-            // Opcional: cambiar título
-            document.querySelector('#menu-display h2').textContent = `Todos los ${categoria}`;
-        };
-    } else {
-        // Caso 2: estamos viendo platos de un local (filtrado por cat) → Ver todo igual lleva a TODOS
-        btn.onclick = () => {
-            fetchMenus(categoria, null, null);
-            document.querySelector('#menu-display h2').textContent = `Todos los ${categoria}`;
-        };
-    }
-}
-
-function hideVerTodoButton() {
-    const btnContainer = document.getElementById('ver-todo-categoria-btn');
-    if (btnContainer) {
-        btnContainer.style.display = 'none';
-    }
-}
-    
+   
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1628,7 +1592,7 @@ async function registerUser() {
         const result = await response.json();
         if (result.success) {
             alert('¡Registro exitoso! Bienvenid@ ' + nombre);
-           
+          
             // Guardamos datos en localStorage
             localStorage.setItem('userId', result.userId);
             localStorage.setItem('userName', nombre);
@@ -1651,7 +1615,7 @@ async function registerUser() {
         btn.textContent = 'Registrarse';
     }
 }
-       
+      
         function loadAllDrinks() {
             fetch(`${scriptUrl}?action=getAllMenus`)
                 .then(r => r.ok ? r.json() : Promise.reject())
@@ -1684,7 +1648,7 @@ async function registerUser() {
                 })
                 .catch(() => showError(container, 'Error al cargar locales'));
         }
-       
+      
         function setupSearch() {
             const input = document.getElementById('search-input');
             let timeout;
@@ -1706,31 +1670,44 @@ async function registerUser() {
                 .then(res => displayMenus(res.menus || [], `Resultados para "${query}"`))
                 .catch(() => showError(container, 'Error en búsqueda'));
         }
-        // 1. Cambiamos el nombre de la función para que sea más clara su intención
-// y creamos una versión específica para categorías
-document.querySelector('.categories').addEventListener('click', e => {
-    const cat = e.target.closest('.category');
-    if (!cat) return;
-   
-    const categoria = cat.dataset.type;
-    ultimaCategoriaSeleccionada = categoria;
-   
-    fetchLocalesByCategoria(categoria);
+        
+        // Botón: Ver todos los platos de la categoría (sin importar local)
+document.getElementById('btn-ver-todo-categoria')?.addEventListener('click', () => {
+    if (!ultimaCategoriaSeleccionada) return;
+    
+    // Llamamos fetchMenus SOLO con la categoría → sin local
+    fetchMenus(ultimaCategoriaSeleccionada, null, null);
+    
+    // Opcional: actualizar título para que sea más claro
+    document.querySelector('#menu-display h2').textContent = 
+        `Todos los ${ultimaCategoriaSeleccionada}`;
 });
-       
+
+// Botón: Ver TODO el menú del local seleccionado
+document.getElementById('btn-ver-todo-menu-local')?.addEventListener('click', () => {
+    if (!ultimoLocalSeleccionado) return;
+    
+    // Llamamos fetchMenus SOLO con el local → sin categoría
+    fetchMenus(null, ultimoLocalSeleccionado, null);
+    
+    // Opcional: título más descriptivo
+    document.querySelector('#menu-display h2').textContent = 
+        `Menú completo - ${document.querySelector('.menu-item .local-name')?.textContent || 'Local'}`;
+});
+      
 // Nueva función dedicada
 function fetchLocalesByCategoria(categoria) {
     const container = document.getElementById('menu-display');
     const suggestionContainer = document.getElementById('suggestion-items');
-   
+  
     // Ocultamos menú de platos y mostramos sección de locales
     container.style.display = 'none';
     suggestionContainer.innerHTML = ''; // limpiamos sugerencias normales
-   
+  
     showLoading(suggestionContainer); // ← reutilizamos loading
-   
+  
     const url = `${scriptUrl}?action=getLocalesByCategoria&type=${encodeURIComponent(categoria)}`;
-   
+  
     fetch(url)
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
@@ -1741,73 +1718,108 @@ function fetchLocalesByCategoria(categoria) {
             showError(suggestionContainer, 'No pudimos cargar los locales con esa categoría');
         });
 }
-        
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
-
+    // Limpiamos el contenedor
     container.innerHTML = '';
+    // Opcional: agregamos una clase al contenedor padre para poder ajustar estilos específicos
+    // si es necesario (por ejemplo más espacio, centrado diferente, etc.)
     suggestionsSection.classList.add('mostrando-por-categoria');
-
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
                 No encontramos locales con <strong>${categoria}</strong> en este momento.
             </p>`;
-        hideVerTodoButton();
         return;
     }
-
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-        div.innerHTML = `...`;  // ← tu HTML actual
+        // Estructura con el nuevo estilo
+        div.innerHTML = `
+            <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
+                 alt="${local.nombre_local}"
+                 onerror="this.src='https://placehold.co/120x120?text=Local'">
+            <div class="suggestion-info">
+                <div class="local-name">${local.nombre_local}</div>
+                <div class="categoria-precio">
+                    <span class="cat">${categoria}</span>
+                    <span class="precio-min">
+                        desde $${Number(local.precio_min_categoria).toLocaleString('es-AR')}
+                    </span>
+                </div>
+            </div>
+        `;
+        // Acción al hacer clic: cargar menú del local con la categoría seleccionada
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         container.appendChild(div);
     });
-
+    // Cambiamos el título de la sección para que sea más claro
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
-
-    // Mostramos el botón debajo de los locales
-    showVerTodoButton(categoria, "locales");
 }
         
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
     showLoading(container);
+
     let url = `${scriptUrl}?action=getMenus`;
     if (tipoCategoria) url += `&type=${encodeURIComponent(tipoCategoria)}`;
-    if (localId) url += `&local=${encodeURIComponent(localId)}`;
+    if (localId)      url += `&local=${encodeURIComponent(localId)}`;
+
     fetch(url)
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
             let menus = data || [];
-            // Filtrado adicional en frontend (por si el backend no lo hace bien)
+
+            // Filtrado extra en frontend si hace falta
             if (filtroCategoriaInicial && !tipoCategoria) {
                 const catLower = filtroCategoriaInicial.toLowerCase().trim();
-                menus = menus.filter(menu =>
-                    menu.categoria &&
-                    menu.categoria.toLowerCase().trim().includes(catLower)
+                menus = menus.filter(m => 
+                    m.categoria?.toLowerCase().trim().includes(catLower)
                 );
             }
-            // Título más inteligente según el caso
-            let titulo = 'Menú del local';
-           
-            if (tipoCategoria && !localId) {
-                titulo = `Todos los ${tipoCategoria}`;
-            }
-            else if (filtroCategoriaInicial && localId) {
-                titulo = `${filtroCategoriaInicial} - ${menus[0]?.nombre_local || 'Local'}`;
-            }
-            else if (tipoCategoria) {
+
+            // ───────────────────────────────────────────────────────
+            // Determinamos título y qué botón mostrar
+            // ───────────────────────────────────────────────────────
+            let titulo = 'Menú';
+
+            const showCategoriaButton = !!ultimaCategoriaSeleccionada && !localId;
+            const showLocalButton     = !!localId;
+
+            if (showCategoriaButton) {
+                titulo = `Explorar ${ultimaCategoriaSeleccionada}`;
+            } else if (showLocalButton) {
+                titulo = `Menú de ${menus[0]?.nombre_local || 'Local'}`;
+            } else if (tipoCategoria) {
                 titulo = tipoCategoria;
             }
+
             displayMenus(menus, titulo, tipoCategoria || filtroCategoriaInicial);
+
+            // ───────────────────────────────────────────────────────
+            // Mostramos/ocultamos los botones correspondientes
+            // ───────────────────────────────────────────────────────
+            const catBtnContainer = document.getElementById('ver-todo-categoria-container');
+            const localBtnContainer = document.getElementById('ver-todo-menu-local-container');
+
+            if (showCategoriaButton) {
+                document.getElementById('span-categoria-ver-todo').textContent = ultimaCategoriaSeleccionada;
+                catBtnContainer.style.display = 'block';
+                localBtnContainer.style.display = 'none';
+            } else if (showLocalButton) {
+                catBtnContainer.style.display = 'none';
+                localBtnContainer.style.display = 'block';
+            } else {
+                catBtnContainer.style.display = 'none';
+                localBtnContainer.style.display = 'none';
+            }
         })
         .catch(() => showError(container, 'Error al cargar menús'));
 }
-    
+   
         function showLoading(container) {
     container.innerHTML = '<div class="loading"><div class="spinner"></div> Cargando...</div>';
     // Solo aplicamos display: block al contenedor de menús
@@ -1972,7 +1984,7 @@ function showAddedToCartToast(nombreProducto) {
         }
     }, 4000);
 }
-       
+      
     function updateCartCount() {
         const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
         document.getElementById('cart-count').textContent = total;
@@ -2089,7 +2101,7 @@ function removeFromCart(index) {
         updateCartDisplay();
     }
 }
-    
+   
         function renderDrinksCarousel() {
             const container = document.getElementById('drinks-container');
             container.innerHTML = '';
@@ -2290,7 +2302,7 @@ function startPaymentPolling(preferenceId, externalReference) { // ← agregamos
         }
     }, 5000);
 }
-    
+   
 async function finalizeOrderAfterPayment() {
     if (!pendingOrderData) return;
     // ← CAMBIO IMPORTANTE: usamos el mismo flujo que efectivo
@@ -2355,7 +2367,7 @@ function openChangeAddressModal() {
     addressInput.value = userAddress || '';
     showModal('change-address-modal');
 }
-    
+   
 function saveProfileChanges() {
     const name = document.getElementById('edit-name').value.trim();
     const email = document.getElementById('edit-email').value.trim().toLowerCase();
@@ -2389,10 +2401,10 @@ function saveProfileChanges() {
                 // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-            
+           
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
-            
+           
                 // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
@@ -2404,7 +2416,7 @@ function saveProfileChanges() {
             alert('Error de conexión al intentar actualizar el perfil');
         });
 }
-    
+   
 function saveAddressChange() {
     const newAddress = document.getElementById('edit-address').value.trim();
     if (!newAddress) {
@@ -2420,11 +2432,11 @@ function saveAddressChange() {
             if (data.success) {
                 userAddress = newAddress;
                 localStorage.setItem('userAddress', newAddress);
-            
+           
                 // Actualizamos el campo de dirección del checkout si está visible
                 const checkoutDir = document.getElementById('direccion');
                 if (checkoutDir) checkoutDir.value = newAddress;
-            
+           
                 alert('Dirección actualizada correctamente');
                 closeModal('change-address-modal');
             } else {
@@ -2502,7 +2514,7 @@ async function createConfirmedOrder(orderData) {
             body: JSON.stringify(payload)
         });
         alert("¡Pago confirmado! Tu pedido ha sido registrado correctamente.");
-    
+   
         // Limpieza final
         cart = [];
         updateCartCount();
@@ -2511,7 +2523,7 @@ async function createConfirmedOrder(orderData) {
         document.getElementById('mercadopago-checkout').style.display = 'none';
         document.getElementById('checkout-btn').style.display = 'block';
         document.getElementById('checkout-form').reset();
-    
+   
     } catch (err) {
         console.error("Error registrando pedido pagado:", err);
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
@@ -2522,37 +2534,37 @@ function setupCategoriesCarousel() {
     const container = document.getElementById('categories-container');
     const prevBtn = document.getElementById('prev-category');
     const nextBtn = document.getElementById('next-category');
-  
+ 
     if (!container || !prevBtn || !nextBtn) return;
-  
+ 
     function scrollLeft() {
         container.scrollBy({ left: -container.clientWidth * 0.7, behavior: 'smooth' });
     }
-  
+ 
     function scrollRight() {
         container.scrollBy({ left: container.clientWidth * 0.7, behavior: 'smooth' });
     }
-  
+ 
     prevBtn.addEventListener('click', scrollLeft);
     nextBtn.addEventListener('click', scrollRight);
-  
+ 
     // Opcional: deshabilitar botones si no hay más para ver
     function updateButtons() {
         const atStart = container.scrollLeft <= 0;
         const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
-      
+     
         prevBtn.disabled = atStart;
         prevBtn.style.opacity = atStart ? '0.4' : '1';
         prevBtn.style.cursor = atStart ? 'default' : 'pointer';
-      
+     
         nextBtn.disabled = atEnd;
         nextBtn.style.opacity = atEnd ? '0.4' : '1';
         nextBtn.style.cursor = atEnd ? 'default' : 'pointer';
     }
-  
+ 
     container.addEventListener('scroll', updateButtons);
     window.addEventListener('resize', updateButtons);
-  
+ 
     // Estado inicial
     setTimeout(updateButtons, 300);
 }
