@@ -1687,6 +1687,9 @@ document.querySelector('.categories').addEventListener('click', e => {
        
 // Nueva función dedicada
 function fetchLocalesByCategoria(categoria) {
+    // Limpiar botón anterior si existe
+    const oldBtn = document.getElementById('ver-todo-categoria-btn');
+    if (oldBtn) oldBtn.remove();
     const container = document.getElementById('menu-display');
     const suggestionContainer = document.getElementById('suggestion-items');
    
@@ -1708,6 +1711,50 @@ function fetchLocalesByCategoria(categoria) {
             showError(suggestionContainer, 'No pudimos cargar los locales con esa categoría');
         });
 }
+
+        // Coloca esto lo más arriba posible dentro del <script>, después de las variables globales
+function agregarBotonVerTodoCategoria(containerElement, categoria) {
+    // Evitamos duplicados
+    const existingBtn = document.getElementById('ver-todo-categoria-btn');
+    if (existingBtn) {
+        existingBtn.remove(); // eliminamos el anterior si existe
+    }
+
+    const btnHTML = `
+        <div class="ver-todo-categoria" id="ver-todo-categoria-btn" style="text-align:center; margin: 35px 0 50px;">
+            <button id="btn-ver-todo-categoria" style="
+                background: #d32f2f;
+                color: white;
+                border: none;
+                border-radius: 50px;
+                padding: 14px 32px;
+                font-size: 1.05rem;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 14px rgba(211, 47, 47, 0.35);
+                transition: all 0.22s ease;
+            "
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(211,47,47,0.45)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.35)'"
+            >
+                Ver todo <span>${categoria}</span>
+            </button>
+        </div>
+    `;
+
+    // Insertamos después del contenido
+    containerElement.insertAdjacentHTML('beforeend', btnHTML);
+
+    // Asignamos la acción
+    const btn = document.getElementById('btn-ver-todo-categoria');
+    if (btn) {
+        btn.onclick = () => {
+            fetchMenus(categoria, null, null);
+        };
+    }
+}
+
+        
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
@@ -2501,42 +2548,6 @@ async function createConfirmedOrder(orderData) {
         console.error("Error registrando pedido pagado:", err);
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
-}
-
-        function agregarBotonVerTodoCategoria(containerElement, categoria) {
-    // Evitar duplicados
-    if (document.getElementById('ver-todo-categoria-btn')) return;
-
-    const btnHTML = `
-        <div class="ver-todo-categoria" id="ver-todo-categoria-btn" style="text-align:center; margin: 35px 0 50px;">
-            <button id="btn-ver-todo-categoria" style="
-                background: #d32f2f;
-                color: white;
-                border: none;
-                border-radius: 50px;
-                padding: 14px 32px;
-                font-size: 1.05rem;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 4px 14px rgba(211, 47, 47, 0.35);
-                transition: all 0.22s ease;
-            "
-            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(211,47,47,0.45)'"
-            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.35)'"
-            >
-                Ver todo <span>${categoria}</span>
-            </button>
-        </div>
-    `;
-
-    // Insertar después del contenido principal del contenedor
-    containerElement.insertAdjacentHTML('beforeend', btnHTML);
-
-    // Asignar acción al botón
-    document.getElementById('btn-ver-todo-categoria').onclick = () => {
-        // Mostrar TODOS los menús de esa categoría (sin importar local)
-        fetchMenus(categoria, null, null);
-    };
 }
         
         // Carrusel de categorías (solo en móviles)
