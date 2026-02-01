@@ -1984,15 +1984,39 @@ function addToCart(menu) {
         return;
     }
 
-    const item = { /* ... */ };
-    // lógica de agregar al carrito (sin cambios)
+    // Crear el objeto del ítem (esta es la estructura que ya usabas)
+    const item = {
+        idLocal: menu.local_id,
+        nombreLocal: menu.nombre_local || 'Local desconocido',
+        idProducto: menu.id,
+        nombreProducto: menu.nombre,
+        precioUnitario: Number(menu.precio),
+        cantidad: 1,
+        categoria: menu.categoria || ''
+    };
 
-    // ── Cambio principal ────────────────────────────────────────
-    // En lugar de confirm()
+    // ── Lógica de agregar / incrementar cantidad ────────────────────────
+    const existingIndex = cart.findIndex(i => i.idProducto === item.idProducto);
+
+    if (existingIndex !== -1) {
+        // Ya existe → incrementar cantidad
+        cart[existingIndex].cantidad += 1;
+    } else {
+        // Es nuevo → agregar al carrito
+        cart.push(item);
+    }
+
+    // ── Actualizaciones de UI ───────────────────────────────────────────
+    updateCartCount();        // actualiza el número en el ícono del carrito
+    updateCartDisplay();      // refresca el contenido del sidebar (si está abierto)
+
+    // Mostrar toast de éxito (no bloqueante)
     showAddedToCartToast(menu.nombre);
 
-    updateCartCount();
-    updateCartDisplay();
+    // Opcional: pequeño feedback visual extra en el botón (si quieres)
+    // const btn = event.target; // si lo llamas desde onclick del botón
+    // btn.style.transform = 'scale(0.95)';
+    // setTimeout(() => btn.style.transform = 'scale(1)', 150);
 }
 
 // Nueva función auxiliar
