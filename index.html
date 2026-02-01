@@ -1697,27 +1697,36 @@ document.getElementById('btn-ver-todo-menu-local')?.addEventListener('click', ()
       
 // Nueva función dedicada
 function fetchLocalesByCategoria(categoria) {
+    console.log("→ Clic en categoría:", categoria);           // ← debe aparecer
+
     const container = document.getElementById('menu-display');
     const suggestionContainer = document.getElementById('suggestion-items');
-  
-    // Ocultamos menú de platos y mostramos sección de locales
+
     container.style.display = 'none';
-    suggestionContainer.innerHTML = ''; // limpiamos sugerencias normales
-  
-    showLoading(suggestionContainer); // ← reutilizamos loading
-  
+    suggestionContainer.innerHTML = '';
+
+    showLoading(suggestionContainer);
+
     const url = `${scriptUrl}?action=getLocalesByCategoria&type=${encodeURIComponent(categoria)}`;
-  
+    console.log("→ URL que se va a consultar:", url);         // ← copia esta URL
+
     fetch(url)
-        .then(r => r.ok ? r.json() : Promise.reject())
+        .then(r => {
+            console.log("→ Respuesta HTTP status:", r.status); // ← importante
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        })
         .then(data => {
+            console.log("→ Datos recibidos del backend:", data); // ← lo más importante
             const locales = data.locales || [];
             displayLocalesConCategoria(locales, categoria);
         })
-        .catch(() => {
+        .catch(err => {
+            console.error("→ Error al cargar locales por categoría:", err);
             showError(suggestionContainer, 'No pudimos cargar los locales con esa categoría');
         });
 }
+        
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
