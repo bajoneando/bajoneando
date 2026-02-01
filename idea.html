@@ -1692,29 +1692,49 @@ function fetchLocalesByCategoria(categoria) {
         });
 }
 function displayLocalesConCategoria(locales, categoria) {
-    const container = document.getElementById('suggestion-items');
+    // 1. Obtenemos los contenedores importantes
     const suggestionsSection = document.querySelector('.suggestions');
-    // Limpiamos todo lo anterior
-    container.innerHTML = '';
-  
-    // Actualizamos título y clase visual
-    document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
-    suggestionsSection.classList.add('mostrando-por-categoria');
-    // Eliminamos cualquier botón "Ver todo" anterior que pudiera existir
-    const previousBtn = document.querySelector('.ver-todo-categoria-dinamica');
-    if (previousBtn) previousBtn.remove();
+    const categoryResultsSection = document.getElementById('category-results-section');
+    const categoryTitle = document.getElementById('category-title');
+    const carouselContainer = document.getElementById('category-locales-carousel');
+
+    // 2. Limpiamos el carrusel anterior
+    if (carouselContainer) {
+        carouselContainer.innerHTML = '';
+    }
+
+    // 3. Actualizamos título
+    if (categoryTitle) {
+        categoryTitle.textContent = `Locales con ${categoria}`;
+    }
+
+    // 4. Ocultamos las sugerencias normales y mostramos la sección de categoría
+    if (suggestionsSection) {
+        suggestionsSection.style.display = 'none';
+    }
+    if (categoryResultsSection) {
+        categoryResultsSection.style.display = 'block';
+    }
+
+    // 5. Caso: no hay locales
     if (locales.length === 0) {
-        container.innerHTML = `
-            <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
-                No encontramos locales con <strong>${categoria}</strong> en este momento.
-            </p>`;
+        if (carouselContainer) {
+            carouselContainer.innerHTML = `
+                <div style="width:100%; text-align:center; padding:60px 20px; color:#777; font-size:1.1rem;">
+                    No encontramos locales que ofrezcan <strong>${categoria}</strong> en este momento.
+                </div>
+            `;
+        }
         return;
     }
-    // Mostramos los locales
+
+    // 6. Creamos las tarjetas en formato carrusel
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
+
+        // Estructura de la tarjeta (mismo estilo que antes, pero optimizado para carrusel)
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1729,47 +1749,63 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
+
+        // Click → mostrar menú filtrado por esa categoría del local
         div.onclick = () => {
-            fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
+            ultimaCategoriaSeleccionada = categoria;
+            fetchMenus(null, local.local_id, categoria);
         };
-        container.appendChild(div);
+
+        // Agregamos al carrusel
+        if (carouselContainer) {
+            carouselContainer.appendChild(div);
+        }
     });
-    // Creamos el botón "Ver todo [categoría]" dinámicamente
+
+    // 7. Botón "Ver todo [categoría]" (ahora fuera del carrusel, centrado abajo)
+    // Removemos cualquier botón anterior
+    const existingBtn = document.querySelector('.ver-todo-categoria-dinamica');
+    if (existingBtn) existingBtn.remove();
+
     const btnContainer = document.createElement('div');
     btnContainer.className = 'ver-todo-categoria dinamica';
     btnContainer.style.cssText = `
         text-align: center;
-        margin: 30px 0 50px;
+        margin: 40px 0 60px;
+        padding: 0 20px;
     `;
+
     btnContainer.innerHTML = `
         <button style="
             background: #d32f2f;
             color: white;
             border: none;
             border-radius: 12px;
-            padding: 14px 28px;
+            padding: 14px 32px;
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(211,47,47,0.3);
-            transition: all 0.2s;
+            box-shadow: 0 4px 14px rgba(211,47,47,0.3);
+            transition: all 0.25s;
         "
-        onmouseover="this.style.transform='scale(1.04)'; this.style.boxShadow='0 6px 18px rgba(211,47,47,0.4)'"
-        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 12px rgba(211,47,47,0.3)'"
+        onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 24px rgba(211,47,47,0.4)'"
+        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.3)'"
         >
-            Ver todo ${categoria}
+            Ver todos los locales con ${categoria}
         </button>
     `;
-    // Asignamos la acción al botón
+
     const button = btnContainer.querySelector('button');
-    button.onclick = function () {
-        console.log(`Clic en "Ver todo ${categoria}" → cargando todos los menús`);
+    button.onclick = () => {
         ultimaCategoriaSeleccionada = categoria;
-        fetchMenus(categoria, null, null);
-        // Opcional: btnContainer.remove(); // si quieres que desaparezca tras clic
+        fetchMenus(categoria, null, null);  // ← todos los menús de esa categoría (sin filtro de local)
     };
-    // Lo agregamos al final de los locales
-    container.appendChild(btnContainer);
+
+    // Lo insertamos después del carrusel
+    const wrapper = document.querySelector('#category-results-section .horizontal-carousel-wrapper');
+    if (wrapper && wrapper.parentNode) {
+        wrapper.parentNode.insertBefore(btnContainer, wrapper.nextSibling);
+    }
 }
   
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
@@ -2570,6 +2606,22 @@ window.addEventListener('load', () => {
         });
     });
   }
+
+        function setupLocalesCarousels() {
+    setupOneCarousel('suggestions-carousel', 'suggestions-prev', 'suggestions-next');
+    setupOneCarousel('category-locales-carousel', 'category-prev', 'category-next');
+}
+
+function setupOneCarousel(containerId, prevId, nextId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const prev = document.getElementById(prevId);
+    const next = document.getElementById(nextId);
+    
+    if (prev) prev.onclick = () => container.scrollBy({left: -container.clientWidth * 0.8, behavior: 'smooth'});
+    if (next) next.onclick = () => container.scrollBy({left:  container.clientWidth * 0.8, behavior: 'smooth'});
+}
     </script>
 </body>
 </html>
