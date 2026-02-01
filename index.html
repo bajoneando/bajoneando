@@ -1984,7 +1984,7 @@ function addToCart(menu) {
         return;
     }
 
-    // Crear el ítem
+    // Crear el objeto del ítem (esta es la estructura que ya usabas)
     const item = {
         idLocal: menu.local_id,
         nombreLocal: menu.nombre_local || 'Local desconocido',
@@ -1995,21 +1995,23 @@ function addToCart(menu) {
         categoria: menu.categoria || ''
     };
 
-    // Agregar o incrementar cantidad
+    // ── Lógica de agregar / incrementar cantidad ────────────────────────
     const existingIndex = cart.findIndex(i => i.idProducto === item.idProducto);
+
     if (existingIndex !== -1) {
+        // Ya existe → incrementar cantidad
         cart[existingIndex].cantidad += 1;
     } else {
+        // Es nuevo → agregar al carrito
         cart.push(item);
     }
 
-    // Actualizar interfaz
-    updateCartCount();
-    updateCartDisplay();
+    // ── Actualizaciones de UI ───────────────────────────────────────────
+    updateCartCount();        // actualiza el número en el ícono del carrito
+    updateCartDisplay();      // refresca el contenido del sidebar (si está abierto)
 
-    // Mostrar toast con botón
+    // Mostrar toast de éxito (no bloqueante)
     showAddedToCartToast(menu.nombre);
-}
 
     // Opcional: pequeño feedback visual extra en el botón (si quieres)
     // const btn = event.target; // si lo llamas desde onclick del botón
