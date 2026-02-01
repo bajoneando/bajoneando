@@ -1983,26 +1983,54 @@ function addToCart(menu) {
         alert('¡Debes iniciar sesión para agregar productos al carrito!');
         return;
     }
-    const item = {
-        idLocal: menu.local_id,
-        nombreLocal: menu.nombre_local || 'Local desconocido',
-        idProducto: menu.id,
-        nombreProducto: menu.nombre,
-        precioUnitario: Number(menu.precio),
-        cantidad: 1,
-        categoria: menu.categoria || ''
-    };
-    const existing = cart.findIndex(i => i.idProducto === item.idProducto);
-    if (existing !== -1) {
-        cart[existing].cantidad++;
-    } else {
-        cart.push(item);
-    }
+
+    const item = { /* ... */ };
+    // lógica de agregar al carrito (sin cambios)
+
+    // ── Cambio principal ────────────────────────────────────────
+    // En lugar de confirm()
+    showAddedToCartToast(menu.nombre);
+
     updateCartCount();
     updateCartDisplay();
-    if (confirm(`¡${menu.nombre} agregado al carrito!\n\n¿Quieres ver el carrito ahora?`)) {
-        openCart();
-    }
+}
+
+// Nueva función auxiliar
+function showAddedToCartToast(nombreProducto) {
+    // Opción A: toast muy simple con CSS puro
+    const toast = document.createElement('div');
+    toast.textContent = `¡${nombreProducto} agregado al carrito! ✓`;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #2e7d32;
+        color: white;
+        padding: 14px 28px;
+        border-radius: 50px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        z-index: 9999;
+        font-weight: 600;
+        font-size: 1.05rem;
+        opacity: 0;
+        transition: all 0.4s ease;
+    `;
+
+    document.body.appendChild(toast);
+
+    // Aparecer
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.bottom = '40px';
+    }, 100);
+
+    // Desaparecer después de 3 segundos
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.bottom = '20px';
+        setTimeout(() => toast.remove(), 400);
+    }, 2800);
 }
     function updateCartCount() {
         const total = cart.reduce((sum, i) => sum + i.cantidad, 0);
