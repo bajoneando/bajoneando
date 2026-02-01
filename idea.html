@@ -503,46 +503,51 @@ main {
 }
 
 /* Tarjetas comunes (tanto .suggestion como .suggestion-categoria) */
-/* Contenedor principal del carrusel de sugerencias/locales */
+/* Contenedor general de sugerencias (tanto normales como por categoría) */
 .suggestions {
     width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
     padding: 0 15px;
-    box-sizing: border-box;
 }
 
 .suggestion-carousel-wrapper {
     position: relative;
     width: 100%;
-    margin: 20px auto;
-    padding: 0 20px;           /* espacio para botones laterales */
+    margin: 20px auto 40px;
+    padding: 0 20px;           /* espacio para botones laterales si aparecen */
     box-sizing: border-box;
+    overflow: hidden;           /* importante para que no se vea el scroll feo */
 }
 
-/* Contenedor que hace scroll */
 .suggestion-items {
     display: flex;
-    flex-wrap: nowrap;          /* ¡importante! */
-    gap: 16px;
+    flex-wrap: nowrap;
+    gap: 20px;
     overflow-x: auto;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
-    padding: 12px 0;
+    padding: 20px 0;
     margin: 0 -20px;            /* compensa el padding del wrapper */
-    scrollbar-width: none;      /* firefox */
+    scrollbar-width: none;      /* oculta scrollbar en Firefox */
 }
 
 .suggestion-items::-webkit-scrollbar {
-    display: none;
+    display: none;              /* oculta scrollbar en Chrome/Safari */
 }
 
-/* Tarjetas (ajustar tamaño según dispositivo) */
-.suggestion-categoria,
-.suggestion {
-    flex: 0 0 auto;
-    width:  clamp(130px, 38vw, 170px);   /* responsive */
-    min-width: 130px;
-    /* mantener el resto de estilos que ya tenías */
-    transition: transform 0.25s ease;
+/* Centrado inteligente cuando hay pocas tarjetas */
+.suggestion-items.centered-few {
+    justify-content: center;
+    margin: 0 auto;
+    max-width: 900px;           /* ajusta según cuántas tarjetas caben bien */
+}
+
+/* Tarjetas mantienen su tamaño original */
+.suggestion,
+.suggestion-categoria {
+    flex: 0 0 auto;             /* ¡importante! no crecen ni se achican */
+    /* el resto de estilos se mantienen iguales */
 }
 
 /* Botones de navegación (igual que categorías) */
@@ -553,7 +558,7 @@ main {
     transform: translateY(-50%);
     width: 44px;
     height: 44px;
-    background: rgba(211, 47, 47, 0.8);
+    background: rgba(211, 47, 47, 0.75);
     color: white;
     border: none;
     border-radius: 50%;
@@ -564,36 +569,17 @@ main {
 }
 
 .carousel-btn.suggestions-btn:hover {
-    background: rgba(211, 47, 47, 0.95);
+    background: rgba(211, 47, 47, 0.92);
     transform: translateY(-50%) scale(1.08);
 }
 
-.carousel-btn.left.suggestions-btn  { left:  4px; }
-.carousel-btn.right.suggestions-btn { right: 4px; }
+.carousel-btn.left.suggestions-btn  { left: 8px; }
+.carousel-btn.right.suggestions-btn { right: 8px; }
 
 /* Mostrar botones en mobile / tablet */
 @media (max-width: 920px) {
     .carousel-btn.suggestions-btn {
         display: flex;
-    }
-}
-
-/* En pantallas grandes → centramos todo sin scroll */
-@media (min-width: 921px) {
-    .suggestion-carousel-wrapper {
-        padding: 0;
-    }
-    .suggestion-items {
-        justify-content: center;
-        gap: 24px;
-        margin: 0;
-        padding: 20px 0;
-        overflow-x: hidden;   /* ya no hace falta scroll */
-    }
-    .suggestion-categoria,
-    .suggestion {
-        width: 180px;         /* tamaño fijo más grande */
-        flex: 0 0 180px;
     }
 }
         
@@ -1100,18 +1086,22 @@ main {
 </div>
  
         <!-- Sugerencias de Locales (siempre visible al inicio) -->
+<!-- Sugerencias normales -->
 <div class="suggestions">
-    <h2 id="suggestions-title">Sugerencias de Locales</h2>
-    
+    <h2>Sugerencias de Locales</h2>
     <div class="suggestion-carousel-wrapper">
         <button class="carousel-btn left suggestions-btn" id="prev-suggestion">←</button>
-        
-        <div class="suggestion-items" id="suggestion-items">
-            <!-- aquí van las .suggestion o .suggestion-categoria -->
-        </div>
-        
+        <div class="suggestion-items" id="suggestion-items"></div>
         <button class="carousel-btn right suggestions-btn" id="next-suggestion">→</button>
     </div>
+</div>
+
+<!-- Cuando filtras por categoría (en displayLocalesConCategoria) -->
+<!-- Solo cambia el contenedor -->
+<div class="suggestion-carousel-wrapper">
+    <button class="carousel-btn left suggestions-btn" id="prev-suggestion-cat">←</button>
+    <div class="suggestion-items" id="suggestion-items"></div>
+    <button class="carousel-btn right suggestions-btn" id="next-suggestion-cat">→</button>
 </div>
  
         <div id="menu-display" style="display:none;"></div>
@@ -2651,48 +2641,72 @@ window.addEventListener('load', () => {
 }
 
 function setupSuggestionsCarousel() {
-    const container = document.getElementById('suggestion-items');
-    const prevBtn   = document.getElementById('prev-suggestion');
-    const nextBtn   = document.getElementById('next-suggestion');
-    
-    if (!container || !prevBtn || !nextBtn) return;
+    const normalPrev = document.getElementById('prev-suggestion');
+    const normalNext = document.getElementById('next-suggestion');
+    const catPrev    = document.getElementById('prev-suggestion-cat');
+    const catNext    = document.getElementById('next-suggestion-cat');
+    const container  = document.getElementById('suggestion-items');
 
-    function scrollLeft()  { container.scrollBy({ left: -container.clientWidth * 0.75, behavior: 'smooth' }); }
-    function scrollRight() { container.scrollBy({ left:  container.clientWidth * 0.75, behavior: 'smooth' }); }
+    if (!container) return;
 
-    prevBtn.addEventListener('click', scrollLeft);
-    nextBtn.addEventListener('click', scrollRight);
-
-    function updateButtons() {
-        const atStart = container.scrollLeft <= 1;
-        const atEnd   = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
-        
-        prevBtn.disabled = atStart;
-        prevBtn.style.opacity = atStart ? '0.35' : '1';
-        
-        nextBtn.disabled = atEnd;
-        nextBtn.style.opacity = atEnd ? '0.35' : '1';
+    function scrollLeft() {
+        container.scrollBy({ left: -container.clientWidth * 0.75, behavior: 'smooth' });
     }
 
-    container.addEventListener('scroll', updateButtons);
-    window.addEventListener('resize', updateButtons);
+    function scrollRight() {
+        container.scrollBy({ left: container.clientWidth * 0.75, behavior: 'smooth' });
+    }
+
+    if (normalPrev) normalPrev.onclick = scrollLeft;
+    if (normalNext) normalNext.onclick = scrollRight;
+    if (catPrev)    catPrev.onclick    = scrollLeft;
+    if (catNext)    catNext.onclick    = scrollRight;
+
+    // Centrado inteligente cuando hay pocas tarjetas
+    function updateLayout() {
+        const count = container.children.length;
+        const wrapper = container.closest('.suggestion-carousel-wrapper');
+        
+        if (count <= 4) {  // ajusta este número según diseño
+            container.classList.add('centered-few');
+            if (wrapper) {
+                wrapper.style.padding = '0 40px'; // más espacio lateral
+            }
+        } else {
+            container.classList.remove('centered-few');
+            if (wrapper) {
+                wrapper.style.padding = '0 20px';
+            }
+        }
+
+        // Actualizar visibilidad de botones
+        const atStart = container.scrollLeft <= 0;
+        const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
+        
+        [normalPrev, catPrev].forEach(btn => {
+            if (btn) btn.disabled = atStart;
+        });
+        [normalNext, catNext].forEach(btn => {
+            if (btn) btn.disabled = atEnd;
+        });
+    }
+
+    container.addEventListener('scroll', updateLayout);
+    window.addEventListener('resize', updateLayout);
     
-    // Inicial
-    setTimeout(updateButtons, 400);
+    // Primera ejecución
+    setTimeout(updateLayout, 300);
 }
 
-// Llamar después de cargar la página y cada vez que se actualiza suggestion-items
+// Llamar después de cargar
 window.addEventListener('load', () => {
-    // ... otras inicializaciones
+    // ... tus otros setups
     setupSuggestionsCarousel();
 });
 
-// Cada vez que llenas suggestion-items (en loadFilters, displayLocalesConCategoria, etc)
-function afterUpdatingSuggestions() {
-    setTimeout(() => {
-        setupSuggestionsCarousel();   // o solo updateButtons() si ya está seteado
-    }, 100);
-}
+// También llamar después de cargar locales por categoría
+// en displayLocalesConCategoria() al final:
+setupSuggestionsCarousel();
     </script>
 </body>
 </html>
