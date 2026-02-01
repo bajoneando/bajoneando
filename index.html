@@ -1091,27 +1091,6 @@ main {
         Ver todo <span id="categoria-ver-todo"></span>
     </button>
 </div>
-
-        <!-- Botón "Ver todo el menú del local" -->
-<div class="ver-todo-local" id="ver-todo-local-btn" style="display:none; text-align:center; margin: 30px 0 50px;">
-    <button id="btn-ver-todo-local" style="
-        background: #c62828;
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 14px 32px;
-        font-size: 1.05rem;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 4px 14px rgba(198,40,40,0.35);
-        transition: all 0.22s ease;
-    "
-    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(198,40,40,0.45)'"
-    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(198,40,40,0.35)'"
-    >
-        Ver todo el menú
-    </button>
-</div>
  
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
@@ -1405,16 +1384,14 @@ function showMyFavorites() {
         .catch(() => showError(container, 'Error al cargar tus favoritos'));
 }
       
-function displayMenus(menus, title, categoriaDestacada = null, localId = null) {
+function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
-    
-    // Limpiamos y preparamos
+  
+    // Limpiamos y preparamos la estructura
     container.innerHTML = `
         <h2>${title}</h2>
         <div class="menu-items"></div>
-        
-        <!-- Botón Ver todo [categoría] -->
-        <div class="ver-todo-categoria" id="ver-todo-categoria-btn" style="display:none; text-align:center; margin: 35px 0 30px;">
+        <div class="ver-todo-categoria" id="ver-todo-categoria-btn" style="display:none; text-align:center; margin: 35px 0 50px;">
             <button id="btn-ver-todo-categoria" style="
                 background: #d32f2f;
                 color: white;
@@ -1424,87 +1401,88 @@ function displayMenus(menus, title, categoriaDestacada = null, localId = null) {
                 font-size: 1.05rem;
                 font-weight: 600;
                 cursor: pointer;
-                box-shadow: 0 4px 14px rgba(211,47,47,0.35);
+                box-shadow: 0 4px 14px rgba(211, 47, 47, 0.35);
                 transition: all 0.22s ease;
-            ">
+            "
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(211,47,47,0.45)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.35)'"
+            >
                 Ver todo <span id="categoria-ver-todo"></span>
             </button>
         </div>
-        
-        <!-- Botón Ver todo el menú del local -->
-        <div class="ver-todo-local" id="ver-todo-local-btn" style="display:none; text-align:center; margin: 20px 0 50px;">
-            <button id="btn-ver-todo-local" style="
-                background: #c62828;
-                color: white;
-                border: none;
-                border-radius: 50px;
-                padding: 14px 32px;
-                font-size: 1.05rem;
-                font-weight: 600;
-                cursor: pointer;
-                box-shadow: 0 4px 14px rgba(198,40,40,0.35);
-                transition: all 0.22s ease;
-            ">
-                Ver todo el menú
-            </button>
-        </div>
     `;
-
     const itemsDiv = container.querySelector('.menu-items');
     currentDisplayedMenus = {};
-
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center; color:#999; padding:50px 20px; font-size:1.1rem;">No se encontraron menús en este momento.</p>';
     } else {
         menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
-            // ... (el resto del código de creación de tarjetas sigue igual)
+          
             const div = document.createElement('div');
             div.className = 'menu-item';
-            // ... resto igual ...
+          
+            // Resaltar si coincide con la categoría destacada
+            const esDeCategoria = categoriaDestacada &&
+                menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
+            if (esDeCategoria) {
+                div.classList.add('destacado-categoria');
+            }
+            div.innerHTML = `
+                <img src="${menu.imagen_url || 'https://placehold.co/120x120?text=Sin+Imagen'}"
+                     alt="${menu.nombre}"
+                     onerror="this.src='https://placehold.co/120x120?text=Sin+Imagen'">
+                <div class="card-body-horizontal">
+                    <div class="local-info">
+                        <img class="local-logo"
+                             src="${menu.logo_url || 'https://placehold.co/36x36?text=Local'}"
+                             alt="${menu.nombre_local || 'Local'}"
+                             onerror="this.src='https://placehold.co/36x36?text=?'}">
+                        <span class="local-name">${menu.nombre_local || 'Local sin nombre'}</span>
+                    </div>
+                    <h3>${menu.nombre}</h3>
+                    <p>${menu.descripcion || 'Sin descripción'}</p>
+                    <div class="precio">$${Number(menu.precio).toLocaleString('es-AR')}</div>
+                    <div class="actions">
+                        <button class="add-to-cart" onclick="addToCartById('${menu.id}')">Agregar al carrito</button>
+                        <button class="fav-btn ${userFavorites.includes(menu.id) ? 'active' : ''}"
+                                data-menu-id="${menu.id}"
+                                onclick="toggleFavorite('${menu.id}')">
+                            <img class="fav-empty" src="https://i.postimg.cc/hPB62YDv/18611-(4).jpg" alt="No favorito">
+                            <img class="fav-filled" src="https://i.postimg.cc/xjHByQS4/18611-(3).jpg" alt="Favorito">
+                        </button>
+                    </div>
+                </div>
+            `;
+          
             itemsDiv.appendChild(div);
         });
     }
-
-    // ───────────────────────────────────────────────
-    // Lógica de visibilidad de los botones
-    // ───────────────────────────────────────────────
-
-    const btnVerTodoCategoria = document.getElementById('ver-todo-categoria-btn');
-    const btnVerTodoLocal     = document.getElementById('ver-todo-local-btn');
-    const spanCategoria       = document.getElementById('categoria-ver-todo');
-
-    // Botón 1: Ver todo [categoría] → aparece cuando tenemos categoría y NO estamos mostrando ya todos los de la categoría
-    if (ultimaCategoriaSeleccionada && !localId) {
-        // Estamos en modo "ver locales de una categoría"
-        spanCategoria.textContent = ultimaCategoriaSeleccionada;
-        btnVerTodoCategoria.style.display = 'block';
-
-        document.getElementById('btn-ver-todo-categoria').onclick = () => {
-            // Mostramos TODOS los platos de esa categoría (sin filtro de local)
-            fetchMenus(ultimaCategoriaSeleccionada, null, null);
-            // Opcional: actualizar título
-            container.querySelector('h2').textContent = `Todos los ${ultimaCategoriaSeleccionada}`;
-        };
-    } else {
-        btnVerTodoCategoria.style.display = 'none';
-    }
-
-    // Botón 2: Ver todo el menú del local → aparece cuando estamos viendo un local + categoría
-    if (localId && ultimaCategoriaSeleccionada) {
-        btnVerTodoLocal.style.display = 'block';
-
-        document.getElementById('btn-ver-todo-local').onclick = () => {
-            // Mostramos TODO el menú del local (sin filtro de categoría)
-            fetchMenus(null, localId, null);
-            // Opcional: actualizar título
-            container.querySelector('h2').textContent = `Menú completo - ${menus[0]?.nombre_local || 'Local'}`;
-        };
-    } else {
-        btnVerTodoLocal.style.display = 'none';
-    }
-
+    // ────────────────────────────────────────────────────────────────
+// Lógica del botón "Ver todo [categoría]"
+// ────────────────────────────────────────────────────────────────
+const btnContainer = document.getElementById('ver-todo-categoria-btn');
+const btnVerTodo = document.getElementById('btn-ver-todo-categoria');
+const spanCategoria = document.getElementById('categoria-ver-todo');
+if (ultimaCategoriaSeleccionada && categoriaDestacada) {
+  
+    spanCategoria.textContent = ultimaCategoriaSeleccionada;
+    btnContainer.style.display = 'block';
+    // CAMBIO IMPORTANTE AQUÍ
+    btnVerTodo.onclick = () => {
+        // Mostrar TODOS los menús de esa categoría (sin importar local)
+        fetchMenus(ultimaCategoriaSeleccionada, null, null);
+      
+        // Opcional: cambiar título para que sea más claro
+        // document.querySelector('#menu-display h2').textContent =
+        // `Todos los ${ultimaCategoriaSeleccionada}`;
+    };
+} else {
+    btnContainer.style.display = 'none';
+}
+    // Mostramos el contenedor de menús
     container.style.display = 'block';
+    // Actualizamos visual de favoritos (por si acaso)
     setTimeout(updateFavoriteButtons, 100);
 }
    
