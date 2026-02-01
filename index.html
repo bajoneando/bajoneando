@@ -1711,11 +1711,12 @@ function fetchLocalesByCategoria(categoria) {
 function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const suggestionsSection = document.querySelector('.suggestions');
+
     // Limpiamos el contenedor
     container.innerHTML = '';
-    // Opcional: agregamos una clase al contenedor padre para poder ajustar estilos específicos
-    // si es necesario (por ejemplo más espacio, centrado diferente, etc.)
+
     suggestionsSection.classList.add('mostrando-por-categoria');
+
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem;">
@@ -1723,11 +1724,12 @@ function displayLocalesConCategoria(locales, categoria) {
             </p>`;
         return;
     }
+
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
         div.dataset.local = local.local_id;
-        // Estructura con el nuevo estilo
+
         div.innerHTML = `
             <img src="${local.logo_url || 'https://placehold.co/120x120?text=' + encodeURIComponent(local.nombre_local)}"
                  alt="${local.nombre_local}"
@@ -1742,13 +1744,20 @@ function displayLocalesConCategoria(locales, categoria) {
                 </div>
             </div>
         `;
-        // Acción al hacer clic: cargar menú del local con la categoría seleccionada
+
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         container.appendChild(div);
     });
-    // Cambiamos el título de la sección para que sea más claro
+
+    // Cambiamos el título
     document.querySelector('.suggestions h2').textContent = `Locales con ${categoria}`;
+
+    // ← AQUÍ AGREGAMOS EL BOTÓN "VER TODO" DEBAJO DE LOS LOCALES
+    if (ultimaCategoriaSeleccionada) {
+        agregarBotonVerTodoCategoria(container, ultimaCategoriaSeleccionada);
+    }
 }
+        
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
     showLoading(container);
@@ -2493,6 +2502,43 @@ async function createConfirmedOrder(orderData) {
         alert("El pago fue aprobado pero hubo un problema al registrar el pedido. Contacta soporte con el ID del pago.");
     }
 }
+
+        function agregarBotonVerTodoCategoria(containerElement, categoria) {
+    // Evitar duplicados
+    if (document.getElementById('ver-todo-categoria-btn')) return;
+
+    const btnHTML = `
+        <div class="ver-todo-categoria" id="ver-todo-categoria-btn" style="text-align:center; margin: 35px 0 50px;">
+            <button id="btn-ver-todo-categoria" style="
+                background: #d32f2f;
+                color: white;
+                border: none;
+                border-radius: 50px;
+                padding: 14px 32px;
+                font-size: 1.05rem;
+                font-weight: 600;
+                cursor: pointer;
+                box-shadow: 0 4px 14px rgba(211, 47, 47, 0.35);
+                transition: all 0.22s ease;
+            "
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(211,47,47,0.45)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(211,47,47,0.35)'"
+            >
+                Ver todo <span>${categoria}</span>
+            </button>
+        </div>
+    `;
+
+    // Insertar después del contenido principal del contenedor
+    containerElement.insertAdjacentHTML('beforeend', btnHTML);
+
+    // Asignar acción al botón
+    document.getElementById('btn-ver-todo-categoria').onclick = () => {
+        // Mostrar TODOS los menús de esa categoría (sin importar local)
+        fetchMenus(categoria, null, null);
+    };
+}
+        
         // Carrusel de categorías (solo en móviles)
 function setupCategoriesCarousel() {
     const container = document.getElementById('categories-container');
@@ -2553,6 +2599,7 @@ window.addEventListener('load', () => {
         });
     });
   }
+
     </script>
 </body>
 </html>
