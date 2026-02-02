@@ -560,19 +560,18 @@ main {
         font-weight: 700;
     }
 
-        /* ────────────────────────────────────────────────
-   CARRUSEL GENÉRICO CENTRADO (usado por sugerencias y locales por categoría)
-───────────────────────────────────────────────── */
-/* Contenedor del carrusel (sin cambios mayores) */
+        /* ============================================= */
+/* === CARRUSEL SIEMPRE CENTRADO ============== */
+/* ============================================= */
+
 .carousel-wrapper {
     position: relative;
     width: 100%;
-    margin: 20px auto 40px;
-    overflow: hidden;           /* ← muy importante */
-    padding: 0 10px;            /* margen lateral pequeño para que las flechas no queden pegadas */
+    overflow: hidden;
+    padding: 0 10px;               /* margen lateral para que no choque con bordes */
 }
 
-/* Fila horizontal */
+/* Contenedor que permite el scroll */
 .carousel-container {
     display: flex;
     flex-wrap: nowrap;
@@ -581,71 +580,32 @@ main {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    padding: 20px 0;
-    justify-content: flex-start;
+    padding: 20px 40px;            /* ← padding lateral grande para centrar visualmente */
+    margin: 0 -40px;               /* compensa el padding para que ocupe todo el ancho */
+    width: calc(100% + 80px);      /* compensa los -40px de cada lado */
+    box-sizing: border-box;
+    justify-content: center;       /* ¡clave! centra el grupo de tarjetas */
 }
 
 .carousel-container::-webkit-scrollbar {
     display: none;
 }
 
-/* Tarjetas de sugerencias normales (estilo original intacto) */
-.carousel-container .suggestion {
-    flex: 0 0 auto;
-    width: 120px;
-    height: 120px;
-    /* resto igual: border-radius, shadow, transitions... */
+/* Cuando hay pocas tarjetas → forzamos centrado total */
+.carousel-wrapper.few-items .carousel-container {
+    justify-content: center;
+    padding: 20px;
+    margin: 0;
+    width: 100%;
 }
 
-/* Tarjetas de locales con categoría (estilo ORIGINAL intacto) */
+/* Las tarjetas no crecen ni se achican */
+.carousel-container .suggestion,
 .carousel-container .suggestion-categoria {
     flex: 0 0 auto;
-    width: 140px; /* original */
-    height: auto;
-    min-height: 160px; /* original */
-    /* padding, background, shadow, transitions... TODO IGUAL */
 }
 
-/* Responsive para tarjetas en mobile (como tu original para .suggestion, extendido a .suggestion-categoria) */
-@media (max-width: 768px) {
-    .carousel-container .suggestion,
-    .carousel-container .suggestion-categoria {
-        width: 110px; /* ajustado proporcional */
-        min-height: 140px;
-    }
-    .carousel-container .suggestion-categoria img {
-        width: 70px;
-        height: 70px;
-    }
-    .carousel-container {
-        gap: 14px;
-        padding: 15px 0;
-    }
-}
-
-@media (max-width: 480px) {
-    .carousel-container .suggestion,
-    .carousel-container .suggestion-categoria {
-        width: 100px;
-        min-height: 130px;
-    }
-    .carousel-container .suggestion-categoria img {
-        width: 60px;
-        height: 60px;
-    }
-    .carousel-container {
-        gap: 12px;
-        padding: 10px 0;
-    }
-}
-
-/* Centrado pocas tarjetas */
-.carousel-wrapper.few-items .carousel-container {
-    justify-content: center !important;
-    padding: 20px;
-}
-
-/* Botones (igual que categorías) */
+/* Botones de navegación (flechas) */
 .carousel-btn {
     display: none;
     position: absolute;
@@ -667,14 +627,12 @@ main {
     background: rgba(211, 47, 47, 0.9);
 }
 
-.carousel-btn.left { left: 8px; }
-.carousel-btn.right { right: 8px; }
+.carousel-btn.left  { left:  5px; }
+.carousel-btn.right { right: 5px; }
 
 @media (max-width: 920px) {
     .carousel-btn {
         display: flex;
-        align-items: center;
-        justify-content: center;
     }
 }
     /* Carrito */
