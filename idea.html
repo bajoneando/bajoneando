@@ -560,6 +560,41 @@ main {
         font-weight: 700;
     }
 
+        /* Reducción tarjetas locales con filtro de categoría */
+@media (max-width: 768px) {
+    .suggestion-categoria {
+        width: 118px;
+        min-height: 138px;
+        padding: 10px 6px;
+    }
+    
+    .suggestion-categoria img {
+        width: 68px;
+        height: 68px;
+        margin-bottom: 8px;
+    }
+    
+    .suggestion-categoria .local-name {
+        font-size: 0.88rem;
+        margin-bottom: 5px;
+    }
+    
+    .suggestion-categoria .cat,
+    .suggestion-categoria .precio-min {
+        font-size: 0.76rem;
+    }
+    
+    .suggestion-categoria .categoria-precio {
+        gap: 4px;
+    }
+}
+
+/* Versión desktop (opcional, si también quieres achicarlas ahí) */
+.suggestion-categoria {
+    width: 128px;          /* ← prueba entre 110–130 px */
+    min-height: 148px;
+}
+
         /* ============================================= */
 /* === CARRUSEL SIEMPRE CENTRADO ============== */
 /* ============================================= */
