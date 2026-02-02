@@ -1464,13 +1464,16 @@ function showMyFavorites() {
 }
 function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
+    
     // Limpiamos y preparamos la estructura básica
     container.innerHTML = `
         <h2>${title}</h2>
         <div class="menu-items"></div>
     `;
+    
     const itemsDiv = container.querySelector('.menu-items');
     currentDisplayedMenus = {}; // Limpiamos caché de menús mostrados
+
     // Caso: no hay menús
     if (menus.length === 0) {
         itemsDiv.innerHTML = '<p style="text-align:center; color:#999; padding:50px 20px; font-size:1.1rem;">No se encontraron menús en este momento.</p>';
@@ -1478,17 +1481,17 @@ function displayMenus(menus, title, categoriaDestacada = null) {
         // Mostramos cada plato
         menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
-        
+       
             const div = document.createElement('div');
             div.className = 'menu-item';
-        
+       
             // Resaltar si coincide con la categoría destacada
             const esDeCategoria = categoriaDestacada &&
                 menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
             if (esDeCategoria) {
                 div.classList.add('destacado-categoria');
             }
-        
+       
             div.innerHTML = `
                 <img src="${menu.imagen_url || 'https://placehold.co/120x120?text=Sin+Imagen'}"
                      alt="${menu.nombre}"
@@ -1515,25 +1518,28 @@ function displayMenus(menus, title, categoriaDestacada = null) {
                     </div>
                 </div>
             `;
-        
+       
             itemsDiv.appendChild(div);
         });
     }
+
     // ────────────────────────────────────────────────────────────────
     // Botón "Ver todo el menú" → solo aparece si estamos viendo un local filtrado por categoría
     // ────────────────────────────────────────────────────────────────
     let showFullMenuButton = false;
     let currentLocalId = null;
     let localName = 'este local';
+    
     if (categoriaDestacada && menus.length > 0) {
         currentLocalId = menus[0].local_id;
         localName = menus[0].nombre_local || 'este local';
-    
+   
         // Verificamos que TODOS los menús sean del mismo local
         if (currentLocalId && menus.every(menu => menu.local_id === currentLocalId)) {
             showFullMenuButton = true;
         }
     }
+
     if (showFullMenuButton) {
         container.innerHTML += `
             <div class="ver-todo-menu" style="text-align:center; margin: 30px 0 50px;">
@@ -1556,6 +1562,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
                 </button>
             </div>
         `;
+        
         // Asignamos el evento al botón recién creado
         const fullMenuBtn = container.querySelector('.ver-todo-menu button');
         fullMenuBtn.onclick = () => {
@@ -1563,10 +1570,28 @@ function displayMenus(menus, title, categoriaDestacada = null) {
             fetchMenus(null, currentLocalId, null); // Sin filtro de categoría
         };
     }
+
     // Mostramos el contenedor de menús
     container.style.display = 'block';
+
     // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
+
+    // ────────────────────────────────────────────────────────────────
+    // SCROLL AUTOMÁTICO HACIA LA SECCIÓN DE PLATOS (nueva funcionalidad)
+    // ────────────────────────────────────────────────────────────────
+    setTimeout(() => {
+        const header = document.querySelector('header');
+        const headerHeight = header ? header.offsetHeight : 140; // fallback
+        const extraOffset = 30; // espacio adicional para que no quede pegado al header
+
+        const elementTop = container.getBoundingClientRect().top + window.pageYOffset;
+        
+        window.scrollTo({
+            top: elementTop - headerHeight - extraOffset,
+            behavior: 'smooth'
+        });
+    }, 300);  // 300ms → da tiempo a que el DOM renderice y calcule alturas correctamente
 }
     
         function addToCartById(menuId) {
