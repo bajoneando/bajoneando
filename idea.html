@@ -461,16 +461,25 @@ main {
         margin: 0 auto;
         padding: 0 15px;
     }
-    .suggestion-items {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 20px;
-        padding: 20px 0;
-        width: 100%;
-        margin-top: -20px;
-    }
+    /* Eliminamos o neutralizamos la regla antigua que rompe el carrusel */
+#suggestion-items {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;   /* importante para que no se centren verticalmente */
+    gap: 20px;
+    padding: 20px 0;
+    margin: 0;
+    width: 100%;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+#suggestion-items::-webkit-scrollbar {
+    display: none;
+}
     .suggestion {
         width: 120px;
         height: 120px;
@@ -559,7 +568,8 @@ main {
     position: relative;
     width: 100%;
     margin: 20px auto 40px;
-    overflow: hidden;
+    overflow: hidden;           /* ← muy importante */
+    padding: 0 10px;            /* margen lateral pequeño para que las flechas no queden pegadas */
 }
 
 /* Fila horizontal */
