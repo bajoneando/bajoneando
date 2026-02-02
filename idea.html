@@ -466,7 +466,7 @@ main {
     display: flex !important;
     flex-wrap: nowrap !important;
     justify-content: flex-start !important;
-    align-items: flex-start !important;   /* importante para que no se centren verticalmente */
+    align-items: flex-start !important; /* importante para que no se centren verticalmente */
     gap: 20px;
     padding: 20px 0;
     margin: 0;
@@ -476,7 +476,6 @@ main {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
-
 #suggestion-items::-webkit-scrollbar {
     display: none;
 }
@@ -559,53 +558,15 @@ main {
         color: #2e7d32;
         font-weight: 700;
     }
-
-        /* Reducción tarjetas locales con filtro de categoría */
-@media (max-width: 768px) {
-    .suggestion-categoria {
-        width: 118px;
-        min-height: 138px;
-        padding: 10px 6px;
-    }
-    
-    .suggestion-categoria img {
-        width: 68px;
-        height: 68px;
-        margin-bottom: 8px;
-    }
-    
-    .suggestion-categoria .local-name {
-        font-size: 0.88rem;
-        margin-bottom: 5px;
-    }
-    
-    .suggestion-categoria .cat,
-    .suggestion-categoria .precio-min {
-        font-size: 0.76rem;
-    }
-    
-    .suggestion-categoria .categoria-precio {
-        gap: 4px;
-    }
-}
-
-/* Versión desktop (opcional, si también quieres achicarlas ahí) */
-.suggestion-categoria {
-    width: 128px;          /* ← prueba entre 110–130 px */
-    min-height: 148px;
-}
-
         /* ============================================= */
 /* === CARRUSEL SIEMPRE CENTRADO ============== */
 /* ============================================= */
-
 .carousel-wrapper {
     position: relative;
     width: 100%;
     overflow: hidden;
-    padding: 0 10px;               /* margen lateral para que no choque con bordes */
+    padding: 0 10px; /* margen lateral para que no choque con bordes */
 }
-
 /* Contenedor que permite el scroll */
 .carousel-container {
     display: flex;
@@ -615,17 +576,15 @@ main {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    padding: 20px 40px;            /* ← padding lateral grande para centrar visualmente */
-    margin: 0 -40px;               /* compensa el padding para que ocupe todo el ancho */
-    width: calc(100% + 80px);      /* compensa los -40px de cada lado */
+    padding: 20px 40px; /* ← padding lateral grande para centrar visualmente */
+    margin: 0 -40px; /* compensa el padding para que ocupe todo el ancho */
+    width: calc(100% + 80px); /* compensa los -40px de cada lado */
     box-sizing: border-box;
-    justify-content: center;       /* ¡clave! centra el grupo de tarjetas */
+    justify-content: center; /* ¡clave! centra el grupo de tarjetas */
 }
-
 .carousel-container::-webkit-scrollbar {
     display: none;
 }
-
 /* Cuando hay pocas tarjetas → forzamos centrado total */
 .carousel-wrapper.few-items .carousel-container {
     justify-content: center;
@@ -633,13 +592,11 @@ main {
     margin: 0;
     width: 100%;
 }
-
 /* Las tarjetas no crecen ni se achican */
 .carousel-container .suggestion,
 .carousel-container .suggestion-categoria {
     flex: 0 0 auto;
 }
-
 /* Botones de navegación (flechas) */
 .carousel-btn {
     display: none;
@@ -657,14 +614,11 @@ main {
     z-index: 10;
     box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
-
 .carousel-btn:hover {
     background: rgba(211, 47, 47, 0.9);
 }
-
-.carousel-btn.left  { left:  5px; }
+.carousel-btn.left { left: 5px; }
 .carousel-btn.right { right: 5px; }
-
 @media (max-width: 920px) {
     .carousel-btn {
         display: flex;
@@ -823,31 +777,28 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 180px;           /* suficiente para que se vea bien centrado, pero no ocupa demasiado */
+    min-height: 180px; /* suficiente para que se vea bien centrado, pero no ocupa demasiado */
     width: 100%;
     color: #d32f2f;
     font-weight: 600;
-    font-size: 1.1rem;           /* un poco más chico que 1.15rem para que combine mejor con spinner pequeño */
+    font-size: 1.1rem; /* un poco más chico que 1.15rem para que combine mejor con spinner pequeño */
     padding: 50px 20px;
     text-align: center;
-    gap: 10px;                   /* espacio entre spinner y texto */
+    gap: 10px; /* espacio entre spinner y texto */
 }
-
 .loading .spinner {
-    border: 4px solid #f3f3f3;   /* ← color de fondo más neutro */
+    border: 4px solid #f3f3f3; /* ← color de fondo más neutro */
     border-top: 4px solid #d32f2f;
     border-radius: 50%;
-    width: 28px;                 /* ← tamaño original aproximado (antes era 24px) */
+    width: 28px; /* ← tamaño original aproximado (antes era 24px) */
     height: 28px;
     animation: spin 1s linear infinite;
 }
-
 /* Opcional: si querés que ocupe más espacio en secciones altas (como menú de platos) */
 #suggestion-items .loading,
 .menu-display .loading {
     min-height: 200px;
 }
-
 /* Mobile: ajustamos un poco para que no se vea muy grande */
 @media (max-width: 576px) {
     .loading {
@@ -856,7 +807,7 @@ main {
         font-size: 1rem;
         gap: 8px;
     }
-    
+   
     .loading .spinner {
         width: 26px;
         height: 26px;
@@ -1128,13 +1079,11 @@ main {
     }
     .modal-content input[type="password"] { margin-bottom: 8px; }
     /* Loading y spinner ya están definidos arriba */
-
         /* Aseguramos que el botón quede bien debajo y centrado */
 #ver-todo-categoria-container {
     width: 100%;
     text-align: center;
 }
-
 /* Si quieres más espacio o efecto visual */
 .ver-todo-categoria {
     margin-top: 20px; /* más separación del carrusel */
@@ -1212,21 +1161,20 @@ main {
 </div>
         <div class="suggestions">
     <h2 id="suggestions-title">Sugerencias de Locales</h2>
-    
+   
     <div class="carousel-wrapper" id="suggestions-carousel-wrapper">
         <button class="carousel-btn left" id="prev-suggestion">←</button>
-        
+       
         <div class="carousel-container" id="suggestion-items">
             <!-- solo tarjetas aquí -->
         </div>
-        
+       
         <button class="carousel-btn right" id="next-suggestion">→</button>
     </div>
-
     <!-- Contenedor exclusivo para el botón "Ver todo" -->
     <div id="ver-todo-categoria-container" style="text-align: center; margin: 30px 0 50px;"></div>
 </div>
-        
+       
         <div id="menu-display" style="display:none;"></div>
 <!-- 1. Agregar el backdrop (fondo oscuro) justo después del </header> o al final del body -->
 <div id="cart-backdrop" class="cart-backdrop"></div>
@@ -1270,7 +1218,7 @@ main {
 </select>
 <!-- Contenedor donde se mostrará el checkout de MP -->
 <div id="mercadopago-checkout" style="display:none; margin: 20px 0; min-height: 600px;"></div>
-     
+    
                 <textarea id="observaciones" rows="3" placeholder="Observaciones (opcional)"></textarea>
                 <button type="button" id="checkout-btn">Realizar Pedido</button>
             </form>
@@ -1516,13 +1464,11 @@ function showMyFavorites() {
 }
 function displayMenus(menus, title, categoriaDestacada = null) {
     const container = document.getElementById('menu-display');
- 
     // Limpiamos y preparamos la estructura básica
     container.innerHTML = `
         <h2>${title}</h2>
         <div class="menu-items"></div>
     `;
- 
     const itemsDiv = container.querySelector('.menu-items');
     currentDisplayedMenus = {}; // Limpiamos caché de menús mostrados
     // Caso: no hay menús
@@ -1532,17 +1478,17 @@ function displayMenus(menus, title, categoriaDestacada = null) {
         // Mostramos cada plato
         menus.forEach((menu) => {
             currentDisplayedMenus[menu.id] = menu;
-         
+        
             const div = document.createElement('div');
             div.className = 'menu-item';
-         
+        
             // Resaltar si coincide con la categoría destacada
             const esDeCategoria = categoriaDestacada &&
                 menu.categoria?.toLowerCase().includes(categoriaDestacada.toLowerCase());
             if (esDeCategoria) {
                 div.classList.add('destacado-categoria');
             }
-         
+        
             div.innerHTML = `
                 <img src="${menu.imagen_url || 'https://placehold.co/120x120?text=Sin+Imagen'}"
                      alt="${menu.nombre}"
@@ -1569,7 +1515,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
                     </div>
                 </div>
             `;
-         
+        
             itemsDiv.appendChild(div);
         });
     }
@@ -1582,7 +1528,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
     if (categoriaDestacada && menus.length > 0) {
         currentLocalId = menus[0].local_id;
         localName = menus[0].nombre_local || 'este local';
-     
+    
         // Verificamos que TODOS los menús sean del mismo local
         if (currentLocalId && menus.every(menu => menu.local_id === currentLocalId)) {
             showFullMenuButton = true;
@@ -1622,7 +1568,7 @@ function displayMenus(menus, title, categoriaDestacada = null) {
     // Actualizamos visual de favoritos
     setTimeout(updateFavoriteButtons, 100);
 }
-     
+    
         function addToCartById(menuId) {
     const menu = currentDisplayedMenus[menuId];
     if (!menu) {
@@ -1732,7 +1678,7 @@ async function registerUser() {
         const result = await response.json();
         if (result.success) {
             alert('¡Registro exitoso! Bienvenid@ ' + nombre);
-    
+   
             // Guardamos datos en localStorage
             localStorage.setItem('userId', result.userId);
             localStorage.setItem('userName', nombre);
@@ -1769,20 +1715,15 @@ async function registerUser() {
     const container = document.getElementById('suggestion-items');
     const titleElement = document.getElementById('suggestions-title');
     const wrapper = document.getElementById('suggestions-carousel-wrapper');
-
     if (!container || !wrapper) return;
-
     showLoading(container);
     titleElement.textContent = "Sugerencias de Locales";
-
     // Limpiamos clase de centrado anterior
     wrapper.classList.remove('few-items');
-
     fetch(scriptUrl + '?action=getFilters')
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
             container.innerHTML = '';
-
             if (data.locals?.length > 0) {
                 data.locals.forEach(local => {
                     const div = document.createElement('div');
@@ -1792,7 +1733,6 @@ async function registerUser() {
                     div.onclick = () => fetchMenus(null, local.local_id);
                     container.appendChild(div);
                 });
-
                 // Si hay pocas tarjetas → centramos
                 if (data.locals.length <= 4) {
                     wrapper.classList.add('few-items');
@@ -1801,7 +1741,6 @@ async function registerUser() {
                 container.innerHTML = '<p style="text-align:center;color:#999;padding:40px;">Aún no hay locales disponibles.</p>';
                 wrapper.classList.add('few-items');
             }
-
             // Actualizamos visibilidad de botones
             setTimeout(() => {
                 if (wrapper) {
@@ -1815,7 +1754,7 @@ async function registerUser() {
         })
         .catch(() => showError(container, 'Error al cargar locales'));
 }
-        
+       
         function setupSearch() {
             const input = document.getElementById('search-input');
             let timeout;
@@ -1870,14 +1809,11 @@ function displayLocalesConCategoria(locales, categoria) {
     const titleElement = document.getElementById('suggestions-title');
     const wrapper = document.getElementById('suggestions-carousel-wrapper');
     const buttonContainer = document.getElementById('ver-todo-categoria-container'); // ← nuevo
-
     if (!container || !wrapper || !buttonContainer) return;
-
-    container.innerHTML = '';           // limpiamos tarjetas
-    buttonContainer.innerHTML = '';     // limpiamos botón anterior
+    container.innerHTML = ''; // limpiamos tarjetas
+    buttonContainer.innerHTML = ''; // limpiamos botón anterior
     titleElement.textContent = `Locales con ${categoria}`;
     wrapper.classList.remove('few-items');
-
     if (locales.length === 0) {
         container.innerHTML = `
             <p style="text-align:center; padding:40px; color:#666; font-size:1.1rem; width:100%;">
@@ -1886,7 +1822,6 @@ function displayLocalesConCategoria(locales, categoria) {
         wrapper.classList.add('few-items');
         return;
     }
-
     // Insertamos solo las tarjetas en el carrusel
     locales.forEach(local => {
         const div = document.createElement('div');
@@ -1907,25 +1842,23 @@ function displayLocalesConCategoria(locales, categoria) {
         div.onclick = () => fetchMenus(null, local.local_id, ultimaCategoriaSeleccionada);
         container.appendChild(div);
     });
-
     // Centrado si son pocas tarjetas
     if (locales.length <= 4) {
         wrapper.classList.add('few-items');
     }
-
     // Creamos y agregamos el botón FUERA del carrusel
     const btnContainer = document.createElement('div');
     btnContainer.className = 'ver-todo-categoria dinamica';
     btnContainer.innerHTML = `
         <button style="
-            background:#d32f2f; 
-            color:white; 
-            border:none; 
-            border-radius:12px; 
-            padding:14px 28px; 
-            font-size:1.1rem; 
-            font-weight:600; 
-            cursor:pointer; 
+            background:#d32f2f;
+            color:white;
+            border:none;
+            border-radius:12px;
+            padding:14px 28px;
+            font-size:1.1rem;
+            font-weight:600;
+            cursor:pointer;
             box-shadow:0 4px 12px rgba(211,47,47,0.3);
         ">
             Ver todo ${categoria}
@@ -1935,9 +1868,7 @@ function displayLocalesConCategoria(locales, categoria) {
         ultimaCategoriaSeleccionada = categoria;
         fetchMenus(categoria, null, null);
     };
-
-    buttonContainer.appendChild(btnContainer);  // ← se agrega AQUÍ, debajo del carrusel
-
+    buttonContainer.appendChild(btnContainer); // ← se agrega AQUÍ, debajo del carrusel
     // Visibilidad de flechas del carrusel
     setTimeout(() => {
         const hasOverflow = container.scrollWidth > container.clientWidth;
@@ -1946,7 +1877,6 @@ function displayLocalesConCategoria(locales, categoria) {
         });
     }, 300);
 }
- 
         function fetchMenus(tipoCategoria, localId, filtroCategoriaInicial = null) {
     const container = document.getElementById('menu-display');
     // Ocultamos el botón estático "Ver todo [categoría]" cuando entramos a ver menús
@@ -2567,10 +2497,10 @@ function saveProfileChanges() {
                 // Actualizamos el almacenamiento local
                 localStorage.setItem('userName', name);
                 localStorage.setItem('userEmail', email);
-     
+    
                 alert(data.message || 'Perfil actualizado correctamente');
                 closeModal('edit-profile-modal');
-     
+    
                 // Refrescamos el estado visual si es necesario
                 checkLoginStatus();
             } else {
@@ -2597,11 +2527,11 @@ function saveAddressChange() {
             if (data.success) {
                 userAddress = newAddress;
                 localStorage.setItem('userAddress', newAddress);
-     
+    
                 // Actualizamos el campo de dirección del checkout si está visible
                 const checkoutDir = document.getElementById('direccion');
                 if (checkoutDir) checkoutDir.value = newAddress;
-     
+    
                 alert('Dirección actualizada correctamente');
                 closeModal('change-address-modal');
             } else {
@@ -2743,44 +2673,38 @@ window.addEventListener('load', () => {
         });
     });
   }
-
         function setupGenericCarousel(wrapperId, containerId, prevId, nextId) {
     const wrapper = document.getElementById(wrapperId);
     const container = document.getElementById(containerId);
     const prev = document.getElementById(prevId);
     const next = document.getElementById(nextId);
-    
+   
     if (!container || !prev || !next) return;
-
-    function scrollLeft()  { container.scrollBy({ left: -container.clientWidth * 0.75, behavior: 'smooth' }); }
-    function scrollRight() { container.scrollBy({ left:  container.clientWidth * 0.75, behavior: 'smooth' }); }
-
+    function scrollLeft() { container.scrollBy({ left: -container.clientWidth * 0.75, behavior: 'smooth' }); }
+    function scrollRight() { container.scrollBy({ left: container.clientWidth * 0.75, behavior: 'smooth' }); }
     prev.onclick = scrollLeft;
     next.onclick = scrollRight;
-
     function updateButtons() {
         const atStart = container.scrollLeft <= 1;
-        const atEnd   = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
-        
+        const atEnd = Math.abs(container.scrollLeft + container.clientWidth - container.scrollWidth) < 5;
+       
         prev.disabled = atStart;
         prev.style.opacity = atStart ? '0.35' : '1';
-        next.disabled  = atEnd;
+        next.disabled = atEnd;
         next.style.opacity = atEnd ? '0.35' : '1';
     }
-
     container.addEventListener('scroll', updateButtons);
     window.addEventListener('resize', updateButtons);
-    
+   
     // Estado inicial
     setTimeout(updateButtons, 400);
 }
-
 // Llamar para ambos carruseles
 window.addEventListener('load', () => {
     // ... tus otras inicializaciones ...
-    
+   
     setupGenericCarousel('suggestions-carousel-wrapper', 'suggestion-items', 'prev-suggestion', 'next-suggestion');
-    
+   
     // Si más adelante creas otro carrusel, solo llamas de nuevo la función
 });
     </script>
