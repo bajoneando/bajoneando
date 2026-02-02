@@ -554,6 +554,7 @@ main {
         /* ────────────────────────────────────────────────
    CARRUSEL GENÉRICO CENTRADO (usado por sugerencias y locales por categoría)
 ───────────────────────────────────────────────── */
+/* Contenedor del carrusel (sin cambios mayores) */
 .carousel-wrapper {
     position: relative;
     width: 100%;
@@ -561,35 +562,50 @@ main {
     overflow: hidden;
 }
 
-/* Fila horizontal scrollable */
+/* Fila horizontal */
 .carousel-container {
     display: flex;
-    flex-wrap: nowrap;               /* ← clave: NO wrap */
-    gap: 20px;                       /* mismo gap que tenías */
+    flex-wrap: nowrap;
+    gap: 20px;
     overflow-x: auto;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding: 20px 0;
-    justify-content: flex-start;     /* para que empiece desde la izquierda */
+    justify-content: flex-start;
 }
 
 .carousel-container::-webkit-scrollbar {
     display: none;
 }
 
-/* Las tarjetas dentro del carrusel mantienen su tamaño original */
+/* Tarjetas de sugerencias normales (estilo original intacto) */
 .carousel-container .suggestion {
-    flex: 0 0 auto;                  /* no crecen ni se achican */
+    flex: 0 0 auto;
     width: 120px;
     height: 120px;
+    /* resto igual: border-radius, shadow, transitions... */
 }
 
-/* Responsive: más chico en móvil (como ya tenías) */
+/* Tarjetas de locales con categoría (estilo ORIGINAL intacto) */
+.carousel-container .suggestion-categoria {
+    flex: 0 0 auto;
+    width: 140px; /* original */
+    height: auto;
+    min-height: 160px; /* original */
+    /* padding, background, shadow, transitions... TODO IGUAL */
+}
+
+/* Responsive para tarjetas en mobile (como tu original para .suggestion, extendido a .suggestion-categoria) */
 @media (max-width: 768px) {
-    .carousel-container .suggestion {
-        width: 75px;
-        height: 75px;
+    .carousel-container .suggestion,
+    .carousel-container .suggestion-categoria {
+        width: 110px; /* ajustado proporcional */
+        min-height: 140px;
+    }
+    .carousel-container .suggestion-categoria img {
+        width: 70px;
+        height: 70px;
     }
     .carousel-container {
         gap: 14px;
@@ -598,9 +614,14 @@ main {
 }
 
 @media (max-width: 480px) {
-    .carousel-container .suggestion {
-        width: 70px;
-        height: 70px;
+    .carousel-container .suggestion,
+    .carousel-container .suggestion-categoria {
+        width: 100px;
+        min-height: 130px;
+    }
+    .carousel-container .suggestion-categoria img {
+        width: 60px;
+        height: 60px;
     }
     .carousel-container {
         gap: 12px;
@@ -608,13 +629,13 @@ main {
     }
 }
 
-/* Centrado cuando hay pocas tarjetas */
+/* Centrado pocas tarjetas */
 .carousel-wrapper.few-items .carousel-container {
     justify-content: center !important;
     padding: 20px;
 }
 
-/* Botones (mismo estilo que categorías) */
+/* Botones (igual que categorías) */
 .carousel-btn {
     display: none;
     position: absolute;
@@ -636,7 +657,7 @@ main {
     background: rgba(211, 47, 47, 0.9);
 }
 
-.carousel-btn.left  { left: 8px; }
+.carousel-btn.left { left: 8px; }
 .carousel-btn.right { right: 8px; }
 
 @media (max-width: 920px) {
@@ -1154,15 +1175,10 @@ main {
         <button class="carousel-btn left" id="prev-suggestion">←</button>
         
         <div class="carousel-container" id="suggestion-items">
-            <!-- SOLO las tarjetas van aquí -->
+            <!-- tarjetas .suggestion o .suggestion-categoria se insertan aquí -->
         </div>
         
         <button class="carousel-btn right" id="next-suggestion">→</button>
-    </div>
-
-    <!-- Contenedor exclusivo para el botón "Ver todo" -->
-    <div id="ver-todo-container" style="text-align: center; margin: 30px 0 50px; width: 100%; display: none;">
-        <!-- El botón se insertará aquí dinámicamente -->
     </div>
 </div>
         
