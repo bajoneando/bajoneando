@@ -1097,6 +1097,17 @@ main {
     }
     .modal-content input[type="password"] { margin-bottom: 8px; }
     /* Loading y spinner ya están definidos arriba */
+
+        /* Aseguramos que el botón quede bien debajo y centrado */
+#ver-todo-categoria-container {
+    width: 100%;
+    text-align: center;
+}
+
+/* Si quieres más espacio o efecto visual */
+.ver-todo-categoria {
+    margin-top: 20px; /* más separación del carrusel */
+}
 </style>
     <!-- PWA - Manifest -->
 <link rel="manifest" href="/manifest.json">
@@ -1175,11 +1186,14 @@ main {
         <button class="carousel-btn left" id="prev-suggestion">←</button>
         
         <div class="carousel-container" id="suggestion-items">
-            <!-- tarjetas .suggestion o .suggestion-categoria se insertan aquí -->
+            <!-- solo tarjetas aquí -->
         </div>
         
         <button class="carousel-btn right" id="next-suggestion">→</button>
     </div>
+
+    <!-- Contenedor exclusivo para el botón "Ver todo" -->
+    <div id="ver-todo-categoria-container" style="text-align: center; margin: 30px 0 50px;"></div>
 </div>
         
         <div id="menu-display" style="display:none;"></div>
@@ -1824,12 +1838,13 @@ function displayLocalesConCategoria(locales, categoria) {
     const container = document.getElementById('suggestion-items');
     const titleElement = document.getElementById('suggestions-title');
     const wrapper = document.getElementById('suggestions-carousel-wrapper');
+    const buttonContainer = document.getElementById('ver-todo-categoria-container'); // ← nuevo
 
-    if (!container || !wrapper) return;
+    if (!container || !wrapper || !buttonContainer) return;
 
-    container.innerHTML = '';
+    container.innerHTML = '';           // limpiamos tarjetas
+    buttonContainer.innerHTML = '';     // limpiamos botón anterior
     titleElement.textContent = `Locales con ${categoria}`;
-
     wrapper.classList.remove('few-items');
 
     if (locales.length === 0) {
@@ -1841,6 +1856,7 @@ function displayLocalesConCategoria(locales, categoria) {
         return;
     }
 
+    // Insertamos solo las tarjetas en el carrusel
     locales.forEach(local => {
         const div = document.createElement('div');
         div.className = 'suggestion-categoria';
@@ -1866,12 +1882,21 @@ function displayLocalesConCategoria(locales, categoria) {
         wrapper.classList.add('few-items');
     }
 
-    // Botón "Ver todo"
+    // Creamos y agregamos el botón FUERA del carrusel
     const btnContainer = document.createElement('div');
     btnContainer.className = 'ver-todo-categoria dinamica';
-    btnContainer.style.cssText = 'text-align: center; margin: 30px 0 50px; width: 100%;';
     btnContainer.innerHTML = `
-        <button style="background:#d32f2f; color:white; border:none; border-radius:12px; padding:14px 28px; font-size:1.1rem; font-weight:600; cursor:pointer; box-shadow:0 4px 12px rgba(211,47,47,0.3);">
+        <button style="
+            background:#d32f2f; 
+            color:white; 
+            border:none; 
+            border-radius:12px; 
+            padding:14px 28px; 
+            font-size:1.1rem; 
+            font-weight:600; 
+            cursor:pointer; 
+            box-shadow:0 4px 12px rgba(211,47,47,0.3);
+        ">
             Ver todo ${categoria}
         </button>
     `;
@@ -1879,9 +1904,10 @@ function displayLocalesConCategoria(locales, categoria) {
         ultimaCategoriaSeleccionada = categoria;
         fetchMenus(categoria, null, null);
     };
-    container.appendChild(btnContainer);
 
-    // Actualizamos visibilidad de flechas
+    buttonContainer.appendChild(btnContainer);  // ← se agrega AQUÍ, debajo del carrusel
+
+    // Visibilidad de flechas del carrusel
     setTimeout(() => {
         const hasOverflow = container.scrollWidth > container.clientWidth;
         wrapper.querySelectorAll('.carousel-btn').forEach(btn => {
