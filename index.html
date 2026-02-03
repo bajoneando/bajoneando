@@ -1224,15 +1224,24 @@ main {
             </form>
         </div>
     </main>
+    
     <!-- Footer -->
-    <footer class="text-center">
-        <div class="container">
-            <p class="mb-2">© 2026 <strong>Weep</strong> - Plataforma de Pedidos</p>
-            <p class="small mb-0">
-                <a href="#">Términos</a> • <a href="#">Privacidad</a> • <a href="#">Soporte</a>
-            </p>
-        </div>
-    </footer>
+<footer class="text-center">
+    <div class="container">
+        <p class="mb-2">© 2026 <strong>Weep</strong> - Plataforma de Pedidos</p>
+        
+        <p class="small mb-4">
+            <a href="https://weep.com.ar/locales.html">Registrá tu local</a>
+        </p>
+
+        <p class="small mb-0">
+            <a href="#" data-bs-toggle="modal" data-bs-target="#terminosModal">Términos</a> • 
+            <a href="#">Privacidad</a> • 
+            <a href="mailto:bajoneando.st@gmail.com">Soporte</a>
+        </p>
+    </div>
+</footer>
+    
     <!-- Login Modal -->
     <div id="login-modal" class="modal">
         <div class="modal-content">
@@ -1279,6 +1288,35 @@ main {
         <h2>Cambiar Dirección</h2>
         <input type="text" id="edit-address" placeholder="Nueva dirección de entrega" required>
         <button onclick="saveAddressChange()">Guardar dirección</button>
+    </div>
+</div>
+
+    <!-- Modal Términos -->
+<div class="modal fade" id="terminosModal" tabindex="-1" aria-labelledby="terminosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="terminosModalLabel">Términos y Condiciones</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-start small">
+                <p><strong>Última actualización: febrero 2026</strong></p>
+                
+                <p>Al usar Weep aceptás:</p>
+                <ul>
+                    <li>Utilizar la plataforma de buena fe y respetando las leyes vigentes.</li>
+                    <li>No publicar contenido falso, engañoso o ilegal.</li>
+                    <li>Que los pedidos generados son acuerdos entre el cliente y el local adherido.</li>
+                    <li>Weep actúa solo como intermediario tecnológico y no se responsabiliza por la calidad de los productos, tiempos de entrega ni disputas entre usuarios y comercios.</li>
+                    <li>Nos reservamos el derecho de suspender o eliminar cuentas que incumplan estos términos.</li>
+                </ul>
+                
+                <p class="mt-3">Cualquier duda escribinos a <a href="mailto:bajoneando.st@gmail.com">bajoneando.st@gmail.com</a></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
     </div>
 </div>
     <script>
