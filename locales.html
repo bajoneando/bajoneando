@@ -567,50 +567,75 @@
 
   // === GUARDAR PLATO ===
   document.getElementById('menu-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('guardar-btn');
-    const spinner = btn.querySelector('.spinner-border');
-    spinner.classList.remove('d-none');
-    btn.disabled = true;
-    try {
-      let imagenUrl = '';
-      const file = document.getElementById('foto').files[0];
-      if (file) imagenUrl = await subirImagen(file);
-      const payload = {
-        action: document.getElementById('edit-item-id').value ? 'updateMenuItem' : 'addMenuItem',
-        localId: localToken,
-        nombre: document.getElementById('nombre').value.trim(),
-        categoria: document.getElementById('categoria').value,
-        descripcion: document.getElementById('descripcion').value.trim(),
-        precio: parseFloat(document.getElementById('precio').value),
-        disponibilidad: document.getElementById('disponibilidad').value,
-        tamano_porcion: document.getElementById('tamano_porcion').value || '',
-        variantes: document.getElementById('variantes').value.trim(),
-        tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0
-      };
-      if (imagenUrl) payload.imagen_url = imagenUrl;
-      if (document.getElementById('edit-item-id').value) payload.itemId = document.getElementById('edit-item-id').value;
-      if (!payload.nombre || !payload.categoria || payload.precio <= 0) {
-        alert('Faltan datos obligatorios');
-        return;
-      }
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: { 'Content-Type': 'application/json' },
-        mode: 'no-cors'
-      });
-      alert(payload.action === 'addMenuItem' ? 'Plato agregado' : 'Plato actualizado');
-      document.getElementById('menu-form').classList.add('d-none');
-      cargarMenuCompleto();
-    } catch (err) {
-      console.error(err);
-      alert('Error al guardar. Revisa la consola.');
-    } finally {
-      spinner.classList.add('d-none');
-      btn.disabled = false;
+  e.preventDefault();
+
+  const btn = document.getElementById('guardar-btn');
+  const spinner = btn.querySelector('.spinner-border');
+  spinner.classList.remove('d-none');
+  btn.disabled = true;
+
+  try {
+    let imagenUrl = '';
+    const file = document.getElementById('foto').files[0];
+    if (file) {
+      imagenUrl = await subirImagen(file);
     }
-  });
+
+    const payload = {
+      action: document.getElementById('edit-item-id').value ? 'updateMenuItem' : 'addMenuItem',
+      localId: localToken,
+      nombre: document.getElementById('nombre').value.trim(),
+      categoria: document.getElementById('categoria').value,
+      descripcion: document.getElementById('descripcion').value.trim(),
+      precio: parseFloat(document.getElementById('precio').value),
+      disponibilidad: document.getElementById('disponibilidad').value,
+      tamano_porcion: document.getElementById('tamano_porcion').value || '',
+      variantes: document.getElementById('variantes').value.trim(),
+      tiempo_preparacion: parseInt(document.getElementById('tiempo_preparacion').value) || 0
+    };
+
+    if (imagenUrl) payload.imagen_url = imagenUrl;
+    if (document.getElementById('edit-item-id').value) {
+      payload.itemId = document.getElementById('edit-item-id').value;
+    }
+
+    if (!payload.nombre || !payload.categoria || payload.precio <= 0 || !payload.localId) {
+      throw new Error('Faltan datos obligatorios');
+    }
+
+    // ─── ENVÍO ────────────────────────────────────────────────────────
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('Respuesta del servidor:', result);
+
+    if (result.success === true) {
+      alert(payload.action === 'addMenuItem' 
+        ? '¡Plato agregado correctamente!' 
+        : '¡Plato actualizado correctamente!');
+      document.getElementById('menu-form').classList.add('d-none');
+      document.getElementById('menu-form').reset();
+      cargarMenuCompleto();
+    } else {
+      alert('Error: ' + (result.error || result.message || JSON.stringify(result)));
+    }
+
+  } catch (err) {
+    console.error('Error completo al guardar:', err);
+    alert('No se pudo guardar el plato.\n' + (err.message || 'Error desconocido'));
+  } finally {
+    spinner.classList.add('d-none');
+    btn.disabled = false;
+  }
+});
 
   // === MENÚ ===
   async function cargarMenuCompleto() {
