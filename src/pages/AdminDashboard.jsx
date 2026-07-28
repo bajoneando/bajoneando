@@ -15,7 +15,7 @@ import AdminConfig from './AdminConfig';
 import AdminPruebas from './AdminPruebas';
 import AdminReportes from './AdminReportes';
 import AdminPromos from './AdminPromos';
-import AdminMundial from './AdminMundial';
+// import AdminMundial from './AdminMundial';
 import AdminCRM from './AdminCRM';
 import AdminAds from './AdminAds';
 import AdminMetricas from './AdminMetricas';
@@ -75,7 +75,7 @@ const AdminDashboard = () => {
             case 'config': return <AdminConfig />;
             case 'pruebas': return <AdminPruebas />;
             case 'promos': return <AdminPromos />;
-            case 'mundial': return <AdminMundial />;
+            // case 'mundial': return <AdminMundial />;
             case 'reports': return <AdminReportes />;
             case 'crm': return <AdminCRM />;
             case 'ads': return <AdminAds />;
@@ -122,9 +122,9 @@ const AdminDashboard = () => {
                     <button className={activeTab === 'promos' ? 'active' : ''} onClick={() => handleTabClick('promos')}>
                         <span className="icon">🚀</span> Promos y Descuentos
                     </button>
-                    <button className={activeTab === 'mundial' ? 'active' : ''} onClick={() => handleTabClick('mundial')}>
+                    {/* <button className={activeTab === 'mundial' ? 'active' : ''} onClick={() => handleTabClick('mundial')}>
                         <span className="icon">🏆</span> Mundial 2026
-                    </button>
+                    </button> */}
                     <button className={activeTab === 'crm' ? 'active' : ''} onClick={() => handleTabClick('crm')}>
                         <span className="icon">🤝</span> CRM / Clientes
                     </button>

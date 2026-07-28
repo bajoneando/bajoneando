@@ -361,56 +361,12 @@ export default function PruebasWalletApp() {
   const [pendingOrderId, setPendingOrderId] = React.useState(null);
   const [estimatedTime, setEstimatedTime] = React.useState(null);
 
-  // Mundial 2026: States and checking logic for points earned
-  const [oldMundialPoints, setOldMundialPoints] = React.useState(0);
-  const [oldMundialSobres, setOldMundialSobres] = React.useState(0);
-  const [isNewMundialUser, setIsNewMundialUser] = React.useState(false);
-  const [mundialAward, setMundialAward] = React.useState(null);
-  const [showMundialPopup, setShowMundialPopup] = React.useState(false);
-
-  const checkMundialPointsEarned = async (customOldPts = null, customOldSobres = null, customIsNew = null) => {
-    if (!user?.id) return;
-    
-    // Wait for Supabase backend to finish registering/processing stats
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    try {
-      const statsAfter = await api.getMundialUsuarioStats(user.id);
-      if (statsAfter) {
-        const checkIsNew = customIsNew !== null ? customIsNew : isNewMundialUser;
-        const basePts = checkIsNew ? 100 : (customOldPts !== null ? customOldPts : oldMundialPoints);
-        const baseSobres = checkIsNew ? 2 : (customOldSobres !== null ? customOldSobres : oldMundialSobres);
-        
-        const diffPts = (statsAfter.puntos_totales || 0) - basePts;
-        const diffSobres = (statsAfter.sobres_disponibles || 0) - baseSobres;
-        
-        if (diffPts > 0) {
-          setMundialAward({
-            puntos: diffPts,
-            sobres: diffSobres > 0 ? diffSobres : 0
-          });
-          setShowMundialPopup(true);
-        }
-      }
-    } catch (e) {
-      console.error("Error checking mundial points after order:", e);
-    }
-  };
-
-  React.useEffect(() => {
-    if (user?.id && localStorage.getItem('checkMundialPointsAfterMP') === 'true') {
-      const storedOldPts = Number(localStorage.getItem('oldMundialPointsMP') || '0');
-      const storedOldSobres = Number(localStorage.getItem('oldMundialSobresMP') || '0');
-      const storedIsNew = localStorage.getItem('isNewMundialUserMP') === 'true';
-      
-      localStorage.removeItem('checkMundialPointsAfterMP');
-      localStorage.removeItem('oldMundialPointsMP');
-      localStorage.removeItem('oldMundialSobresMP');
-      localStorage.removeItem('isNewMundialUserMP');
-      
-      checkMundialPointsEarned(storedOldPts, storedOldSobres, storedIsNew);
-    }
-  }, [user]);
+  // Mundial 2026: States and checking logic for points earned (Commented out/Deleted)
+  // const [oldMundialPoints, setOldMundialPoints] = React.useState(0);
+  // const [oldMundialSobres, setOldMundialSobres] = React.useState(0);
+  // const [isNewMundialUser, setIsNewMundialUser] = React.useState(false);
+  // const [mundialAward, setMundialAward] = React.useState(null);
+  // const [showMundialPopup, setShowMundialPopup] = React.useState(false);
 
   // ─── Estado y Efectos para Tarifas de Envío Multi-ciudad ───
   const [ciudadesConfig, setCiudadesConfig] = React.useState([]);
@@ -2096,7 +2052,8 @@ export default function PruebasWalletApp() {
 
     setCheckoutLoading(true);
     try {
-      // Capture pre-checkout stats for Mundial 2026 points check
+      // Capture pre-checkout stats for Mundial 2026 points check (Commented out)
+      /*
       let prePts = 0;
       let preSobres = 0;
       let isNew = false;
@@ -2129,6 +2086,7 @@ export default function PruebasWalletApp() {
       } catch (err) {
         console.error("Error capturing pre-checkout stats:", err);
       }
+      */
 
       // --- NUEVA VALIDACIÃ“N DE DISPONIBILIDAD EN TIEMPO REAL ---
       const uniqueLocalIds = [...new Set(cart.items.map(i => i.local_id).filter(Boolean))];
@@ -2285,7 +2243,7 @@ export default function PruebasWalletApp() {
               setCartOpen(false);
 
               // Verify points earned
-              checkMundialPointsEarned(prePts, preSobres, isNew);
+              // checkMundialPointsEarned(prePts, preSobres, isNew);
             } else {
               // RETIRO O ENVIO DE SHOPS + TRANSFERENCIA: Redirigir a MP
               setCartOpen(false);
@@ -2462,7 +2420,7 @@ export default function PruebasWalletApp() {
               setFoundDriver(null);
               setPendingOrderId(null);
               localStorage.removeItem('pendingOrderDataPruebas');
-              checkMundialPointsEarned(oldMundialPoints, oldMundialSobres, isNewMundialUser);
+              // checkMundialPointsEarned(oldMundialPoints, oldMundialSobres, isNewMundialUser);
             } catch (err) {
               console.error("Error confirming cash order UI:", err);
             }
@@ -4860,8 +4818,8 @@ export default function PruebasWalletApp() {
         />
       )}
 
-      {/* Pestañita Lateral Mundialista */}
-      <Link 
+      {/* Pestañita Lateral Mundialista (Commented out) */}
+      {/* <Link 
         to="/mundialista" 
         className="floating-lateral-tab"
         style={{
@@ -4895,7 +4853,7 @@ export default function PruebasWalletApp() {
             borderRadius: '12px 0 0 12px',
           }}
         />
-      </Link>
+      </Link> */}
 
 
     </div>
@@ -5095,13 +5053,13 @@ function WalletDetailsPanel({ onClose, balance, transactions, promotions, userId
           </div>
         )}
 
-        {/* Widget Mundialista Flotante */}
-        <Link to="/mundialista" className="floating-mundial-trophy" title="¡Campaña Mundialista Wepi! 🏆">
+        {/* Widget Mundialista Flotante (Commented out) */}
+        {/* <Link to="/mundialista" className="floating-mundial-trophy" title="¡Campaña Mundialista Wepi! 🏆">
           <span className="trophy-emoji">🏆</span>
           <span className="trophy-text">Mundial Wepi</span>
-        </Link>
+        </Link> */}
 
-        {showMundialPopup && mundialAward && (
+        {/* {showMundialPopup && (
           <div style={{
             position: 'fixed',
             top: 0,
@@ -5132,7 +5090,6 @@ function WalletDetailsPanel({ onClose, balance, transactions, promotions, userId
               }} 
               onClick={e => e.stopPropagation()}
             >
-              {/* Close Button */}
               <button 
                 onClick={() => setShowMundialPopup(false)}
                 style={{
@@ -5157,7 +5114,6 @@ function WalletDetailsPanel({ onClose, balance, transactions, promotions, userId
                 ✕
               </button>
 
-              {/* Vertical Image */}
               <div style={{ position: 'relative', width: '100%', height: '320px', overflow: 'hidden' }}>
                 <img 
                   src="https://i.postimg.cc/zDg4r1YD/Chat-GPT-Image-Jun-4-2026-08-00-24-PM.png" 
@@ -5179,7 +5135,6 @@ function WalletDetailsPanel({ onClose, balance, transactions, promotions, userId
                 }} />
               </div>
 
-              {/* Content */}
               <div style={{ padding: '24px', textAlign: 'center', color: '#ffffff' }}>
                 <span style={{
                   background: 'rgba(251, 191, 36, 0.1)',
@@ -5202,16 +5157,10 @@ function WalletDetailsPanel({ onClose, balance, transactions, promotions, userId
                 </h3>
 
                 <p style={{ margin: '0 0 20px 0', color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                  Ganaste <strong style={{ color: '#fbbf24', fontSize: '1.1rem' }}>{mundialAward.puntos} puntos</strong> para el ranking. 
-                  {mundialAward.sobres > 0 && (
-                    <>
-                      {' '}y <strong style={{ color: '#38bdf8', fontSize: '1.1rem' }}>{mundialAward.sobres} {mundialAward.sobres === 1 ? 'sobre' : 'sobres'}</strong> de figuritas.
-                    </>
-                  )}
-                  {' '}Participá por premios exclusivos y liderá la tabla local de Wepi.
+                  Ganaste <strong style={{ color: '#fbbf24', fontSize: '1.1rem' }}>puntos</strong> para el ranking. 
+                  Participá por premios exclusivos y liderá la tabla local de Wepi.
                 </p>
 
-                {/* CTA Button */}
                 <Link 
                   to="/mundialista" 
                   onClick={() => setShowMundialPopup(false)}
@@ -5248,7 +5197,7 @@ function WalletDetailsPanel({ onClose, balance, transactions, promotions, userId
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
