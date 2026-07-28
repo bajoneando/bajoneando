@@ -85,38 +85,7 @@ export default function RestaurantDashboard() {
 
   const serverUrl = import.meta.env.VITE_WHATSAPP_SERVER_URL || 'http://localhost:3001';
 
-  React.useEffect(() => {
-    if (!restaurant?.id) return;
 
-    const checkStatus = async () => {
-      try {
-        const res = await fetch(`${serverUrl}/api/status?localId=${restaurant.id}`);
-        const data = await res.json();
-        
-        setWaStatus(data.status);
-        setWaQrCode(data.qr || '');
-        setWaPhoneNumber(data.phoneNumber || '');
-
-        // Si ya se vinculó en el backend, actualizar estado local recargando el perfil
-        if (data.status === 'connected' && profileData && !profileData.whatsapp_assistant_enabled) {
-          loadProfile();
-        }
-      } catch (err) {
-        // Ignorar errores silenciosos si el servidor de WhatsApp no está corriendo
-      }
-    };
-
-    checkStatus();
-
-    // Consultar estado cada 3 segundos si no está conectado aún
-    const interval = setInterval(() => {
-      if (waStatus !== 'connected') {
-        checkStatus();
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [restaurant?.id, waStatus, profileData, loadProfile]);
 
   const handleConnectWA = async () => {
     setWaStatus('loading');
@@ -543,6 +512,39 @@ export default function RestaurantDashboard() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [loadProfile]);
+
+  React.useEffect(() => {
+    if (!restaurant?.id) return;
+
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`${serverUrl}/api/status?localId=${restaurant.id}`);
+        const data = await res.json();
+        
+        setWaStatus(data.status);
+        setWaQrCode(data.qr || '');
+        setWaPhoneNumber(data.phoneNumber || '');
+
+        // Si ya se vinculó en el backend, actualizar estado local recargando el perfil
+        if (data.status === 'connected' && profileData && !profileData.whatsapp_assistant_enabled) {
+          loadProfile();
+        }
+      } catch (err) {
+        // Ignorar errores silenciosos si el servidor de WhatsApp no está corriendo
+      }
+    };
+
+    checkStatus();
+
+    // Consultar estado cada 3 segundos si no está conectado aún
+    const interval = setInterval(() => {
+      if (waStatus !== 'connected') {
+        checkStatus();
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [restaurant?.id, waStatus, profileData, loadProfile]);
 
   /* ─── Modo Automático ─── */
   // Deprecated: Use isLocalOpen from utils/businessHours
