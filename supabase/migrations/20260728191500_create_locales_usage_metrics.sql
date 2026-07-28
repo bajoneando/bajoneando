@@ -43,4 +43,4 @@ BEGIN
     carritos_creados = CASE WHEN metric_name = 'carritos_creados' THEN locales_uso_metricas.carritos_creados + 1 ELSE locales_uso_metricas.carritos_creados END,
     pedidos_creados = CASE WHEN metric_name = 'pedidos_creados' THEN locales_uso_metricas.pedidos_creados + 1 ELSE locales_uso_metricas.pedidos_creados END;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE 'plpgsql' SECURITY DEFINER;
