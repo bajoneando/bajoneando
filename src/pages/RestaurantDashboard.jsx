@@ -83,7 +83,11 @@ export default function RestaurantDashboard() {
   const [waQrCode, setWaQrCode] = React.useState('');
   const [waPhoneNumber, setWaPhoneNumber] = React.useState('');
 
-  const serverUrl = import.meta.env.VITE_WHATSAPP_SERVER_URL || 'http://localhost:3001';
+  const serverUrl = import.meta.env.VITE_WHATSAPP_SERVER_URL || (
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:3001'
+      : 'https://weep-production-5455.up.railway.app'
+  );
 
 
 
