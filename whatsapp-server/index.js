@@ -71,19 +71,7 @@ async function initSession(localId) {
     return null;
   }
   
-  // Obtener la versión más reciente de WhatsApp Web para evitar el error de desconexión 405 (Method Not Allowed)
-  let version = [2, 3000, 1015951307]; // Fallback moderno
-  try {
-    const { fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
-    const latest = await fetchLatestBaileysVersion();
-    version = latest.version;
-    console.log(`[Session Manager] Usando versión de WhatsApp Web: ${version.join('.')}`);
-  } catch (err) {
-    console.warn('[Session Manager] No se pudo obtener la versión en tiempo real, usando fallback de versión.');
-  }
-
   const sock = makeWASocket({
-    version,
     auth: state,
     logger: pino({ level: 'silent' }), // Evita spam de logs en la consola
     printQRInTerminal: false
