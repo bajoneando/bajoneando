@@ -7,7 +7,7 @@ ALTER TABLE public.locales ADD COLUMN IF NOT EXISTS whatsapp_messages_sent INT D
 ALTER TABLE public.locales ADD COLUMN IF NOT EXISTS whatsapp_link_clicks INT DEFAULT 0;
 
 -- 2. Función RPC para incrementar atómicamente el contador de mensajes enviados
-CREATE OR REPLACE FUNCTION public.increment_whatsapp_messages(local_id UUID)
+CREATE OR REPLACE FUNCTION public.increment_whatsapp_messages(local_id TEXT)
 RETURNS VOID AS $$
 BEGIN
   UPDATE public.locales
@@ -17,7 +17,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 3. Función RPC para incrementar atómicamente el contador de visitas desde el bot
-CREATE OR REPLACE FUNCTION public.increment_whatsapp_clicks(local_id UUID)
+CREATE OR REPLACE FUNCTION public.increment_whatsapp_clicks(local_id TEXT)
 RETURNS VOID AS $$
 BEGIN
   UPDATE public.locales

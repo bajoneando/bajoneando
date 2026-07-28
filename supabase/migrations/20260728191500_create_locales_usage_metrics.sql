@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS public.locales_uso_metricas (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  local_id UUID REFERENCES public.locales(id) ON DELETE CASCADE,
+  local_id TEXT REFERENCES public.locales(id) ON DELETE CASCADE,
   fecha DATE DEFAULT CURRENT_DATE NOT NULL,
   visitas_totales INT DEFAULT 0,
   visitas_whatsapp INT DEFAULT 0,
@@ -30,7 +30,7 @@ CREATE POLICY "Permitir actualización general de métricas" ON public.locales_u
   FOR UPDATE USING (true) WITH CHECK (true);
 
 -- Función RPC para incrementar atómicamente métricas diarias
-CREATE OR REPLACE FUNCTION public.increment_local_metric(local_uuid UUID, metric_name TEXT)
+CREATE OR REPLACE FUNCTION public.increment_local_metric(local_uuid TEXT, metric_name TEXT)
 RETURNS VOID AS $$
 BEGIN
   INSERT INTO public.locales_uso_metricas (local_id, fecha)
