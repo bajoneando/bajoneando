@@ -108,7 +108,7 @@ async function initSession(localId) {
 
     if (connection === 'close') {
       const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.log(`[Session Manager] Conexión cerrada para local ${localId}. Reconectar: ${shouldReconnect}`);
+      console.log(`[Session Manager] Conexión cerrada para local ${localId}. Reconectar: ${shouldReconnect}`, lastDisconnect?.error);
       
       sessionObj.status = 'disconnected';
       sessionObj.qr = null;

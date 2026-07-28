@@ -97,16 +97,18 @@ export default function RestaurantDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ localId: restaurant.id })
       });
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
       const data = await res.json();
       
       setWaStatus(data.status);
       setWaQrCode(data.qr || '');
-      toast.info("Iniciando conexión con WhatsApp...");
+      toast("Iniciando conexión con WhatsApp...", { icon: 'ℹ️' });
     } catch (e) {
-      // El backend se inicia de forma asíncrona en segundo plano, por lo que
-      // el polling recuperará el estado y código QR en el siguiente ciclo.
-      console.warn("Conectando en segundo plano...", e);
-      toast.info("Iniciando conexión con WhatsApp...");
+      console.error("Error al iniciar conexión con WhatsApp:", e);
+      setWaStatus('disconnected');
+      toast.error("No se pudo conectar al servidor de WhatsApp. Asegúrate de que esté iniciado.");
     }
   };
 
@@ -5181,7 +5183,7 @@ export default function RestaurantDashboard() {
                     </div>
                   )}
 
-                  {waStatus === 'loading' && (
+                  {(waStatus === 'loading' || waStatus === 'connecting') && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                       <style>{`
                         @keyframes spin {
@@ -5198,7 +5200,7 @@ export default function RestaurantDashboard() {
                         animation: 'spin 1s linear infinite'
                       }}></div>
                       <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)', fontWeight: 500 }}>
-                        Generando código QR...
+                        {waStatus === 'connecting' ? 'Iniciando conexión con WhatsApp...' : 'Generando código QR...'}
                       </span>
                     </div>
                   )}
