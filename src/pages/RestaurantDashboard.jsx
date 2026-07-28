@@ -1427,26 +1427,32 @@ export default function RestaurantDashboard() {
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const selectedDays = [];
-    
-    ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].forEach(day => {
-      if (fd.get(`day_${day}`) === 'on') selectedDays.push(day);
-    });
+    const params = {
+      localId: restaurant.id
+    };
+
+    // Si el formulario contiene campos de Horarios
+    if (fd.has('modo_automatico')) {
+      const selectedDays = [];
+      ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'].forEach(day => {
+        if (fd.get(`day_${day}`) === 'on') selectedDays.push(day);
+      });
+      params.horario_apertura = fd.get('horario_apertura');
+      params.horario_cierre = fd.get('horario_cierre');
+      params.horario_apertura2 = fd.get('horario_apertura2');
+      params.horario_cierre2 = fd.get('horario_cierre2');
+      params.modo_automatico = fd.get('modo_automatico') === 'true';
+      params.dias_apertura = selectedDays;
+      params.config_horarios = configHorarios;
+    }
+
+    // Si el formulario contiene campos de Métodos de Entrega
+    if (e.target.querySelector('input[name="acepta_retiro"]') || e.target.querySelector('input[name="acepta_envio"]')) {
+      params.acepta_retiro = fd.get('acepta_retiro') === 'on';
+      params.acepta_envio = fd.get('acepta_envio') === 'on';
+    }
 
     try {
-      const params = {
-        localId: restaurant.id, 
-        horario_apertura: fd.get('horario_apertura'),
-        horario_cierre: fd.get('horario_cierre'),
-        horario_apertura2: fd.get('horario_apertura2'),
-        horario_cierre2: fd.get('horario_cierre2'),
-        modo_automatico: fd.get('modo_automatico') === 'true',
-        dias_apertura: selectedDays,
-        acepta_retiro: fd.get('acepta_retiro') === 'on',
-        acepta_envio: fd.get('acepta_envio') === 'on',
-        config_horarios: configHorarios
-      };
-
       const success = await api.updatePerfilLocal(params);
       if (success) {
         toast.success('Configuración actualizada correctamente');
@@ -2803,13 +2809,13 @@ export default function RestaurantDashboard() {
                 {/* 2. Horarios */}
                 {!horariosConfigurados && (
                   <li>
-                    🕒 <strong>Horarios sin configurar:</strong> No has configurado tus horarios de apertura de cocina. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit'); }}>Configurar horarios</a>
+                    🕒 <strong>Horarios sin configurar:</strong> No has configurado tus horarios de apertura de cocina. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit_horarios'); }}>Configurar horarios</a>
                   </li>
                 )}
                 {/* 3. Mercado Pago */}
                 {!mercadopagoVinculado && (
                   <li>
-                    💳 <strong>Mercado Pago desvinculado:</strong> Vinculá tu cuenta para poder aceptar pagos digitales de los clientes. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit'); }}>Vincular Mercado Pago</a>
+                    💳 <strong>Mercado Pago desvinculado:</strong> Vinculá tu cuenta para poder aceptar pagos digitales de los clientes. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit_mercadopago'); }}>Vincular Mercado Pago</a>
                   </li>
                 )}
                 {/* 4. Email */}
@@ -2847,7 +2853,7 @@ export default function RestaurantDashboard() {
                 )}
                 {/* 3. Compartir menú */}
                 <li>
-                  🔗 <strong>Compartí tu Menú:</strong> Promocioná tu enlace personalizado en tu perfil de Instagram para recibir pedidos directos. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('profile'); setProfileSubView('edit'); }}>Ver enlace de menú</a>.
+                  🔗 <strong>Compartí tu Menú:</strong> Promocioná tu enlace personalizado en tu perfil de Instagram para recibir pedidos directos. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit_enlace'); }}>Ver enlace de menú</a>.
                 </li>
                 {stockBajoCount === 0 && waStatus === 'connected' && (
                   <li>
@@ -3063,6 +3069,16 @@ export default function RestaurantDashboard() {
                     <span>🔑</span> Cajeros
                   </button>
                 </li>
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${(view === 'settings' && profileSubView === 'enlace') ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('settings'); setProfileSubView('enlace'); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>🔗</span> Compartir Menú
+                  </button>
+                </li>
               </>
             )}
 
@@ -3166,7 +3182,11 @@ export default function RestaurantDashboard() {
               <span className="toggle-thumb" />
             </label>
             <span className={`rd-status ${localOpen ? 'open' : ''}`}>{localOpen ? 'Abierto' : 'Cerrado'}</span>
-            
+            {!isAccepted && (
+              <span className="badge badge-amber" style={{ marginLeft: '8px', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, background: '#fef3c7', color: '#d97706', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                ⚠️ Pendiente de alta
+              </span>
+            )}
           </div>
 
           {planInfo && (
@@ -3200,46 +3220,6 @@ export default function RestaurantDashboard() {
             </div>
           )}
         </div>
-
-
-        {/* Persistent Alerts for Missing Configs */}
-        {profileData && (
-          <div className="rd-alerts" style={{ padding: '0 16px', marginBottom: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-
-            {/* Alert of low stock items */}
-            {menuItems.filter(i => i.maneja_stock && !i.stock_base_id && i.stock_actual <= i.stock_minimo).length > 0 && (
-              <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fee2e2', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: '#991b1b', fontWeight: '500' }}>⚠️ <strong>Stock Bajo:</strong> Hay productos que están alcanzando el límite mínimo.</span>
-                <button className="btn btn-sm" style={{ backgroundColor: '#dc2626', color: '#fff', border: 'none' }} 
-                  onClick={() => {
-                    if (isUnlocked) {
-                      setView('menu');
-                    } else {
-                      setOnSecuritySuccess(() => () => setView('menu'));
-                      setSecurityModalOpen(true);
-                    }
-                  }}
-                >
-                  Ver ítems
-                </button>
-              </div>
-            )}
-
-            {(!profileData.mp_access_token) && (
-              <div style={{ backgroundColor: '#fffbe6', border: '1px solid #ffe58f', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: '#d48800', fontWeight: '500' }}>⚠️ <strong>Mercado Pago desvinculado:</strong> Vinculá tu cuenta para recibir pagos online.</span>
-                <button className="btn btn-sm" style={{ backgroundColor: '#faad14', color: '#fff', border: 'none' }} onClick={() => { setView('settings'); setProfileSubView('edit'); }}>Vincular</button>
-              </div>
-            )}
-            {(!profileData.horario_apertura || !profileData.horario_cierre) && (!profileData.config_horarios || Object.keys(profileData.config_horarios).length === 0) && (
-              <div style={{ backgroundColor: '#fff1f0', border: '1px solid #ffa39e', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ color: '#cf1322', fontWeight: '500' }}>⏰ <strong>Horarios sin configurar:</strong> Establecé el horario de cierre de cocina para gestionar pedidos automáticos.</span>
-                <button className="btn btn-sm" style={{ backgroundColor: '#ff4d4f', color: '#fff', border: 'none' }} onClick={() => { setView('settings'); setProfileSubView('edit'); }}>Configurar</button>
-              </div>
-            )}
-          </div>
-        )}
 
         {planInfo && showGamification && (
           <div className="gamification-pill card animate-slide-up" 
@@ -4536,32 +4516,299 @@ export default function RestaurantDashboard() {
         {/* ─── Settings View ─── */}
         {view === 'settings' && (
           <section className="animate-fade-in">
-            <div className="rd-tabs" style={{ gap: 8, marginBottom: 24 }}>
-              <button className={profileSubView === 'edit' ? 'active' : ''} onClick={() => setProfileSubView('edit')}>
-                ⚙️ Configuración
-              </button>
-              <button className={profileSubView === 'printing' ? 'active' : ''} onClick={() => setProfileSubView('printing')}>
-                🖨️ Impresión Ticket
-              </button>
-              <button className={profileSubView === 'notifications' ? 'active' : ''} onClick={() => setProfileSubView('notifications')}>
-                📳 Notificaciones
-              </button>
-              <button className={profileSubView === 'cajas' ? 'active' : ''} onClick={() => setProfileSubView('cajas')}>
-                🔑 Cajas / Dispositivos
-              </button>
-              <button className={profileSubView === 'whatsapp' ? 'active' : ''} onClick={() => setProfileSubView('whatsapp')}>
-                🤖 Wepi Assistant (Beta)
-              </button>
-            </div>
+            {!profileSubView.startsWith('edit') && (
+              <div className="rd-tabs" style={{ gap: 8, marginBottom: 24 }}>
+                <button className={profileSubView === 'printing' ? 'active' : ''} onClick={() => setProfileSubView('printing')}>
+                  🖨️ Impresión Ticket
+                </button>
+                <button className={profileSubView === 'notifications' ? 'active' : ''} onClick={() => setProfileSubView('notifications')}>
+                  📳 Notificaciones
+                </button>
+                <button className={profileSubView === 'cajas' ? 'active' : ''} onClick={() => setProfileSubView('cajas')}>
+                  🔑 Cajas / Dispositivos
+                </button>
+                <button className={profileSubView === 'whatsapp' ? 'active' : ''} onClick={() => setProfileSubView('whatsapp')}>
+                  🤖 Wepi Assistant (Beta)
+                </button>
+                <button className={profileSubView === 'enlace' ? 'active' : ''} onClick={() => setProfileSubView('enlace')}>
+                  🔗 Compartir Menú
+                </button>
+              </div>
+            )}
 
             {profileSubView === 'edit' && (
-              <div className="card card-body" style={{ maxWidth: '600px', margin: '0 auto' }}>
-                <h2 style={{ color: 'var(--red-600)', marginBottom: 20, textAlign: 'center' }}>⚙️ Configuración del Local</h2>
+              <div style={{ maxWidth: '700px', margin: '0 auto', padding: '0 16px' }}>
+                <h2 style={{ color: 'var(--red-600)', marginBottom: '8px', textAlign: 'left', fontWeight: 800, fontSize: '1.6rem' }}>⚙️ Ajustes del Local</h2>
+                <p style={{ color: 'var(--gray-500)', fontSize: '0.9rem', marginBottom: '24px', textAlign: 'left', fontWeight: 500 }}>
+                  Administrá los parámetros principales de tu local. Seleccioná una sección para configurar:
+                </p>
+                
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+                  gap: '20px', 
+                  textAlign: 'left' 
+                }}>
+                  {/* Shortcut 1: Horarios */}
+                  <div 
+                    onClick={() => setProfileSubView('edit_horarios')}
+                    className="card"
+                    style={{ padding: '24px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid var(--gray-200)', background: '#fff' }}
+                  >
+                    <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🕒</div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 6px 0', color: 'var(--gray-800)' }}>Horarios de Atención</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', margin: 0, lineHeight: 1.4 }}>
+                      Establecé los horarios de apertura de tu cocina para cada día de la semana.
+                    </p>
+                  </div>
+
+                  {/* Shortcut 2: Métodos de Entrega */}
+                  <div 
+                    onClick={() => setProfileSubView('edit_entrega')}
+                    className="card"
+                    style={{ padding: '24px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid var(--gray-200)', background: '#fff' }}
+                  >
+                    <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🛵</div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 6px 0', color: 'var(--gray-800)' }}>Métodos de Entrega</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', margin: 0, lineHeight: 1.4 }}>
+                      Habilitá envíos a domicilio o retiros en el local y configurá las opciones básicas.
+                    </p>
+                  </div>
+
+                  {/* Shortcut 3: Mercado Pago */}
+                  <div 
+                    onClick={() => setProfileSubView('edit_mercadopago')}
+                    className="card"
+                    style={{ padding: '24px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid var(--gray-200)', background: '#fff' }}
+                  >
+                    <div style={{ fontSize: '2rem', marginBottom: '12px' }}>💳</div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 6px 0', color: 'var(--gray-800)' }}>Cobros con Mercado Pago</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', margin: 0, lineHeight: 1.4 }}>
+                      Vinculá tu cuenta para cobrar de forma digital y recibir dinero al instante.
+                    </p>
+                  </div>
+
+                  {/* Shortcut 4: Rama y Rubros */}
+                  <div 
+                    onClick={() => setProfileSubView('edit_rubros')}
+                    className="card"
+                    style={{ padding: '24px', borderRadius: '16px', cursor: 'pointer', transition: 'all 0.2s', border: '1px solid var(--gray-200)', background: '#fff' }}
+                  >
+                    <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🛍️</div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 6px 0', color: 'var(--gray-800)' }}>Rama y Rubros</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', margin: 0, lineHeight: 1.4 }}>
+                      Configurá la rama principal (Delivery / Shops) y los rubros de tu negocio.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {profileSubView === 'edit_horarios' && (
+              <div className="card card-body" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
+                <button 
+                  onClick={() => setProfileSubView('edit')}
+                  className="btn btn-ghost" 
+                  style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: 'var(--gray-500)', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  ← Volver a Ajustes
+                </button>
+                <h2 style={{ color: 'var(--red-600)', marginBottom: 20, fontSize: '1.4rem', fontWeight: 800 }}>🕒 Horarios de Atención</h2>
                 
                 <form onSubmit={handleSaveSettings}>
-                  {/* Rubro Selection (Keep instant update logic but inside form UI) */}
                   <div style={{ marginBottom: 24, padding: 16, background: 'var(--gray-50)', borderRadius: 12, border: '1px solid var(--gray-200)' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: 12, color: 'var(--gray-700)' }}>Rama de Servicio</h3>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: 20 }}>
+                      Configurá los horarios específicos para cada día de la semana.
+                    </p>
+                    {renderHorariosConfig()}
+
+                    <div style={{ marginTop: 24, padding: '16px', background: 'white', borderRadius: '12px', border: '1px solid var(--gray-200)' }}>
+                      <label style={{ fontSize: '0.85rem', color: 'var(--gray-600)', display: 'block', marginBottom: 8, fontWeight: 600 }}>Gestión de Estado</label>
+                      <select name="modo_automatico" className="form-select" defaultValue={profileData?.modo_automatico ? 'true' : 'false'}>
+                        <option value="true">Modo Automático (Abrir/Cerrar según horario)</option>
+                        <option value="false">Modo Manual (Yo controlo el botón de Abrir/Cerrar)</option>
+                      </select>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: 8 }}>
+                        En modo automático, el local cambiará su estado a "Abierto" o "Cerrado" siguiendo la configuración de arriba.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rd-form-actions">
+                    <button type="submit" className="btn btn-success btn-full">Guardar Horarios</button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {profileSubView === 'edit_entrega' && (
+              <div className="card card-body" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
+                <button 
+                  onClick={() => setProfileSubView('edit')}
+                  className="btn btn-ghost" 
+                  style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: 'var(--gray-500)', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  ← Volver a Ajustes
+                </button>
+                <h2 style={{ color: 'var(--red-600)', marginBottom: 20, fontSize: '1.4rem', fontWeight: 800 }}>🛵 Métodos de Entrega</h2>
+                
+                <form onSubmit={handleSaveSettings}>
+                  <div style={{ marginBottom: 24, padding: 24, background: 'var(--gray-50)', borderRadius: 12, border: '1px solid var(--gray-200)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', fontSize: '0.95rem', fontWeight: 600 }}>
+                        <input type="checkbox" name="acepta_retiro" defaultChecked={profileData?.acepta_retiro !== false} />
+                        🏪 Ofrecer Retiro en Local
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', fontSize: '0.95rem', fontWeight: 600 }}>
+                        <input type="checkbox" name="acepta_envio" defaultChecked={profileData?.acepta_envio !== false} />
+                        🛵 Ofrecer Envío a Domicilio
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="rd-form-actions">
+                    <button type="submit" className="btn btn-success btn-full">Guardar Cambios</button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {profileSubView === 'edit_mercadopago' && (
+              <div className="card card-body" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
+                <button 
+                  onClick={() => setProfileSubView('edit')}
+                  className="btn btn-ghost" 
+                  style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: 'var(--gray-500)', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  ← Volver a Ajustes
+                </button>
+                <h2 style={{ color: 'var(--red-600)', marginBottom: 20, fontSize: '1.4rem', fontWeight: 800 }}>💳 Cobros con Mercado Pago</h2>
+                
+                <div style={{ backgroundColor: '#f0f9ff', padding: '24px', borderRadius: '12px', border: '1px solid #bae6fd', marginBottom: 24 }}>
+                  <h3 style={{ color: '#0369a1', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', fontWeight: 700 }}>
+                    <img src="https://i.postimg.cc/k47vV4h3/mercadopago.png" alt="MP" style={{ height: 24 }} onError={(e) => e.target.style.display = 'none'} />
+                    Mercado Pago
+                  </h3>
+                  <p style={{ color: '#0c4a6e', fontSize: '0.9rem', marginBottom: '20px', lineHeight: 1.5 }}>
+                    Conectá tu cuenta de Mercado Pago para recibir pagos online de forma automática en tu cuenta bancaria o billetera digital.
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ backgroundColor: '#009ee3', borderColor: '#009ee3', padding: '10px 24px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#fff' }}
+                      onClick={() => {
+                        const clientId = import.meta.env.VITE_MP_CLIENT_ID || prompt("Por favor, ingresa el CLIENT_ID de tu aplicación de Mercado Pago:");
+                        if (!clientId) return;
+                        const redirectUri = `${import.meta.env.VITE_SUPABASE_URL || 'https://jskxfescamdjesdrcnkf.supabase.co'}/functions/v1/mp-oauth-callback`;
+                        const authUrl = `https://auth.mercadopago.com/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${restaurant.id}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+                        window.location.href = authUrl;
+                      }}
+                    >
+                      Vincular MercadoPago
+                    </button>
+                    {profileData?.mp_access_token && (
+                      <span className="badge badge-green" style={{ padding: '6px 12px', fontSize: '0.85rem', background: '#d1fae5', color: '#065f46', borderRadius: '12px', fontWeight: 600 }}>✓ Vinculada</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {profileSubView === 'enlace' && (
+              <div className="card card-body" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
+                <h2 style={{ color: 'var(--red-600)', marginBottom: 20, fontSize: '1.4rem', fontWeight: 800 }}>🔗 Compartir Menú</h2>
+                
+                <div style={{ backgroundColor: '#f0fdf4', padding: '18px', borderRadius: '12px', border: '1px solid #bbf7d0', marginBottom: 24, fontSize: '0.9rem', color: '#166534', lineHeight: 1.5 }}>
+                  💡 <strong>¿Cómo usar tu enlace?</strong>
+                  <p style={{ margin: '8px 0 0 0' }}>
+                    Derivá este enlace personalizado en tus biografías de Instagram, Facebook y estados de WhatsApp. Al hacer clic, tus clientes accederán directamente a tu menú digital de Wepi y verán <strong>exclusivamente tus productos</strong>, facilitando la toma de pedidos y aumentando tus ventas de forma directa.
+                  </p>
+                </div>
+
+                <div>
+                  {/* Enlace Compartible */}
+                  <div style={{ padding: 16, background: '#f0f9ff', borderRadius: 12, border: '1px solid #bae6fd' }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: 12, color: '#0369a1', fontWeight: 700 }}>🔗 Enlace Compartible</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '4px', 
+                          background: '#fff', 
+                          border: '1px solid #bae6fd', 
+                          borderRadius: '8px', 
+                          padding: '0 12px', 
+                          flex: 1,
+                          minWidth: '180px'
+                        }}>
+                          <span style={{ color: '#64748b', fontSize: '0.85rem', whiteSpace: 'nowrap', userSelect: 'none' }}>
+                            {profileData?.tipo_servicio === 'shops' 
+                              ? `https://wepi.com.ar/shops/${getCitySlug(profileData?.ciudad)}/` 
+                              : `https://wepi.com.ar/pedir/${getCitySlug(profileData?.ciudad)}/`}
+                          </span>
+                          <input 
+                            type="text"
+                            value={customSlug}
+                            onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                            placeholder="mi-local"
+                            className="form-input"
+                            style={{ border: 'none', padding: '10px 0', margin: 0, fontSize: '0.85rem', boxShadow: 'none', flex: 1, minWidth: '80px', background: 'transparent' }}
+                            required
+                          />
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button 
+                            type="button" 
+                            className="btn btn-success" 
+                            disabled={slugSaving || customSlug.trim() === '' || customSlug === profileData?.slug}
+                            onClick={handleSaveSlug}
+                            style={{ whiteSpace: 'nowrap' }}
+                          >
+                            {slugSaving ? 'Guardando...' : 'Guardar'}
+                          </button>
+                          
+                          <button 
+                            type="button" 
+                            className="btn btn-primary"
+                            style={{ background: '#0284c7', whiteSpace: 'nowrap', border: 'none', cursor: 'pointer', color: '#fff', borderRadius: '8px' }}
+                            disabled={!profileData?.slug}
+                            onClick={() => {
+                              const citySlug = getCitySlug(profileData?.ciudad);
+                              const prefix = profileData?.tipo_servicio === 'shops' 
+                                ? `https://wepi.com.ar/shops/${citySlug}/` 
+                                : `https://wepi.com.ar/pedir/${citySlug}/`;
+                              const link = `${prefix}${profileData?.slug || ''}`;
+                              navigator.clipboard.writeText(link);
+                              toast.success('¡Enlace copiado!', { icon: '📋' });
+                            }}
+                          >
+                            Copiar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {profileSubView === 'edit_rubros' && (
+              <div className="card card-body" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
+                <button 
+                  onClick={() => setProfileSubView('edit')}
+                  className="btn btn-ghost" 
+                  style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: 'var(--gray-500)', background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  ← Volver a Ajustes
+                </button>
+                <h2 style={{ color: 'var(--red-600)', marginBottom: 20, fontSize: '1.4rem', fontWeight: 800 }}>🛍️ Rama y Rubros</h2>
+                
+                <div>
+                  {/* Rama de Servicio */}
+                  <div style={{ marginBottom: 24, padding: 16, background: 'var(--gray-50)', borderRadius: 12, border: '1px solid var(--gray-200)' }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: 12, color: 'var(--gray-700)', fontWeight: 700 }}>Rama de Servicio</h3>
                     <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
                       <label style={{ 
                         display: 'flex', 
@@ -4621,11 +4868,8 @@ export default function RestaurantDashboard() {
                       </label>
                     </div>
 
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: 12, color: 'var(--gray-700)' }}>Rubros del Negocio</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: 20 }}>
-                      Seleccioná el rubro de tu local para adaptar las opciones del panel.
-                    </p>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
+                    <h3 style={{ fontSize: '1rem', marginBottom: 12, color: 'var(--gray-700)', fontWeight: 700 }}>Rubros del Negocio</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 12 }}>
                       {(profileData?.tipo_servicio === 'shops'
                         ? ['Hogar', 'Tecnología', 'Moda', 'Regalería', 'Deportes', 'Bebidas']
                         : ['Restaurante', 'Cafetería', 'Heladería', 'Market', 'Farmacia', 'Bebidas', 'Carnicería']
@@ -4674,190 +4918,6 @@ export default function RestaurantDashboard() {
                         );
                       })}
                     </div>
-                  </div>
-
-
-                  {/* Enlace Compartible */}
-                  <div style={{ marginBottom: 24, padding: 16, background: '#f0f9ff', borderRadius: 12, border: '1px solid #bae6fd' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: 12, color: '#0369a1' }}>🔗 Enlace Compartible</h3>
-                    <p style={{ fontSize: '0.85rem', color: '#0c4a6e', marginBottom: 16 }}>
-                      Personalizá y compartí este enlace con tus clientes para que accedan directamente a tu local en Wepi.
-                    </p>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '4px', 
-                          background: '#fff', 
-                          border: '1px solid #bae6fd', 
-                          borderRadius: '8px', 
-                          padding: '0 12px', 
-                          flex: 1,
-                          minWidth: '200px'
-                        }}>
-                          <span style={{ color: '#64748b', fontSize: '0.85rem', whiteSpace: 'nowrap', userSelect: 'none' }}>
-                            {profileData?.tipo_servicio === 'shops' 
-                              ? `https://wepi.com.ar/shops/${getCitySlug(profileData?.ciudad)}/` 
-                              : `https://wepi.com.ar/pedir/${getCitySlug(profileData?.ciudad)}/`}
-                          </span>
-                          <input 
-                            type="text"
-                            value={customSlug}
-                            onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                if (!slugSaving && customSlug.trim() !== '' && customSlug !== profileData?.slug) {
-                                  handleSaveSlug(e);
-                                }
-                              }
-                            }}
-                            placeholder="mi-local"
-                            className="form-input"
-                            style={{ border: 'none', padding: '10px 0', margin: 0, fontSize: '0.85rem', boxShadow: 'none', flex: 1, minWidth: '80px', background: 'transparent' }}
-                            required
-                          />
-                        </div>
-                        
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button 
-                            type="button" 
-                            className="btn btn-success" 
-                            disabled={slugSaving || customSlug.trim() === '' || customSlug === profileData?.slug}
-                            onClick={handleSaveSlug}
-                            style={{ whiteSpace: 'nowrap' }}
-                          >
-                            {slugSaving ? 'Guardando...' : 'Guardar'}
-                          </button>
-                          
-                          <button 
-                            type="button" 
-                            className="btn btn-primary"
-                            style={{ background: '#0284c7', whiteSpace: 'nowrap' }}
-                            disabled={!profileData?.slug}
-                            onClick={() => {
-                              const citySlug = getCitySlug(profileData?.ciudad);
-                              const prefix = profileData?.tipo_servicio === 'shops' 
-                                ? `https://wepi.com.ar/shops/${citySlug}/` 
-                                : `https://wepi.com.ar/pedir/${citySlug}/`;
-                              const link = `${prefix}${profileData?.slug || ''}`;
-                              navigator.clipboard.writeText(link);
-                              toast.success('¡Enlace copiado!', { icon: '📋' });
-                            }}
-                          >
-                            Copiar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {!profileData?.slug && (
-                      <p style={{ fontSize: '0.75rem', color: 'var(--red-600)', marginTop: 8, fontWeight: 600 }}>
-                        ⚠️ Tu local aún no tiene un identificador único asignado. Asignale uno para poder compartir tu local.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Configuración de Horarios Flexible */}
-                  {/* Configuración de Horarios Flexible */}
-                  <div style={{ marginBottom: 24, padding: 0, background: 'white', borderRadius: 12, border: '1px solid var(--gray-200)', overflow: 'hidden' }}>
-                    <div 
-                      onClick={() => setShowHorariosConfig(!showHorariosConfig)}
-                      style={{ 
-                        padding: '16px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'space-between', 
-                        cursor: 'pointer',
-                        background: showHorariosConfig ? 'var(--gray-50)' : 'white',
-                        borderBottom: showHorariosConfig ? '1px solid var(--gray-200)' : 'none'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ fontSize: '1.2rem' }}>🕒</span>
-                        <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'var(--gray-700)' }}>Horarios de Atención</h3>
-                      </div>
-                      <span style={{ 
-                        transform: showHorariosConfig ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.3s ease',
-                        fontSize: '1.2rem',
-                        color: 'var(--gray-400)'
-                      }}>
-                        ▼
-                      </span>
-                    </div>
-
-                    {showHorariosConfig && (
-                      <div className="animate-fade-in" style={{ padding: '16px' }}>
-                        <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: 20 }}>
-                          Configurá los horarios específicos para cada día de la semana.
-                        </p>
-                        
-                        {renderHorariosConfig()}
-
-                        <div style={{ marginTop: 24, padding: '16px', background: 'var(--gray-50)', borderRadius: '12px', border: '1px solid var(--gray-200)' }}>
-                          <label style={{ fontSize: '0.85rem', color: 'var(--gray-600)', display: 'block', marginBottom: 8, fontWeight: 600 }}>Gestión de Estado</label>
-                          <select name="modo_automatico" className="form-select" defaultValue={profileData?.modo_automatico ? 'true' : 'false'}>
-                            <option value="true">Modo Automático (Abrir/Cerrar según horario)</option>
-                            <option value="false">Modo Manual (Yo controlo el botón de Abrir/Cerrar)</option>
-                          </select>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--gray-500)', marginTop: 8 }}>
-                            En modo automático, el local cambiará su estado a "Abierto" o "Cerrado" siguiendo la configuración de arriba.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Entrega */}
-                  <div style={{ marginBottom: 24, padding: 16, background: 'white', borderRadius: 12, border: '1px solid var(--gray-200)' }}>
-                    <h3 style={{ fontSize: '1.1rem', marginBottom: 16, color: 'var(--gray-700)' }}>🛵 Métodos de Entrega</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', fontSize: '0.95rem' }}>
-                        <input type="checkbox" name="acepta_retiro" defaultChecked={profileData?.acepta_retiro !== false} />
-                        🏪 Ofrecer Retiro en Local
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', fontSize: '0.95rem' }}>
-                        <input type="checkbox" name="acepta_envio" defaultChecked={profileData?.acepta_envio !== false} />
-                        🛵 Ofrecer Envío a Domicilio
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="rd-form-actions" style={{ marginBottom: 32 }}>
-                    <button type="submit" className="btn btn-success btn-full">Guardar Configuración</button>
-                  </div>
-                </form>
-
-                {/* Mercado Pago connection (External to the main settings form) */}
-                <hr style={{ margin: '32px 0', border: 'none', borderTop: '1px solid var(--gray-200)' }} />
-                <div style={{ backgroundColor: '#f0f9ff', padding: '20px', borderRadius: '12px', border: '1px solid #bae6fd' }}>
-                  <h3 style={{ color: '#0369a1', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <img src="https://i.postimg.cc/k47vV4h3/mercadopago.png" alt="MP" style={{ height: 24 }} onError={(e) => e.target.style.display = 'none'} />
-                    Cobros con Mercado Pago
-                  </h3>
-                  <p style={{ color: '#0c4a6e', fontSize: '0.9rem', marginBottom: '16px', lineHeight: 1.5 }}>
-                    Conectá tu cuenta de Mercado Pago para recibir pagos online directamente en tu cuenta.
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <button 
-                      className="btn btn-primary" 
-                      style={{ backgroundColor: '#009ee3', borderColor: '#009ee3', padding: '10px 24px', fontWeight: 600 }}
-                      onClick={() => {
-                        const clientId = import.meta.env.VITE_MP_CLIENT_ID || prompt("Por favor, ingresa el CLIENT_ID de tu aplicación de Mercado Pago:");
-                        if (!clientId) return;
-                        const redirectUri = `${import.meta.env.VITE_SUPABASE_URL || 'https://jskxfescamdjesdrcnkf.supabase.co'}/functions/v1/mp-oauth-callback`;
-                        const authUrl = `https://auth.mercadopago.com/authorization?client_id=${clientId}&response_type=code&platform_id=mp&state=${restaurant.id}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-                        window.location.href = authUrl;
-                      }}
-                    >
-                      Vincular MercadoPago
-                    </button>
-                    {profileData?.mp_access_token && (
-                      <span className="badge badge-green" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>✓ Vinculada</span>
-                    )}
                   </div>
                 </div>
               </div>
