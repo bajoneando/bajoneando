@@ -23,8 +23,11 @@ ALTER TABLE public.locales_uso_metricas ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Permitir lectura general de métricas" ON public.locales_uso_metricas
   FOR SELECT USING (true);
 
-CREATE POLICY "Permitir inserción y actualización general de métricas" ON public.locales_uso_metricas
-  FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir inserción general de métricas" ON public.locales_uso_metricas
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Permitir actualización general de métricas" ON public.locales_uso_metricas
+  FOR UPDATE USING (true) WITH CHECK (true);
 
 -- Función RPC para incrementar atómicamente métricas diarias
 CREATE OR REPLACE FUNCTION public.increment_local_metric(local_uuid UUID, metric_name TEXT)
