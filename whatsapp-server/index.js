@@ -185,7 +185,7 @@ async function initSession(localId) {
 }
 
 // Enviar mensaje simulando escritura humana y con retraso aleatorio (Anti-Ban)
-async function sendSmartMessage(sock, to, content) {
+async function sendSmartMessage(localId, sock, to, content) {
   try {
     // 1. Mostrar estado "Escribiendo..." (composing)
     await sock.sendPresenceUpdate('composing', to);
@@ -203,6 +203,14 @@ async function sendSmartMessage(sock, to, content) {
     // 3. Detener estado "Escribiendo..." y enviar el mensaje
     await sock.sendPresenceUpdate('paused', to);
     await sock.sendMessage(to, content);
+
+    // 4. Incrementar de forma atómica el contador de mensajes de WhatsApp enviados
+    if (localId) {
+      supabase.rpc('increment_whatsapp_messages', { local_id: localId })
+        .then(({ error }) => {
+          if (error) console.error(`[Metrics] Error incrementando whatsapp_messages_sent para ${localId}:`, error);
+        });
+    }
   } catch (err) {
     console.error(`Error al enviar mensaje inteligente a ${to}:`, err);
   }
@@ -262,7 +270,7 @@ async function handleIncomingMessage(localId, sock, from, msg) {
       .slice(0, 5);
 
     if (topCategories.length === 0) {
-      await sendSmartMessage(sock, from, {
+      await sendSmartMessage(localId, sock, from, {
         text: `¡Hola! Podés ver todo nuestro catálogo ingresando directamente a nuestra web aquí:\n🔗 ${baseUrl}?utm_source=wa_bot`
       });
       return;
@@ -276,12 +284,12 @@ async function handleIncomingMessage(localId, sock, from, msg) {
     
     menuText += `📋 *Ver Menú Completo*:\n🔗 ${baseUrl}?utm_source=wa_bot`;
 
-    await sendSmartMessage(sock, from, { text: menuText });
+    await sendSmartMessage(localId, sock, from, { text: menuText });
 
   } else if (text === '1' || text.includes('carta') || text.includes('menu') || text.includes('catálogo')) {
     // Enviar link del menú completo
     const responseText = `¡Perfecto! Aquí tenés el menú completo de *${local.nombre}* para elegir lo que quieras 👇\n\n🔗 ${baseUrl}?utm_source=wa_bot\n\n_Sumá tus productos al carrito y finalizá el pedido desde la web de forma simple._`;
-    await sendSmartMessage(sock, from, { text: responseText });
+    await sendSmartMessage(localId, sock, from, { text: responseText });
 
   } else if (text === '3' || text.includes('info') || text.includes('horario') || text.includes('donde') || text.includes('ubicacion') || text.includes('direcci')) {
     // Enviar información y horarios del local
@@ -309,12 +317,12 @@ async function handleIncomingMessage(localId, sock, from, msg) {
                      infoDetails.join('\n\n') + 
                      `\n\n🔗 *Hacé tu pedido online ingresando aquí:* \n${baseUrl}?utm_source=wa_bot`;
                      
-    await sendSmartMessage(sock, from, { text: infoText });
+    await sendSmartMessage(localId, sock, from, { text: infoText });
 
   } else {
     // Mensaje de saludo de bienvenida inicial (Cualquier otro texto)
     const welcomeText = `¡Hola! 👋 Soy *Wepi Assistant*, el asistente virtual de *${local.nombre}*.\n\nTe ayudo a hacer tu pedido más rápido. ¿Qué querés hacer hoy? \n\n1️⃣ *Ver el Menú Completo* (Abrir catálogo digital)\n2️⃣ *Buscar por Categorías* (Pizzas, Hamburguesas, etc.)\n3️⃣ *Información y Horarios* (Ubicación, entrega, horarios)\n\n_Respondé con el número *1*, *2* o *3* para continuar._`;
-    await sendSmartMessage(sock, from, { text: welcomeText });
+    await sendSmartMessage(localId, sock, from, { text: welcomeText });
   }
 }
 
@@ -357,11 +365,15 @@ app.post('/api/connect', async (req, res) => {
   }
 
   try {
-    const session = await initSession(localId);
+    // Inicializar sesión en segundo plano para evitar timeouts HTTP en el cliente
+    initSession(localId).catch(err => {
+      console.error(`[Session Manager] Error asíncrono iniciando sesión para local ${localId}:`, err);
+    });
+
     res.json({
-      status: session.status,
-      qr: session.qr,
-      phoneNumber: session.phoneNumber
+      status: 'loading',
+      qr: null,
+      phoneNumber: null
     });
   } catch (err) {
     console.error('Error al inicializar sesión:', err);

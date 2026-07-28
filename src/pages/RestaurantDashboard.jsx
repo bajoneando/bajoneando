@@ -97,13 +97,9 @@ export default function RestaurantDashboard() {
         setWaQrCode(data.qr || '');
         setWaPhoneNumber(data.phoneNumber || '');
 
-        // Si ya se vinculó en el backend, actualizar estado local
+        // Si ya se vinculó en el backend, actualizar estado local recargando el perfil
         if (data.status === 'connected' && profileData && !profileData.whatsapp_assistant_enabled) {
-          setProfileData(prev => ({
-            ...prev,
-            whatsapp_assistant_enabled: true,
-            whatsapp_phone_number: data.phoneNumber
-          }));
+          loadProfile();
         }
       } catch (err) {
         // Ignorar errores silenciosos si el servidor de WhatsApp no está corriendo
@@ -112,15 +108,15 @@ export default function RestaurantDashboard() {
 
     checkStatus();
 
-    // Consultar estado cada 3 segundos si está en proceso de carga o escaneo
+    // Consultar estado cada 3 segundos si no está conectado aún
     const interval = setInterval(() => {
-      if (waStatus === 'loading' || waStatus === 'qr_ready') {
+      if (waStatus !== 'connected') {
         checkStatus();
       }
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [restaurant?.id, waStatus, profileData]);
+  }, [restaurant?.id, waStatus, profileData, loadProfile]);
 
   const handleConnectWA = async () => {
     setWaStatus('loading');
@@ -138,8 +134,10 @@ export default function RestaurantDashboard() {
       setWaQrCode(data.qr || '');
       toast.info("Iniciando conexión con WhatsApp...");
     } catch (e) {
-      toast.error("No se pudo conectar al servidor de WhatsApp. Asegúrate de iniciarlo en la terminal.");
-      setWaStatus('disconnected');
+      // El backend se inicia de forma asíncrona en segundo plano, por lo que
+      // el polling recuperará el estado y código QR en el siguiente ciclo.
+      console.warn("Conectando en segundo plano...", e);
+      toast.info("Iniciando conexión con WhatsApp...");
     }
   };
 
@@ -5222,6 +5220,28 @@ export default function RestaurantDashboard() {
                       <span className="badge badge-green" style={{ padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, background: '#d1fae5', color: '#065f46' }}>
                         🟢 Asistente Activo
                       </span>
+
+                      {/* Grid de métricas de uso */}
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '1fr 1fr', 
+                        gap: '12px', 
+                        width: '100%', 
+                        maxWidth: '320px', 
+                        margin: '8px 0' 
+                      }}>
+                        <div style={{ background: '#fff', border: '1px solid var(--gray-200)', borderRadius: '12px', padding: '12px', textAlign: 'center' }}>
+                          <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '4px' }}>💬</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'block', fontWeight: 600 }}>Respuestas</span>
+                          <strong style={{ fontSize: '1.1rem', color: 'var(--gray-800)' }}>{profileData?.whatsapp_messages_sent || 0}</strong>
+                        </div>
+                        <div style={{ background: '#fff', border: '1px solid var(--gray-200)', borderRadius: '12px', padding: '12px', textAlign: 'center' }}>
+                          <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '4px' }}>🔗</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--gray-500)', display: 'block', fontWeight: 600 }}>Visitas</span>
+                          <strong style={{ fontSize: '1.1rem', color: 'var(--gray-800)' }}>{profileData?.whatsapp_link_clicks || 0}</strong>
+                        </div>
+                      </div>
+
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '12px 18px', borderRadius: '10px', border: '1px solid #d1fae5' }}>
                         <span style={{ fontSize: '1.2rem' }}>📞</span>
                         <strong style={{ fontSize: '0.95rem', color: 'var(--gray-800)' }}>{waPhoneNumber}</strong>

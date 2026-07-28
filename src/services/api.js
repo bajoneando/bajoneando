@@ -3250,6 +3250,30 @@ export async function adminForceDeleteOrders({ status, startDate, endDate } = {}
   if (errDel) throw new Error(errDel.message);
   return { success: true, count: idsToDelete.length };
 }
+export async function incrementarClicksWhatsApp(localId) {
+  const { error } = await supabase.rpc('increment_whatsapp_clicks', { local_id: localId });
+  if (error) {
+    console.error('[Metrics] Error incrementando clicks de WhatsApp:', error);
+    return false;
+  }
+  return true;
+}
+export async function incrementarUsoMetrica(localId, metricName) {
+  const { error } = await supabase.rpc('increment_local_metric', { local_uuid: localId, metric_name: metricName });
+  if (error) {
+    console.error(`[Metrics] Error incrementando metrica ${metricName} para ${localId}:`, error);
+    return false;
+  }
+  return true;
+}
+
+export async function adminGetUsoMetricas() {
+  const { data, error } = await supabase
+    .from('locales_uso_metricas')
+    .select('*, locales(nombre, ciudad, slug)');
+  if (error) throw new Error(error.message);
+  return data || [];
+}
 
 
 

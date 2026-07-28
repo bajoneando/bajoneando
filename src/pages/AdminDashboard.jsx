@@ -18,6 +18,7 @@ import AdminPromos from './AdminPromos';
 import AdminMundial from './AdminMundial';
 import AdminCRM from './AdminCRM';
 import AdminAds from './AdminAds';
+import AdminMetricas from './AdminMetricas';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -78,6 +79,7 @@ const AdminDashboard = () => {
             case 'reports': return <AdminReportes />;
             case 'crm': return <AdminCRM />;
             case 'ads': return <AdminAds />;
+            case 'metricas': return <AdminMetricas />;
             default: return <AdminLocales />;
         }
     };
@@ -131,6 +133,9 @@ const AdminDashboard = () => {
                     </button>
                     <button className={activeTab === 'reports' ? 'active' : ''} onClick={() => handleTabClick('reports')}>
                         <span className="icon">📊</span> Informes de Gestión
+                    </button>
+                    <button className={activeTab === 'metricas' ? 'active' : ''} onClick={() => handleTabClick('metricas')}>
+                        <span className="icon">📈</span> Métricas de Uso
                     </button>
                     <button className={activeTab === 'pruebas' ? 'active' : ''} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }} onClick={() => handleTabClick('pruebas')}>
                         <span className="icon">🧪</span> Pruebas

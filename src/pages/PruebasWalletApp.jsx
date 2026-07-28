@@ -1490,6 +1490,17 @@ export default function PruebasWalletApp() {
             selectCity(local.ciudad);
           }
 
+          // Registrar métricas de uso de plataforma
+          const searchParams = new URLSearchParams(location.search);
+          const isWhatsApp = searchParams.get('utm_source') === 'wa_bot';
+          
+          api.incrementarUsoMetrica(local.id, 'visitas_totales').catch(() => {});
+          if (isWhatsApp) {
+            api.incrementarUsoMetrica(local.id, 'visitas_whatsapp').catch(() => {});
+          } else {
+            api.incrementarUsoMetrica(local.id, 'visitas_enlace_propio').catch(() => {});
+          }
+
           fetchMenusByLocal(local.id);
         } else if (local && local.admin_status !== 'Aceptado') {
           console.warn("⚠️ PruebasWalletApp: Local no aceptado:", local.nombre);
@@ -1828,6 +1839,17 @@ export default function PruebasWalletApp() {
     if (!isLocalOpen(localRef)) {
       toast.error('Este local está cerrado por el momento');
       return;
+    }
+
+    // Registrar métrica de Carrito Creado (único por sesión de usuario)
+    try {
+      const cartTrackedKey = `wepi_cart_tracked_${menu.local_id}`;
+      if (!sessionStorage.getItem(cartTrackedKey)) {
+        api.incrementarUsoMetrica(menu.local_id, 'carritos_creados').catch(() => {});
+        sessionStorage.setItem(cartTrackedKey, 'true');
+      }
+    } catch (e) {
+      console.error("[Metrics] Error registrando creación de carrito:", e);
     }
 
     // Detect category and configuration
@@ -2209,6 +2231,12 @@ export default function PruebasWalletApp() {
 
          if (!response.success) throw new Error("No se pudo crear el pedido base.");
 
+         // Registrar métrica de Pedido Creado (Entrega o Efectivo/Transferencia)
+         const localIdForMetric = cart.items[0]?.local_id;
+         if (localIdForMetric) {
+           api.incrementarUsoMetrica(localIdForMetric, 'pedidos_creados').catch(() => {});
+         }
+
          const pendingOrderInfo = {
             pedidoId: pregeneratedId,
             cart: cart.items,
@@ -2478,6 +2506,12 @@ export default function PruebasWalletApp() {
       if (!pendingRaw) throw new Error('No se encontró la información del pedido');
       
       const pendingData = JSON.parse(pendingRaw);
+
+      // Registrar métrica de Pedido Creado (Pago Online Mercado Pago)
+      if (pendingData.localId) {
+        api.incrementarUsoMetrica(pendingData.localId, 'pedidos_creados').catch(() => {});
+      }
+
       const successUrl = "https://wepi.com.ar/pedir";
       
       const paymentData = {
