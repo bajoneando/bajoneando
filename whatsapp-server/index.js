@@ -171,6 +171,9 @@ async function initSession(localId) {
       if (isGroup || isMe) continue;
 
       try {
+        // Enviar recibo de lectura (Read Receipt) para simular que abrimos el chat
+        await sock.readMessages([msg.key]);
+        
         await handleIncomingMessage(localId, sock, from, msg);
       } catch (err) {
         console.error(`Error procesando mensaje entrante de ${from}:`, err);
@@ -184,12 +187,18 @@ async function initSession(localId) {
 // Enviar mensaje simulando escritura humana y con retraso aleatorio (Anti-Ban)
 async function sendSmartMessage(sock, to, content) {
   try {
-    // 1. Mostrar estado "Escribiendo..."
+    // 1. Mostrar estado "Escribiendo..." (composing)
     await sock.sendPresenceUpdate('composing', to);
     
-    // 2. Calcular retraso aleatorio entre 1.5 y 3.5 segundos
-    const delay = Math.floor(Math.random() * 2000) + 1500;
-    await new Promise(resolve => setTimeout(resolve, delay));
+    // 2. Calcular retraso proporcional a la longitud del texto
+    const textLength = content.text ? content.text.length : 100;
+    // Velocidad de escritura promedio: ~10ms por caracter + pausa humana aleatoria de 1s a 2s
+    const baseDelay = textLength * 10;
+    const randomDelay = Math.floor(Math.random() * 1000) + 1000;
+    // Margen de seguridad: Entre 1.5s y 5.0s
+    const finalDelay = Math.min(5000, Math.max(1500, baseDelay + randomDelay));
+    
+    await new Promise(resolve => setTimeout(resolve, finalDelay));
     
     // 3. Detener estado "Escribiendo..." y enviar el mensaje
     await sock.sendPresenceUpdate('paused', to);
@@ -220,7 +229,7 @@ async function handleIncomingMessage(localId, sock, from, msg) {
   // 1. Obtener la información del local desde Supabase
   const { data: local, error: localErr } = await supabase
     .from('locales')
-    .select('id, nombre, ciudad, slug')
+    .select('id, nombre, ciudad, slug, direccion, horario_apertura, horario_cierre, acepta_retiro, acepta_envio')
     .eq('id', localId)
     .single();
 
@@ -274,9 +283,37 @@ async function handleIncomingMessage(localId, sock, from, msg) {
     const responseText = `¡Perfecto! Aquí tenés el menú completo de *${local.nombre}* para elegir lo que quieras 👇\n\n🔗 ${baseUrl}?utm_source=wa_bot\n\n_Sumá tus productos al carrito y finalizá el pedido desde la web de forma simple._`;
     await sendSmartMessage(sock, from, { text: responseText });
 
+  } else if (text === '3' || text.includes('info') || text.includes('horario') || text.includes('donde') || text.includes('ubicacion') || text.includes('direcci')) {
+    // Enviar información y horarios del local
+    const infoDetails = [];
+    
+    if (local.direccion) {
+      infoDetails.push(`📍 *Dirección:* ${local.direccion}`);
+    }
+    
+    if (local.horario_apertura && local.horario_cierre) {
+      infoDetails.push(`🕒 *Horarios hoy:* Abierto de ${local.horario_apertura} a ${local.horario_cierre} hs.`);
+    } else {
+      infoDetails.push(`🕒 *Horarios:* Consultá nuestros horarios abriendo el menú online.`);
+    }
+
+    const metodos = [];
+    if (local.acepta_envio !== false) metodos.push('🛵 Envío a domicilio');
+    if (local.acepta_retiro !== false) metodos.push('🏪 Retiro en local');
+    
+    if (metodos.length > 0) {
+      infoDetails.push(`💳 *Servicios:* ${metodos.join(' | ')}`);
+    }
+
+    const infoText = `*ℹ️ Información sobre ${local.nombre}*:\n\n` + 
+                     infoDetails.join('\n\n') + 
+                     `\n\n🔗 *Hacé tu pedido online ingresando aquí:* \n${baseUrl}?utm_source=wa_bot`;
+                     
+    await sendSmartMessage(sock, from, { text: infoText });
+
   } else {
     // Mensaje de saludo de bienvenida inicial (Cualquier otro texto)
-    const welcomeText = `¡Hola! 👋 Soy *Wepi Assistant*, el asistente virtual de *${local.nombre}*.\n\nTe ayudo a hacer tu pedido más rápido. ¿Qué querés hacer hoy? \n\n1️⃣ *Ver el Menú Completo* (Abrir catálogo digital)\n2️⃣ *Buscar por Categorías* (Pizzas, Hamburguesas, etc.)\n\n_Respondé con el número *1* o *2* para continuar._`;
+    const welcomeText = `¡Hola! 👋 Soy *Wepi Assistant*, el asistente virtual de *${local.nombre}*.\n\nTe ayudo a hacer tu pedido más rápido. ¿Qué querés hacer hoy? \n\n1️⃣ *Ver el Menú Completo* (Abrir catálogo digital)\n2️⃣ *Buscar por Categorías* (Pizzas, Hamburguesas, etc.)\n3️⃣ *Información y Horarios* (Ubicación, entrega, horarios)\n\n_Respondé con el número *1*, *2* o *3* para continuar._`;
     await sendSmartMessage(sock, from, { text: welcomeText });
   }
 }
