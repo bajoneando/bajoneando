@@ -2764,6 +2764,9 @@ export default function RestaurantDashboard() {
     const stockBajoCount = menuItems.filter(i => i.maneja_stock && !i.stock_base_id && i.stock_actual <= i.stock_minimo).length;
     const mercadopagoVinculado = !!profileData?.mp_access_token;
     const horariosConfigurados = (profileData?.horario_apertura && profileData?.horario_cierre) || (profileData?.config_horarios && Object.keys(profileData.config_horarios).length > 0);
+    const ubicacionConfigurada = !!(profileLat && profileLng && profileAddress);
+    const emailConfirmado = !!(restaurant && restaurant.emailConfirmado);
+    const isAccepted = profileData?.admin_status === 'Aceptado';
 
     return (
       <div className="animate-fade-in" style={{ padding: '8px 0' }}>
@@ -2772,40 +2775,86 @@ export default function RestaurantDashboard() {
             ¡Hola, {profileData?.nombre || 'Socio'}! 👋
           </h2>
           <p style={{ color: 'var(--gray-500)', fontSize: '0.95rem', margin: 0, fontWeight: 500 }}>
-            Recomendaciones y avisos de tu Aliado comercial Wepi para potenciar tu negocio.
+            {isAccepted
+              ? 'Recomendaciones y avisos de tu Aliado comercial Wepi para potenciar tu negocio.'
+              : 'Aquí están las cosas que faltan para que tu cuenta esté lista para ser dada de alta.'}
           </p>
         </div>
 
-        {/* Sección de Mensajes de Aliado Comercial */}
-        <div className="card" style={{ padding: '20px', marginBottom: '24px', background: 'linear-gradient(135deg, #fff 0%, #fef2f2 100%)', borderLeft: '4px solid var(--red-500)' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--red-700)', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🤝 Recomendaciones de tu Aliado Wepi
+        {/* Sección de Mensajes de Aliado Comercial o Pendientes de Alta */}
+        <div className="card" style={{ 
+          padding: '20px', 
+          marginBottom: '24px', 
+          background: isAccepted ? 'linear-gradient(135deg, #fff 0%, #fef2f2 100%)' : 'linear-gradient(135deg, #fff 0%, #fffbeb 100%)', 
+          borderLeft: isAccepted ? '4px solid var(--red-500)' : '4px solid #f59e0b' 
+        }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 800, color: isAccepted ? 'var(--red-700)' : '#b45309', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {isAccepted ? '🤝 Recomendaciones de tu Aliado Wepi' : '⏳ Pendientes para Alta de Cuenta'}
           </h3>
-          <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.9rem', color: 'var(--gray-700)' }}>
-            {stockBajoCount > 0 && (
-              <li>
-                <strong>Stock Crítico:</strong> Tenés <span style={{ color: '#dc2626', fontWeight: 'bold' }}>{stockBajoCount} productos</span> con stock bajo su límite mínimo. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('menu'); loadMenu(); }}>Gestionar stock</a>.
-              </li>
-            )}
-            {!mercadopagoVinculado && (
-              <li>
-                <strong>Ventas Digitales:</strong> Tu cuenta de Mercado Pago no está vinculada. Conéctala para aceptar pagos online. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit'); }}>Vincular cuenta</a>.
-              </li>
-            )}
-            {!horariosConfigurados && (
-              <li>
-                <strong>Atención Automática:</strong> No has configurado tus horarios de apertura de cocina. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit'); }}>Configurar horarios</a>.
-              </li>
-            )}
-            {waStatus !== 'connected' && (
-              <li>
-                <strong>Automatiza Pedidos:</strong> Conectá el asistente de WhatsApp para que el bot tome pedidos de tus clientes de forma automática y aumente tu conversión. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('whatsapp'); }}>Vincular WhatsApp</a>.
-              </li>
-            )}
-            {stockBajoCount === 0 && mercadopagoVinculado && horariosConfigurados && waStatus === 'connected' && (
-              <li>
-                ¡Excelente! Tu local está perfectamente configurado y optimizado para vender. Sigamos creciendo juntos. 🚀
-              </li>
+          <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem', color: 'var(--gray-700)' }}>
+            {!isAccepted ? (
+              <>
+                {/* 1. Ubicación */}
+                {!ubicacionConfigurada && (
+                  <li>
+                    📍 <strong>Ubicación no configurada:</strong> Tu local no tiene una dirección o ubicación exacta en el mapa. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('profile'); setProfileSubView('edit'); setShowAddressSelector(true); }}>Configurar dirección ahora</a>
+                  </li>
+                )}
+                {/* 2. Horarios */}
+                {!horariosConfigurados && (
+                  <li>
+                    🕒 <strong>Horarios sin configurar:</strong> No has configurado tus horarios de apertura de cocina. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit'); }}>Configurar horarios</a>
+                  </li>
+                )}
+                {/* 3. Mercado Pago */}
+                {!mercadopagoVinculado && (
+                  <li>
+                    💳 <strong>Mercado Pago desvinculado:</strong> Vinculá tu cuenta para poder aceptar pagos digitales de los clientes. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit'); }}>Vincular Mercado Pago</a>
+                  </li>
+                )}
+                {/* 4. Email */}
+                {!emailConfirmado && (
+                  <li style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    ✉️ <strong>Email no confirmado:</strong> Por favor confirma tu dirección de correo electrónico para operar con normalidad.
+                    <button 
+                      className="btn btn-sm" 
+                      style={{ background: '#faad14', color: '#fff', border: 'none', padding: '3px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                      onClick={handleResendConfirmationService}
+                    >
+                      Reenviar enlace
+                    </button>
+                  </li>
+                )}
+                {ubicacionConfigurada && horariosConfigurados && mercadopagoVinculado && emailConfirmado && (
+                  <li>
+                    🎉 <strong>¡Todo completado!</strong> Has configurado todos los requisitos pendientes. Tu cuenta está siendo revisada para el alta definitiva.
+                  </li>
+                )}
+              </>
+            ) : (
+              <>
+                {/* 1. Stock */}
+                {stockBajoCount > 0 && (
+                  <li>
+                    📦 <strong>Stock Crítico:</strong> Tenés <span style={{ color: '#dc2626', fontWeight: 'bold' }}>{stockBajoCount} productos</span> con stock bajo su límite mínimo. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('menu'); loadMenu(); }}>Gestionar stock</a>.
+                  </li>
+                )}
+                {/* 2. WhatsApp Assistant */}
+                {waStatus !== 'connected' && (
+                  <li>
+                    🤖 <strong>Automatiza Pedidos:</strong> Conectá el asistente de WhatsApp para que el bot tome pedidos de tus clientes de forma automática y aumente tu conversión. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('whatsapp'); }}>Vincular WhatsApp</a>.
+                  </li>
+                )}
+                {/* 3. Compartir menú */}
+                <li>
+                  🔗 <strong>Compartí tu Menú:</strong> Promocioná tu enlace personalizado en tu perfil de Instagram para recibir pedidos directos. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('profile'); setProfileSubView('edit'); }}>Ver enlace de menú</a>.
+                </li>
+                {stockBajoCount === 0 && waStatus === 'connected' && (
+                  <li>
+                    🚀 ¡Excelente! Tu local está perfectamente configurado y optimizado para vender. Sigamos creciendo juntos.
+                  </li>
+                )}
+              </>
             )}
           </ul>
         </div>
@@ -2838,12 +2887,22 @@ export default function RestaurantDashboard() {
   const stockBajoCount = menuItems.filter(i => i.maneja_stock && !i.stock_base_id && i.stock_actual <= i.stock_minimo).length;
   const mercadopagoVinculado = !!profileData?.mp_access_token;
   const horariosConfigurados = (profileData?.horario_apertura && profileData?.horario_cierre) || (profileData?.config_horarios && Object.keys(profileData.config_horarios).length > 0);
+  const ubicacionConfigurada = !!(profileLat && profileLng && profileAddress);
+  const emailConfirmado = !!(restaurant && restaurant.emailConfirmado);
+  const isAccepted = profileData?.admin_status === 'Aceptado';
 
   let recommendationsCount = 0;
-  if (stockBajoCount > 0) recommendationsCount++;
-  if (!mercadopagoVinculado) recommendationsCount++;
-  if (!horariosConfigurados) recommendationsCount++;
-  if (waStatus !== 'connected') recommendationsCount++;
+  if (!isAccepted) {
+    // Si no está aceptado, los pendientes son requisitos para el alta
+    if (!ubicacionConfigurada) recommendationsCount++;
+    if (!horariosConfigurados) recommendationsCount++;
+    if (!mercadopagoVinculado) recommendationsCount++;
+    if (!emailConfirmado) recommendationsCount++;
+  } else {
+    // Si está aceptado, cuenta las sugerencias comerciales
+    if (stockBajoCount > 0) recommendationsCount++;
+    if (waStatus !== 'connected') recommendationsCount++;
+  }
 
   const totalMobileBadgeCount = pendingCount + recommendationsCount;
 
@@ -2887,9 +2946,9 @@ export default function RestaurantDashboard() {
             <li className="rd-sidebar-title">Principal</li>
             <li>
               <button className={`rd-sidebar-btn ${view === 'dashboard' ? 'active' : ''}`} onClick={() => { setView('dashboard'); setMobileSidebarOpen(false); }}>
-                <span>🤝</span> Recomendaciones
+                <span>{isAccepted ? '🤝' : '⏳'}</span> {isAccepted ? 'Recomendaciones' : 'Pendientes'}
                 {recommendationsCount > 0 && (
-                  <span className="rd-sidebar-badge amber">{recommendationsCount}</span>
+                  <span className={`rd-sidebar-badge ${isAccepted ? 'amber' : 'red'}`}>{recommendationsCount}</span>
                 )}
               </button>
             </li>
@@ -3063,66 +3122,7 @@ export default function RestaurantDashboard() {
         </aside>
 
         <main className="rd-main-content">
-        {restaurant && (!profileLat || !profileLng || !profileAddress) && (
-          <div className="address-warning-banner" style={{
-            background: '#fff2f0',
-            border: '1px solid #ffccc7',
-            borderRadius: '12px',
-            padding: '16px',
-            marginBottom: '24px',
-            margin: '0 16px 24px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            boxShadow: '0 4px 12px rgba(255, 77, 79, 0.1)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span style={{ fontSize: '1.5rem' }}>📍</span>
-              <div style={{ flex: 1 }}>
-                <strong style={{ color: '#cf1322', display: 'block', marginBottom: '4px' }}>Ubicación no configurada</strong>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#820014', lineHeight: '1.4' }}>
-                  Tu local no tiene una dirección o ubicación exacta en el mapa. Es necesario configurarla para que los clientes puedan encontrarte.
-                </p>
-              </div>
-            </div>
-            <button 
-              className="btn btn-primary btn-full" 
-              style={{ background: '#ff4d4f', border: 'none', fontWeight: 'bold' }}
-              onClick={() => {
-                setView('profile');
-                setProfileSubView('edit');
-                setShowAddressSelector(true);
-              }}
-            >
-              Configurar dirección ahora
-            </button>
-          </div>
-        )}
 
-        {restaurant && !restaurant.emailConfirmado && (
-          <div className="unconfirmed-banner" style={{
-            background: '#fff7e6',
-            border: '1px solid #ffd591',
-            borderRadius: '8px',
-            padding: '12px 16px',
-            marginBottom: '16px',
-            margin: '0 16px 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            fontSize: '0.9rem',
-            color: '#874d00'
-          }}>
-            <span>⚠️ <strong>Email no confirmado:</strong> Por favor confirma tu dirección de correo para operar con normalidad.</span>
-            <button 
-              className="btn btn-sm" 
-              style={{ background: '#faad14', color: '#fff', border: 'none' }}
-              onClick={handleResendConfirmationService}
-            >
-              Reenviar enlace
-            </button>
-          </div>
-        )}
 
         {notificationStatus === 'denied' && (
           <div className="rd-notification-banner banner-danger animate-fade-in">
