@@ -2831,7 +2831,7 @@ export async function deleteAdminTask(id) {
 // ═══════════════════════════════════════════════════
 // ADMIN — Emails
 // ═══════════════════════════════════════════════════
-export async function adminSendBulkEmail({ target, manualEmails, subject, htmlBody }) {
+export async function adminSendBulkEmail({ target, manualEmails, subject, htmlBody, ciudad }) {
   let emails = [];
   if (target === 'manual' && manualEmails) {
     emails = manualEmails;
@@ -2841,8 +2841,14 @@ export async function adminSendBulkEmail({ target, manualEmails, subject, htmlBo
     if (target === 'locales') table = 'locales';
     if (target === 'repartidores') table = 'repartidores';
     if (target === 'lanzamiento') table = 'lanzamiento';
+    if (target === 'usuarios_ciudad') table = 'usuarios';
     
-    const { data: recipients } = await supabase.from(table).select('email');
+    let query = supabase.from(table).select('email');
+    if (table !== 'lanzamiento' && ciudad) {
+      query = query.eq('ciudad', ciudad);
+    }
+    
+    const { data: recipients } = await query;
     if (!recipients || recipients.length === 0) return { success: false, error: 'No recipients found' };
     emails = [...new Set(recipients.map(r => r.email.trim()))];
   }

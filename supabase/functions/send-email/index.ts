@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     });
 
     const info = await transporter.sendMail({
-      from: `"WEEP" <${gmailEmail}>`,
+      from: `"WEPI" <${gmailEmail}>`,
       to: [to],
       subject: subject,
       html: htmlBody,

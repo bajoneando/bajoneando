@@ -58,7 +58,7 @@ const planBenefits = {
 export default function RestaurantDashboard() {
   const { restaurant, loginAsRestaurant, logoutRestaurant } = useAuth();
 
-  const [view, setView] = React.useState('orders'); // 'menu','addItem','orders','profile'
+  const [view, setView] = React.useState('orders'); // 'orders','dashboard','menu','addItem','profile'
 
   React.useEffect(() => {
     if (restaurant?.role === 'Cajero' && view !== 'orders' && view !== 'cierre') {
@@ -78,6 +78,97 @@ export default function RestaurantDashboard() {
   React.useEffect(() => {
     profileDataRef.current = profileData;
   }, [profileData]);
+
+  const [waStatus, setWaStatus] = React.useState('disconnected'); // 'disconnected', 'loading', 'qr_ready', 'connected'
+  const [waQrCode, setWaQrCode] = React.useState('');
+  const [waPhoneNumber, setWaPhoneNumber] = React.useState('');
+
+  const serverUrl = import.meta.env.VITE_WHATSAPP_SERVER_URL || 'http://localhost:3001';
+
+  React.useEffect(() => {
+    if (!restaurant?.id) return;
+
+    const checkStatus = async () => {
+      try {
+        const res = await fetch(`${serverUrl}/api/status?localId=${restaurant.id}`);
+        const data = await res.json();
+        
+        setWaStatus(data.status);
+        setWaQrCode(data.qr || '');
+        setWaPhoneNumber(data.phoneNumber || '');
+
+        // Si ya se vinculó en el backend, actualizar estado local
+        if (data.status === 'connected' && profileData && !profileData.whatsapp_assistant_enabled) {
+          setProfileData(prev => ({
+            ...prev,
+            whatsapp_assistant_enabled: true,
+            whatsapp_phone_number: data.phoneNumber
+          }));
+        }
+      } catch (err) {
+        // Ignorar errores silenciosos si el servidor de WhatsApp no está corriendo
+      }
+    };
+
+    checkStatus();
+
+    // Consultar estado cada 3 segundos si está en proceso de carga o escaneo
+    const interval = setInterval(() => {
+      if (waStatus === 'loading' || waStatus === 'qr_ready') {
+        checkStatus();
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [restaurant?.id, waStatus, profileData]);
+
+  const handleConnectWA = async () => {
+    setWaStatus('loading');
+    setWaQrCode('');
+    
+    try {
+      const res = await fetch(`${serverUrl}/api/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ localId: restaurant.id })
+      });
+      const data = await res.json();
+      
+      setWaStatus(data.status);
+      setWaQrCode(data.qr || '');
+      toast.info("Iniciando conexión con WhatsApp...");
+    } catch (e) {
+      toast.error("No se pudo conectar al servidor de WhatsApp. Asegúrate de iniciarlo en la terminal.");
+      setWaStatus('disconnected');
+    }
+  };
+
+  const handleDisconnectWA = async () => {
+    if (!window.confirm("¿Estás seguro de que deseas desconectar el Asistente de WhatsApp?")) return;
+    
+    setWaStatus('loading');
+    try {
+      await fetch(`${serverUrl}/api/disconnect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ localId: restaurant.id })
+      });
+      
+      setWaStatus('disconnected');
+      setWaQrCode('');
+      setWaPhoneNumber('');
+      
+      setProfileData(prev => ({
+        ...prev,
+        whatsapp_assistant_enabled: false,
+        whatsapp_phone_number: null
+      }));
+      toast.success("Asistente de WhatsApp desconectado");
+    } catch (e) {
+      toast.error("Error al desconectar");
+      setWaStatus('connected');
+    }
+  };
   const isInventory = React.useMemo(() => {
     if (!profileData) return false;
     return profileData.tipo_servicio === 'shops' || profileData.rubros?.some(r => r === 'Market' || r === 'Farmacia' || r === 'Bebidas' || r === 'Hogar' || r === 'Tecnología' || r === 'Moda' || r === 'Regalería' || r === 'Deportes');
@@ -123,6 +214,7 @@ export default function RestaurantDashboard() {
   const [cierreLoading, setCierreLoading] = React.useState(false);
   const [cierreSubTab, setCierreSubTab] = React.useState('generar'); // generar, historial, estadisticas
   const [hideStatsInCierre, setHideStatsInCierre] = React.useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
 
   const [statsDates, setStatsDates] = React.useState({ 
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
@@ -166,7 +258,7 @@ export default function RestaurantDashboard() {
   const [securityPassword, setSecurityPassword] = React.useState('');
   const [securityLoading, setSecurityLoading] = React.useState(false);
   const [onSecuritySuccess, setOnSecuritySuccess] = React.useState(null);
-  const [isUnlocked, setIsUnlocked] = React.useState(false);
+  const [isUnlocked, setIsUnlocked] = React.useState(true);
   const [notificationStatus, setNotificationStatus] = React.useState('loading');
   const [isIOS, setIsIOS] = React.useState(false);
   const [isBaseProductMode, setIsBaseProductMode] = React.useState(false);
@@ -2663,6 +2755,98 @@ export default function RestaurantDashboard() {
   };
 
   // ─── Dashboard ───
+  const renderDashboardView = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const ordersToday = orders.filter(o => o.creado_a?.startsWith(todayStr));
+    const ventasHoy = ordersToday.filter(o => o.estadoActual !== 'Cancelado').reduce((acc, o) => acc + (o.total || 0), 0);
+    const pedidosHoy = ordersToday.length;
+    const pedidosActivos = orders.filter(o => ['Pendiente', 'Confirmado', 'En Preparacion', 'Despachado', 'En Camino'].includes(o.estadoActual)).length;
+    const stockBajoCount = menuItems.filter(i => i.maneja_stock && !i.stock_base_id && i.stock_actual <= i.stock_minimo).length;
+    const mercadopagoVinculado = !!profileData?.mp_access_token;
+    const horariosConfigurados = (profileData?.horario_apertura && profileData?.horario_cierre) || (profileData?.config_horarios && Object.keys(profileData.config_horarios).length > 0);
+
+    return (
+      <div className="animate-fade-in" style={{ padding: '8px 0' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--gray-900)', margin: '0 0 4px 0' }}>
+            ¡Hola, {profileData?.nombre || 'Socio'}! 👋
+          </h2>
+          <p style={{ color: 'var(--gray-500)', fontSize: '0.95rem', margin: 0, fontWeight: 500 }}>
+            Recomendaciones y avisos de tu Aliado comercial Wepi para potenciar tu negocio.
+          </p>
+        </div>
+
+        {/* Sección de Mensajes de Aliado Comercial */}
+        <div className="card" style={{ padding: '20px', marginBottom: '24px', background: 'linear-gradient(135deg, #fff 0%, #fef2f2 100%)', borderLeft: '4px solid var(--red-500)' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--red-700)', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            🤝 Recomendaciones de tu Aliado Wepi
+          </h3>
+          <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.9rem', color: 'var(--gray-700)' }}>
+            {stockBajoCount > 0 && (
+              <li>
+                <strong>Stock Crítico:</strong> Tenés <span style={{ color: '#dc2626', fontWeight: 'bold' }}>{stockBajoCount} productos</span> con stock bajo su límite mínimo. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('menu'); loadMenu(); }}>Gestionar stock</a>.
+              </li>
+            )}
+            {!mercadopagoVinculado && (
+              <li>
+                <strong>Ventas Digitales:</strong> Tu cuenta de Mercado Pago no está vinculada. Conéctala para aceptar pagos online. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit'); }}>Vincular cuenta</a>.
+              </li>
+            )}
+            {!horariosConfigurados && (
+              <li>
+                <strong>Atención Automática:</strong> No has configurado tus horarios de apertura de cocina. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit'); }}>Configurar horarios</a>.
+              </li>
+            )}
+            {waStatus !== 'connected' && (
+              <li>
+                <strong>Automatiza Pedidos:</strong> Conectá el asistente de WhatsApp para que el bot tome pedidos de tus clientes de forma automática y aumente tu conversión. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('whatsapp'); }}>Vincular WhatsApp</a>.
+              </li>
+            )}
+            {stockBajoCount === 0 && mercadopagoVinculado && horariosConfigurados && waStatus === 'connected' && (
+              <li>
+                ¡Excelente! Tu local está perfectamente configurado y optimizado para vender. Sigamos creciendo juntos. 🚀
+              </li>
+            )}
+          </ul>
+        </div>
+
+        {/* Acciones Rápidas */}
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--gray-800)', margin: '0 0 12px 0' }}>
+            🔗 Acciones Rápidas
+          </h3>
+          <div className="rd-quick-actions">
+            <button className="rd-quick-action-btn" onClick={() => { setView('orders'); loadOrders(); }}>
+              <span>📋</span> Ver Pedidos
+            </button>
+            <button className="rd-quick-action-btn" onClick={() => { setEditItem(null); setItemCategory(''); setItemSubcategory('Helado por kg'); setItemName(''); setView('addItem'); setIsBaseProductMode(false); }}>
+              <span>➕</span> Agregar Producto
+            </button>
+            <button className="rd-quick-action-btn" onClick={() => { setView('cierre'); setCierreSubTab('generar'); setHideStatsInCierre(true); }}>
+              <span>💰</span> Cerrar Caja
+            </button>
+            <button className="rd-quick-action-btn" onClick={() => { setView('sync'); }}>
+              <span>🔄</span> Wepi Sync
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ─── Dashboard ───
+  const stockBajoCount = menuItems.filter(i => i.maneja_stock && !i.stock_base_id && i.stock_actual <= i.stock_minimo).length;
+  const mercadopagoVinculado = !!profileData?.mp_access_token;
+  const horariosConfigurados = (profileData?.horario_apertura && profileData?.horario_cierre) || (profileData?.config_horarios && Object.keys(profileData.config_horarios).length > 0);
+
+  let recommendationsCount = 0;
+  if (stockBajoCount > 0) recommendationsCount++;
+  if (!mercadopagoVinculado) recommendationsCount++;
+  if (!horariosConfigurados) recommendationsCount++;
+  if (waStatus !== 'connected') recommendationsCount++;
+
+  const totalMobileBadgeCount = pendingCount + recommendationsCount;
+
   return (
     <div className="rd-page">
       {renderTutorial()}
@@ -2681,85 +2865,204 @@ export default function RestaurantDashboard() {
 
         <div className="rd-topbar-right" style={{ border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
           {profileData?.foto_url && <img src={profileData.foto_url} alt="" className="rd-avatar" />}
-          
-          <div className="rd-dropdown-container">
-            <button 
-              className={`btn btn-ghost btn-sm ${view === 'profile' ? 'active' : ''}`} 
-              onClick={(e) => { 
-                e.stopPropagation(); 
-                setProfileMenuOpen(!profileMenuOpen);
-              }}
-              style={{ color: 'white' }}
-            >
-              Mi Perfil ▾
-            </button>
-            
-            {profileMenuOpen && (
-              <div className="rd-dropdown-menu animate-fade-in" style={{ right: 0, left: 'auto' }}>
-                {restaurant?.role !== 'Cajero' && (
-                  <>
-                    <button className="rd-dropdown-item" onClick={() => { 
-                      if (isUnlocked) {
-                        setView('profile'); setProfileSubView('ventas'); loadOrders(); setProfileMenuOpen(false); 
-                      } else {
-                        setOnSecuritySuccess(() => () => { setView('profile'); setProfileSubView('ventas'); loadOrders(); });
-                        setSecurityModalOpen(true);
-                        setProfileMenuOpen(false);
-                      }
-                    }}>
-                      💰 Mis Ventas
-                    </button>
-                    <button className="rd-dropdown-item" onClick={() => { 
-                      if (isUnlocked) {
-                        setView('profile'); setProfileSubView('cobros'); loadCobros(); setProfileMenuOpen(false); 
-                      } else {
-                        setOnSecuritySuccess(() => () => { setView('profile'); setProfileSubView('cobros'); loadCobros(); });
-                        setSecurityModalOpen(true);
-                        setProfileMenuOpen(false);
-                      }
-                    }}>
-                      🏦 Gestión de Pagos
-                    </button>
-                    <button className="rd-dropdown-item" onClick={() => { 
-                      if (isUnlocked) {
-                        setView('profile'); setProfileSubView('edit'); loadProfile(); setProfileMenuOpen(false); 
-                      } else {
-                        setOnSecuritySuccess(() => () => { setView('profile'); setProfileSubView('edit'); loadProfile(); });
-                        setSecurityModalOpen(true);
-                        setProfileMenuOpen(false);
-                      }
-                    }}>
-                      👤 Editar Perfil
-                    </button>
-                    <button className="rd-dropdown-item" onClick={() => { 
-                      if (isUnlocked) {
-                        setView('settings'); setProfileSubView('edit'); setProfileMenuOpen(false); 
-                      } else {
-                        setOnSecuritySuccess(() => () => { setView('settings'); setProfileSubView('edit'); });
-                        setSecurityModalOpen(true);
-                        setProfileMenuOpen(false);
-                      }
-                    }}>
-                      ⚙️ Configuración
-                    </button>
-                  </>
-                )}
-                <button className="rd-dropdown-item" onClick={() => { setShowTutorial(true); setTutorialStep(1); setView('orders'); setProfileMenuOpen(false); }}>
-                  📖 Ver tutorial
-                </button>
-
-                <div style={{ borderTop: '1px solid var(--gray-100)', marginTop: '8px', paddingTop: '8px' }}>
-                  <button className="rd-dropdown-item" style={{ color: 'var(--red-500)' }} onClick={() => { logoutRestaurant(); window.location.reload(); }}>
-                    🚪 Salir
-                  </button>
-                </div>
-              </div>
+          <button 
+            className="rd-hamburger-btn" 
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            style={{ position: 'relative' }}
+          >
+            ☰
+            {totalMobileBadgeCount > 0 && (
+              <span className="rd-hamburger-badge">
+                {totalMobileBadgeCount}
+              </span>
             )}
-          </div>
+          </button>
         </div>
       </header>
 
-      <main className="rd-main">
+      <div className="rd-workspace">
+        {mobileSidebarOpen && <div className="rd-sidebar-backdrop" onClick={() => setMobileSidebarOpen(false)} />}
+        <aside className={`rd-sidebar ${mobileSidebarOpen ? 'mobile-open' : ''}`}>
+          <ul className="rd-sidebar-menu">
+            <li className="rd-sidebar-title">Principal</li>
+            <li>
+              <button className={`rd-sidebar-btn ${view === 'dashboard' ? 'active' : ''}`} onClick={() => { setView('dashboard'); setMobileSidebarOpen(false); }}>
+                <span>🤝</span> Recomendaciones
+                {recommendationsCount > 0 && (
+                  <span className="rd-sidebar-badge amber">{recommendationsCount}</span>
+                )}
+              </button>
+            </li>
+            <li>
+              <button 
+                className={`rd-sidebar-btn ${view === 'orders' ? 'active' : ''}`} 
+                onClick={() => { setView('orders'); loadOrders(); setMobileSidebarOpen(false); }}
+              >
+                <span>📋</span> Pedidos
+                {pendingCount > 0 && (
+                  <span className="rd-sidebar-badge">{pendingCount}</span>
+                )}
+              </button>
+            </li>
+
+            <li className="rd-sidebar-title">Catálogo</li>
+            {restaurant?.role !== 'Cajero' && (
+              <>
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${view === 'menu' || view === 'addItem' || view === 'sabores' ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('menu'); loadMenu(); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>📖</span> Productos
+                  </button>
+                </li>
+                <li>
+                  <button className={`rd-sidebar-btn ${view === 'sync' ? 'active' : ''}`} onClick={() => { setView('sync'); setMobileSidebarOpen(false); }}>
+                    <span>🔄</span> Wepi Sync
+                  </button>
+                </li>
+              </>
+            )}
+
+            <li className="rd-sidebar-title">Finanzas</li>
+            {restaurant?.role !== 'Cajero' && (
+              <>
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${(view === 'profile' && profileSubView === 'ventas') ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('profile'); setProfileSubView('ventas'); loadOrders(); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>📊</span> Mis Ventas
+                  </button>
+                </li>
+
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${view === 'plans' ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('plans'); loadPlanInfo(); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>🎟️</span> Mi Plan
+                  </button>
+                </li>
+              </>
+            )}
+            <li>
+              <button 
+                className={`rd-sidebar-btn ${view === 'cierre' ? 'active' : ''}`} 
+                onClick={() => { setView('cierre'); setCierreSubTab('generar'); setHideStatsInCierre(true); setMobileSidebarOpen(false); }}
+              >
+                <span>💰</span> Arqueo / Cierre
+              </button>
+            </li>
+
+            <li className="rd-sidebar-title">Herramientas</li>
+            {restaurant?.role !== 'Cajero' && (
+              <>
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${(view === 'settings' && profileSubView === 'printing') ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('settings'); setProfileSubView('printing'); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>🖨️</span> Impresión Tickets
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${(view === 'settings' && profileSubView === 'notifications') ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('settings'); setProfileSubView('notifications'); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>🔔</span> Notificaciones
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${(view === 'settings' && profileSubView === 'whatsapp') ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('settings'); setProfileSubView('whatsapp'); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>💬</span> WhatsApp Assistant
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${(view === 'settings' && profileSubView === 'cajas') ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('settings'); setProfileSubView('cajas'); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>🔑</span> Cajeros
+                  </button>
+                </li>
+              </>
+            )}
+
+            <li className="rd-sidebar-title">Configuración</li>
+            {restaurant?.role !== 'Cajero' && (
+              <>
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${(view === 'settings' && profileSubView === 'edit') ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('settings'); setProfileSubView('edit'); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>⚙️</span> Ajustes Local
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    className={`rd-sidebar-btn ${(view === 'profile' && profileSubView === 'edit') ? 'active' : ''}`} 
+                    onClick={() => {
+                      setView('profile'); setProfileSubView('edit'); loadProfile(); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>👤</span> Editar Perfil
+                  </button>
+                </li>
+              </>
+            )}
+
+            <li className="rd-sidebar-title">Cuenta</li>
+            <li>
+              <button 
+                className="rd-sidebar-btn" 
+                onClick={() => { 
+                  setShowTutorial(true); 
+                  setTutorialStep(1); 
+                  setView('orders'); 
+                  setMobileSidebarOpen(false); 
+                }}
+              >
+                <span>📖</span> Ver tutorial
+              </button>
+            </li>
+            <li>
+              <button 
+                className="rd-sidebar-btn" 
+                style={{ color: 'var(--red-500)' }} 
+                onClick={() => { 
+                  logoutRestaurant(); 
+                  window.location.reload(); 
+                }}
+              >
+                <span>🚪</span> Cerrar Sesión
+              </button>
+            </li>
+          </ul>
+        </aside>
+
+        <main className="rd-main-content">
         {restaurant && (!profileLat || !profileLng || !profileAddress) && (
           <div className="address-warning-banner" style={{
             background: '#fff2f0',
@@ -3003,32 +3306,8 @@ export default function RestaurantDashboard() {
           </div>
         )}
 
-        {/* Navigation */}
-        <nav className="rd-nav animate-slide-up" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-          <button className={`rd-nav-btn ${view === 'orders' ? 'active' : ''}`} onClick={() => { setView('orders'); loadOrders(); }}>
-            📋 Pedidos
-            {(pendingCount > 0 || (showTutorial && tutorialSampleOrderState === 'Pendiente')) && (
-              <span className="rd-nav-badge">
-                {pendingCount + (showTutorial && tutorialSampleOrderState === 'Pendiente' ? 1 : 0)}
-              </span>
-            )}
-          </button>
-          {restaurant?.role !== 'Cajero' && (
-            <button className={`rd-nav-btn ${view === 'menu' ? 'active' : ''}`} 
-              onClick={() => { 
-                if (isUnlocked) {
-                  setView('menu'); loadMenu(); 
-                } else {
-                  setOnSecuritySuccess(() => () => { setView('menu'); loadMenu(); });
-                  setSecurityModalOpen(true);
-                }
-              }}
-            >
-              📖 Catálogo
-            </button>
-          )}
-          
-        </nav>
+        {/* Dashboard View */}
+        {view === 'dashboard' && renderDashboardView()}
 
         {/* ─── Wepi Sync View ─── */}
         {view === 'sync' && renderSyncView()}
@@ -4270,6 +4549,9 @@ export default function RestaurantDashboard() {
               <button className={profileSubView === 'cajas' ? 'active' : ''} onClick={() => setProfileSubView('cajas')}>
                 🔑 Cajas / Dispositivos
               </button>
+              <button className={profileSubView === 'whatsapp' ? 'active' : ''} onClick={() => setProfileSubView('whatsapp')}>
+                🤖 Wepi Assistant (Beta)
+              </button>
             </div>
 
             {profileSubView === 'edit' && (
@@ -4803,6 +5085,108 @@ export default function RestaurantDashboard() {
                 </div>
               </div>
             )}
+
+            {profileSubView === 'whatsapp' && (
+              <div className="card card-body" style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🤖</div>
+                <h2 style={{ color: 'var(--red-600)', marginBottom: 8 }}>Wepi Assistant (Beta)</h2>
+                <p style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginBottom: 24 }}>
+                  Vincular tu cuenta es muy simple. Escaneá el código QR desde la sección de Dispositivos Vinculados en tu app de WhatsApp.
+                </p>
+
+                <div style={{ 
+                  background: 'var(--gray-50)', 
+                  border: '1px solid var(--gray-200)', 
+                  borderRadius: '16px', 
+                  padding: '24px', 
+                  marginBottom: '24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '220px'
+                }}>
+                  {waStatus === 'disconnected' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <span className="badge badge-gray" style={{ marginBottom: '16px', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
+                        🔴 Estado: Desconectado
+                      </span>
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ background: 'var(--red-600)', borderColor: 'var(--red-600)', padding: '12px 24px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}
+                        onClick={handleConnectWA}
+                      >
+                        🔗 Vincular Código QR
+                      </button>
+                    </div>
+                  )}
+
+                  {waStatus === 'loading' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                      <style>{`
+                        @keyframes spin {
+                          0% { transform: rotate(0deg); }
+                          100% { transform: rotate(360deg); }
+                        }
+                      `}</style>
+                      <div className="wa-spinner" style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        border: '3px solid var(--gray-200)', 
+                        borderTop: '3px solid var(--red-600)', 
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }}></div>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)', fontWeight: 500 }}>
+                        Generando código QR...
+                      </span>
+                    </div>
+                  )}
+
+                  {waStatus === 'qr_ready' && waQrCode && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <span className="badge badge-amber" style={{ padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
+                        ⏳ Esperando escaneo...
+                      </span>
+                      <div style={{ background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid var(--gray-300)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                        <img src={waQrCode} alt="WhatsApp QR Code" style={{ width: '180px', height: '180px', display: 'block' }} />
+                      </div>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--gray-600)', maxWidth: '280px', margin: 0, lineHeight: '1.4' }}>
+                        Abrí <strong>WhatsApp</strong> en tu celular ➜ <strong>Dispositivos vinculados</strong> ➜ <strong>Vincular un dispositivo</strong> y escaneá este código QR.
+                      </p>
+                    </div>
+                  )}
+
+                  {waStatus === 'connected' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <span className="badge badge-green" style={{ padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, background: '#d1fae5', color: '#065f46' }}>
+                        🟢 Asistente Activo
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '12px 18px', borderRadius: '10px', border: '1px solid #d1fae5' }}>
+                        <span style={{ fontSize: '1.2rem' }}>📞</span>
+                        <strong style={{ fontSize: '0.95rem', color: 'var(--gray-800)' }}>{waPhoneNumber}</strong>
+                      </div>
+                      <button 
+                        className="btn" 
+                        style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+                        onClick={handleDisconnectWA}
+                      >
+                        🛑 Desconectar Asistente
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ textAlign: 'left', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <h4 style={{ fontSize: '0.85rem', color: 'var(--gray-800)', marginBottom: '8px', fontWeight: 700 }}>💡 ¿Cómo funciona el Asistente?</h4>
+                  <ul style={{ fontSize: '0.8rem', color: 'var(--gray-600)', paddingLeft: '20px', margin: 0, lineHeight: '1.4' }}>
+                    <li style={{ marginBottom: '4px' }}><strong>Sigue usando tu celular</strong>: El bot responde en segundo plano de forma automática, sin que pierdas tu chat móvil.</li>
+                    <li style={{ marginBottom: '4px' }}><strong>Toma Pedidos</strong>: Responde a saludos, muestra categorías principales de tu menú y provee enlaces a tu catálogo.</li>
+                    <li><strong>Estado de pedidos</strong>: Tus clientes pueden consultar el estado de su envío directamente desde WhatsApp.</li>
+                  </ul>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -4816,9 +5200,7 @@ export default function RestaurantDashboard() {
               <button className={profileSubView === 'ventas' ? 'active' : ''} onClick={() => setProfileSubView('ventas')}>
                 💰 Mis Ventas
               </button>
-              <button className={profileSubView === 'cobros' ? 'active' : ''} onClick={() => { setProfileSubView('cobros'); loadCobros(); }}>
-                🏦 Gestión de Pagos
-              </button>
+
               <button className={profileSubView === 'edit' ? 'active' : ''} onClick={() => setProfileSubView('edit')}>
                 👤 Editar Perfil
               </button>
@@ -4902,151 +5284,7 @@ export default function RestaurantDashboard() {
             )}
 
 
-            {profileSubView === 'cobros' && (
-              <div className="card card-body">
-                <h2 style={{ color: 'var(--red-600)', marginBottom: 16, textAlign: 'center' }}>Gestión de Pagos</h2>
-                <p style={{ textAlign: 'center', color: 'var(--gray-500)', marginBottom: 24 }}>Comisión Wepi {planInfo?.comision_actual ?? 15}% • Abona tu saldo pendiente por transferencia</p>
-                
-                {cobrosLoading || !cobrosData ? (
-                  <div className="loading-state"><div className="spinner" /> Cargando...</div>
-                ) : (
-                  <>
-                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-                      {/* Total */}
-                      <div className="card" style={{ padding: '20px', textAlign: 'center', borderTop: '4px solid var(--gray-400)' }}>
-                        <p style={{ margin: 0, color: 'var(--gray-500)', fontSize: '0.85rem' }}>Total ventas</p>
-                        <h3 style={{ margin: '8px 0 0', fontSize: '1.5rem' }}>${cobrosData.totalVentas}</h3>
-                      </div>
-                      <div className="card" style={{ padding: '20px', textAlign: 'center', borderTop: '4px solid var(--amber-500)' }}>
-                        <p style={{ margin: 0, color: 'var(--gray-500)', fontSize: '0.85rem' }}>Comisión Total ({planInfo?.comision_actual ?? 15}%)</p>
-                        <h3 style={{ margin: '8px 0 0', fontSize: '1.5rem', color: 'var(--amber-600)' }}>${cobrosData.comisionTotal}</h3>
-                      </div>
 
-                      {/* Transferencia */}
-                      <div className="card" style={{ padding: '20px', textAlign: 'center', borderTop: '4px solid #bae6fd' }}>
-                        <p style={{ margin: 0, color: 'var(--gray-500)', fontSize: '0.85rem' }}>Ventas Transferencia</p>
-                        <h3 style={{ margin: '8px 0 0', fontSize: '1.5rem' }}>${cobrosData.ventasTransf}</h3>
-                      </div>
-                      <div className="card" style={{ padding: '20px', textAlign: 'center', borderTop: '4px solid var(--green-500)' }}>
-                        <p style={{ margin: 0, color: 'var(--gray-500)', fontSize: '0.85rem' }}>Comisión saldada</p>
-                        <h3 style={{ margin: '8px 0 0', fontSize: '1.5rem', color: 'var(--green-600)' }}>${cobrosData.comisionSaldada}</h3>
-                      </div>
-
-                      {/* Efectivo */}
-                      <div className="card" style={{ padding: '20px', textAlign: 'center', borderTop: '4px solid #fed7aa' }}>
-                        <p style={{ margin: 0, color: 'var(--gray-500)', fontSize: '0.85rem' }}>Ventas Efectivo</p>
-                        <h3 style={{ margin: '8px 0 0', fontSize: '1.5rem' }}>${cobrosData.ventasEfectivo}</h3>
-                      </div>
-                      <div className="card" style={{ padding: '20px', textAlign: 'center', borderTop: '4px solid var(--red-600)' }}>
-                        <p style={{ margin: 0, color: 'var(--gray-500)', fontSize: '0.85rem' }}>Comisión Pendiente</p>
-                        <h3 style={{ margin: '8px 0 0', fontSize: '1.5rem', color: 'var(--red-600)' }}>${cobrosData.comisionPendiente}</h3>
-                      </div>
-                    </div>
-
-                    {cobrosData.comisionPendiente > 0 && (
-                      <div className="animate-fade-in" style={{ backgroundColor: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '12px', padding: '24px', marginBottom: '32px' }}>
-                        <h3 style={{ color: '#9a3412', marginBottom: '16px', textAlign: 'center' }}>Pagar Saldo Pendiente</h3>
-                        <p style={{ textAlign: 'center', fontSize: '0.95rem', color: '#7c2d12', marginBottom: '20px' }}>
-                          Para saldar tu comisión de pedidos en efectivo, realizá una transferencia a la siguiente cuenta y adjuntá el comprobante.
-                        </p>
-                        
-                        <div style={{ maxWidth: '400px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #fed7aa' }}>
-                            <div>
-                              <p style={{ margin: 0, fontSize: '0.75rem', color: '#9a3412' }}>Nombre de cuenta</p>
-                              <p style={{ margin: 0, fontWeight: '600' }}>Axel Damian Martinez</p>
-                            </div>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #fed7aa' }}>
-                            <div>
-                              <p style={{ margin: 0, fontSize: '0.75rem', color: '#9a3412' }}>Alias</p>
-                              <p style={{ margin: 0, fontWeight: '600' }}>weep.ar</p>
-                            </div>
-                            <button className="btn btn-sm btn-ghost" onClick={() => { navigator.clipboard.writeText('weep.ar'); toast.success('Alias copiado'); }}>Copiar</button>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', padding: '12px', borderRadius: '8px', border: '1px solid #fed7aa' }}>
-                            <div>
-                              <p style={{ margin: 0, fontSize: '0.75rem', color: '#9a3412' }}>CVU</p>
-                              <p style={{ margin: 0, fontWeight: '600', fontSize: '0.85rem' }}>0000003100022130092564</p>
-                            </div>
-                            <button className="btn btn-sm btn-ghost" onClick={() => { navigator.clipboard.writeText('0000003100022130092564'); toast.success('CVU copiado'); }}>Copiar</button>
-                          </div>
-                          
-                          <div style={{ marginTop: '16px' }}>
-                            <label style={{ display: 'block', fontSize: '0.9rem', marginBottom: '8px', fontWeight: '600' }}>Adjuntar comprobante (imagen)</label>
-                            <input type="file" id="comprobante_pago" accept="image/*" className="form-input" style={{ marginBottom: '16px' }} />
-                            
-                            <button 
-                              className="btn btn-success btn-full" 
-                              onClick={async () => {
-                                const fileInput = document.getElementById('comprobante_pago');
-                                const file = fileInput?.files[0];
-                                if (!file) { toast.error('Debes adjuntar el comprobante'); return; }
-                                
-                                setCobrosLoading(true);
-                                try {
-                                  const imgUrl = await api.uploadImage(file);
-                                  const res = await api.solicitarCobro(restaurant.id, cobrosData.comisionPendiente, imgUrl);
-                                  if (res.success) {
-                                    toast.success('Pago solicitado correctamente');
-                                    loadCobros();
-                                  } else {
-                                    toast.error(res.error || 'Error al enviar');
-                                  }
-                                } catch (e) {
-                                  toast.error('Error al subir comprobante');
-                                }
-                                setCobrosLoading(false);
-                              }}
-                            >
-                              Confirmar y Pagar Saldo (${cobrosData.comisionPendiente})
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <h3 style={{ color: 'var(--red-600)', marginBottom: 16 }}>Historial de Pago</h3>
-                    <div className="card" style={{ padding: '16px', overflowX: 'auto' }}>
-                      {cobrosData.historial.length === 0 ? (
-                        <p className="rd-empty">No hay solicitudes anteriores.</p>
-                      ) : (
-                        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-                          <thead>
-                            <tr style={{ borderBottom: '2px solid var(--gray-200)' }}>
-                              <th style={{ padding: '12px 8px' }}>Fecha</th>
-                              <th style={{ padding: '12px 8px' }}>Monto</th>
-                              <th style={{ padding: '12px 8px' }}>Estado</th>
-                              <th style={{ padding: '12px 8px' }}>Comprobante</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {cobrosData.historial.map((h, i) => (
-                              <tr key={i} style={{ borderBottom: '1px solid var(--gray-100)' }}>
-                                <td style={{ padding: '12px 8px' }}>{new Date(h.fechaSolicitud).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })}</td>
-                                <td style={{ padding: '12px 8px', fontWeight: '600' }}>${h.montoNeto}</td>
-                                <td style={{ padding: '12px 8px' }}>
-                                  <span className={`badge ${h.estado === 'Pendiente' ? 'badge-amber' : h.estado === 'Completado' ? 'badge-green' : 'badge-gray'}`}>
-                                    {h.estado === 'Pendiente' ? 'Pago solicitado' : h.estado}
-                                  </span>
-                                </td>
-                                <td style={{ padding: '12px 8px' }}>
-                                  {h.comprobanteUrl ? (
-                                    <a href={h.comprobanteUrl} target="_blank" rel="noreferrer" className="btn btn-sm btn-ghost" style={{ fontSize: '0.75rem' }}>Ver</a>
-                                  ) : (
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--gray-400)' }}>Sin adjunto</span>
-                                  )}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
 
 
             {profileSubView === 'edit' && (
@@ -5110,6 +5348,9 @@ export default function RestaurantDashboard() {
           </section>
         )}
       </main>
+      </div>
+
+
 
       <footer className="footer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '60px 20px', background: 'var(--red-800)', color: 'white' }}>
         <img src="https://i.postimg.cc/htHr0QMM/Tarde-de-superclasico-(1)-(1).png" alt="Wepi" style={{ height: '50px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />

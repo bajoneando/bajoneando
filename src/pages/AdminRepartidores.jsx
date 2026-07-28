@@ -258,13 +258,27 @@ const AdminRepartidores = () => {
         }
     };
 
-    const handleGenerateMessage = () => {
+    const getFilteredSettlements = () => {
+        if (repFilter === 'Todos') {
+            return settlements;
+        }
+        const selDriver = repartidores.find(r => r.id === repFilter);
+        if (selDriver && selDriver.es_partner) {
+            const linkedIds = repartidores
+                .filter(r => r.partner_id === selDriver.id || r.id === selDriver.id)
+                .map(r => r.id);
+            return settlements.filter(s => linkedIds.includes(s.repartidor_id));
+        }
+        return settlements.filter(s => s.repartidor_id === repFilter);
+    };     const handleGenerateMessage = () => {
         if (selectedSettleIds.length === 0) return;
         
         const selectedData = settlements.filter(s => selectedSettleIds.includes(s.id));
-        const firstRep = selectedData[0]?.repartidores?.nombre || 'Repartidor';
+        const selDriver = repartidores.find(r => r.id === repFilter);
+        const isPartnerSelected = selDriver && selDriver.es_partner;
+        const targetName = isPartnerSelected ? selDriver.nombre : (selectedData[0]?.repartidores?.nombre || 'Repartidor');
         
-        let msg = `Hola ${firstRep}, te envío la liquidación de tus pedidos de hoy:\n\n`;
+        let msg = `Hola ${targetName}, te envío la liquidación de tus pedidos de hoy:\n\n`;
         let totalTransferir = 0;
         
         selectedData.forEach(s => {
@@ -276,7 +290,11 @@ const AdminRepartidores = () => {
             if (isCash) note = ' (Efectivo - Ya pagado)';
             else if (isProcessed) note = ' (Ya saldado)';
 
-            msg += `- #${s.id.substring(0, 8)} (${new Date(s.created_at).toLocaleDateString()}): $${amount.toLocaleString('es-AR')}${note}\n`;
+            const driverSuffix = isPartnerSelected 
+                ? ` repartidor ${s.repartidores?.nombre || s.repartidor_id || 'N/A'}` 
+                : '';
+
+            msg += `- #${s.id.substring(0, 8)} (${new Date(s.created_at).toLocaleDateString()}): $${amount.toLocaleString('es-AR')}${note}${driverSuffix}\n`;
             
             if (!isProcessed && !isCash) {
                 totalTransferir += amount;
@@ -703,14 +721,30 @@ _Este es un mensaje de difusión. No responder_`;
                                         className="filter-select" 
                                         value={repFilter} 
                                         onChange={(e) => {
-                                            setRepFilter(e.target.value);
-                                            setSelectedSettleIds([]);
+                                            const val = e.target.value;
+                                            setRepFilter(val);
+                                            if (val === 'Todos') {
+                                                setSelectedSettleIds([]);
+                                            } else {
+                                                const selDriver = repartidores.find(r => r.id === val);
+                                                if (selDriver && selDriver.es_partner) {
+                                                    const linkedIds = repartidores
+                                                        .filter(r => r.partner_id === selDriver.id || r.id === selDriver.id)
+                                                        .map(r => r.id);
+                                                    const partnerSettlements = settlements.filter(s => linkedIds.includes(s.repartidor_id));
+                                                    setSelectedSettleIds(partnerSettlements.map(s => s.id));
+                                                } else {
+                                                    setSelectedSettleIds([]);
+                                                }
+                                            }
                                         }}
                                         style={{ padding: '6px', borderRadius: '4px', border: '1px solid #e2e8f0' }}
                                     >
                                         <option value="Todos">Todos los repartidores</option>
-                                        {repartidores.filter(r => r.admin_status === 'Aceptado').map(r => (
-                                            <option key={r.id} value={r.id}>{r.nombre}</option>
+                                        {repartidores.filter(r => r.admin_status === 'Aceptado' || r.es_partner).map(r => (
+                                            <option key={r.id} value={r.id}>
+                                                {r.nombre}{r.es_partner ? ' (Partner Logístico)' : ''}
+                                            </option>
                                         ))}
                                     </select>
                                     <button className="btn btn-sm btn-primary" onClick={loadSettlements} disabled={settlementsLoading}>
@@ -750,8 +784,8 @@ _Este es un mensaje de difusión. No responder_`;
                                         <th style={{ width: '40px' }}>
                                             <input 
                                                 type="checkbox" 
-                                                checked={selectedSettleIds.length > 0 && selectedSettleIds.length === settlements.filter(s => (repFilter === 'Todos' || s.repartidor_id === repFilter)).length}
-                                                onChange={() => handleSelectAll(settlements.filter(s => repFilter === 'Todos' || s.repartidor_id === repFilter))}
+                                                checked={selectedSettleIds.length > 0 && selectedSettleIds.length === getFilteredSettlements().length}
+                                                onChange={() => handleSelectAll(getFilteredSettlements())}
                                             />
                                         </th>
                                         <th>Fecha</th>
@@ -763,9 +797,7 @@ _Este es un mensaje de difusión. No responder_`;
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {settlements
-                                        .filter(s => repFilter === 'Todos' || s.repartidor_id === repFilter)
-                                        .map(settle => (
+                                    {getFilteredSettlements().map(settle => (
                                         <tr key={settle.id} className={selectedSettleIds.includes(settle.id) ? 'selected-row' : ''}>
                                             <td>
                                                 <input 
@@ -807,14 +839,13 @@ _Este es un mensaje de difusión. No responder_`;
                                     <tr>
                                         <td colSpan="4">TOTAL SELECCIONADO</td>
                                         <td style={{ textAlign: 'right', color: '#10b981' }}>
-                                            ${settlements
-                                                .filter(s => repFilter === 'Todos' || s.repartidor_id === repFilter)
+                                            ${getFilteredSettlements()
                                                 .reduce((sum, s) => sum + Number(s.precio_envio || 0), 0)
                                                 .toLocaleString('es-AR')}
                                         </td>
                                         <td colSpan="2" style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                            Pendiente: ${settlements
-                                                .filter(s => (repFilter === 'Todos' || s.repartidor_id === repFilter) && !s.cobro_repartidor_procesado)
+                                            Pendiente: ${getFilteredSettlements()
+                                                .filter(s => !s.cobro_repartidor_procesado)
                                                 .reduce((sum, s) => sum + Number(s.precio_envio || 0), 0)
                                                 .toLocaleString('es-AR')}
                                         </td>
@@ -1119,8 +1150,10 @@ _Este es un mensaje de difusión. No responder_`;
                                     onChange={(e) => setNewPayment({ ...newPayment, repartidor_id: e.target.value })}
                                 >
                                     <option value="">Seleccionar...</option>
-                                    {repartidores.filter(r => r.admin_status === 'Aceptado').map(r => (
-                                        <option key={r.id} value={r.id}>{r.nombre}</option>
+                                    {repartidores.filter(r => r.admin_status === 'Aceptado' || r.es_partner).map(r => (
+                                        <option key={r.id} value={r.id}>
+                                            {r.nombre}{r.es_partner ? ' (Partner Logístico)' : ''}
+                                        </option>
                                     ))}
                                 </select>
                             </div>

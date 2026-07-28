@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,23 @@ const AdminEmails = () => {
     const [buttonText, setButtonText] = useState('');
     const [buttonUrl, setButtonUrl] = useState('');
     const [sending, setSending] = useState(false);
+    const [cities, setCities] = useState([]);
+    const [selectedCity, setSelectedCity] = useState('');
+
+    useEffect(() => {
+        const loadCities = async () => {
+            try {
+                const data = await api.getCiudadesConfig();
+                setCities(data || []);
+                if (data && data.length > 0) {
+                    setSelectedCity(data[0].ciudad);
+                }
+            } catch (err) {
+                console.error('Error fetching cities:', err);
+            }
+        };
+        loadCities();
+    }, []);
 
     const handleSend = async (e) => {
         e.preventDefault();
@@ -25,22 +42,22 @@ const AdminEmails = () => {
             const htmlBody = `
                 <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
                     <div style="text-align: center; margin-bottom: 30px;">
-                        <img src="https://pub-9ccf233ac6f348aebf32f1c18a6e9622.r2.dev/wepi-logo.png" alt="Wepi" style="width: 120px; height: auto;">
+                        <img src="https://i.postimg.cc/wjN5JF7h/wepi-(1).png" alt="Wepi" style="width: 120px; height: auto;">
                     </div>
-                    <div style="background-color: #6366f1; padding: 2px; border-radius: 4px; margin-bottom: 30px;"></div>
+                    <div style="background-color: #d32f2f; padding: 2px; border-radius: 4px; margin-bottom: 30px;"></div>
                     <h1 style="color: #1e293b; font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 20px;">${subject}</h1>
                     <div style="font-size: 16px; color: #475569; line-height: 1.8; margin-bottom: 40px; white-space: pre-wrap;">
 ${message}
                     </div>
                     ${buttonText && buttonUrl ? `
                     <div style="text-align: center; margin-bottom: 40px;">
-                        <a href="${buttonUrl}" style="display: inline-block; padding: 14px 28px; background-color: #6366f1; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                        <a href="${buttonUrl}" style="display: inline-block; padding: 14px 28px; background-color: #d32f2f; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
                             ${buttonText}
                         </a>
                     </div>
                     ` : ''}
                     <div style="background-color: #f8fafc; padding: 30px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
-                        <h3 style="color: #6366f1; margin-bottom: 10px; font-size: 18px;">WEPI — Plataforma de pedidos y delivery</h3>
+                        <h3 style="color: #d32f2f; margin-bottom: 10px; font-size: 18px;">WEPI — Plataforma de pedidos y delivery</h3>
                     </div>
                     <div style="text-align: center; margin-top: 40px; color: #94a3b8; font-size: 12px;">
                         <p>© ${new Date().getFullYear()} WEPI. Todos los derechos reservados.</p>
@@ -63,7 +80,8 @@ ${message}
                 target, 
                 manualEmails: manualList, 
                 subject, 
-                htmlBody 
+                htmlBody,
+                ciudad: target === 'usuarios_ciudad' ? selectedCity : null
             });
             if (res.success) {
                 toast.success(`Emails enviados a ${res.count} destinatarios!`, { id: loading });
@@ -92,12 +110,28 @@ ${message}
                     <label>Enviar a:</label>
                     <select value={target} onChange={(e) => setTarget(e.target.value)} className="form-control">
                         <option value="usuarios">Todos los Usuarios</option>
+                        <option value="usuarios_ciudad">Usuarios por Ciudad</option>
                         <option value="locales">Todos los Locales</option>
                         <option value="repartidores">Todos los Repartidores</option>
                         <option value="lanzamiento">Hoja de Lanzamiento (Supabase)</option>
                         <option value="manual">Manual (Ingresar emails)</option>
                     </select>
                 </div>
+
+                {target === 'usuarios_ciudad' && (
+                    <div className="form-group">
+                        <label>Seleccionar Ciudad:</label>
+                        <select 
+                            value={selectedCity} 
+                            onChange={(e) => setSelectedCity(e.target.value)} 
+                            className="form-control"
+                        >
+                            {cities.map(c => (
+                                <option key={c.id || c.ciudad} value={c.ciudad}>{c.ciudad}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
 
                 {target === 'manual' && (
                     <div className="form-group">
@@ -181,8 +215,17 @@ ${message}
                 }
                 .admin-form .form-control:focus {
                     outline: none;
-                    border-color: #6366f1;
+                    border-color: #d32f2f;
                     background: rgba(15, 23, 42, 0.7);
+                }
+                .admin-form .btn-primary {
+                    background: #d32f2f !important;
+                    border-color: #d32f2f !important;
+                    color: white;
+                }
+                .admin-form .btn-primary:hover {
+                    background: #b71c1c !important;
+                    border-color: #b71c1c !important;
                 }
             `}</style>
         </div>
