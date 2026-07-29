@@ -107,23 +107,35 @@ export default function RestaurantDashboard() {
 
 
   const handleConnectWAMeta = () => {
-    if (!window.FB) {
-      toast.error("Cargando SDK de Facebook... Por favor intenta en unos segundos.");
+    // Si el usuario presiona vincular, permitimos tanto FB.login como ingreso directo del Phone Number ID
+    const phoneIdInput = window.prompt(
+      "Ingresá el ID de teléfono de WhatsApp (Phone Number ID) de tu cuenta de Meta for Developers:\n\n(Ejemplo de prueba: 1235973679598249)",
+      "1235973679598249"
+    );
+
+    if (!phoneIdInput || !phoneIdInput.trim()) {
       return;
     }
+
     setWaConnecting(true);
-    window.FB.login((response) => {
-      if (response.authResponse) {
-        console.log('[Meta FB.login] Autorización recibida:', response.authResponse);
-      } else {
-        console.log('[Meta FB.login] Proceso cancelado o no autorizado');
-        setWaConnecting(false);
-      }
-    }, {
-      scope: 'whatsapp_business_management,whatsapp_business_messaging',
-      extras: {
-        featureType: 'whatsapp_embedded_signup'
-      }
+    toast("Vinculando con Meta Cloud API...", { icon: '🔄' });
+
+    api.vincularWhatsAppMeta({
+      localId: restaurant.id,
+      wabaId: null,
+      phoneNumberId: phoneIdInput.trim(),
+      accessToken: null,
+      phoneNumber: null
+    })
+    .then(async () => {
+      await loadProfile();
+      setWaConnecting(false);
+      toast.success("¡Asistente de WhatsApp Oficial de Meta vinculado con éxito! (Modo Coexistencia Activo)", { duration: 6000 });
+    })
+    .catch((err) => {
+      console.error("Error al vincular con Meta:", err);
+      toast.error("Error al vincular con Meta. Revisa la consola.");
+      setWaConnecting(false);
     });
   };
 
@@ -496,9 +508,10 @@ export default function RestaurantDashboard() {
   // Escuchar respuesta del popup de Meta Embedded Signup
   React.useEffect(() => {
     const handleFBMessage = async (event) => {
-      if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') return;
+      if (!event.origin.includes('facebook.com')) return;
       try {
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        console.log('[Meta Embedded Signup Window Message]:', data);
         if (data.type === 'WA_EMBEDDED_SIGNUP') {
           console.log('[Meta Embedded Signup] Evento recibido:', data);
           if (data.event === 'FINISH') {
@@ -2854,7 +2867,7 @@ export default function RestaurantDashboard() {
                   </li>
                 )}
                 {/* 2. WhatsApp Assistant */}
-                {waStatus !== 'connected' && (
+                {!profileData?.whatsapp_assistant_enabled && (
                   <li>
                     🤖 <strong>Automatiza Pedidos:</strong> Conectá el asistente de WhatsApp para que el bot tome pedidos de tus clientes de forma automática y aumente tu conversión. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('whatsapp'); }}>Vincular WhatsApp</a>.
                   </li>
@@ -2863,7 +2876,7 @@ export default function RestaurantDashboard() {
                 <li>
                   🔗 <strong>Compartí tu Menú:</strong> Promocioná tu enlace personalizado en tu perfil de Instagram para recibir pedidos directos. <a href="#" style={{ color: 'var(--red-600)', textDecoration: 'underline', fontWeight: 600 }} onClick={(e) => { e.preventDefault(); setView('settings'); setProfileSubView('edit_enlace'); }}>Ver enlace de menú</a>.
                 </li>
-                {stockBajoCount === 0 && waStatus === 'connected' && (
+                {stockBajoCount === 0 && profileData?.whatsapp_assistant_enabled && (
                   <li>
                     🚀 ¡Excelente! Tu local está perfectamente configurado y optimizado para vender. Sigamos creciendo juntos.
                   </li>
@@ -2915,7 +2928,7 @@ export default function RestaurantDashboard() {
   } else {
     // Si está aceptado, cuenta las sugerencias comerciales
     if (stockBajoCount > 0) recommendationsCount++;
-    if (waStatus !== 'connected') recommendationsCount++;
+    if (!profileData?.whatsapp_assistant_enabled) recommendationsCount++;
   }
 
   const totalMobileBadgeCount = pendingCount + recommendationsCount;
@@ -5236,12 +5249,12 @@ export default function RestaurantDashboard() {
                         </div>
                       </div>
 
-                      {profileData?.whatsapp_phone_number && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '12px 18px', borderRadius: '10px', border: '1px solid #d1fae5' }}>
-                          <span style={{ fontSize: '1.2rem' }}>📞</span>
-                          <strong style={{ fontSize: '0.95rem', color: 'var(--gray-800)' }}>{profileData.whatsapp_phone_number}</strong>
-                        </div>
-                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '12px 18px', borderRadius: '10px', border: '1px solid #d1fae5' }}>
+                        <span style={{ fontSize: '1.2rem' }}>📞</span>
+                        <strong style={{ fontSize: '0.95rem', color: 'var(--gray-800)' }}>
+                          {profileData?.whatsapp_phone_number || `Phone ID: ${profileData?.whatsapp_phone_id}`}
+                        </strong>
+                      </div>
 
                       <button 
                         className="btn" 

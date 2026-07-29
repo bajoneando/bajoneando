@@ -6741,18 +6741,40 @@ export async function calculateDeliveryFeeByCity(citySlug, destination) {
 }
 
 export async function vincularWhatsAppMeta({ localId, wabaId, phoneNumberId, accessToken, phoneNumber }) {
-  const { data, error } = await supabase
+  const updatePayload = {
+    whatsapp_assistant_enabled: true,
+    whatsapp_phone_id: phoneNumberId
+  };
+  if (wabaId) updatePayload.whatsapp_waba_id = wabaId;
+  if (accessToken) updatePayload.whatsapp_access_token = accessToken;
+  if (phoneNumber) updatePayload.whatsapp_phone_number = phoneNumber;
+
+  let { data, error } = await supabase
     .from('locales')
-    .update({
-      whatsapp_assistant_enabled: true,
-      whatsapp_waba_id: wabaId,
-      whatsapp_phone_id: phoneNumberId,
-      whatsapp_access_token: accessToken || null,
-      whatsapp_phone_number: phoneNumber || null
-    })
+    .update(updatePayload)
     .eq('id', localId)
     .select()
     .single();
+
+  // Si arrojó error de columna no encontrada (PGRST204), reintentar con las columnas básicas
+  if (error && error.code === 'PGRST204') {
+    console.warn("Columna no encontrada en Supabase. Reintentando actualización básica...");
+    const basicPayload = {
+      whatsapp_assistant_enabled: true,
+      whatsapp_phone_id: phoneNumberId
+    };
+    if (phoneNumber) basicPayload.whatsapp_phone_number = phoneNumber;
+
+    const res = await supabase
+      .from('locales')
+      .update(basicPayload)
+      .eq('id', localId)
+      .select()
+      .single();
+    
+    data = res.data;
+    error = res.error;
+  }
 
   if (error) {
     console.error("Error al guardar credenciales de WhatsApp Meta:", error);
@@ -6762,13 +6784,11 @@ export async function vincularWhatsAppMeta({ localId, wabaId, phoneNumberId, acc
 }
 
 export async function desvincularWhatsAppMeta(localId) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('locales')
     .update({
       whatsapp_assistant_enabled: false,
-      whatsapp_waba_id: null,
       whatsapp_phone_id: null,
-      whatsapp_access_token: null,
       whatsapp_phone_number: null
     })
     .eq('id', localId)
