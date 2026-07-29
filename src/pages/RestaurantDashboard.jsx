@@ -104,43 +104,7 @@ export default function RestaurantDashboard() {
     };
   }, []);
 
-  // Escuchar respuesta del popup de Meta Embedded Signup
-  React.useEffect(() => {
-    const handleFBMessage = async (event) => {
-      if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') return;
-      try {
-        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
-        if (data.type === 'WA_EMBEDDED_SIGNUP') {
-          console.log('[Meta Embedded Signup] Evento recibido:', data);
-          if (data.event === 'FINISH') {
-            const { phone_number_id, waba_id } = data.data || {};
-            setWaConnecting(true);
-            toast("Vinculando WhatsApp Business oficial...", { icon: '🔄' });
-            
-            await api.vincularWhatsAppMeta({
-              localId: restaurant.id,
-              wabaId: waba_id || null,
-              phoneNumberId: phone_number_id || null,
-              accessToken: null,
-              phoneNumber: null
-            });
 
-            await loadProfile();
-            setWaConnecting(false);
-            toast.success("¡WhatsApp Business Oficial vinculado con éxito! (Modo Coexistencia Activo)", { duration: 6000 });
-          } else if (data.event === 'CANCEL') {
-            toast.error("Vinculación de WhatsApp cancelada");
-            setWaConnecting(false);
-          }
-        }
-      } catch (e) {
-        // Ignorar mensajes de otras fuentes
-      }
-    };
-
-    window.addEventListener('message', handleFBMessage);
-    return () => window.removeEventListener('message', handleFBMessage);
-  }, [restaurant?.id, loadProfile]);
 
   const handleConnectWAMeta = () => {
     if (!window.FB) {
@@ -528,6 +492,44 @@ export default function RestaurantDashboard() {
       }
     } catch {}
   }, [restaurant]);
+
+  // Escuchar respuesta del popup de Meta Embedded Signup
+  React.useEffect(() => {
+    const handleFBMessage = async (event) => {
+      if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') return;
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data.type === 'WA_EMBEDDED_SIGNUP') {
+          console.log('[Meta Embedded Signup] Evento recibido:', data);
+          if (data.event === 'FINISH') {
+            const { phone_number_id, waba_id } = data.data || {};
+            setWaConnecting(true);
+            toast("Vinculando WhatsApp Business oficial...", { icon: '🔄' });
+            
+            await api.vincularWhatsAppMeta({
+              localId: restaurant.id,
+              wabaId: waba_id || null,
+              phoneNumberId: phone_number_id || null,
+              accessToken: null,
+              phoneNumber: null
+            });
+
+            await loadProfile();
+            setWaConnecting(false);
+            toast.success("¡WhatsApp Business Oficial vinculado con éxito! (Modo Coexistencia Activo)", { duration: 6000 });
+          } else if (data.event === 'CANCEL') {
+            toast.error("Vinculación de WhatsApp cancelada");
+            setWaConnecting(false);
+          }
+        }
+      } catch (e) {
+        // Ignorar mensajes de otras fuentes
+      }
+    };
+
+    window.addEventListener('message', handleFBMessage);
+    return () => window.removeEventListener('message', handleFBMessage);
+  }, [restaurant?.id, loadProfile]);
 
   React.useEffect(() => {
     if (profileData?.slug) {
