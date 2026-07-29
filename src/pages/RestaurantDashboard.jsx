@@ -79,7 +79,8 @@ export default function RestaurantDashboard() {
     profileDataRef.current = profileData;
   }, [profileData]);
 
-  const [waStatus, setWaStatus] = React.useState('disconnected'); // 'disconnected', 'loading', 'qr_ready', 'connected'
+  const [waStatus, setWaStatus] = React.useState('disconnected'); // 'disconnected', 'loading', 'qr_ready', 'connected', 'error'
+  const [waErrorMessage, setWaErrorMessage] = React.useState('');
   const [waQrCode, setWaQrCode] = React.useState('');
   const [waPhoneNumber, setWaPhoneNumber] = React.useState('');
 
@@ -530,6 +531,7 @@ export default function RestaurantDashboard() {
         setWaStatus(data.status);
         setWaQrCode(data.qr || '');
         setWaPhoneNumber(data.phoneNumber || '');
+        if (data.errorMessage) setWaErrorMessage(data.errorMessage);
 
         // Si ya se vinculó en el backend, actualizar estado local recargando el perfil
         if (data.status === 'connected' && profileData && !profileData.whatsapp_assistant_enabled) {
@@ -544,7 +546,7 @@ export default function RestaurantDashboard() {
 
     // Consultar estado cada 3 segundos si no está conectado aún
     const interval = setInterval(() => {
-      if (waStatus !== 'connected') {
+      if (waStatus !== 'connected' && waStatus !== 'error') {
         checkStatus();
       }
     }, 3000);
@@ -5206,6 +5208,22 @@ export default function RestaurantDashboard() {
                       <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)', fontWeight: 500 }}>
                         {waStatus === 'connecting' ? 'Iniciando conexión con WhatsApp...' : 'Generando código QR...'}
                       </span>
+                    </div>
+                  )}
+
+                  {waStatus === 'error' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '16px', background: '#fef2f2', borderRadius: '12px', border: '1px solid #fecaca' }}>
+                      <span style={{ fontSize: '2rem' }}>⚠️</span>
+                      <p style={{ fontSize: '0.85rem', color: '#991b1b', textAlign: 'center', margin: 0, lineHeight: '1.5', maxWidth: '300px', fontWeight: 500 }}>
+                        {waErrorMessage || 'No se pudo conectar a WhatsApp. Intenta nuevamente más tarde.'}
+                      </p>
+                      <button
+                        className="btn"
+                        style={{ background: 'var(--red-600)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}
+                        onClick={handleConnectWA}
+                      >
+                        🔄 Reintentar Conexión
+                      </button>
                     </div>
                   )}
 

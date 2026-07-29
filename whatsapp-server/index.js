@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestWaWebVersion } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const QRCode = require('qrcode');
 const path = require('path');
@@ -40,10 +40,12 @@ if (!fs.existsSync(authFolder)) {
 // CONTROLADOR DE SESIONES WHATSAPP (BAILEYS)
 // ─────────────────────────────────────────────────────────────────
 
-async function initSession(localId) {
+const MAX_RETRIES = 5; // Máximo de reintentos antes de detenerse
+
+async function initSession(localId, retryCount = 0) {
   if (sessions.has(localId)) {
     const session = sessions.get(localId);
-    if (session.status !== 'disconnected') {
+    if (session.status !== 'disconnected' && session.status !== 'error') {
       return session;
     }
   }
@@ -53,11 +55,12 @@ async function initSession(localId) {
     sock: null,
     status: 'loading',
     qr: null,
-    phoneNumber: null
+    phoneNumber: null,
+    errorMessage: null
   };
   sessions.set(localId, sessionObj);
 
-  console.log(`[Session Manager] Inicializando sesión para localId: ${localId}`);
+  console.log(`[Session Manager] Inicializando sesión para localId: ${localId} (intento ${retryCount + 1}/${MAX_RETRIES})`);
   const localAuthPath = path.join(authFolder, localId);
   
   let state, saveCreds;
@@ -70,12 +73,30 @@ async function initSession(localId) {
     sessions.delete(localId);
     return null;
   }
+
+  // Obtener la versión más reciente de WhatsApp Web con timeout para evitar bloqueos
+  let version;
+  try {
+    const versionResult = await Promise.race([
+      fetchLatestWaWebVersion({}),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+    ]);
+    version = versionResult.version;
+    console.log(`[Session Manager] Usando versión de WhatsApp Web: ${version.join('.')}`);
+  } catch (err) {
+    console.warn('[Session Manager] No se pudo obtener la versión en tiempo real, usando la versión por defecto de Baileys.');
+    version = undefined; // Baileys usará su versión interna por defecto
+  }
   
-  const sock = makeWASocket({
+  const socketConfig = {
     auth: state,
     logger: pino({ level: 'silent' }), // Evita spam de logs en la consola
-    printQRInTerminal: false
-  });
+    printQRInTerminal: false,
+    browser: ['Wepi', 'Chrome', '127.0.0.1'], // Identidad de navegador para evitar rechazo 405
+  };
+  if (version) socketConfig.version = version;
+
+  const sock = makeWASocket(socketConfig);
 
   sessionObj.sock = sock;
 
@@ -88,6 +109,7 @@ async function initSession(localId) {
         const qrImage = await QRCode.toDataURL(qr);
         sessionObj.status = 'qr_ready';
         sessionObj.qr = qrImage;
+        sessionObj.errorMessage = null;
         console.log(`[Session Manager] QR listo para el local ${localId}`);
       } catch (err) {
         console.error('Error al generar código QR:', err);
@@ -95,18 +117,31 @@ async function initSession(localId) {
     }
 
     if (connection === 'close') {
-      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.log(`[Session Manager] Conexión cerrada para local ${localId}. Reconectar: ${shouldReconnect}`, lastDisconnect?.error);
+      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      console.log(`[Session Manager] Conexión cerrada para local ${localId}. Código: ${statusCode}. Reconectar: ${shouldReconnect}`, lastDisconnect?.error?.message);
       
-      sessionObj.status = 'disconnected';
       sessionObj.qr = null;
 
-      if (shouldReconnect) {
-        // Intentar reconectar automáticamente si no se cerró sesión intencionalmente
-        setTimeout(() => initSession(localId), 5000);
+      if (shouldReconnect && retryCount < MAX_RETRIES) {
+        // Intentar reconectar con backoff exponencial (5s, 10s, 20s, 40s, 80s)
+        const delay = 5000 * Math.pow(2, retryCount);
+        console.log(`[Session Manager] Reintentando en ${delay / 1000}s... (intento ${retryCount + 1}/${MAX_RETRIES})`);
+        sessionObj.status = 'loading';
+        setTimeout(() => initSession(localId, retryCount + 1), delay);
+      } else if (shouldReconnect) {
+        // Se agotaron los reintentos
+        console.error(`[Session Manager] Se agotaron los ${MAX_RETRIES} reintentos para local ${localId}. Error 405: WhatsApp rechazó la conexión.`);
+        sessionObj.status = 'error';
+        sessionObj.errorMessage = 'No se pudo conectar a WhatsApp después de varios intentos. Intenta nuevamente más tarde.';
+        // Limpiar credenciales corruptas para la siguiente vez
+        try {
+          fs.rmSync(localAuthPath, { recursive: true, force: true });
+        } catch (e) { /* ignorar */ }
       } else {
         // Si el usuario cerró sesión en el celular, borramos la carpeta de credenciales
         console.log(`[Session Manager] Sesión cerrada permanentemente por el usuario. Limpiando datos.`);
+        sessionObj.status = 'disconnected';
         sessions.delete(localId);
         try {
           fs.rmSync(localAuthPath, { recursive: true, force: true });
@@ -341,7 +376,8 @@ app.get('/api/status', async (req, res) => {
   res.json({
     status: session.status,
     qr: session.qr,
-    phoneNumber: session.phoneNumber
+    phoneNumber: session.phoneNumber,
+    errorMessage: session.errorMessage || null
   });
 });
 
