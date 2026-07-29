@@ -45,11 +45,19 @@ Deno.serve(async (req) => {
 
       const entry = body.entry?.[0];
       const changes = entry?.changes?.[0];
+      const field = changes?.field;
       const value = changes?.value;
+
+      // MODO COEXISTENCIA: Ignorar "echoes" (mensajes que el comerciante envía a mano desde su celular)
+      if (field === 'smb_message_echoes' || value?.statuses || value?.smb_message_echoes || value?.message_echoes) {
+        console.log("Evento de coexistencia / respuesta manual detectado (echo). Guardando silencio.");
+        return new Response("EVENT_RECEIVED", { status: 200 });
+      }
+
       const message = value?.messages?.[0];
       const metadata = value?.metadata;
 
-      // Asegurarse de que sea una notificación de mensaje entrante (no una actualización de estado de entrega)
+      // Asegurarse de que sea una notificación de mensaje entrante
       if (message) {
         const from = message.from; // Celular del cliente
         const phoneId = metadata?.phone_number_id; // ID del número del comercio en Meta
@@ -64,24 +72,23 @@ Deno.serve(async (req) => {
         try {
           const { data, error } = await supabase
             .from('locales')
-            .select('id, nombre, ciudad, slug, whatsapp_phone_id')
+            .select('id, nombre, ciudad, slug, whatsapp_phone_id, whatsapp_access_token')
             .eq('whatsapp_phone_id', phoneId)
             .maybeSingle();
 
           if (!error && data) {
             local = data;
           }
-        } catch (e) {
-          console.warn("La columna whatsapp_phone_id no existe o arrojó un error:", e.message);
+        } catch (e: any) {
+          console.warn("Error consultando local por whatsapp_phone_id:", e.message);
         }
 
-        // B. FALLBACK DE PRUEBAS: Si no se encuentra el comercio por ID de WhatsApp (o la columna no existe),
-        // vinculamos por defecto a "Pepes Take Away" (slug: pepes-takeaway) para habilitar el testing inmediato.
+        // B. FALLBACK DE PRUEBAS
         if (!local) {
-          console.log("Usando local de pruebas por defecto: Pepes Take Away.");
+          console.log("Local no encontrado por phoneId. Buscando local por defecto.");
           const { data: defaultLocal } = await supabase
             .from('locales')
-            .select('id, nombre, ciudad, slug')
+            .select('id, nombre, ciudad, slug, whatsapp_access_token')
             .eq('id', 'LOC-1774567661603')
             .single();
           local = defaultLocal;
@@ -91,6 +98,8 @@ Deno.serve(async (req) => {
           console.error("No se pudo obtener ningún local de la base de datos.");
           return new Response("Local no encontrado", { status: 200 });
         }
+
+        const accessToken = local.whatsapp_access_token || Deno.env.get("META_ACCESS_TOKEN");
 
         // C. Detectar el tipo de interacción
         const messageType = message.type;
@@ -104,24 +113,24 @@ Deno.serve(async (req) => {
             console.log(`Botón presionado: ${buttonId}`);
             
             if (buttonId === "buscar_categoria") {
-              await enviarListaCategorias(from, phoneId, local, supabase);
+              await enviarListaCategorias(from, phoneId, local, supabase, accessToken);
             } else if (buttonId === "ver_menu_completo") {
-              await enviarLinkMenuCompleto(from, phoneId, local);
+              await enviarLinkMenuCompleto(from, phoneId, local, supabase, accessToken);
             }
           } else if (interactiveType === "list_reply") {
             const selectionId = message.interactive.list_reply.id;
             console.log(`Opción de lista seleccionada: ${selectionId}`);
             
             if (selectionId === "cat_ver_todo") {
-              await enviarLinkMenuCompleto(from, phoneId, local);
+              await enviarLinkMenuCompleto(from, phoneId, local, supabase, accessToken);
             } else {
               const categoria = selectionId.replace("cat_", "");
-              await enviarLinkCategoria(from, phoneId, local, categoria);
+              await enviarLinkCategoria(from, phoneId, local, categoria, supabase, accessToken);
             }
           }
         } else {
-          // Cualquier texto regular (ej: "Hola", "Menú", etc.) envía el mensaje de bienvenida con botones
-          await enviarMensajeBienvenida(from, phoneId, local.nombre);
+          // Cualquier texto regular envía mensaje de bienvenida con botones
+          await enviarMensajeBienvenida(from, phoneId, local.nombre, local.id, supabase, accessToken);
         }
       }
 
@@ -129,7 +138,7 @@ Deno.serve(async (req) => {
         status: 200,
         headers: { "Content-Type": "application/json" }
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error al procesar el webhook de WhatsApp:", err);
       return new Response(JSON.stringify({ error: err.message }), { 
         status: 500,
@@ -145,11 +154,10 @@ Deno.serve(async (req) => {
 // FUNCIONES AUXILIARES PARA ENVIAR LLAMADAS A LA API DE META
 // ─────────────────────────────────────────────────────────────────
 
-async function callMetaAPI(phoneId: string, payload: any) {
-  // META_ACCESS_TOKEN configurada en las variables de entorno de Supabase
-  const token = Deno.env.get("META_ACCESS_TOKEN");
+async function callMetaAPI(phoneId: string, payload: any, accessToken?: string, localId?: string, supabase?: any) {
+  const token = accessToken || Deno.env.get("META_ACCESS_TOKEN");
   if (!token) {
-    console.error("META_ACCESS_TOKEN no está configurada en las variables de entorno de Supabase.");
+    console.error("No hay Token de Acceso de Meta disponible.");
     return;
   }
 
@@ -164,12 +172,16 @@ async function callMetaAPI(phoneId: string, payload: any) {
     });
     const data = await res.json();
     console.log("Respuesta de la API de Meta:", JSON.stringify(data));
+
+    if (localId && supabase && data?.messages?.[0]?.id) {
+      await supabase.rpc('increment_whatsapp_messages', { local_id: localId });
+    }
   } catch (err) {
     console.error("Error llamando a la API de Meta:", err);
   }
 }
 
-async function enviarMensajeBienvenida(to: string, phoneId: string, nombreComercio: string) {
+async function enviarMensajeBienvenida(to: string, phoneId: string, nombreComercio: string, localId?: string, supabase?: any, accessToken?: string) {
   const payload = {
     messaging_product: "whatsapp",
     recipient_type: "individual",
@@ -201,11 +213,10 @@ async function enviarMensajeBienvenida(to: string, phoneId: string, nombreComerc
     }
   };
 
-  await callMetaAPI(phoneId, payload);
+  await callMetaAPI(phoneId, payload, accessToken, localId, supabase);
 }
 
-async function enviarListaCategorias(to: string, phoneId: string, local: any, supabase: any) {
-  // 1. Consultar el menú del comercio
+async function enviarListaCategorias(to: string, phoneId: string, local: any, supabase: any, accessToken?: string) {
   const { data: menuItems, error } = await supabase
     .from('menu')
     .select('categoria')
@@ -214,11 +225,10 @@ async function enviarListaCategorias(to: string, phoneId: string, local: any, su
 
   if (error || !menuItems || menuItems.length === 0) {
     console.log("No se encontraron categorías activas. Enviando al menú completo.");
-    await enviarLinkMenuCompleto(to, phoneId, local);
+    await enviarLinkMenuCompleto(to, phoneId, local, supabase, accessToken);
     return;
   }
 
-  // 2. Agrupar y obtener las 4 categorías con más productos
   const counts: Record<string, number> = {};
   menuItems.forEach((item: any) => {
     if (item.categoria) {
@@ -231,14 +241,13 @@ async function enviarListaCategorias(to: string, phoneId: string, local: any, su
     .slice(0, 4);
 
   if (categoriasPrincipales.length === 0) {
-    await enviarLinkMenuCompleto(to, phoneId, local);
+    await enviarLinkMenuCompleto(to, phoneId, local, supabase, accessToken);
     return;
   }
 
-  // 3. Crear las filas de la lista de WhatsApp
   const rows = categoriasPrincipales.map(cat => ({
     id: `cat_${cat.toLowerCase().replace(/\s+/g, '_')}`,
-    title: cat.substring(0, 24), // Límite de Meta: 24 caracteres
+    title: cat.substring(0, 24),
     description: `Ver opciones de ${cat.substring(0, 50)}`
   }));
 
@@ -274,11 +283,10 @@ async function enviarListaCategorias(to: string, phoneId: string, local: any, su
     }
   };
 
-  await callMetaAPI(phoneId, payload);
+  await callMetaAPI(phoneId, payload, accessToken, local.id, supabase);
 }
 
-async function enviarLinkCategoria(to: string, phoneId: string, local: any, categoria: string) {
-  // Asegurarnos de usar slugs válidos de la ciudad
+async function enviarLinkCategoria(to: string, phoneId: string, local: any, categoria: string, supabase: any, accessToken?: string) {
   const ciudadSlug = local.ciudad ? local.ciudad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-') : 'obera';
   const localSlug = local.slug || 'local';
   
@@ -295,10 +303,10 @@ async function enviarLinkCategoria(to: string, phoneId: string, local: any, cate
     }
   };
 
-  await callMetaAPI(phoneId, payload);
+  await callMetaAPI(phoneId, payload, accessToken, local.id, supabase);
 }
 
-async function enviarLinkMenuCompleto(to: string, phoneId: string, local: any) {
+async function enviarLinkMenuCompleto(to: string, phoneId: string, local: any, supabase: any, accessToken?: string) {
   const ciudadSlug = local.ciudad ? local.ciudad.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-') : 'obera';
   const localSlug = local.slug || 'local';
 
@@ -315,5 +323,5 @@ async function enviarLinkMenuCompleto(to: string, phoneId: string, local: any) {
     }
   };
 
-  await callMetaAPI(phoneId, payload);
+  await callMetaAPI(phoneId, payload, accessToken, local.id, supabase);
 }

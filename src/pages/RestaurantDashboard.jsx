@@ -79,68 +79,98 @@ export default function RestaurantDashboard() {
     profileDataRef.current = profileData;
   }, [profileData]);
 
-  const [waStatus, setWaStatus] = React.useState('disconnected'); // 'disconnected', 'loading', 'qr_ready', 'connected', 'error'
-  const [waErrorMessage, setWaErrorMessage] = React.useState('');
-  const [waQrCode, setWaQrCode] = React.useState('');
-  const [waPhoneNumber, setWaPhoneNumber] = React.useState('');
+  const [waConnecting, setWaConnecting] = React.useState(false);
 
-  const serverUrl = import.meta.env.VITE_WHATSAPP_SERVER_URL || (
-    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3001'
-      : 'https://weep-production-5455.up.railway.app'
-  );
+  // Cargar SDK de Facebook para Embedded Signup
+  React.useEffect(() => {
+    if (document.getElementById('facebook-jssdk')) return;
+    const js = document.createElement('script');
+    js.id = 'facebook-jssdk';
+    js.src = 'https://connect.facebook.net/es_LA/sdk.js';
+    js.async = true;
+    js.defer = true;
+    js.crossOrigin = 'anonymous';
+    document.body.appendChild(js);
 
-
-
-  const handleConnectWA = async () => {
-    setWaStatus('loading');
-    setWaQrCode('');
-    
-    try {
-      const res = await fetch(`${serverUrl}/api/connect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ localId: restaurant.id })
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+    window.fbAsyncInit = function() {
+      if (window.FB) {
+        window.FB.init({
+          appId: '2585469061885377',
+          cookie: true,
+          xfbml: true,
+          version: 'v20.0'
+        });
       }
-      const data = await res.json();
-      
-      setWaStatus(data.status);
-      setWaQrCode(data.qr || '');
-      toast("Iniciando conexión con WhatsApp...", { icon: 'ℹ️' });
-    } catch (e) {
-      console.error("Error al iniciar conexión con WhatsApp:", e);
-      setWaStatus('disconnected');
-      toast.error("No se pudo conectar al servidor de WhatsApp. Asegúrate de que esté iniciado.");
+    };
+  }, []);
+
+  // Escuchar respuesta del popup de Meta Embedded Signup
+  React.useEffect(() => {
+    const handleFBMessage = async (event) => {
+      if (event.origin !== 'https://www.facebook.com' && event.origin !== 'https://web.facebook.com') return;
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data.type === 'WA_EMBEDDED_SIGNUP') {
+          console.log('[Meta Embedded Signup] Evento recibido:', data);
+          if (data.event === 'FINISH') {
+            const { phone_number_id, waba_id } = data.data || {};
+            setWaConnecting(true);
+            toast("Vinculando WhatsApp Business oficial...", { icon: '🔄' });
+            
+            await api.vincularWhatsAppMeta({
+              localId: restaurant.id,
+              wabaId: waba_id || null,
+              phoneNumberId: phone_number_id || null,
+              accessToken: null,
+              phoneNumber: null
+            });
+
+            await loadProfile();
+            setWaConnecting(false);
+            toast.success("¡WhatsApp Business Oficial vinculado con éxito! (Modo Coexistencia Activo)", { duration: 6000 });
+          } else if (data.event === 'CANCEL') {
+            toast.error("Vinculación de WhatsApp cancelada");
+            setWaConnecting(false);
+          }
+        }
+      } catch (e) {
+        // Ignorar mensajes de otras fuentes
+      }
+    };
+
+    window.addEventListener('message', handleFBMessage);
+    return () => window.removeEventListener('message', handleFBMessage);
+  }, [restaurant?.id, loadProfile]);
+
+  const handleConnectWAMeta = () => {
+    if (!window.FB) {
+      toast.error("Cargando SDK de Facebook... Por favor intenta en unos segundos.");
+      return;
     }
+    setWaConnecting(true);
+    window.FB.login((response) => {
+      if (response.authResponse) {
+        console.log('[Meta FB.login] Autorización recibida:', response.authResponse);
+      } else {
+        console.log('[Meta FB.login] Proceso cancelado o no autorizado');
+        setWaConnecting(false);
+      }
+    }, {
+      scope: 'whatsapp_business_management,whatsapp_business_messaging',
+      extras: {
+        featureType: 'whatsapp_embedded_signup'
+      }
+    });
   };
 
-  const handleDisconnectWA = async () => {
-    if (!window.confirm("¿Estás seguro de que deseas desconectar el Asistente de WhatsApp?")) return;
-    
-    setWaStatus('loading');
+  const handleDisconnectWAMeta = async () => {
+    if (!window.confirm("¿Estás seguro de que deseas desconectar el Asistente de WhatsApp Oficial?")) return;
     try {
-      await fetch(`${serverUrl}/api/disconnect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ localId: restaurant.id })
-      });
-      
-      setWaStatus('disconnected');
-      setWaQrCode('');
-      setWaPhoneNumber('');
-      
-      setProfileData(prev => ({
-        ...prev,
-        whatsapp_assistant_enabled: false,
-        whatsapp_phone_number: null
-      }));
+      await api.desvincularWhatsAppMeta(restaurant.id);
+      await loadProfile();
       toast.success("Asistente de WhatsApp desconectado");
     } catch (e) {
-      toast.error("Error al desconectar");
-      setWaStatus('connected');
+      toast.error("Error al desconectar WhatsApp");
     }
   };
   const isInventory = React.useMemo(() => {
@@ -520,39 +550,7 @@ export default function RestaurantDashboard() {
     }
   }, [loadProfile]);
 
-  React.useEffect(() => {
-    if (!restaurant?.id) return;
 
-    const checkStatus = async () => {
-      try {
-        const res = await fetch(`${serverUrl}/api/status?localId=${restaurant.id}`);
-        const data = await res.json();
-        
-        setWaStatus(data.status);
-        setWaQrCode(data.qr || '');
-        setWaPhoneNumber(data.phoneNumber || '');
-        if (data.errorMessage) setWaErrorMessage(data.errorMessage);
-
-        // Si ya se vinculó en el backend, actualizar estado local recargando el perfil
-        if (data.status === 'connected' && profileData && !profileData.whatsapp_assistant_enabled) {
-          loadProfile();
-        }
-      } catch (err) {
-        // Ignorar errores silenciosos si el servidor de WhatsApp no está corriendo
-      }
-    };
-
-    checkStatus();
-
-    // Consultar estado cada 3 segundos si no está conectado aún
-    const interval = setInterval(() => {
-      if (waStatus !== 'connected' && waStatus !== 'error') {
-        checkStatus();
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [restaurant?.id, waStatus, profileData, loadProfile]);
 
   /* ─── Modo Automático ─── */
   // Deprecated: Use isLocalOpen from utils/businessHours
@@ -5174,77 +5172,45 @@ export default function RestaurantDashboard() {
                   justifyContent: 'center',
                   minHeight: '220px'
                 }}>
-                  {waStatus === 'disconnected' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <span className="badge badge-gray" style={{ marginBottom: '16px', padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
-                        🔴 Estado: Desconectado
+                  {!profileData?.whatsapp_assistant_enabled ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', maxWidth: '340px' }}>
+                      <span className="badge badge-gray" style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
+                        ⚪ Estado: No Vinculado
                       </span>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--gray-600)', textAlign: 'center', margin: 0, lineHeight: '1.4' }}>
+                        Vinculá tu <strong>WhatsApp Business Oficial</strong> con un solo clic. 
+                        Tus clientes podrán pedir desde tu catálogo digital y vos <strong>podrás seguir respondiendo desde tu celular sin interrupciones</strong>.
+                      </p>
                       <button 
-                        className="btn btn-primary" 
-                        style={{ background: 'var(--red-600)', borderColor: 'var(--red-600)', padding: '12px 24px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer' }}
-                        onClick={handleConnectWA}
+                        className="btn" 
+                        disabled={waConnecting}
+                        style={{ 
+                          background: '#1877F2', 
+                          color: 'white', 
+                          border: 'none', 
+                          padding: '12px 24px', 
+                          borderRadius: '10px', 
+                          fontWeight: 700, 
+                          cursor: waConnecting ? 'wait' : 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          boxShadow: '0 4px 12px rgba(24, 119, 242, 0.25)',
+                          fontSize: '0.9rem'
+                        }}
+                        onClick={handleConnectWAMeta}
                       >
-                        🔗 Vincular Código QR
+                        <span style={{ fontSize: '1.1rem' }}>💬</span>
+                        {waConnecting ? 'Vinculando con Meta...' : 'Vincular WhatsApp Oficial'}
                       </button>
-                    </div>
-                  )}
-
-                  {(waStatus === 'loading' || waStatus === 'connecting') && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                      <style>{`
-                        @keyframes spin {
-                          0% { transform: rotate(0deg); }
-                          100% { transform: rotate(360deg); }
-                        }
-                      `}</style>
-                      <div className="wa-spinner" style={{ 
-                        width: '40px', 
-                        height: '40px', 
-                        border: '3px solid var(--gray-200)', 
-                        borderTop: '3px solid var(--red-600)', 
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }}></div>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--gray-600)', fontWeight: 500 }}>
-                        {waStatus === 'connecting' ? 'Iniciando conexión con WhatsApp...' : 'Generando código QR...'}
+                      <span style={{ fontSize: '0.7rem', color: 'var(--gray-400)', fontWeight: 500 }}>
+                        🔒 API Oficial de Meta Cloud • Modo Coexistencia • Sin riesgo de baneo
                       </span>
                     </div>
-                  )}
-
-                  {waStatus === 'error' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '16px', background: '#fef2f2', borderRadius: '12px', border: '1px solid #fecaca' }}>
-                      <span style={{ fontSize: '2rem' }}>⚠️</span>
-                      <p style={{ fontSize: '0.85rem', color: '#991b1b', textAlign: 'center', margin: 0, lineHeight: '1.5', maxWidth: '300px', fontWeight: 500 }}>
-                        {waErrorMessage || 'No se pudo conectar a WhatsApp. Intenta nuevamente más tarde.'}
-                      </p>
-                      <button
-                        className="btn"
-                        style={{ background: 'var(--red-600)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}
-                        onClick={handleConnectWA}
-                      >
-                        🔄 Reintentar Conexión
-                      </button>
-                    </div>
-                  )}
-
-                  {waStatus === 'qr_ready' && waQrCode && (
+                  ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                      <span className="badge badge-amber" style={{ padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600 }}>
-                        ⏳ Esperando escaneo...
-                      </span>
-                      <div style={{ background: 'white', padding: '12px', borderRadius: '12px', border: '1px solid var(--gray-300)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                        <img src={waQrCode} alt="WhatsApp QR Code" style={{ width: '180px', height: '180px', display: 'block' }} />
-                      </div>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--gray-600)', maxWidth: '280px', margin: 0, lineHeight: '1.4' }}>
-                        Abrí <strong>WhatsApp</strong> en tu celular ➜ <strong>Dispositivos vinculados</strong> ➜ <strong>Vincular un dispositivo</strong> y escaneá este código QR.
-                      </p>
-                    </div>
-                  )}
-
-                  {waStatus === 'connected' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                      <span className="badge badge-green" style={{ padding: '6px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, background: '#d1fae5', color: '#065f46' }}>
-                        🟢 Asistente Activo
+                      <span className="badge badge-green" style={{ padding: '6px 14px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600, background: '#d1fae5', color: '#065f46' }}>
+                        🟢 Asistente Oficial Activo (Meta)
                       </span>
 
                       {/* Grid de métricas de uso */}
@@ -5268,14 +5234,17 @@ export default function RestaurantDashboard() {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '12px 18px', borderRadius: '10px', border: '1px solid #d1fae5' }}>
-                        <span style={{ fontSize: '1.2rem' }}>📞</span>
-                        <strong style={{ fontSize: '0.95rem', color: 'var(--gray-800)' }}>{waPhoneNumber}</strong>
-                      </div>
+                      {profileData?.whatsapp_phone_number && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '12px 18px', borderRadius: '10px', border: '1px solid #d1fae5' }}>
+                          <span style={{ fontSize: '1.2rem' }}>📞</span>
+                          <strong style={{ fontSize: '0.95rem', color: 'var(--gray-800)' }}>{profileData.whatsapp_phone_number}</strong>
+                        </div>
+                      )}
+
                       <button 
                         className="btn" 
                         style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
-                        onClick={handleDisconnectWA}
+                        onClick={handleDisconnectWAMeta}
                       >
                         🛑 Desconectar Asistente
                       </button>

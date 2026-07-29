@@ -6739,3 +6739,46 @@ export async function calculateDeliveryFeeByCity(citySlug, destination) {
     googleApiUsed: false
   };
 }
+
+export async function vincularWhatsAppMeta({ localId, wabaId, phoneNumberId, accessToken, phoneNumber }) {
+  const { data, error } = await supabase
+    .from('locales')
+    .update({
+      whatsapp_assistant_enabled: true,
+      whatsapp_waba_id: wabaId,
+      whatsapp_phone_id: phoneNumberId,
+      whatsapp_access_token: accessToken || null,
+      whatsapp_phone_number: phoneNumber || null
+    })
+    .eq('id', localId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error al guardar credenciales de WhatsApp Meta:", error);
+    throw error;
+  }
+  return data;
+}
+
+export async function desvincularWhatsAppMeta(localId) {
+  const { data, error } = await supabase
+    .from('locales')
+    .update({
+      whatsapp_assistant_enabled: false,
+      whatsapp_waba_id: null,
+      whatsapp_phone_id: null,
+      whatsapp_access_token: null,
+      whatsapp_phone_number: null
+    })
+    .eq('id', localId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error al desvincular WhatsApp Meta:", error);
+    throw error;
+  }
+  return data;
+}
+
