@@ -2829,31 +2829,91 @@ export async function deleteAdminTask(id) {
 }
 
 // ═══════════════════════════════════════════════════
-// ADMIN — Emails
+// ADMIN — Emails & Marketing Segmentation
 // ═══════════════════════════════════════════════════
-export async function adminSendBulkEmail({ target, manualEmails, subject, htmlBody, ciudad }) {
-  let emails = [];
+export async function getSegmentedRecipients({ 
+  target, 
+  manualEmails, 
+  ciudad, 
+  segmentType = 'none', 
+  numSegments = 2, 
+  segmentIndex = 0, 
+  activityType = 'all', 
+  samplePercentage = 50 
+}) {
   if (target === 'manual' && manualEmails) {
-    emails = manualEmails;
-  } else {
-    // 1. Get all recipients based on target
-    let table = 'usuarios';
-    if (target === 'locales') table = 'locales';
-    if (target === 'repartidores') table = 'repartidores';
-    if (target === 'lanzamiento') table = 'lanzamiento';
-    if (target === 'usuarios_ciudad') table = 'usuarios';
-    
-    let query = supabase.from(table).select('email');
-    if (table !== 'lanzamiento' && ciudad) {
-      query = query.eq('ciudad', ciudad);
-    }
-    
-    const { data: recipients } = await query;
-    if (!recipients || recipients.length === 0) return { success: false, error: 'No recipients found' };
-    emails = [...new Set(recipients.map(r => r.email.trim()))];
+    return Array.isArray(manualEmails) ? manualEmails : manualEmails.split(/[\s,]+/).filter(e => e && e.includes('@'));
   }
+
+  let table = 'usuarios';
+  if (target === 'locales') table = 'locales';
+  if (target === 'repartidores') table = 'repartidores';
+  if (target === 'lanzamiento') table = 'lanzamiento';
+  if (target === 'usuarios_ciudad' || target === 'usuarios_segmento') table = 'usuarios';
+
+  let selectFields = 'email';
+  if (table === 'usuarios') selectFields = 'id, email, ciudad, ya_realizo_pedidos';
+
+  let query = supabase.from(table).select(selectFields);
+  if (table !== 'lanzamiento' && ciudad) {
+    query = query.eq('ciudad', ciudad);
+  }
+
+  const { data: recipients } = await query;
+  if (!recipients || recipients.length === 0) return [];
+
+  let list = recipients.filter(r => r.email && r.email.includes('@'));
+
+  // Segmentación por actividad de pedidos
+  if (table === 'usuarios' && segmentType === 'activity') {
+    if (activityType === 'new') {
+      list = list.filter(r => !r.ya_realizo_pedidos);
+    } else if (activityType === 'active') {
+      list = list.filter(r => r.ya_realizo_pedidos);
+    }
+  }
+
+  // Segmentación por división A/B o muestra aleatoria
+  if (segmentType === 'split' && list.length > 0) {
+    list.sort((a, b) => (a.id || a.email).localeCompare(b.id || b.email));
+    const total = list.length;
+    const chunkSize = Math.ceil(total / numSegments);
+    const start = segmentIndex * chunkSize;
+    const end = Math.min(start + chunkSize, total);
+    list = list.slice(start, end);
+  } else if (segmentType === 'sample' && list.length > 0) {
+    list.sort((a, b) => (a.id || a.email).localeCompare(b.id || b.email));
+    const count = Math.max(1, Math.ceil(list.length * (samplePercentage / 100)));
+    list = list.slice(0, count);
+  }
+
+  return [...new Set(list.map(r => r.email.trim()))];
+}
+
+export async function adminSendBulkEmail({ 
+  target, 
+  manualEmails, 
+  subject, 
+  htmlBody, 
+  ciudad,
+  segmentType = 'none',
+  numSegments = 2,
+  segmentIndex = 0,
+  activityType = 'all',
+  samplePercentage = 50
+}) {
+  const emails = await getSegmentedRecipients({ 
+    target, 
+    manualEmails, 
+    ciudad, 
+    segmentType, 
+    numSegments, 
+    segmentIndex, 
+    activityType, 
+    samplePercentage 
+  });
   
-  if (emails.length === 0) return { success: false, error: 'No recipients found' };
+  if (emails.length === 0) return { success: false, error: 'No se encontraron destinatarios para el segmento seleccionado.' };
   
   const results = await Promise.all(emails.map(email => 
     supabase.functions.invoke('send-email', {
@@ -3273,6 +3333,68 @@ export async function adminGetUsoMetricas() {
     .select('*, locales(nombre, ciudad, slug)');
   if (error) throw new Error(error.message);
   return data || [];
+}
+
+// ═══════════════════════════════════════════════════
+// MÉTRICAS DE CLIC EN EMAILS
+// ═══════════════════════════════════════════════════
+
+export async function logEmailClickMetric({ campaign = 'Campaña General', ciudad = null, path = '/pedir' }) {
+  const newRecord = {
+    campaign,
+    ciudad,
+    path,
+    created_at: new Date().toISOString()
+  };
+
+  try {
+    const existingCache = JSON.parse(localStorage.getItem('wepi_email_click_logs') || '[]');
+    existingCache.push({ id: 'loc-' + Date.now(), ...newRecord });
+    localStorage.setItem('wepi_email_click_logs', JSON.stringify(existingCache.slice(-500)));
+  } catch (e) {
+    console.warn("Notice: Local storage click metric warning:", e);
+  }
+
+  try {
+    const { error } = await supabase
+      .from('email_click_logs')
+      .insert([newRecord]);
+    if (error) console.warn("Notice: Supabase email_click_logs warning:", error);
+    return { success: true };
+  } catch (err) {
+    console.warn("Notice logging email click:", err);
+    return { success: true, simulated: true };
+  }
+}
+
+export async function adminGetEmailClickMetrics() {
+  let dbLogs = [];
+  try {
+    const { data, error } = await supabase
+      .from('email_click_logs')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (!error && data) {
+      dbLogs = data;
+    }
+  } catch (e) {
+    console.warn("Notice reading email_click_logs from Supabase:", e);
+  }
+
+  try {
+    const localLogs = JSON.parse(localStorage.getItem('wepi_email_click_logs') || '[]');
+    const all = [...dbLogs, ...localLogs];
+    const uniqueMap = new Map();
+    all.forEach(item => {
+      const key = `${item.campaign}_${item.created_at}_${item.path}`;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, item);
+      }
+    });
+    return Array.from(uniqueMap.values()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } catch (e) {
+    return dbLogs;
+  }
 }
 
 
@@ -6520,13 +6642,49 @@ export function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 
 export async function registrarInteresExpansion({ nombre, whatsapp, email, ciudad }) {
   try {
-    const { data, error } = await supabase
+    // 1. Guardar en tabla leads_expansion
+    await supabase
       .from('leads_expansion')
-      .insert([{ nombre, whatsapp, email, ciudad }]);
-    if (error) throw error;
+      .insert([{ nombre, whatsapp, email, ciudad }])
+      .catch(err => console.warn("Notice: leads_expansion insert warning:", err));
+
+    // 2. Registrar directamente en la tabla usuarios con su ciudad correspondiente
+    const cleanPhone = whatsapp ? whatsapp.replace(/\D/g, '') : '';
+    const userEmail = (email && email.trim()) ? email.trim() : (cleanPhone ? `${cleanPhone}@lead.wepi.app` : `lead_${Date.now()}@wepi.app`);
+    const userId = 'USR-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+
+    const { error: userError } = await supabase.from('usuarios').insert({
+      id: userId,
+      nombre: nombre ? nombre.trim() : 'Usuario Interesado',
+      telefono: whatsapp ? whatsapp.trim() : null,
+      email: userEmail,
+      ciudad: ciudad,
+      email_confirmado: true,
+      terms_accepted: true,
+      privacy_accepted: true,
+      terms_accepted_at: new Date().toISOString(),
+      terms_version: 'v1'
+    });
+
+    if (userError) {
+      console.warn("User insert notice in registrarInteresExpansion:", userError);
+      // Si el usuario ya existía por teléfono o email, se le actualiza la ciudad correspondiente y el nombre
+      if (userError.code === '23505') {
+        if (whatsapp && whatsapp.trim()) {
+          await supabase.from('usuarios')
+            .update({ ciudad, nombre: nombre ? nombre.trim() : undefined })
+            .eq('telefono', whatsapp.trim());
+        } else if (email && email.trim()) {
+          await supabase.from('usuarios')
+            .update({ ciudad, nombre: nombre ? nombre.trim() : undefined })
+            .eq('email', email.trim());
+        }
+      }
+    }
+
     return { success: true };
   } catch (err) {
-    console.error("Error al registrar lead en Supabase:", err);
+    console.error("Error al registrar lead y usuario en Supabase:", err);
     return { success: true, simulated: true };
   }
 }

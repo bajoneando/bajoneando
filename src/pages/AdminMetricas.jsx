@@ -10,11 +10,15 @@ const AdminMetricas = () => {
     const [sortField, setSortField] = useState('visitas_totales');
     const [sortAsc, setSortAsc] = useState(false);
 
+    const [emailMetrics, setEmailMetrics] = useState([]);
+
     useEffect(() => {
         const fetchMetrics = async () => {
             try {
                 const data = await api.adminGetUsoMetricas();
-                setRawMetrics(data);
+                setRawMetrics(data || []);
+                const eMetrics = await api.adminGetEmailClickMetrics();
+                setEmailMetrics(eMetrics || []);
             } catch (err) {
                 console.error(err);
                 toast.error('Error al cargar las métricas de uso.');
@@ -24,6 +28,27 @@ const AdminMetricas = () => {
         };
         fetchMetrics();
     }, []);
+
+    // Agrupar métricas de clics de email por campaña
+    const emailCampaignSummary = useMemo(() => {
+        const map = {};
+        emailMetrics.forEach(item => {
+            const camp = item.campaign || 'Campaña General';
+            if (!map[camp]) {
+                map[camp] = {
+                    campaign: camp,
+                    ciudad: item.ciudad || 'Todas',
+                    clicks: 0,
+                    lastClick: item.created_at
+                };
+            }
+            map[camp].clicks += 1;
+            if (new Date(item.created_at) > new Date(map[camp].lastClick)) {
+                map[camp].lastClick = item.created_at;
+            }
+        });
+        return Object.values(map).sort((a, b) => b.clicks - a.clicks);
+    }, [emailMetrics]);
 
     // 1. Obtener lista de ciudades única para los filtros
     const citiesList = useMemo(() => {
@@ -260,6 +285,76 @@ const AdminMetricas = () => {
                         <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#16a34a', letterSpacing: '0.5px' }}>Conversión</span>
                     </div>
                     <h3 style={{ fontSize: '1.8rem', fontWeight: 800, margin: 0, color: '#15803d' }}>{globals.conversion}%</h3>
+                </div>
+            </div>
+
+            {/* ─── Sección de Métricas de Conversión y Clics desde Email Marketing ─── */}
+            <div className="card" style={{ background: 'white', border: '1px solid var(--gray-200)', borderRadius: '16px', padding: '20px', marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        📧 Conversiones & Clics desde Email Marketing
+                    </h3>
+                    <span style={{ fontSize: '0.8rem', background: '#fee2e2', color: '#991b1b', padding: '4px 12px', borderRadius: '14px', fontWeight: '700' }}>
+                        Total Clics: {emailMetrics.length}
+                    </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+                    <div style={{ padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Total Clics Registrados</div>
+                        <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>{emailMetrics.length}</div>
+                    </div>
+                    <div style={{ padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Campañas con Clics</div>
+                        <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#e63946', marginTop: '4px' }}>{emailCampaignSummary.length}</div>
+                    </div>
+                </div>
+
+                <h4 style={{ fontSize: '0.92rem', fontWeight: 700, color: '#334155', marginBottom: '10px' }}>Rendimiento por Campaña de Email</h4>
+                <div style={{ overflowX: 'auto' }}>
+                    <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ borderBottom: '2px solid var(--gray-200)', textAlign: 'left', fontSize: '0.8rem', color: 'var(--gray-500)' }}>
+                                <th style={{ padding: '10px 8px' }}>Campaña</th>
+                                <th style={{ padding: '10px 8px' }}>Ciudad Target</th>
+                                <th style={{ padding: '10px 8px', textAlign: 'center' }}>Total Clics</th>
+                                <th style={{ padding: '10px 8px', textAlign: 'center' }}>Último Clic</th>
+                                <th style={{ padding: '10px 8px', textAlign: 'right' }}>Enlace de Prueba</th>
+                            </tr>
+                        </thead>
+                        <tbody style={{ fontSize: '0.86rem', color: 'var(--gray-700)' }}>
+                            {emailCampaignSummary.length === 0 ? (
+                                <tr>
+                                    <td colSpan="5" style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>
+                                        Aún no hay clics de email registrados. Los clics se contarán automáticamente cuando los usuarios ingresen desde los botones de los correos.
+                                    </td>
+                                </tr>
+                            ) : (
+                                emailCampaignSummary.map((c, idx) => (
+                                    <tr key={idx} style={{ borderBottom: '1px solid var(--gray-150)' }}>
+                                        <td style={{ padding: '10px 8px', fontWeight: 700, color: '#0f172a' }}>{c.campaign}</td>
+                                        <td style={{ padding: '10px 8px', color: '#475569' }}>{c.ciudad}</td>
+                                        <td style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 700, color: '#e63946' }}>{c.clicks}</td>
+                                        <td style={{ padding: '10px 8px', textAlign: 'center', color: '#64748b', fontSize: '0.78rem' }}>
+                                            {new Date(c.lastClick).toLocaleString('es-AR')}
+                                        </td>
+                                        <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+                                            <button
+                                                onClick={() => {
+                                                    const url = `${window.location.origin}/pedir?ref=email&campaign=${encodeURIComponent(c.campaign)}`;
+                                                    navigator.clipboard.writeText(url);
+                                                    toast.success('Enlace de prueba copiado!');
+                                                }}
+                                                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#0f172a', padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}
+                                            >
+                                                📋 Copiar Enlace
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

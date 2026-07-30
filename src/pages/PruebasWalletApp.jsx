@@ -30,6 +30,20 @@ const getCityFromSlug = (str) => {
   return null;
 };
 
+const getInactiveCityFromSlug = (str) => {
+  if (!str) return null;
+  try {
+    const decoded = decodeURIComponent(str);
+    const norm = decoded.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    if (norm === 'alem' || norm === 'leandro-n-alem' || norm === 'leandro n alem' || norm === 'l-n-alem') return 'Alem (Misiones)';
+    if (norm === 'apostoles' || norm === 'apóstoles') return 'Apóstoles (Misiones)';
+    if (norm === 'goya') return 'Goya (Corrientes)';
+  } catch (e) {
+    console.error(e);
+  }
+  return null;
+};
+
 export default function PruebasWalletApp() {
   const { ciudad, slug } = useParams();
   const location = useLocation();
@@ -78,16 +92,27 @@ export default function PruebasWalletApp() {
 
   React.useEffect(() => {
     try {
-      const decodedPath = decodeURIComponent(window.location.pathname);
+      const decodedPath = decodeURIComponent(location.pathname);
       const path = decodedPath.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       const segments = path.split('/').filter(Boolean);
+      let targetSegment = null;
       if (segments.length >= 2) {
-        const maybeCitySegment = segments[1];
-        const matchedCity = getCityFromSlug(maybeCitySegment);
+        targetSegment = segments[1];
+      } else if (segments.length === 1 && (segments[0] !== 'pedir' && segments[0] !== 'shops' && segments[0] !== 'p')) {
+        targetSegment = segments[0];
+      }
+
+      if (targetSegment) {
+        const matchedCity = getCityFromSlug(targetSegment);
         if (matchedCity && activeCity !== matchedCity) {
           setActiveCity(matchedCity);
           sessionStorage.setItem('sessionCity', matchedCity);
           localStorage.setItem('guestCiudad', matchedCity);
+        } else if (!matchedCity) {
+          const inactiveMatched = getInactiveCityFromSlug(targetSegment);
+          if (inactiveMatched) {
+            setInactiveCityModal(inactiveMatched);
+          }
         }
       }
     } catch (e) {
@@ -108,6 +133,27 @@ export default function PruebasWalletApp() {
       setActiveCity(null);
     }
   }, [user?.ciudad]);
+
+  // Detección y Registro de Métricas de Clic desde Emails
+  React.useEffect(() => {
+    try {
+      const searchParams = new URLSearchParams(location.search);
+      const isEmailRef = searchParams.get('ref') === 'email' || 
+                         searchParams.get('utm_source') === 'email' || 
+                         searchParams.get('email_ref') === 'true';
+      if (isEmailRef) {
+        const campaign = searchParams.get('campaign') || searchParams.get('utm_campaign') || 'Campaña General';
+        const cityParam = searchParams.get('city') || activeCity || 'Todas';
+        const sessionKey = `logged_email_click_${campaign}_${cityParam}`;
+        if (!sessionStorage.getItem(sessionKey)) {
+          sessionStorage.setItem(sessionKey, 'true');
+          api.logEmailClickMetric({ campaign, ciudad: cityParam, path: location.pathname });
+        }
+      }
+    } catch (e) {
+      console.error("Error logging email click metric:", e);
+    }
+  }, [location.search, location.pathname, activeCity]);
 
   const getAbbreviatedCity = (city) => {
     if (!city) return 'Seleccionar';
@@ -133,6 +179,46 @@ export default function PruebasWalletApp() {
     window.Notification ? Notification.permission : 'default'
   );
   const [showNotificationBanner, setShowNotificationBanner] = React.useState(false);
+
+  // Inactive cities popup states
+  const [inactiveCityModal, setInactiveCityModal] = React.useState(null);
+  const [leadForm, setLeadForm] = React.useState({ nombre: '', whatsapp: '', email: '' });
+  const [leadSubmitting, setLeadSubmitting] = React.useState(false);
+  const [leadSubmitted, setLeadSubmitted] = React.useState(false);
+
+  const openInactiveCityModal = (cityName) => {
+    setInactiveCityModal(cityName);
+    setLeadForm({ nombre: '', whatsapp: '', email: '' });
+    setLeadSubmitted(false);
+  };
+
+  const handleLeadSubmit = async (e) => {
+    e.preventDefault();
+    if (!leadForm.nombre.trim() || !leadForm.whatsapp.trim()) {
+      toast.error('Por favor ingresa tu nombre y WhatsApp');
+      return;
+    }
+    setLeadSubmitting(true);
+    try {
+      const res = await api.registrarInteresExpansion({
+        nombre: leadForm.nombre.trim(),
+        whatsapp: leadForm.whatsapp.trim(),
+        email: leadForm.email.trim(),
+        ciudad: inactiveCityModal
+      });
+      if (res.success) {
+        setLeadSubmitted(true);
+        toast.success(`¡Te anotamos con éxito para ${inactiveCityModal}!`, { icon: '🎉' });
+      } else {
+        toast.error('Ocurrió un error al registrarte');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error de conexión');
+    } finally {
+      setLeadSubmitting(false);
+    }
+  };
 
 
 
@@ -3752,6 +3838,9 @@ export default function PruebasWalletApp() {
                   <select name="ciudad" className="form-input" required style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.15)', background: 'var(--slate-800, #1e293b)', color: '#f8fafc' }}>
                     <option value="Santo Tomé">Santo Tomé (Corrientes)</option>
                     <option value="Oberá">Oberá (Misiones)</option>
+                    <option value="Alem (Misiones)">Alem (Misiones)</option>
+                    <option value="Apóstoles (Misiones)">Apóstoles (Misiones)</option>
+                    <option value="Goya (Corrientes)">Goya (Corrientes)</option>
                   </select>
                 </div>
                 
@@ -3890,25 +3979,12 @@ export default function PruebasWalletApp() {
                   <p><strong>9. Aceptación</strong></p>
                   <p>Mediante registro y confirmación electrónica.</p>
                   <hr style={{ margin: '15px 0', borderColor: '#eee' }} />
-                  <h3 style={{ color: 'var(--red-600)' }}>🔒 USUARIOS – POLÍTICA DE PRIVACIDAD</h3>
                   <p><strong>Datos recolectados:</strong></p>
                   <ul style={{ paddingLeft: '18px', marginBottom: '10px' }}>
                     <li>Nombre, teléfono, email</li>
                     <li>Dirección</li>
                     <li>Ubicación en tiempo real</li>
                     <li>Historial de pedidos</li>
-                  </ul>
-                  <p><strong>Uso de datos:</strong></p>
-                  <ul style={{ paddingLeft: '18px', marginBottom: '10px' }}>
-                    <li>Procesar pedidos</li>
-                    <li>Coordinar entregas</li>
-                    <li>Asignar repartidores</li>
-                  </ul>
-                  <p><strong>Compartición:</strong></p>
-                  <ul style={{ paddingLeft: '18px', marginBottom: '10px' }}>
-                    <li>Comercios</li>
-                    <li>Repartidores</li>
-                    <li>Proveedores de pago (Mercado Pago)</li>
                   </ul>
                 </div>
                 <button className="btn btn-secondary btn-full" onClick={() => setModal('register')} style={{ marginTop: 16 }}>Volver al Registro</button>
@@ -3920,56 +3996,243 @@ export default function PruebasWalletApp() {
 
       {/* ─── Modal de Selección de Ciudad Obligatorio ─── */}
       {!activeCity && (
-        <div className="modal-overlay" style={{ zIndex: 10000, background: 'rgba(15, 23, 42, 0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-          <div className="modal-box animate-fade-in" style={{ maxWidth: '440px', padding: '40px 30px', textAlign: 'center', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', background: 'var(--slate-900, #0f172a)', border: '1px solid rgba(255, 255, 255, 0.08)' }} onClick={e => e.stopPropagation()}>
-            <div style={{ marginBottom: '25px' }}>
-              <img src="https://i.postimg.cc/d1myDmBb/wepi.png" alt="Wepi Logo" style={{ width: '80px', height: '80px', borderRadius: '20px', marginBottom: '15px', boxShadow: '0 8px 16px rgba(0,0,0,0.3)' }} />
-              <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#f8fafc', margin: '0 0 10px 0', fontFamily: "'Outfit', sans-serif" }}>¡Te damos la bienvenida a Wepi!</h2>
-              <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.5', margin: 0 }}>Para mostrarte los mejores locales y promociones de tu zona, selecciona tu ciudad:</p>
+        <div className="modal-overlay" style={{ zIndex: 10000, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, padding: '12px' }}>
+          <div className="modal-box animate-fade-in" style={{ maxWidth: '370px', width: '100%', padding: '22px 20px', textAlign: 'center', borderRadius: '18px', boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.15)', background: '#ffffff', border: '1px solid #e2e8f0', color: '#0f172a' }} onClick={e => e.stopPropagation()}>
+            <div style={{ marginBottom: '10px' }}>
+              <img src="https://i.postimg.cc/d1myDmBb/wepi.png" alt="Wepi Logo" style={{ width: '48px', height: '48px', borderRadius: '12px', marginBottom: '6px' }} />
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 3px 0', fontFamily: "'Outfit', sans-serif" }}>¡Bienvenido a Wepi!</h2>
+              <p style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: '1.3', margin: 0 }}>Para mostrarte los locales de tu zona, selecciona tu ciudad:</p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
+              <div style={{ textAlign: 'left', fontSize: '0.68rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#e63946', marginBottom: '1px' }}>
+                Ciudades Disponibles
+              </div>
               <button 
                 onClick={() => selectCity('Santo Tomé')} 
                 className="btn btn-full"
                 style={{ 
-                  background: 'linear-gradient(135deg, #e63946 0%, #b5179e 100%)', 
-                  color: 'white', 
-                  padding: '16px 20px', 
-                  borderRadius: '14px', 
-                  fontWeight: '700', 
-                  fontSize: '1.1rem',
-                  border: 'none',
+                  background: '#ffffff', 
+                  color: '#0f172a', 
+                  padding: '8px 12px', 
+                  borderRadius: '9px', 
+                  fontWeight: '600', 
+                  fontSize: '0.84rem',
+                  border: '1px solid #cbd5e1',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
                   cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(230, 57, 70, 0.3)',
-                  transition: 'transform 0.2s, box-shadow 0.2s'
+                  transition: 'all 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center'
                 }}
               >
-                📍 Santo Tomé (Corrientes)
+                Santo Tomé (Corrientes)
               </button>
               
               <button 
-                onClick={() => { selectCity('Oberá'); }} 
+                onClick={() => selectCity('Oberá')} 
                 className="btn btn-full"
                 style={{ 
-                  background: 'rgba(255, 255, 255, 0.05)', 
-                  color: '#f8fafc', 
-                  padding: '16px 20px', 
-                  borderRadius: '14px', 
-                  fontWeight: '700', 
-                  fontSize: '1.1rem',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: '#ffffff', 
+                  color: '#0f172a', 
+                  padding: '8px 12px', 
+                  borderRadius: '9px', 
+                  fontWeight: '600', 
+                  fontSize: '0.84rem',
+                  border: '1px solid #cbd5e1',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
                   cursor: 'pointer',
-                  transition: 'background 0.2s, transform 0.2s'
+                  transition: 'all 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center'
                 }}
               >
-                📢 Oberá (Misiones)
+                Oberá (Misiones)
+              </button>
+
+              <div style={{ textAlign: 'left', fontSize: '0.68rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#d97706', marginTop: '6px', marginBottom: '1px' }}>
+                Próximos Lanzamientos
+              </div>
+
+              <button 
+                onClick={() => openInactiveCityModal('Alem (Misiones)')} 
+                className="btn btn-full"
+                style={{ 
+                  background: '#f8fafc', 
+                  color: '#334155', 
+                  padding: '7px 11px', 
+                  borderRadius: '9px', 
+                  fontWeight: '500', 
+                  fontSize: '0.82rem',
+                  border: '1px dashed #cbd5e1',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center'
+                }}
+              >
+                Alem (Misiones)
+              </button>
+
+              <button 
+                onClick={() => openInactiveCityModal('Apóstoles (Misiones)')} 
+                className="btn btn-full"
+                style={{ 
+                  background: '#f8fafc', 
+                  color: '#334155', 
+                  padding: '7px 11px', 
+                  borderRadius: '9px', 
+                  fontWeight: '500', 
+                  fontSize: '0.82rem',
+                  border: '1px dashed #cbd5e1',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center'
+                }}
+              >
+                Apóstoles (Misiones)
+              </button>
+
+              <button 
+                onClick={() => openInactiveCityModal('Goya (Corrientes)')} 
+                className="btn btn-full"
+                style={{ 
+                  background: '#f8fafc', 
+                  color: '#334155', 
+                  padding: '7px 11px', 
+                  borderRadius: '9px', 
+                  fontWeight: '500', 
+                  fontSize: '0.82rem',
+                  border: '1px dashed #cbd5e1',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center'
+                }}
+              >
+                Goya (Corrientes)
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal Pop-up para Registrarse para Novedades (Ciudades Inactivas) ─── */}
+      {inactiveCityModal && (
+        <div className="modal-overlay" style={{ zIndex: 10050, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, padding: '12px' }}>
+          <div className="modal-box animate-fade-in" style={{ maxWidth: '370px', width: '100%', padding: '22px 20px', textAlign: 'center', borderRadius: '18px', boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.15)', background: '#ffffff', border: '1px solid #e2e8f0', color: '#0f172a', position: 'relative' }} onClick={e => e.stopPropagation()}>
             
-            <div style={{ marginTop: '25px', fontSize: '0.8rem', color: '#64748b' }}>
-              ¿Sos un local o repartidor? Podés registrarte seleccionando tu ciudad.
-            </div>
+            <button 
+              onClick={() => { setInactiveCityModal(null); setLeadSubmitted(false); }}
+              style={{ position: 'absolute', top: '12px', right: '12px', background: '#f1f5f9', border: 'none', color: '#64748b', width: '26px', height: '26px', borderRadius: '50%', cursor: 'pointer', fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              ✕
+            </button>
+
+            {!leadSubmitted ? (
+              <>
+                <span style={{ background: '#fef3c7', color: '#b45309', fontSize: '0.68rem', fontWeight: '700', padding: '2px 8px', borderRadius: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'inline-block', marginBottom: '6px' }}>
+                  Próximamente
+                </span>
+                
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#0f172a', margin: '0 0 4px 0', fontFamily: "'Outfit', sans-serif" }}>
+                  Wepi llega a {inactiveCityModal}
+                </h2>
+                
+                <p style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: '1.3', margin: '0 0 12px 0' }}>
+                  Registrate para recibir novedades y promociones exclusivas el día del lanzamiento.
+                </p>
+
+                <form onSubmit={handleLeadSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: '600', color: '#475569', marginBottom: '3px' }}>Nombre completo *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="Ej: Juan Pérez" 
+                      value={leadForm.nombre}
+                      onChange={e => setLeadForm({ ...leadForm, nombre: e.target.value })}
+                      style={{ width: '100%', padding: '7px 10px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #cbd5e1', color: '#0f172a', fontSize: '0.82rem', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: '600', color: '#475569', marginBottom: '3px' }}>WhatsApp *</label>
+                    <input 
+                      type="tel" 
+                      required 
+                      placeholder="Ej: 3755 123456" 
+                      value={leadForm.whatsapp}
+                      onChange={e => setLeadForm({ ...leadForm, whatsapp: e.target.value })}
+                      style={{ width: '100%', padding: '7px 10px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #cbd5e1', color: '#0f172a', fontSize: '0.82rem', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: '600', color: '#475569', marginBottom: '3px' }}>Email (opcional)</label>
+                    <input 
+                      type="email" 
+                      placeholder="tu@email.com" 
+                      value={leadForm.email}
+                      onChange={e => setLeadForm({ ...leadForm, email: e.target.value })}
+                      style={{ width: '100%', padding: '7px 10px', borderRadius: '8px', background: '#f8fafc', border: '1px solid #cbd5e1', color: '#0f172a', fontSize: '0.82rem', outline: 'none' }}
+                    />
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={leadSubmitting}
+                    style={{ 
+                      marginTop: '4px',
+                      background: 'linear-gradient(135deg, #e63946 0%, #b5179e 100%)', 
+                      color: '#fff', 
+                      padding: '9px 14px', 
+                      borderRadius: '8px', 
+                      fontWeight: '600', 
+                      fontSize: '0.84rem',
+                      border: 'none',
+                      cursor: leadSubmitting ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 2px 6px rgba(230, 57, 70, 0.25)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justify: 'center'
+                    }}
+                  >
+                    {leadSubmitting ? 'Registrando...' : 'Registrarme para recibir novedades'}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <div style={{ padding: '6px 0' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', marginBottom: '6px', fontFamily: "'Outfit', sans-serif" }}>
+                  ¡Gracias por sumarte!
+                </h3>
+                <p style={{ color: '#475569', fontSize: '0.82rem', lineHeight: '1.3', marginBottom: '14px' }}>
+                  Registramos tus datos para <strong style={{ color: '#e63946' }}>{inactiveCityModal}</strong>. Te avisaremos apenas iniciemos operaciones.
+                </p>
+                <button 
+                  onClick={() => { setInactiveCityModal(null); setLeadSubmitted(false); }}
+                  style={{ 
+                    background: '#f1f5f9', 
+                    color: '#0f172a', 
+                    padding: '7px 14px', 
+                    borderRadius: '8px', 
+                    fontWeight: '600', 
+                    border: '1px solid #cbd5e1',
+                    cursor: 'pointer',
+                    fontSize: '0.82rem'
+                  }}
+                >
+                  Entendido
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
