@@ -190,6 +190,11 @@ export default function RestaurantDashboard() {
   const [cierreMode, setCierreMode] = React.useState('pendientes'); // 'dia', 'intervalo', 'pendientes'
   const [cierreFechaInicio, setCierreFechaInicio] = React.useState(new Date().toISOString().split('T')[0]);
   const [cierreFechaFin, setCierreFechaFin] = React.useState(new Date().toISOString().split('T')[0]);
+
+  // Historial Filter State
+  const [historialFilterType, setHistorialFilterType] = React.useState('hoy'); // 'hoy', 'dia', 'rango', 'todos'
+  const [historialFecha, setHistorialFecha] = React.useState(() => new Date().toISOString().split('T')[0]);
+  const [historialFechaFin, setHistorialFechaFin] = React.useState(() => new Date().toISOString().split('T')[0]);
   const [cierreReport, setCierreReport] = React.useState(null);
   const [cierreLoading, setCierreLoading] = React.useState(false);
   const [cierreSubTab, setCierreSubTab] = React.useState('generar'); // generar, historial, estadisticas
@@ -371,9 +376,6 @@ export default function RestaurantDashboard() {
     const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     setIsIOS(isIOSDevice);
   }, []);
-
-
-  // Location State
   const [showAddressSelector, setShowAddressSelector] = React.useState(false);
   const [profileAddress, setProfileAddress] = React.useState('');
   const [profileLat, setProfileLat] = React.useState(null);
@@ -381,6 +383,7 @@ export default function RestaurantDashboard() {
 
   const pollingRef = React.useRef(null);
   const previousOrdersRef = React.useRef([]);
+  const isInitialLoadRef = React.useRef(true);
   const localOpenRef = React.useRef(false);
 
   const playAlertSound = () => {
@@ -429,15 +432,65 @@ export default function RestaurantDashboard() {
         nombre,
         username,
         password,
-        rol: 'Cajero'
+        role: 'Cajero'
       });
-      toast.success('Caja agregada con éxito');
+      toast.success('Cajero creado con éxito');
       e.target.reset();
       loadCajeros();
     } catch (err) {
-      toast.error(err.message || 'Error al agregar caja');
+      toast.error(err.message || 'Error al crear cajero');
     }
   };
+
+  const handleConfirmStock = async () => {
+    if (!restaurant?.id) return;
+    try {
+      setItemLoading(true);
+      await api.confirmarStockLocal(restaurant.id);
+      toast.success('Stock confirmado por hoy');
+      setNeedsStockConfirmation(false);
+      loadMenu();
+    } catch {
+      toast.error('Error al confirmar stock');
+    } finally {
+      setItemLoading(false);
+    }
+  };
+
+  const loadOrders = React.useCallback(async (silent = false) => {
+    if (!restaurant) return;
+    if (!silent) setOrdersLoading(true);
+    try {
+      const processed = await api.getPedidosLocalesCompletosByLocal(restaurant.id);
+
+      const isShopLocal = profileDataRef.current?.tipo_servicio === 'shops';
+      const validAlertStates = isShopLocal ? ['Pendiente', 'Confirmado'] : ['Confirmado'];
+
+      // Check new pending/confirmed orders for alerts (strictly excluding Entregado/Retirado/En Camino/Rechazado)
+      if (!isInitialLoadRef.current) {
+        const previousIds = previousOrdersRef.current.map(o => o.idPedidoLocal);
+        const newAlerts = processed.filter(o => 
+          validAlertStates.includes(o.estadoActual) && 
+          !['Entregado', 'Retirado', 'En Camino', 'Rechazado', 'Cancelado'].includes(o.estadoActual) &&
+          !previousIds.includes(o.idPedidoLocal)
+        );
+        if (newAlerts.length > 0) {
+          playAlertSound();
+          toast.success(`Tenés ${newAlerts.length} pedido(s) nuevo(s)!`, { icon: '🔔' });
+        }
+      } else {
+        isInitialLoadRef.current = false;
+      }
+      previousOrdersRef.current = processed;
+
+      setOrders(processed);
+      setPendingCount(processed.filter(o => validAlertStates.includes(o.estadoActual)).length);
+    } catch (err) { 
+      console.error("Error in loadOrders:", err);
+      if (!silent) toast.error('Error al cargar pedidos'); 
+    }
+    if (!silent) setOrdersLoading(false);
+  }, [restaurant]);
 
   const handleDeleteCajero = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar esta caja?')) return;
@@ -646,35 +699,7 @@ export default function RestaurantDashboard() {
     }
   };
 
-  const loadOrders = React.useCallback(async (silent = false) => {
-    if (!restaurant) return;
-    if (!silent) setOrdersLoading(true);
-    try {
-      const processed = await api.getPedidosLocalesCompletosByLocal(restaurant.id);
 
-      const isShopLocal = profileDataRef.current?.tipo_servicio === 'shops';
-      // Check new pending/confirmed orders for alerts
-      if (silent && previousOrdersRef.current.length > 0) {
-        const previousIds = previousOrdersRef.current.map(o => o.idPedidoLocal);
-        const newAlerts = processed.filter(o => 
-          (isShopLocal ? ['Pendiente', 'Confirmado'] : ['Confirmado']).includes(o.estadoActual) && 
-          !previousIds.includes(o.idPedidoLocal)
-        );
-        if (newAlerts.length > 0) {
-          playAlertSound();
-          toast.success(`Tenés ${newAlerts.length} pedido(s) nuevo(s)!`, { icon: '🔔' });
-        }
-      }
-      previousOrdersRef.current = processed;
-
-      setOrders(processed);
-      setPendingCount(processed.filter(o => (isShopLocal ? ['Pendiente', 'Confirmado'] : ['Confirmado']).includes(o.estadoActual)).length);
-    } catch (err) { 
-      console.error("Error in loadOrders:", err);
-      if (!silent) toast.error('Error al cargar pedidos'); 
-    }
-    if (!silent) setOrdersLoading(false);
-  }, [restaurant]);
 
   // Load data on login and window focus
   React.useEffect(() => {
@@ -778,36 +803,63 @@ export default function RestaurantDashboard() {
   React.useEffect(() => {
     if (!restaurant) return;
     
+    // Desbloqueo de AudioContext con primer gesto del usuario (sin reproducir chime)
+    const unlockAudio = () => {
+      try {
+        api.unlockAudioContext();
+      } catch (e) {}
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+    };
+    window.addEventListener('click', unlockAudio, { once: true });
+    window.addEventListener('touchstart', unlockAudio, { once: true });
+
     // Load immediately
     loadOrders(false);
     loadRepartidoresStatus();
 
     // Subscribe to realtime changes in pedidos_locales for this local
     console.log("📡 Subscribing to realtime updates for local orders:", restaurant.id);
-    const channel = api.supabase
-      .channel(`pedidos_locales_changes_${restaurant.id}`)
-      .on('postgres_changes', {
-        event: '*', // Listen to INSERT, UPDATE, DELETE
-        schema: 'public',
-        table: 'pedidos_locales',
-        filter: `local_id=eq.${restaurant.id}`
-      }, (payload) => {
-        console.log("🔔 Realtime update on pedidos_locales received:", payload);
-        loadOrders(true); // silent refresh
-      })
-      .subscribe();
+    let channel;
+    
+    const setupRealtimeChannel = () => {
+      if (channel) api.supabase.removeChannel(channel);
+      channel = api.supabase
+        .channel(`pedidos_locales_changes_${restaurant.id}`)
+        .on('postgres_changes', {
+          event: '*', // Listen to INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'pedidos_locales',
+          filter: `local_id=eq.${restaurant.id}`
+        }, (payload) => {
+          console.log("🔔 Realtime update on pedidos_locales received:", payload);
+          loadOrders(true); // silent refresh
+        })
+        .subscribe((status, err) => {
+          console.log(`📡 Estado de canal Realtime (${restaurant.id}):`, status);
+          if (err) console.error("❌ Error en suscripción Realtime:", err);
+          if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+            console.warn("⚠️ Canal Realtime cerrado o con error, reintentando suscripción en 5s...");
+            setTimeout(setupRealtimeChannel, 5000);
+          }
+        });
+    };
 
-    // Fallback polling (every 45s) to guarantee updates if WebSocket is interrupted
+    setupRealtimeChannel();
+
+    // Fallback polling ultra-rápido (cada 15s) para garantizar actualización si el WebSocket sufre micro-cortes
     pollingRef.current = setInterval(() => {
-      console.log("🔄 Fallback polling refresh...");
+      console.log("🔄 Fallback polling refresh (15s)...");
       loadOrders(true);
       loadRepartidoresStatus();
-    }, 45000);
+    }, 15000);
 
     return () => {
       console.log("🔌 Unsubscribing from realtime local orders:", restaurant.id);
-      api.supabase.removeChannel(channel);
-      clearInterval(pollingRef.current);
+      window.removeEventListener('click', unlockAudio);
+      window.removeEventListener('touchstart', unlockAudio);
+      if (channel) api.supabase.removeChannel(channel);
+      if (pollingRef.current) clearInterval(pollingRef.current);
     };
   }, [restaurant, loadOrders, loadRepartidoresStatus]);
 
@@ -1907,7 +1959,36 @@ export default function RestaurantDashboard() {
   };
 
   const finishedOrders = orders.filter(o => o.estadoActual === 'Entregado');
-  
+  const allFinishedOrders = orders.filter(o => ['Entregado', 'Retirado', 'En Camino'].includes(o.estadoActual)).sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+  const formatDateYYYYMMDD = (dateInput) => {
+    if (!dateInput) return '';
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return String(dateInput).split('T')[0];
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const entregadosOrders = React.useMemo(() => {
+    const todayStr = formatDateYYYYMMDD(new Date());
+
+    return allFinishedOrders.filter(o => {
+      if (!o.fecha) return true;
+      const orderDateStr = formatDateYYYYMMDD(o.fecha);
+
+      if (historialFilterType === 'hoy') {
+        return orderDateStr === todayStr;
+      } else if (historialFilterType === 'dia') {
+        return orderDateStr === historialFecha;
+      } else if (historialFilterType === 'rango') {
+        return orderDateStr >= historialFecha && orderDateStr <= historialFechaFin;
+      }
+      return true; // 'todos'
+    });
+  }, [allFinishedOrders, historialFilterType, historialFecha, historialFechaFin]);
+
   const isShop = profileData?.tipo_servicio === 'shops';
   const processOrders = orders.filter(o => {
     if (isShop) {
@@ -1921,12 +2002,15 @@ export default function RestaurantDashboard() {
   const preparacionOrders = processOrders.filter(o => o.estadoActual === 'Aceptado');
   const listosOrders = processOrders.filter(o => o.estadoActual === 'Listo' || (isShop && o.estadoActual === 'Buscando Repartidor'));
 
-  const currentTabOrders = (isShop ? [...processOrders].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)) : 
-                            (currentTab === 'pendientes' ? pendientesOrders :
-                             currentTab === 'preparacion' ? preparacionOrders :
-                             listosOrders)).filter(o => 
-                              !orderSearch || o.idPedido.toLowerCase().includes(orderSearch.toLowerCase())
-                            );
+  const activeOrdersForCurrentTab = isShop ? (currentTab === 'entregados' ? entregadosOrders : [...processOrders].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))) : 
+                                             (currentTab === 'pendientes' ? pendientesOrders :
+                                              currentTab === 'preparacion' ? preparacionOrders :
+                                              currentTab === 'listos' ? listosOrders :
+                                              entregadosOrders);
+
+  const currentTabOrders = activeOrdersForCurrentTab.filter(o => 
+    !orderSearch || o.idPedido.toLowerCase().includes(orderSearch.toLowerCase())
+  );
 
   const finalOrders = (() => {
     if (!showTutorial || view !== 'orders') return currentTabOrders;
@@ -3043,7 +3127,7 @@ export default function RestaurantDashboard() {
                 className={`rd-sidebar-btn ${view === 'cierre' ? 'active' : ''}`} 
                 onClick={() => { setView('cierre'); setCierreSubTab('generar'); setHideStatsInCierre(true); setMobileSidebarOpen(false); }}
               >
-                <span>💰</span> Arqueo / Cierre
+                <span>💰</span> Cierre de turno
               </button>
             </li>
 
@@ -3335,7 +3419,7 @@ export default function RestaurantDashboard() {
             </div>
 
             {!isShop ? (
-              <div className="rd-tabs" style={{ gap: 8 }}>
+              <div className="rd-tabs" style={{ gap: 8, flexWrap: 'wrap' }}>
                 <button className={currentTab === 'pendientes' ? 'active' : ''} onClick={() => setCurrentTab('pendientes')} style={{ position: 'relative' }}>
                   Pendientes <span className="badge badge-amber" style={{ marginLeft: 6 }}>{pendientesOrders.length + (showTutorial && tutorialSampleOrderState === 'Pendiente' ? 1 : 0)}</span>
                 </button>
@@ -3345,10 +3429,105 @@ export default function RestaurantDashboard() {
                 <button className={currentTab === 'listos' ? 'active' : ''} onClick={() => setCurrentTab('listos')} style={{ position: 'relative' }}>
                   Listos <span className="badge badge-blue" style={{ marginLeft: 6 }}>{listosOrders.length + (showTutorial && tutorialSampleOrderState === 'Listo' ? 1 : 0)}</span>
                 </button>
+                <button className={currentTab === 'entregados' ? 'active' : ''} onClick={() => setCurrentTab('entregados')} style={{ position: 'relative' }}>
+                  Historial <span className="badge badge-green" style={{ marginLeft: 6 }}>{entregadosOrders.length}</span>
+                </button>
               </div>
             ) : (
-              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--gray-700)', padding: '8px 4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📋 Pedidos Activos <span className="badge badge-amber" style={{ fontSize: '0.85rem' }}>{finalOrders.length}</span>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%' }}>
+                <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--gray-700)', padding: '8px 4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📋 {currentTab === 'entregados' ? 'Historial' : 'Pedidos Activos'} <span className="badge badge-amber" style={{ fontSize: '0.85rem' }}>{finalOrders.length}</span>
+                </div>
+                <button className={`btn btn-sm ${currentTab === 'entregados' ? 'btn-success' : 'btn-outline'}`} onClick={() => setCurrentTab(currentTab === 'entregados' ? 'pendientes' : 'entregados')}>
+                  {currentTab === 'entregados' ? '📋 Ver Activos' : `📦 Historial (${entregadosOrders.length})`}
+                </button>
+              </div>
+            )}
+
+            {currentTab === 'entregados' && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                flexWrap: 'wrap',
+                background: '#f8fafc',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                margin: '12px 0 16px'
+              }}>
+                <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#334155', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📅 Filtrar Historial:
+                </span>
+                
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <button 
+                    type="button"
+                    className={`btn btn-sm ${historialFilterType === 'hoy' ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setHistorialFilterType('hoy')}
+                    style={historialFilterType === 'hoy' ? { background: '#0284c7', borderColor: '#0284c7', color: 'white' } : {}}
+                  >
+                    Hoy
+                  </button>
+                  <button 
+                    type="button"
+                    className={`btn btn-sm ${historialFilterType === 'dia' ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setHistorialFilterType('dia')}
+                    style={historialFilterType === 'dia' ? { background: '#0284c7', borderColor: '#0284c7', color: 'white' } : {}}
+                  >
+                    Día Específico
+                  </button>
+                  <button 
+                    type="button"
+                    className={`btn btn-sm ${historialFilterType === 'rango' ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setHistorialFilterType('rango')}
+                    style={historialFilterType === 'rango' ? { background: '#0284c7', borderColor: '#0284c7', color: 'white' } : {}}
+                  >
+                    Rango de Fechas
+                  </button>
+                  <button 
+                    type="button"
+                    className={`btn btn-sm ${historialFilterType === 'todos' ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setHistorialFilterType('todos')}
+                    style={historialFilterType === 'todos' ? { background: '#0284c7', borderColor: '#0284c7', color: 'white' } : {}}
+                  >
+                    Todos
+                  </button>
+                </div>
+
+                {historialFilterType === 'dia' && (
+                  <input 
+                    type="date"
+                    className="form-input"
+                    style={{ padding: '4px 10px', fontSize: '0.85rem', margin: 0, width: 'auto' }}
+                    value={historialFecha}
+                    onChange={(e) => setHistorialFecha(e.target.value)}
+                  />
+                )}
+
+                {historialFilterType === 'rango' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input 
+                      type="date"
+                      className="form-input"
+                      style={{ padding: '4px 10px', fontSize: '0.85rem', margin: 0, width: 'auto' }}
+                      value={historialFecha}
+                      onChange={(e) => setHistorialFecha(e.target.value)}
+                    />
+                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>hasta</span>
+                    <input 
+                      type="date"
+                      className="form-input"
+                      style={{ padding: '4px 10px', fontSize: '0.85rem', margin: 0, width: 'auto' }}
+                      value={historialFechaFin}
+                      onChange={(e) => setHistorialFechaFin(e.target.value)}
+                    />
+                  </div>
+                )}
+
+                <span style={{ fontSize: '0.82rem', color: '#64748b', marginLeft: 'auto', fontWeight: 500 }}>
+                  Mostrando {entregadosOrders.length} pedido(s)
+                </span>
               </div>
             )}
             {ordersLoading ? (
@@ -3361,6 +3540,7 @@ export default function RestaurantDashboard() {
                 order={o}
                 isShop={profileData?.tipo_servicio === 'shops'} 
                 localNombre={profileData?.nombre} 
+                localLogo={profileData?.foto_url} 
                 onAction={async (order, action) => {
                   if (action === 'RechazarClick') {
                     setOrderToReject(order);
@@ -5593,7 +5773,7 @@ export default function RestaurantDashboard() {
 }
 
 /* ─── Order Card Component ─── */
-function OrderCard({ order: o, onAction, finished, isShop, localNombre }) {
+function OrderCard({ order: o, onAction, finished, isShop, localNombre, localLogo }) {
   const [loading, setLoading] = React.useState('');
   const [showScheduler, setShowScheduler] = React.useState(false);
   const [scheduleDate, setScheduleDate] = React.useState('');
@@ -5604,6 +5784,283 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre }) {
                           String(o.metodoPago).toLowerCase().includes('online') || 
                           String(o.metodoPago).toLowerCase().includes('tarjeta') || 
                           String(o.metodoPago).toLowerCase() === 'mp';
+
+  const handleReavisar = async () => {
+    setLoading('Reavisar');
+    try {
+      const direccionLocal = localNombre || 'Local';
+      await api.notifyOrderListo(o, direccionLocal);
+
+      if (o.repartidorId) {
+        try {
+          const rep = await api.repartidorGetDatos(o.repartidorId);
+          if (rep?.data?.Email) {
+            const cartMapped = (o.items || []).map(i => ({
+              nombre: i[4],
+              precio: i[5],
+              cantidad: i[6],
+              subtotal: i[7]
+            }));
+            await api.notifyDriverAboutNewOrder(
+              o.idPedido,
+              cartMapped,
+              o.direccion,
+              o.observaciones,
+              o.totalLocal,
+              o.metodoPago,
+              rep.data.Email
+            );
+          }
+        } catch (e) {
+          console.error("Error al notificar repartidor:", e);
+        }
+      }
+
+      await api.reavisarRepartidorOrder(o.idPedidoLocal);
+      toast.success('¡Aviso re-enviado al repartidor con éxito! 🛵🔔', { icon: '🛵' });
+    } catch (err) {
+      console.error("Error en handleReavisar:", err);
+      toast.error('No se pudo reavisar al repartidor: ' + (err.message || 'Error'));
+    } finally {
+      setLoading('');
+    }
+  };
+
+  const handlePrintTicket = () => {
+    const logoUrl = localLogo || 'https://jskxfescamdjesdrcnkf.supabase.co/storage/v1/object/public/locales/default-logo.png';
+    const dateObj = o.fecha ? new Date(o.fecha) : new Date();
+    const formattedDate = dateObj.toLocaleString('es-AR', {
+      day: '2-digit',
+      month: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).replace(/\./g, '');
+
+    const itemsHtml = (o.items || []).map(item => {
+      const descRaw = item[9] || item[3] || item.descripcion || item.observaciones || '';
+      let desc = (descRaw && descRaw !== 'Ninguna') ? descRaw.trim() : '';
+      let rawNombre = (item[4] || 'Producto').trim();
+      const cantidad = item[6] || 1;
+      const precioSubtotal = item[7] || 0;
+
+      let displayTitle = rawNombre;
+      let displayDesc = desc;
+      const matchParen = rawNombre.match(/^(.*?)\s*\((.*?)\)$/);
+      if (matchParen) {
+        displayTitle = matchParen[1].trim();
+        displayDesc = matchParen[2].trim();
+      } else if (desc && rawNombre.toLowerCase().includes(desc.toLowerCase())) {
+        displayDesc = '';
+      }
+
+      // Deduplicar descripciones repetidas (ej: "(X) (X)")
+      if (displayDesc) {
+        const matches = [...displayDesc.matchAll(/\((.*?)\)/g)].map(m => m[1].trim());
+        if (matches.length > 0) {
+          displayDesc = [...new Set(matches)].join(', ');
+        } else {
+          const parts = displayDesc.split(/\s*[\(\)\/\+]\s*/).filter(Boolean);
+          const uniqueParts = [...new Set(parts)];
+          if (uniqueParts.length < parts.length && uniqueParts.length > 0) {
+            displayDesc = uniqueParts.join(' / ');
+          }
+        }
+      }
+
+      return `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 1mm;">
+          <span style="flex: 1; padding-right: 2mm;">${cantidad} x ${displayTitle}</span>
+          <span>$${precioSubtotal.toFixed(2)}</span>
+        </div>
+        ${displayDesc ? `<div style="font-size: 11px; font-style: italic; margin-left: 4mm; margin-bottom: 2mm;">- ${displayDesc}</div>` : ''}
+      `;
+    }).join('');
+
+    const subtotalVal = (o.items || []).reduce((sum, i) => sum + (i[7] || 0), 0) || o.totalLocal || 0;
+    const isEnvio = String(o.tipoEntrega).toLowerCase().includes('env') || String(o.tipoEntrega).toLowerCase().includes('domicilio') || (o.precioEnvio > 0);
+    const envioVal = isEnvio ? (o.precioEnvio || 0) : 0;
+    const grandTotal = (o.totalLocal && o.totalLocal > subtotalVal) ? o.totalLocal : (subtotalVal + envioVal);
+
+    let totalSectionHtml = '';
+    if (isEnvio && envioVal > 0) {
+      totalSectionHtml = `
+        <div style="text-align: right; font-size: 13px; margin-top: 4mm; border-top: 1px solid #000; padding-top: 2mm;">
+          Subtotal: $${subtotalVal.toFixed(2)}
+        </div>
+        <div style="text-align: right; font-size: 13px;">
+          Envío Wepi: $${envioVal.toFixed(2)}
+        </div>
+        <div class="total-section" style="border-top: none; margin-top: 1mm; padding-top: 0;">
+          TOTAL: $${grandTotal.toFixed(2)}
+        </div>
+      `;
+    } else {
+      totalSectionHtml = `
+        <div class="total-section">
+          TOTAL: $${grandTotal.toFixed(2)}
+        </div>
+      `;
+    }
+
+    const opNumber = (isOnlinePayment || String(o.metodoPago).toLowerCase().includes('mercado') || String(o.metodoPago).toLowerCase().includes('mp') || String(o.metodoPago).toLowerCase().includes('transfer')) ? (o.paymentId || o.numConfirmacion || o.idPedido.substring(0, 8)) : null;
+
+    let metodoPagoClean = String(o.metodoPago || 'No especificado').toUpperCase();
+    if (isOnlinePayment || metodoPagoClean.includes('TRANSFER') || metodoPagoClean.includes('MERCADO') || metodoPagoClean.includes('MP') || metodoPagoClean.includes('ONLINE') || metodoPagoClean.includes('TARJETA')) {
+      metodoPagoClean = 'MERCADO PAGO';
+    }
+
+    const ticketContentHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Ticket Pedido #${o.idPedido}</title>
+        <style>
+          @page { size: 80mm auto; margin: 0; }
+          body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 80mm;
+            margin: 0 auto;
+            padding: 4mm 2mm;
+            font-size: 13px;
+            color: #000;
+            background: #fff;
+            box-sizing: border-box;
+          }
+          .central-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            text-align: center;
+            margin-bottom: 5px;
+          }
+          .separator {
+            border-top: 2px solid #000;
+            margin: 5px 0;
+          }
+          .dashed-separator {
+            border-top: 1px dashed #000;
+            margin: 3mm 0;
+          }
+          .order-info {
+            text-align: center;
+            margin: 4px 0;
+            font-size: 22px;
+            font-weight: bold;
+          }
+          .date-info {
+            text-align: center;
+            font-size: 11px;
+            margin-bottom: 10px;
+          }
+          .client-info {
+            margin-bottom: 3mm;
+            font-size: 14px;
+            line-height: 1.3;
+          }
+          .total-section {
+            text-align: right;
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 4mm;
+            border-top: 1px solid #000;
+            padding-top: 2mm;
+          }
+          .footer {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 11px;
+            line-height: 1.4;
+          }
+          @media print {
+            body { border: none; }
+            img { filter: grayscale(100%) contrast(1.2); }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="central-header">
+          <img src="${logoUrl}" onerror="this.style.display='none'" style="max-width: 35mm; max-height: 20mm; object-fit: contain;">
+          <span style="font-size: 25px; line-height: 1;">|</span>
+          <img src="https://i.postimg.cc/YG09sFTR/wepi.png" onerror="this.style.display='none'" style="max-width: 40mm; max-height: 25mm; object-fit: contain;">
+        </div>
+
+        <div class="separator"></div>
+
+        <div style="text-align: center; font-size: 10px; font-weight: bold; letter-spacing: 0.5px;">*** ORIGINAL - CLIENTE ***</div>
+
+        <div class="order-info">#${o.idPedido}</div>
+        <div class="date-info">${formattedDate} ${o.numConfirmacion ? `(PIN: ${o.numConfirmacion})` : ''}</div>
+
+        <div class="client-info">
+          <strong>CLIENTE:</strong><br>
+          ${o.nombreCliente}<br>
+          ${o.direccion}<br>
+          Tel: ${o.clienteTelefono || 'N/A'}
+        </div>
+
+        <div class="dashed-separator"></div>
+
+        <div>${itemsHtml}</div>
+
+        <div class="dashed-separator"></div>
+
+        <div>
+          <strong>PAGO:</strong> ${metodoPagoClean} ${opNumber ? `(N° Op: ${opNumber})` : ''}<br>
+          ${o.observaciones && o.observaciones !== 'Ninguna' ? `<strong>OBS Gral:</strong> ${o.observaciones}` : ''}
+        </div>
+
+        ${totalSectionHtml}
+
+        <div class="footer">
+          ¡Gracias por su compra!<br>
+          <strong>Wepi - Pedidos y Delivery</strong>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            }, 250);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=450,height=650');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(ticketContentHtml);
+      printWindow.document.close();
+    } else {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '10px';
+      iframe.style.height = '10px';
+      iframe.style.opacity = '0.01';
+      document.body.appendChild(iframe);
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(ticketContentHtml);
+      doc.close();
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => {
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        }, 1000);
+      }, 300);
+    }
+  };
 
   const handleConfirmRequestDriver = () => {
     if (!scheduleDate || !scheduleTime) {
@@ -5652,7 +6109,18 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre }) {
             {String(o.tipoEntrega).toLowerCase().includes('env') || o.tipoEntrega === 'Con Envío' ? '🚚 Envío' : '🏪 Retiro'}
           </span>
         </div>
-        <span className={`badge ${statusColors[o.estadoActual] || 'badge-gray'}`}>{o.estadoActual}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button 
+            type="button"
+            className="btn btn-outline btn-sm"
+            style={{ padding: '2px 8px', fontSize: '0.8rem', background: '#fff', borderColor: 'var(--gray-300)', cursor: 'pointer' }}
+            onClick={handlePrintTicket}
+            title="Imprimir Ticket"
+          >
+            🖨️ Ticket
+          </button>
+          <span className={`badge ${statusColors[o.estadoActual] || 'badge-gray'}`}>{o.estadoActual}</span>
+        </div>
       </div>
       <div className="rd-order-body">
         <p><strong>Cliente:</strong> {o.nombreCliente}</p>
@@ -5662,8 +6130,14 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre }) {
             {o.numConfirmacion || 'N/A'}
           </span>
         </p>
-        <p><strong>Dirección:</strong> {o.direccion}</p>
-        <p><strong>Pago:</strong> {o.metodoPago}</p>
+        <p style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <strong>Pago:</strong> {o.metodoPago}
+          {(isOnlinePayment || String(o.metodoPago).toLowerCase().includes('mercado') || String(o.metodoPago).toLowerCase().includes('mp')) && (
+            <span style={{ fontSize: '0.82rem', color: '#0284c7', background: '#e0f2fe', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold', border: '1px solid #bae6fd' }}>
+              N° Op: {o.paymentId || o.numConfirmacion || o.idPedido.substring(0, 8)}
+            </span>
+          )}
+        </p>
         {String(o.metodoPago).toLowerCase().includes('efectivo') && (
           <p style={{ color: 'var(--amber-600)', fontWeight: 'bold', fontSize: '0.9rem', marginTop: '4px', background: '#fffbeb', padding: '6px 10px', borderRadius: '6px', border: '1px solid #fef3c7' }}>
             ⚠️ El pedido no fue pagado aún
@@ -5673,16 +6147,67 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre }) {
           <p><strong>Repartidor:</strong> <span style={{ color: 'var(--blue-600)', fontWeight: 'bold' }}>{o.repartidorNombre || 'Buscando...'}</span> {o.repartidorTelefono && <span style={{ fontSize: '0.85rem', color: 'var(--gray-500)', marginLeft: 8 }}>({o.repartidorTelefono})</span>}</p>
         )}
         {o.observaciones !== 'Ninguna' && <p><strong>Obs:</strong> {o.observaciones}</p>}
-        <div className="rd-order-items">
-          {o.items.map((item, i) => (
-            <div key={i} className="rd-order-item" style={{ flexDirection: 'column', alignItems: 'flex-start', borderBottom: '1px dashed var(--gray-100)', padding: '10px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontWeight: 600 }}>
-                <span>{item[4]} × {item[6]}</span>
-                <span>${item[7].toFixed(2)}</span>
+        <div className="rd-order-items" style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '12px 0' }}>
+          {o.items.map((item, i) => {
+            const imgUrl = item[8] || item.imagen_url || item.foto_url || '';
+            const descRaw = item[9] || item[3] || item.descripcion || item.observaciones || '';
+            const desc = (descRaw && descRaw !== 'Ninguna') ? descRaw.trim() : '';
+            let rawNombre = (item[4] || 'Producto').trim();
+            const cantidad = item[6] || 1;
+            const precioSubtotal = item[7] || 0;
+
+            // Extraer nombre principal y descripción secundaria si el nombre viene formateado con paréntesis "Título (Detalles)"
+            let displayTitle = rawNombre;
+            let displayDesc = desc;
+
+            const matchParen = rawNombre.match(/^(.*?)\s*\((.*?)\)$/);
+            if (matchParen) {
+              displayTitle = matchParen[1].trim();
+              displayDesc = matchParen[2].trim();
+            } else if (desc && !rawNombre.toLowerCase().includes(desc.toLowerCase())) {
+              displayDesc = desc;
+            } else if (desc && rawNombre.toLowerCase().includes(desc.toLowerCase())) {
+              displayDesc = '';
+            }
+
+            return (
+              <div key={i} className="rd-order-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', padding: '8px 10px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                  {imgUrl ? (
+                    <img 
+                      src={imgUrl} 
+                      alt={displayTitle} 
+                      style={{ width: '42px', height: '42px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0, border: '1px solid #cbd5e1' }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div style={{ width: '42px', height: '42px', borderRadius: '6px', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0, color: '#64748b' }}>
+                      📦
+                    </div>
+                  )}
+                  
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--red-600)', background: '#fff1f2', border: '1px solid #fecdd3', padding: '2px 6px', borderRadius: '4px', flexShrink: 0 }}>
+                    {cantidad}x
+                  </span>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b', lineHeight: 1.3, wordBreak: 'break-word' }}>
+                      {displayTitle}
+                    </span>
+                    {displayDesc && (
+                      <span style={{ fontSize: '0.78rem', fontWeight: 400, color: '#64748b', marginTop: '2px', lineHeight: 1.25 }}>
+                        {displayDesc}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0f172a', marginLeft: '8px', flexShrink: 0 }}>
+                  ${precioSubtotal.toFixed(2)}
+                </div>
               </div>
-              {/* El detalle ahora viene incluido en el nombre del producto (item[4]) */}
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="rd-order-footer">
           <p><strong>Subtotal (Local):</strong> <span style={{ color: 'var(--red-600)', fontSize: '1.2rem' }}>${o.totalLocal.toFixed(2)}</span></p>
@@ -5835,6 +6360,22 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre }) {
                         </span>
                       ) : '✓ Listo'}
                     </button>
+
+                    {(o.estadoActual === 'Listo' || o.estadoActual === 'Buscando Repartidor') && (String(o.tipoEntrega).toLowerCase().includes('env') || o.tipoEntrega === 'Con Envío') && (
+                      <button 
+                        className="btn btn-sm" 
+                        style={{ background: '#f59e0b', color: '#fff', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }} 
+                        disabled={loading === 'Reavisar'} 
+                        onClick={handleReavisar}
+                      >
+                        {loading === 'Reavisar' ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span className="spinner spinner-white" style={{ width: 14, height: 14 }} /> Reavisando...
+                          </span>
+                        ) : '🔔 Reavisar'}
+                      </button>
+                    )}
+
                     <button 
                       className="btn btn-sm" 
                       style={o.estadoActual !== 'Listo' ? { background: 'var(--gray-300)', color: 'var(--gray-500)', cursor: 'not-allowed' } : { background: 'var(--blue-500)', color: '#fff' }} 

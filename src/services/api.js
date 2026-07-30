@@ -1882,10 +1882,10 @@ export async function getPedidosLocalesCompletosByLocal(localId) {
     throw generalErr;
   }
 
-  // 3. Fetch all matching items in ONE query
+  // 3. Fetch all matching items in ONE query with menu image and description
   const { data: allItems, error: itemsErr } = await supabase
     .from('pedidos_items')
-    .select('*')
+    .select('*, menu:item_id(imagen_url, descripcion)')
     .in('pedido_id', uniquePedidoIds)
     .eq('local_id', localId);
 
@@ -1903,15 +1903,19 @@ export async function getPedidosLocalesCompletosByLocal(localId) {
   const itemsMap = {};
   allItems.forEach(i => {
     if (!itemsMap[i.pedido_id]) itemsMap[i.pedido_id] = [];
+    const img = i.imagen_url || i.imagen || i.foto_url || i.menu?.imagen_url || i.menu?.foto_url || '';
+    const desc = i.descripcion || i.observaciones || i.menu?.descripcion || '';
     itemsMap[i.pedido_id].push([
       i.id,
       i.pedido_id,
       i.item_id,
-      '',
+      i.observaciones || '',
       i.nombre,
       i.precio_unitario,
       i.cantidad,
-      i.subtotal
+      i.subtotal,
+      img,
+      desc
     ]);
   });
 
@@ -1934,10 +1938,12 @@ export async function getPedidosLocalesCompletosByLocal(localId) {
       clienteTelefono: gen.usuarios?.telefono || null,
       fecha: gen.fecha,
       numConfirmacion: gen.num_confirmacion,
+      paymentId: gen.payment_id || gen.preference_id || null,
       repartidorId: gen.repartidor_id,
       repartidorNombre: rep.nombre || null,
       repartidorTelefono: rep.telefono || null,
       localId: p.local_id,
+      precioEnvio: Number(gen.precio_envio || gen.costo_envio || gen.envio || gen.costo_delivery) || 0,
       totalLocal: Number(p.total) || items.reduce((acc, item) => acc + (Number(item[7]) || 0), 0),
     };
   });
@@ -4258,6 +4264,20 @@ const LOGO_HTML = `
   <hr style="border:0; border-top:2px solid #d32f2f; margin:30px 0;">
 `;
 
+export async function reavisarRepartidorOrder(pedidoLocalId) {
+  try {
+    const { error } = await supabase
+      .from('pedidos_locales')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', pedidoLocalId);
+    if (error) console.error("Error updating pedidos_locales updated_at:", error);
+    return { success: true };
+  } catch (err) {
+    console.error("Error in reavisarRepartidorOrder:", err);
+    return { success: false };
+  }
+}
+
 export async function notifyOrderListo(pedido, direccionLocal) {
   try {
     const isEnvio = String(pedido.tipoEntrega).toLowerCase().includes('env') || String(pedido.tipoEntrega).toLowerCase() === 'con envío';
@@ -4348,9 +4368,23 @@ export async function notifyOrderRechazado(pedido, reason = '') {
   }
 }
 
+let globalAudioCtx = null;
+
+export function unlockAudioContext() {
+  try {
+    if (!globalAudioCtx) {
+      globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (globalAudioCtx.state === 'suspended') {
+      globalAudioCtx.resume().catch(e => console.log('Audio resume deferred:', e));
+    }
+  } catch (err) {}
+}
+
 export function playNotificationSound() {
   try {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    unlockAudioContext();
+    const audioCtx = globalAudioCtx;
     for (let i = 0; i < 3; i++) {
       const oscillator = audioCtx.createOscillator();
       const gainNode = audioCtx.createGain();
