@@ -198,8 +198,11 @@ export default function RestaurantDashboard() {
   const [cierreReport, setCierreReport] = React.useState(null);
   const [cierreLoading, setCierreLoading] = React.useState(false);
   const [cierreSubTab, setCierreSubTab] = React.useState('generar'); // generar, historial, estadisticas
-  const [hideStatsInCierre, setHideStatsInCierre] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
+
+  // Pending order alert refs (30s re-trigger)
+  const pendingArrivalTimesRef = React.useRef({});
+  const lastPendingAlertTimesRef = React.useRef({});
 
   const [statsDates, setStatsDates] = React.useState({ 
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
@@ -482,6 +485,28 @@ export default function RestaurantDashboard() {
         isInitialLoadRef.current = false;
       }
       previousOrdersRef.current = processed;
+
+      // Actualizar timestamps para la re-alerta cada 30s de pedidos no aceptados
+      const currentPending = processed.filter(o => 
+        validAlertStates.includes(o.estadoActual) && 
+        !['Entregado', 'Retirado', 'En Camino', 'Rechazado', 'Cancelado', 'Aceptado', 'Listo'].includes(o.estadoActual)
+      );
+
+      const nowTime = Date.now();
+      currentPending.forEach(o => {
+        if (!pendingArrivalTimesRef.current[o.idPedidoLocal]) {
+          pendingArrivalTimesRef.current[o.idPedidoLocal] = nowTime;
+          lastPendingAlertTimesRef.current[o.idPedidoLocal] = nowTime;
+        }
+      });
+
+      // Limpiar pedidos que salieron de estado pendiente
+      Object.keys(pendingArrivalTimesRef.current).forEach(id => {
+        if (!currentPending.some(o => o.idPedidoLocal === id)) {
+          delete pendingArrivalTimesRef.current[id];
+          delete lastPendingAlertTimesRef.current[id];
+        }
+      });
 
       setOrders(processed);
       setPendingCount(processed.filter(o => validAlertStates.includes(o.estadoActual)).length);
@@ -862,6 +887,36 @@ export default function RestaurantDashboard() {
       if (pollingRef.current) clearInterval(pollingRef.current);
     };
   }, [restaurant, loadOrders, loadRepartidoresStatus]);
+
+  // Re-alerta cada 30 segundos si hay pedidos pendientes sin aceptar
+  React.useEffect(() => {
+    if (!restaurant) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const unacceptedIds = [];
+
+      Object.keys(pendingArrivalTimesRef.current).forEach(id => {
+        const arrival = pendingArrivalTimesRef.current[id];
+        const lastAlert = lastPendingAlertTimesRef.current[id] || arrival;
+
+        if (now - arrival >= 30000 && now - lastAlert >= 30000) {
+          unacceptedIds.push(id);
+          lastPendingAlertTimesRef.current[id] = now;
+        }
+      });
+
+      if (unacceptedIds.length > 0) {
+        api.playNotificationSound();
+        toast.warning(`⚠️ Tenés ${unacceptedIds.length} pedido(s) pendiente(s) sin aceptar desde hace más de 30 segundos!`, {
+          duration: 6000,
+          icon: '🔔'
+        });
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [restaurant]);
 
   // Modo Automatico Auto-update
   React.useEffect(() => {
@@ -3080,7 +3135,7 @@ export default function RestaurantDashboard() {
               <>
                 <li>
                   <button 
-                    className={`rd-sidebar-btn ${view === 'menu' || view === 'addItem' || view === 'sabores' ? 'active' : ''}`} 
+                    className={`rd-sidebar-btn ${view === 'menu' ? 'active' : ''}`} 
                     onClick={() => {
                       setView('menu'); loadMenu(); setMobileSidebarOpen(false);
                     }}
@@ -3089,8 +3144,30 @@ export default function RestaurantDashboard() {
                   </button>
                 </li>
                 <li>
+                  <button 
+                    className={`rd-sidebar-btn ${view === 'addItem' ? 'active' : ''}`} 
+                    onClick={() => {
+                      setEditItem(null); setItemCategory(''); setItemSubcategory('Helado por kg'); setItemName(''); setView('addItem'); setIsBaseProductMode(false); setMobileSidebarOpen(false);
+                    }}
+                  >
+                    <span>➕</span> Agregar
+                  </button>
+                </li>
+                {(profileData?.rubro === 'Heladeria' || profileData?.rubro === 'Heladería' || (Array.isArray(profileData?.rubros) && profileData.rubros.some(r => String(r).toLowerCase().includes('helad'))) || String(profileData?.nombre).toLowerCase().includes('helad')) && (
+                  <li>
+                    <button 
+                      className={`rd-sidebar-btn ${view === 'sabores' ? 'active' : ''}`} 
+                      onClick={() => {
+                        setView('sabores'); loadSabores(); setMobileSidebarOpen(false);
+                      }}
+                    >
+                      <span>🍨</span> Sabores y Adicionales
+                    </button>
+                  </li>
+                )}
+                <li>
                   <button className={`rd-sidebar-btn ${view === 'sync' ? 'active' : ''}`} onClick={() => { setView('sync'); setMobileSidebarOpen(false); }}>
-                    <span>🔄</span> Wepi Sync
+                    <span>📥</span> Carga masiva
                   </button>
                 </li>
               </>
@@ -3156,12 +3233,17 @@ export default function RestaurantDashboard() {
                 </li>
                 <li>
                   <button 
-                    className={`rd-sidebar-btn ${(view === 'settings' && profileSubView === 'whatsapp') ? 'active' : ''}`} 
-                    onClick={() => {
-                      setView('settings'); setProfileSubView('whatsapp'); setMobileSidebarOpen(false);
+                    className="rd-sidebar-btn disabled"
+                    style={{ opacity: 0.65, cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toast.info('🔒 La sección WhatsApp Assistant estará disponible próximamente', { icon: '🤖' });
                     }}
                   >
-                    <span>💬</span> WhatsApp Assistant
+                    <span><span>💬</span> WhatsApp Assistant</span>
+                    <span style={{ fontSize: '0.7rem', background: '#fef3c7', color: '#b45309', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, border: '1px solid #fde68a' }}>
+                      Próximamente
+                    </span>
                   </button>
                 </li>
                 <li>
@@ -3603,6 +3685,16 @@ export default function RestaurantDashboard() {
                       )}
                    </div>
 
+                   {(profileData?.rubro === 'Heladeria' || profileData?.rubro === 'Heladería' || (Array.isArray(profileData?.rubros) && profileData.rubros.some(r => String(r).toLowerCase().includes('helad'))) || String(profileData?.nombre).toLowerCase().includes('helad')) && (
+                     <button 
+                       className="btn" 
+                       style={{ background: '#f59e0b', color: 'white', borderColor: '#d97706', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
+                       onClick={() => { setView('sabores'); loadSabores(); }}
+                     >
+                       🍨 Sabores y Adicionales
+                     </button>
+                   )}
+
                    <button className={`btn ${showStockPanel ? 'btn-primary' : 'btn-outline'}`} onClick={() => { setShowStockPanel(!showStockPanel); setShowDiscountPanel(false); }} style={showStockPanel ? { background: '#f97316', borderColor: '#f97316' } : {}}>
                      📦 Stock
                    </button>
@@ -3612,7 +3704,7 @@ export default function RestaurantDashboard() {
                    </button>
 
                    <button className="btn btn-outline" onClick={() => setView('sync')}>
-                     🔄 Wepi Sync
+                     📥 Carga masiva
                    </button>
                 </div>
 
