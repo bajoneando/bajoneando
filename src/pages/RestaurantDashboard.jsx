@@ -4742,10 +4742,8 @@ export default function RestaurantDashboard() {
                           <tr key={p.id} style={{ borderBottom: '1px solid var(--gray-50)' }}>
                             <td style={{ padding: '8px 4px', fontWeight: 600 }}>#{p.id.slice(0, 8)}</td>
                             <td style={{ padding: '8px 4px', fontSize: '0.7rem' }}>
-                              {new Date(new Date(p.hora).getTime() + 3 * 60 * 60 * 1000).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}
+                              {new Date(p.hora).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}
                             </td>
-
-
                             <td style={{ padding: '8px 4px' }}>
                               <div>{p.metodo}</div>
                               {p.metodo?.toLowerCase().includes('transferencia') && p.nro_operacion && p.nro_operacion !== 'N/A' && (
@@ -4855,7 +4853,7 @@ export default function RestaurantDashboard() {
                         {historialCierres.map(c => (
                           <tr key={c.id} style={{ borderBottom: '1px solid var(--gray-50)' }}>
                             <td style={{ padding: '12px 8px', fontWeight: 600 }}>
-                              {new Date(new Date(c.created_at).getTime() + 3 * 60 * 60 * 1000).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                              {new Date(c.created_at || c.fecha).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                             </td>
 
 
@@ -5783,7 +5781,7 @@ export default function RestaurantDashboard() {
                           {statsData.history.map(h => (
                             <tr key={h.id} style={{ borderBottom: '1px solid var(--gray-50)' }}>
                               <td style={{ padding: '12px 8px', fontWeight: 600 }}>
-                                {new Date(new Date(h.created_at).getTime() + 3 * 60 * 60 * 1000).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                                {new Date(h.created_at || h.fecha).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                               </td>
 
 
@@ -6374,7 +6372,7 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre, localLog
         <div>
           <strong>Pedido #{o.idPedido}</strong>
 
-          {o.fecha && <span className="rd-order-sub" style={{ marginLeft: 8 }}>📅 {new Date(new Date(o.fecha).getTime() + 3 * 60 * 60 * 1000).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>}
+          {o.fecha && <span className="rd-order-sub" style={{ marginLeft: 8 }}>📅 {new Date(o.fecha).toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false })}</span>}
           <span className={`badge ${String(o.tipoEntrega).toLowerCase().includes('env') || o.tipoEntrega === 'Con Envío' ? 'badge-blue' : 'badge-gray'}`} style={{ marginLeft: 8 }}>
             {String(o.tipoEntrega).toLowerCase().includes('env') || o.tipoEntrega === 'Con Envío' ? '🚚 Envío' : '🏪 Retiro'}
           </span>

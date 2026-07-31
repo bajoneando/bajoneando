@@ -438,7 +438,7 @@ const AdminReportes = () => {
                                              <tr key={p.id}>
                                                  <td style={{ fontWeight: 600 }}>#{p.id.slice(0, 8)}</td>
                                                  <td style={{ fontSize: '0.75rem' }}>
-                                                     {new Date(new Date(p.hora).getTime() + 3 * 60 * 60 * 1000).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}
+                                                     {new Date(p.hora).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}
                                                  </td>
                                                  <td>
                                                      <div>{p.metodo}</div>
@@ -619,7 +619,7 @@ const AdminReportes = () => {
                                 {historial.map(c => (
                                     <tr key={c.id}>
                                         <td style={{ fontSize: '0.65rem', fontFamily: 'monospace' }}>{c.id.slice(0,8)}</td>
-                                        <td>{new Date(c.fecha).toLocaleDateString('es-AR')}</td>
+                                        <td>{new Date(c.created_at || c.fecha).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}</td>
                                         <td style={{ fontWeight: 600 }}>{c.locales?.nombre}</td>
                                         <td style={{ fontWeight: 600, color: 'var(--blue-600)' }}>{c.num_pedidos || (c.datos_detallados || []).length || 0}</td>
                                         <td>${c.total_subtotal}</td>
@@ -958,7 +958,7 @@ const AdminReportes = () => {
                                                     <td style={{ fontWeight: 600 }}>{idx + 1}. #{p.id.slice(0, 8)}</td>
                                                     <td>{p.cliente}</td>
                                                     <td style={{ fontSize: '0.7rem' }}>
-                                                        {new Date(new Date(p.hora).getTime() + 3 * 60 * 60 * 1000).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                                                        {new Date(p.hora).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                                                     </td>
                                                     <td>
                                                         <div>{p.metodo}</div>
@@ -1278,7 +1278,7 @@ const AdminReportes = () => {
                                                     {visibleCols.cliente && <td>{p.cliente}</td>}
                                                     {visibleCols.fecha && (
                                                         <td style={{ fontSize: '0.7rem' }}>
-                                                            {new Date(new Date(p.hora).getTime() + 3 * 60 * 60 * 1000).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                                                            {new Date(p.hora).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                                                         </td>
                                                     )}
                                                     {visibleCols.metodo && (
