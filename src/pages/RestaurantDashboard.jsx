@@ -298,9 +298,11 @@ export default function RestaurantDashboard() {
     const finalTotalVal = subtotalVal + (isEnvio ? costoEnvioVal : 0);
 
     const itemsHtml = (o.items || []).map(item => {
-      let rawNombre = (item[4] || 'Producto').trim();
+      const rawVal = item[4] || item.nombre || 'Producto';
+      let rawNombre = typeof rawVal === 'string' ? rawVal.trim() : String(rawVal).trim();
       const descRaw = item[9] || item[3] || item.descripcion || item.observaciones || '';
-      const desc = (descRaw && descRaw !== 'Ninguna') ? descRaw.trim() : '';
+      const descStr = typeof descRaw === 'string' ? descRaw : (descRaw && typeof descRaw === 'object' ? '' : String(descRaw));
+      const desc = (descStr && descStr !== 'Ninguna' && descStr !== '[object Object]') ? descStr.trim() : '';
 
       let displayTitle = rawNombre;
       let displayDesc = desc;
@@ -6107,8 +6109,10 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre, localLog
 
     const itemsHtml = (o.items || []).map(item => {
       const descRaw = item[9] || item[3] || item.descripcion || item.observaciones || '';
-      let desc = (descRaw && descRaw !== 'Ninguna') ? descRaw.trim() : '';
-      let rawNombre = (item[4] || 'Producto').trim();
+      const descStr = typeof descRaw === 'string' ? descRaw : (descRaw && typeof descRaw === 'object' ? '' : String(descRaw));
+      let desc = (descStr && descStr !== 'Ninguna' && descStr !== '[object Object]') ? descStr.trim() : '';
+      const rawVal = item[4] || item.nombre || 'Producto';
+      let rawNombre = typeof rawVal === 'string' ? rawVal.trim() : String(rawVal).trim();
       const cantidad = item[6] || 1;
       const precioSubtotal = item[7] || 0;
 
@@ -6417,8 +6421,10 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre, localLog
           {o.items.map((item, i) => {
             const imgUrl = item[8] || item.imagen_url || item.foto_url || '';
             const descRaw = item[9] || item[3] || item.descripcion || item.observaciones || '';
-            const desc = (descRaw && descRaw !== 'Ninguna') ? descRaw.trim() : '';
-            let rawNombre = (item[4] || 'Producto').trim();
+            const descStr = typeof descRaw === 'string' ? descRaw : (descRaw && typeof descRaw === 'object' ? '' : String(descRaw));
+            const desc = (descStr && descStr !== 'Ninguna' && descStr !== '[object Object]') ? descStr.trim() : '';
+            const rawVal = item[4] || item.nombre || 'Producto';
+            let rawNombre = typeof rawVal === 'string' ? rawVal.trim() : String(rawVal).trim();
             const cantidad = item[6] || 1;
             const precioSubtotal = item[7] || 0;
 

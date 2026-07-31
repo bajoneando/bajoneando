@@ -2685,13 +2685,13 @@ export async function getAdminTasks() {
 export async function getLocalCierreReport(localId, options = {}) {
   const { fecha, inicio, fin, pendientes } = options;
   
-  // 1. Configurar query base
+  // 1. Configurar query base en pedidos_locales (excluyendo lo que ya esté cerrado)
   let query = supabase
     .from('pedidos_locales')
     .select('*')
     .eq('local_id', localId)
     .eq('estado', 'Entregado')
-    .eq('cierre_caja', false);
+    .neq('cierre_caja', true);
 
   // 2. Aplicar filtros según el modo
   if (pendientes) {
@@ -2708,14 +2708,36 @@ export async function getLocalCierreReport(localId, options = {}) {
 
   query = query.order('created_at', { ascending: true });
 
-  const { data: pedidosLocales, error: errPL } = await query;
-
-
+  const { data: rawPedidosLocales, error: errPL } = await query;
 
   if (errPL) throw new Error(errPL.message);
   
-  if (!pedidosLocales || pedidosLocales.length === 0) {
-    return { success: true, subtotal: 0, transferencia: 0, efectivo: 0, comisionEfectivo: 0, pedidos: [], comisiones: 0, neto: 0, comisionPct: 0 };
+  if (!rawPedidosLocales || rawPedidosLocales.length === 0) {
+    return { success: true, subtotal: '0.00', transferencia: '0.00', efectivo: '0.00', comisionEfectivo: '0.00', pedidos: [], comisiones: '0.00', neto: '0.00', comisionPct: 0 };
+  }
+
+  // Cruce de seguridad: Consultar tabla cierre_caja para descartar pedidos registrados previamente
+  const { data: pastCierres } = await supabase
+    .from('cierre_caja')
+    .select('datos_detallados')
+    .eq('local_id', localId);
+
+  const pastClosedOrderIds = new Set();
+  if (pastCierres) {
+    pastCierres.forEach(c => {
+      if (Array.isArray(c.datos_detallados)) {
+        c.datos_detallados.forEach(d => {
+          if (d.id) pastClosedOrderIds.add(String(d.id));
+        });
+      }
+    });
+  }
+
+  // Filtrar pedidos que no estén en cierres anteriores
+  const pedidosLocales = rawPedidosLocales.filter(p => !pastClosedOrderIds.has(String(p.pedido_id)));
+
+  if (pedidosLocales.length === 0) {
+    return { success: true, subtotal: '0.00', transferencia: '0.00', efectivo: '0.00', comisionEfectivo: '0.00', pedidos: [], comisiones: '0.00', neto: '0.00', comisionPct: 0 };
   }
 
   // 2. Obtener datos complementarios de pedidos_general (nombre_cliente, nro_operacion, etc.)
@@ -2818,8 +2840,9 @@ export async function getLocalCierreReport(localId, options = {}) {
 
   const neto = subtotal - totalComisiones;
 
-  // Asegurar que siempre devolvemos una fecha de referencia para el registro del cierre
-  const finalFecha = fecha || inicio || new Date().toISOString().split('T')[0];
+  // Garantizar fecha en zona horaria Argentina (UTC-3)
+  const argentinaToday = getArgentinaDateStr(new Date());
+  const finalFecha = fecha || inicio || argentinaToday;
 
   return {
     subtotal: subtotal.toFixed(2),
@@ -2834,6 +2857,7 @@ export async function getLocalCierreReport(localId, options = {}) {
     neto: neto.toFixed(2),
     comisionPct, 
     fecha: finalFecha,
+    cierreMode: pendientes ? 'pendientes' : (fecha ? 'dia' : (inicio ? 'intervalo' : 'pendientes')),
     success: true
   };
 }
@@ -3062,9 +3086,9 @@ export async function saveLocalCierre(data) {
     throw new Error('No hay pedidos en este informe para realizar el cierre.');
   }
 
-  const pedidoIds = (data.pedidos || []).map(p => p.id);
+  const pedidoIds = (data.pedidos || []).map(p => String(p.id));
 
-  // Verificar si los pedidos ya han sido cerrados en un cierre de caja previo
+  // Verificar si los pedidos ya han sido cerrados en pedidos_locales
   const { data: cierresExistentes, error: errCheck } = await supabase
     .from('pedidos_locales')
     .select('pedido_id')
@@ -3074,20 +3098,35 @@ export async function saveLocalCierre(data) {
 
   if (errCheck) console.error("Error al verificar cierres existentes:", errCheck);
 
-  if (cierresExistentes && cierresExistentes.length === pedidoIds.length) {
-    throw new Error('Este cierre de caja ya fue procesado y guardado previamente.');
+  // Verificar si los pedidos ya existen en la tabla cierre_caja
+  const { data: pastCierres } = await supabase
+    .from('cierre_caja')
+    .select('datos_detallados')
+    .eq('local_id', data.localId);
+
+  const pastClosedOrderIds = new Set(cierresExistentes?.map(c => String(c.pedido_id)) || []);
+  if (pastCierres) {
+    pastCierres.forEach(c => {
+      if (Array.isArray(c.datos_detallados)) {
+        c.datos_detallados.forEach(d => {
+          if (d.id) pastClosedOrderIds.add(String(d.id));
+        });
+      }
+    });
   }
 
-  const yaCerradosSet = new Set(cierresExistentes?.map(c => c.pedido_id) || []);
-  const nuevosPedidoIds = pedidoIds.filter(id => !yaCerradosSet.has(id));
+  const nuevosPedidoIds = pedidoIds.filter(id => !pastClosedOrderIds.has(id));
 
   if (nuevosPedidoIds.length === 0) {
-    throw new Error('Todos los pedidos de este informe ya fueron marcados como cerrados.');
+    throw new Error('Todos los pedidos de este informe ya fueron marcados como cerrados previamente.');
   }
+
+  // La fecha del cierre en la BD debe ser la fecha/hora exacta en que se realiza el cierre (momento del clic)
+  const fechaCierreGuardar = (data.cierreMode === 'dia' && data.fecha) ? data.fecha : new Date().toISOString();
 
   const { error } = await supabase.from('cierre_caja').insert({
     local_id: data.localId,
-    fecha: data.fecha || new Date().toISOString(),
+    fecha: fechaCierreGuardar,
     total_subtotal: data.subtotal,
     total_comisiones: data.comisiones,
     total_neto_local: data.neto,
@@ -3095,16 +3134,22 @@ export async function saveLocalCierre(data) {
     total_efectivo: data.efectivo,
     comision_efectivo: data.comisionEfectivo || 0,
     num_pedidos: nuevosPedidoIds.length,
-    datos_detallados: data.pedidos.filter(p => !yaCerradosSet.has(p.id))
+    datos_detallados: data.pedidos.filter(p => !pastClosedOrderIds.has(String(p.id)))
   });
 
   if (error) throw new Error(error.message);
 
   if (nuevosPedidoIds.length > 0) {
+    // 1. Marcar como cerrado en pedidos_locales
     await supabase.from('pedidos_locales')
       .update({ cierre_caja: true })
       .in('pedido_id', nuevosPedidoIds)
       .eq('local_id', data.localId);
+
+    // 2. Marcar como cerrado en pedidos_general para sincronización global
+    await supabase.from('pedidos_general')
+      .update({ cierre_caja: true })
+      .in('id', nuevosPedidoIds);
   }
   return { success: true };
 }
@@ -3113,7 +3158,7 @@ export async function getAdminCierreReport(fecha, localId = null) {
   let query = supabase.from('pedidos_general')
     .select('*, repartidores:repartidor_id(nombre)')
     .eq('estado', 'Entregado')
-    .eq('cierre_caja', false)
+    .neq('cierre_caja', true)
     .gte('created_at', `${fecha}T00:00:00Z`)
     .lte('created_at', `${fecha}T23:59:59Z`);
 
@@ -3121,7 +3166,8 @@ export async function getAdminCierreReport(fecha, localId = null) {
     const { data: pLocales, error: errIds } = await supabase
       .from('pedidos_locales')
       .select('pedido_id')
-      .eq('local_id', localId);
+      .eq('local_id', localId)
+      .neq('cierre_caja', true);
     
     if (errIds) throw new Error(errIds.message);
     const pedidoIds = (pLocales || []).map(pl => pl.pedido_id);
@@ -3129,13 +3175,39 @@ export async function getAdminCierreReport(fecha, localId = null) {
     query = query.in('id', pedidoIds);
   }
 
-  const { data: dataGeneral, error } = await query;
+  const { data: rawDataGeneral, error } = await query;
   if (error) throw new Error(error.message);
 
-  const pedidoIds = (dataGeneral || []).map(p => p.id);
+  if (!rawDataGeneral || rawDataGeneral.length === 0) {
+    return { success: true, pedidos: [], repartidores: [] };
+  }
+
+  // Cruce de seguridad con la tabla de historial cierre_caja
+  let cierresQuery = supabase.from('cierre_caja').select('datos_detallados');
+  if (localId && localId !== 'Todos') cierresQuery = cierresQuery.eq('local_id', localId);
+  const { data: pastCierres } = await cierresQuery;
+
+  const pastClosedOrderIds = new Set();
+  if (pastCierres) {
+    pastCierres.forEach(c => {
+      if (Array.isArray(c.datos_detallados)) {
+        c.datos_detallados.forEach(d => {
+          if (d.id) pastClosedOrderIds.add(String(d.id));
+        });
+      }
+    });
+  }
+
+  const dataGeneral = rawDataGeneral.filter(p => !pastClosedOrderIds.has(String(p.id)));
+
+  if (dataGeneral.length === 0) {
+    return { success: true, pedidos: [], repartidores: [] };
+  }
+
+  const pedidoIds = dataGeneral.map(p => p.id);
   const { data: dataLocales } = await supabase.from('pedidos_locales').select('*').in('pedido_id', pedidoIds);
 
-  const data = (dataGeneral || []).map(p => {
+  const data = dataGeneral.map(p => {
     const pLocales = (dataLocales || []).filter(pl => pl.pedido_id === p.id);
     const totalComision = pLocales.reduce((acc, pl) => acc + (Number(pl.comision_monto) || 0), 0);
     return {
@@ -3144,7 +3216,6 @@ export async function getAdminCierreReport(fecha, localId = null) {
       total_comision: totalComision
     };
   });
-
 
   const repartidoresStats = {};
   data.forEach(p => {
@@ -3190,6 +3261,25 @@ export async function getHistorialCierresRepartidores() {
   return data || [];
 }
 
+function getArgentinaDateStr(dateVal) {
+  if (!dateVal) return '';
+  try {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) {
+      return String(dateVal).split('T')[0];
+    }
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    return formatter.format(d);
+  } catch (e) {
+    return String(dateVal).split('T')[0];
+  }
+}
+
 export async function getHistorialCierresLocales(localId = null, dateOptions = {}) {
 
   let query = supabase.from('cierre_caja')
@@ -3200,16 +3290,11 @@ export async function getHistorialCierresLocales(localId = null, dateOptions = {
     query = query.eq('local_id', localId);
   }
 
-  if (dateOptions.mode === 'dia' && dateOptions.fecha) {
-    query = query.eq('fecha', dateOptions.fecha);
-  } else if (dateOptions.mode === 'intervalo' && dateOptions.inicio && dateOptions.fin) {
-    query = query.gte('fecha', dateOptions.inicio).lte('fecha', dateOptions.fin);
-  }
-
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
-  const closures = data || [];
+  let closures = data || [];
+
   if (closures.length > 0) {
     const missingOrderIds = [];
     closures.forEach(c => {
@@ -3241,6 +3326,33 @@ export async function getHistorialCierresLocales(localId = null, dateOptions = {
         });
       }
     }
+  }
+
+  // Filtrado preciso por fecha e intervalo evaluando tanto la fecha del cierre como la fecha real de los pedidos (zona horaria Argentina UTC-3)
+  if (dateOptions.mode === 'dia' && dateOptions.fecha) {
+    const targetDate = dateOptions.fecha;
+    closures = closures.filter(c => {
+      const cDate = getArgentinaDateStr(c.fecha);
+      if (cDate === targetDate) return true;
+      const orderDates = (c.datos_detallados || []).map(o => getArgentinaDateStr(o.hora || o.created_at));
+      return orderDates.includes(targetDate);
+    });
+  } else if (dateOptions.mode === 'intervalo' && dateOptions.inicio && dateOptions.fin) {
+    const inicioStr = dateOptions.inicio;
+    const finStr = dateOptions.fin;
+
+    closures = closures.filter(c => {
+      const cDate = getArgentinaDateStr(c.fecha);
+      const orderDates = (c.datos_detallados || []).map(o => getArgentinaDateStr(o.hora || o.created_at)).filter(Boolean);
+
+      // Si el cierre tiene pedidos detallados, evaluamos si al menos uno cae dentro del intervalo solicitado [inicio, fin]
+      if (orderDates.length > 0) {
+        return orderDates.some(d => d >= inicioStr && d <= finStr);
+      }
+
+      // Si no posee lista detallada, evaluar la fecha registrada del cierre
+      return cDate >= inicioStr && cDate <= finStr;
+    });
   }
 
   return closures;
