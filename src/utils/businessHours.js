@@ -13,10 +13,56 @@ const normalize = (str) => {
 /**
  * Checks if the local is currently open based on its configuration.
  */
+const getDayIntervals = (local, dayName) => {
+  const dayNorm = normalize(dayName);
+
+  // 1. New flexible configuration (config_horarios)
+  if (local.config_horarios && typeof local.config_horarios === 'object' && Object.keys(local.config_horarios).length > 0) {
+    const dayConfigKey = Object.keys(local.config_horarios).find(k => normalize(k) === dayNorm);
+    const dayConfig = dayConfigKey ? local.config_horarios[dayConfigKey] : null;
+
+    if (!dayConfig || dayConfig.tipo === 'cerrado') return { tipo: 'cerrado', intervalos: [] };
+    if (dayConfig.tipo === '24hs') return { tipo: '24hs', intervalos: [] };
+
+    if (dayConfig.tipo === 'especifico' && Array.isArray(dayConfig.intervalos)) {
+      return { tipo: 'especifico', intervalos: dayConfig.intervalos };
+    }
+  }
+
+  // 2. Fallback to legacy columns
+  const { horario_apertura, horario_cierre, horario_apertura2, horario_cierre2, dias_apertura } = local;
+
+  if (dias_apertura && Array.isArray(dias_apertura) && dias_apertura.length > 0) {
+    const normalizedDays = dias_apertura.map(normalize);
+    if (!normalizedDays.includes(dayNorm)) return { tipo: 'cerrado', intervalos: [] };
+  }
+
+  if (horario_apertura && horario_cierre) {
+    const list = [{ inicio: horario_apertura, fin: horario_cierre }];
+    if (horario_apertura2 && horario_cierre2) {
+      list.push({ inicio: horario_apertura2, fin: horario_cierre2 });
+    }
+    return { tipo: 'especifico', intervalos: list };
+  }
+
+  return { tipo: 'desconocido', intervalos: [] };
+};
+
+/**
+ * Checks if the local is currently open based on its configuration.
+ * Handles overnight shifts across midnight without mixing closing time of previous day with opening time of current day.
+ */
 export const isLocalOpen = (local) => {
   if (!local) return false;
 
-  // 1. Check availability date (legacy/shared)
+  const estadoNorm = (local.estado || '').toLowerCase().trim();
+
+  // Si el estado explícito del local es cerrado, inactivo o desactivado, NUNCA acepta pedidos
+  if (['cerrado', 'inactivo', 'desactivado', 'inhabilitado'].includes(estadoNorm)) {
+    return false;
+  }
+
+  // 1. Check availability date (disponible_desde)
   if (local.disponible_desde) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -25,64 +71,76 @@ export const isLocalOpen = (local) => {
     if (today < availableDate) return false;
   }
 
-  // 2. If not in automatic mode, return manual state
+  // 2. Si no está en modo automático, depende del estado manual ('abierto' o 'activo')
   if (!local.modo_automatico) {
-    return local.estado?.toLowerCase() === 'activo';
+    return estadoNorm === 'abierto' || estadoNorm === 'activo';
   }
 
-  const now = new Date();
+  // 3. Evaluar horario y día en la zona horaria oficial de Argentina (America/Argentina/Buenos_Aires)
+  const nowArgStr = new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' });
+  const now = new Date(nowArgStr);
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const currentDayName = DAYS_MAP[now.getDay()];
-  const currentDayNorm = normalize(currentDayName);
 
-  // 3. Check new flexible configuration (config_horarios)
-  if (local.config_horarios && typeof local.config_horarios === 'object' && Object.keys(local.config_horarios).length > 0) {
-    const dayConfigKey = Object.keys(local.config_horarios).find(k => normalize(k) === currentDayNorm);
-    const dayConfig = dayConfigKey ? local.config_horarios[dayConfigKey] : null;
+  const dayIndex = now.getDay();
+  const prevDayIndex = (dayIndex + 6) % 7;
 
-    if (!dayConfig || dayConfig.tipo === 'cerrado') return false;
-    if (dayConfig.tipo === '24hs') return true;
+  const currentDayName = DAYS_MAP[dayIndex];
+  const prevDayName = DAYS_MAP[prevDayIndex];
 
-    if (dayConfig.tipo === 'especifico' && Array.isArray(dayConfig.intervalos)) {
-      return dayConfig.intervalos.some(intervalo => {
-        const [hI, mI] = (intervalo.inicio || '00:00').split(':').map(Number);
-        const [hF, mF] = (intervalo.fin || '00:00').split(':').map(Number);
-        const minInicio = hI * 60 + mI;
-        const minFin = hF * 60 + mF;
+  // A) Verificar turno de HOY
+  const todayData = getDayIntervals(local, currentDayName);
 
-        if (minInicio < minFin) {
-          return currentMinutes >= minInicio && currentMinutes <= minFin;
-        } else {
-          return currentMinutes >= minInicio || currentMinutes <= minFin;
-        }
-      });
-    }
+  if (todayData.tipo === '24hs') return true;
+
+  if (todayData.tipo === 'especifico') {
+    const isOpenToday = todayData.intervalos.some(intervalo => {
+      const [hI, mI] = (intervalo.inicio || '00:00').split(':').map(Number);
+      const [hF, mF] = (intervalo.fin || '00:00').split(':').map(Number);
+      const minInicio = hI * 60 + mI;
+      const minFin = hF * 60 + mF;
+
+      if (minInicio < minFin) {
+        // Horario diurno el mismo día (ej: 12:00 a 16:00)
+        return currentMinutes >= minInicio && currentMinutes <= minFin;
+      } else if (minInicio > minFin) {
+        // Horario nocturno que cruza la medianoche (ej: 20:00 a 00:30)
+        // Para el día de hoy, el turno inició a las minInicio (20:00) y se extiende hasta las 23:59
+        return currentMinutes >= minInicio;
+      } else {
+        // minInicio === minFin (ej: 00:00 a 00:00 -> abierto todo el día)
+        return true;
+      }
+    });
+
+    if (isOpenToday) return true;
+  } else if (todayData.tipo === 'desconocido' && (estadoNorm === 'abierto' || estadoNorm === 'activo')) {
+    return true;
   }
 
-  // 4. Fallback to legacy columns
-  const { horario_apertura, horario_cierre, horario_apertura2, horario_cierre2, dias_apertura } = local;
+  // B) Verificar turno de AYER (extensión tras la medianoche hasta la madrugada de hoy)
+  const yesterdayData = getDayIntervals(local, prevDayName);
 
-  if (dias_apertura && Array.isArray(dias_apertura) && dias_apertura.length > 0) {
-    const normalizedDays = dias_apertura.map(normalize);
-    if (!normalizedDays.includes(currentDayNorm)) return false;
+  if (yesterdayData.tipo === '24hs') return true;
+
+  if (yesterdayData.tipo === 'especifico') {
+    const isOpenFromYesterday = yesterdayData.intervalos.some(intervalo => {
+      const [hI, mI] = (intervalo.inicio || '00:00').split(':').map(Number);
+      const [hF, mF] = (intervalo.fin || '00:00').split(':').map(Number);
+      const minInicio = hI * 60 + mI;
+      const minFin = hF * 60 + mF;
+
+      if (minInicio > minFin) {
+        // El turno de ayer inició ayer por la noche y cruza la medianoche (ej: 20:00 a 00:30)
+        // En la madrugada de HOY, el local sigue abierto desde las 00:00 hasta minFin (00:30)
+        return currentMinutes <= minFin;
+      }
+      return false;
+    });
+
+    if (isOpenFromYesterday) return true;
   }
 
-  if (!horario_apertura || !horario_cierre) return local.estado?.toLowerCase() === 'activo';
-
-  const checkInterval = (start, end) => {
-    if (!start || !end) return false;
-    const [hI, mI] = start.split(':').map(Number);
-    const [hF, mF] = end.split(':').map(Number);
-    const minI = hI * 60 + mI;
-    const minF = hF * 60 + mF;
-    if (minI < minF) return currentMinutes >= minI && currentMinutes <= minF;
-    return currentMinutes >= minI || currentMinutes <= minF;
-  };
-
-  const insideFirst = checkInterval(horario_apertura, horario_cierre);
-  const insideSecond = (horario_apertura2 && horario_cierre2) ? checkInterval(horario_apertura2, horario_cierre2) : false;
-
-  return insideFirst || insideSecond;
+  return false;
 };
 
 /**

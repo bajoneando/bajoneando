@@ -2,6 +2,7 @@
    WEEP API — Supabase Backend
    ═══════════════════════════════════════════════════ */
 import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase';
+import { isLocalOpen } from '../utils/businessHours';
 export { supabase, SUPABASE_URL, SUPABASE_ANON_KEY };
 
 // Cloudflare R2 Storage (vía Supabase Edge Function)
@@ -1310,6 +1311,25 @@ export async function crearPedido({ userId, pedidoId, direccion, metodoPago, obs
   const total = totalCalculado !== undefined ? totalCalculado : items.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
   const estado = estadoInicial || 'Pendiente';
 
+  // --- VERIFICACIÓN DE SEGURIDAD: COMPROBAR QUE LOS LOCALES ESTÉN ABIERTOS AL CREAR EL PEDIDO ---
+  const uniqueLocalIds = [...new Set((items || []).map(i => i.local_id).filter(Boolean))];
+  if (uniqueLocalIds.length > 0) {
+    const { data: freshLocales, error: locErr } = await supabase
+      .from('locales')
+      .select('id, nombre, estado, horario_apertura, horario_cierre, horario_apertura2, horario_cierre2, modo_automatico, dias_apertura, disponible_desde, config_horarios')
+      .in('id', uniqueLocalIds);
+
+    if (locErr) {
+      console.error("Error consultando estado de locales en crearPedido:", locErr);
+    } else if (freshLocales && freshLocales.length > 0) {
+      for (const loc of freshLocales) {
+        if (!isLocalOpen(loc)) {
+          throw new Error(`El local "${loc.nombre}" se encuentra CERRADO en este momento y no puede recibir nuevos pedidos.`);
+        }
+      }
+    }
+  }
+
   const { data, error } = await supabase.rpc('create_pedido_completo', {
     p_user_id: userId,
     p_id: pedidoId,
@@ -1970,20 +1990,26 @@ export async function getOrderDetail(userId, pedidoId) {
     const localIds = [...new Set(localesRelation.map(lr => lr.local_id))].filter(Boolean);
     const { data: localesData, error: localesTableError } = await supabase
       .from('locales')
-      .select('id, nombre')
+      .select('id, nombre, lat, lng, direccion')
       .in('id', localIds);
 
     if (localesTableError) {
       console.error("Error fetching locales table in getOrderDetail:", localesTableError);
     } else {
-      const localesNameMap = {};
+      const localesDataMap = {};
       if (localesData) {
         for (const loc of localesData) {
-          localesNameMap[loc.id] = loc.nombre;
+          localesDataMap[loc.id] = loc;
         }
       }
       for (const pl of localesRelation) {
-        pl.locales = { nombre: localesNameMap[pl.local_id] || 'Local' };
+        const locInfo = localesDataMap[pl.local_id] || {};
+        pl.locales = { 
+          nombre: locInfo.nombre || 'Local',
+          lat: locInfo.lat,
+          lng: locInfo.lng,
+          direccion: locInfo.direccion
+        };
       }
     }
     locales = localesRelation;
@@ -3032,28 +3058,52 @@ export async function solicitarCobro(localId, monto, comprobanteUrl = '') {
 }
 
 export async function saveLocalCierre(data) {
+  if (!data || !data.pedidos || data.pedidos.length === 0) {
+    throw new Error('No hay pedidos en este informe para realizar el cierre.');
+  }
+
+  const pedidoIds = (data.pedidos || []).map(p => p.id);
+
+  // Verificar si los pedidos ya han sido cerrados en un cierre de caja previo
+  const { data: cierresExistentes, error: errCheck } = await supabase
+    .from('pedidos_locales')
+    .select('pedido_id')
+    .eq('local_id', data.localId)
+    .in('pedido_id', pedidoIds)
+    .eq('cierre_caja', true);
+
+  if (errCheck) console.error("Error al verificar cierres existentes:", errCheck);
+
+  if (cierresExistentes && cierresExistentes.length === pedidoIds.length) {
+    throw new Error('Este cierre de caja ya fue procesado y guardado previamente.');
+  }
+
+  const yaCerradosSet = new Set(cierresExistentes?.map(c => c.pedido_id) || []);
+  const nuevosPedidoIds = pedidoIds.filter(id => !yaCerradosSet.has(id));
+
+  if (nuevosPedidoIds.length === 0) {
+    throw new Error('Todos los pedidos de este informe ya fueron marcados como cerrados.');
+  }
 
   const { error } = await supabase.from('cierre_caja').insert({
     local_id: data.localId,
-    fecha: data.fecha,
+    fecha: data.fecha || new Date().toISOString(),
     total_subtotal: data.subtotal,
     total_comisiones: data.comisiones,
     total_neto_local: data.neto,
     total_transferencia: data.transferencia,
     total_efectivo: data.efectivo,
     comision_efectivo: data.comisionEfectivo || 0,
-    num_pedidos: (data.pedidos || []).length,
-    datos_detallados: data.pedidos
+    num_pedidos: nuevosPedidoIds.length,
+    datos_detallados: data.pedidos.filter(p => !yaCerradosSet.has(p.id))
   });
-
 
   if (error) throw new Error(error.message);
 
-  const pedidoIds = (data.pedidos || []).map(p => p.id);
-  if (pedidoIds.length > 0) {
+  if (nuevosPedidoIds.length > 0) {
     await supabase.from('pedidos_locales')
       .update({ cierre_caja: true })
-      .in('pedido_id', pedidoIds)
+      .in('pedido_id', nuevosPedidoIds)
       .eq('local_id', data.localId);
   }
   return { success: true };

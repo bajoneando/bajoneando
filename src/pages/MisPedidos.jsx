@@ -10,7 +10,39 @@ import toast from 'react-hot-toast';
 import './MisPedidos.css';
 
 const MAP_LIBRARIES = ['places'];
+const PEPO_MOTO_MARKER = "https://i.postimg.cc/htHr0QMM/Tarde-de-superclasico-(1)-(1).png";
 
+const calculateETA = (originCoords, destCoords, speedKmH = 25) => {
+  if (!originCoords || !destCoords) return null;
+
+  const lat1 = Number(originCoords.lat);
+  const lng1 = Number(originCoords.lng);
+  const lat2 = Number(destCoords.lat);
+  const lng2 = Number(destCoords.lng);
+
+  if (isNaN(lat1) || isNaN(lng1) || isNaN(lat2) || isNaN(lng2) || (lat1 === 0 && lng1 === 0) || (lat2 === 0 && lng2 === 0)) {
+    return null;
+  }
+
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLng = (lng2 - lng1) * (Math.PI / 180);
+
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distanceKm = R * c;
+
+  const travelHours = distanceKm / speedKmH;
+  const totalMinutes = Math.max(3, Math.round(travelHours * 60 + 3));
+
+  return {
+    distanceKm: distanceKm.toFixed(1),
+    minutes: totalMinutes,
+    etaText: `${totalMinutes} min aprox.`
+  };
+};
 
 export default function MisPedidos() {
   const { user } = useAuth();
@@ -24,6 +56,7 @@ export default function MisPedidos() {
   // Seguimiento modal
   const [seguimiento, setSeguimiento] = React.useState(null);
   const [seguimientoLoading, setSeguimientoLoading] = React.useState(false);
+  const [trackingTab, setTrackingTab] = React.useState('etapa'); // 'etapa', 'mapa', 'repartidor'
 
   // Calificación modal
   const [calificar, setCalificar] = React.useState(null);
@@ -91,11 +124,15 @@ export default function MisPedidos() {
 
   const openSeguimiento = async (pedidoId) => {
     setSeguimientoLoading(true);
-    setSeguimiento({ idPedido: pedidoId }); // show modal immediately with loading
+    setSeguimiento({ idPedido: pedidoId });
+    setTrackingTab('etapa');
     try {
       const data = await api.getOrderDetail(user.id, pedidoId);
       if (data.success) {
         setSeguimiento({ idPedido: pedidoId, ...data.detalle });
+        if (['Retirado', 'En camino'].includes(data.detalle?.estadoGeneral)) {
+          setTrackingTab('mapa');
+        }
       } else {
         toast.error('No se pudo cargar el detalle');
         setSeguimiento(null);
@@ -486,130 +523,280 @@ export default function MisPedidos() {
               <div className="mp-loading"><div className="spinner" /> Cargando...</div>
             ) : (
               <>
-                {/* Timeline */}
-                <div className="timeline">
-                  {seguimiento.estadoGeneral === 'Pendiente de Pago' && (
-                    <div style={{ background: '#fff7ed', padding: '15px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', border: '1px solid #ffedd5' }}>
-                      <p style={{ margin: '0 0 5px 0', color: '#9a3412', fontSize: '1rem', fontWeight: 'bold' }}>💳 Esperando tu pago</p>
-                      <small style={{ color: '#c2410c', display: 'block', marginBottom: '8px' }}>Tu pedido se cancelará automáticamente si no recibimos el pago en:</small>
-                      <CountdownTimer 
-                        startTime={seguimiento.pago_pendiente_at || seguimiento.created_at} 
-                        limitMinutes={5} 
-                        onTimeout={() => loadPedidos()} 
-                      />
-                    </div>
-                  )}
-                  {timelineSteps.map((step, i) => {
-                    const progress = getTimelineProgress(seguimiento.estadoGeneral || 'Pendiente');
-                    const isDone = i <= progress;
-                    return (
-                      <div key={step.key} className={`timeline-step ${isDone ? 'done' : ''}`}>
-                        <div className="timeline-icon">{step.icon}</div>
-                        <div className="timeline-info">
-                          <strong>{step.label}</strong>
-                          <small>{step.text}</small>
-                        </div>
-                      </div>
-                    );
-                  })}
+                {/* Sub-pestañas de Seguimiento */}
+                <div className="tracking-tabs-container">
+                  <button 
+                    className={`tracking-tab-btn ${trackingTab === 'etapa' ? 'active' : ''}`}
+                    onClick={() => setTrackingTab('etapa')}
+                  >
+                    📌 Etapa
+                  </button>
+                  <button 
+                    className={`tracking-tab-btn ${trackingTab === 'mapa' ? 'active' : ''}`}
+                    onClick={() => setTrackingTab('mapa')}
+                  >
+                    🗺️ Ver mapa
+                  </button>
+                  <button 
+                    className={`tracking-tab-btn ${trackingTab === 'repartidor' ? 'active' : ''}`}
+                    onClick={() => setTrackingTab('repartidor')}
+                  >
+                    🛵 Datos de repartidor
+                  </button>
                 </div>
 
-                {/* Map Section */}
-                {['Retirado', 'En camino'].includes(seguimiento.estadoGeneral) && isMapLoaded ? (
-                  <div className="mp-map-container">
-                    <GoogleMap
-                      mapContainerClassName="mp-google-map"
-                      center={driverCoords || { lat: Number(seguimiento.lat) || -28.48, lng: Number(seguimiento.lng) || -56.04 }}
-                      zoom={15}
-                      options={{
-                        disableDefaultUI: true,
-                        zoomControl: true,
-                        styles: [
-                          {
-                            "featureType": "poi",
-                            "stylers": [{ "visibility": "off" }]
-                          }
-                        ]
-                      }}
-                    >
-                      {/* Marcador Destino (Cliente) */}
-                      {seguimiento.lat && seguimiento.lng && (
-                        <Marker 
-                          position={{ lat: Number(seguimiento.lat), lng: Number(seguimiento.lng) }} 
-                          icon={{
-                            url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-                            scaledSize: new window.google.maps.Size(40, 40)
-                          }}
-                          title="Tu ubicación de entrega"
+                {/* 📌 SECCIÓN 1: ETAPA */}
+                {trackingTab === 'etapa' && (
+                  <div className="animate-fade-in">
+                    {seguimiento.estadoGeneral === 'Pendiente de Pago' && (
+                      <div style={{ background: '#fff7ed', padding: '15px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', border: '1px solid #ffedd5' }}>
+                        <p style={{ margin: '0 0 5px 0', color: '#9a3412', fontSize: '1rem', fontWeight: 'bold' }}>💳 Esperando tu pago</p>
+                        <small style={{ color: '#c2410c', display: 'block', marginBottom: '8px' }}>Tu pedido se cancelará automáticamente si no recibimos el pago en:</small>
+                        <CountdownTimer 
+                          startTime={seguimiento.pago_pendiente_at || seguimiento.created_at} 
+                          limitMinutes={5} 
+                          onTimeout={() => loadPedidos()} 
                         />
-                      )}
+                      </div>
+                    )}
 
-                      {/* Marcador Repartidor */}
-                      {driverCoords && (
-                        <Marker 
-                          position={driverCoords} 
-                          icon={{
-                            url: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png', // Icono de moto
-                            scaledSize: new window.google.maps.Size(40, 40),
-                            anchor: new window.google.maps.Point(20, 20)
-                          }}
-                          title={`Repartidor: ${seguimiento.repartidor?.nombre || ''}`}
-                        />
-                      )}
+                    {seguimiento.numConfirmacion && String(seguimiento.tipoEntrega).toLowerCase().includes('env') && (
+                      <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', padding: '12px 16px', borderRadius: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: '#e11d48', fontWeight: 600, display: 'block' }}>PIN DE RECEPCIÓN (Entrega al repartidor)</span>
+                          <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#9f1239', letterSpacing: '2px' }}>{seguimiento.numConfirmacion}</span>
+                        </div>
+                        <span style={{ fontSize: '1.8rem' }}>🔑</span>
+                      </div>
+                    )}
 
-                      {/* Línea de ruta opcional */}
-                      {driverCoords && seguimiento.lat && (
-                        <Polyline 
-                          path={[
-                            driverCoords,
-                            { lat: Number(seguimiento.lat), lng: Number(seguimiento.lng) }
-                          ]}
-                          options={{
-                            strokeColor: "#3b82f6",
-                            strokeOpacity: 0.6,
-                            strokeWeight: 4,
-                            icons: [{
-                              icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 },
-                              offset: '0',
-                              repeat: '20px'
-                            }],
-                          }}
-                        />
-                      )}
-                    </GoogleMap>
-                  </div>
-                ) : seguimiento.estadoGeneral === 'Retirado' || seguimiento.estadoGeneral === 'En camino' ? (
-                  <div className="map-placeholder">
-                    <div className="spinner" /> Cargando mapa...
-                  </div>
-                ) : (
-                  <div className="map-placeholder info">
-                    📍 El mapa se activará cuando el repartidor retire tu pedido.
+                    {/* Timeline */}
+                    <div className="timeline">
+                      {timelineSteps.map((step, i) => {
+                        const progress = getTimelineProgress(seguimiento.estadoGeneral || 'Pendiente');
+                        const isDone = i <= progress;
+                        return (
+                          <div key={step.key} className={`timeline-step ${isDone ? 'done' : ''}`}>
+                            <div className="timeline-icon">{step.icon}</div>
+                            <div className="timeline-info">
+                              <strong>{step.label}</strong>
+                              <small>{step.text}</small>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="order-details" style={{ marginTop: '16px' }}>
+                      <h3>Resumen de la orden</h3>
+                      <div className="detail-row"><span>Local</span><span>{seguimiento.locales?.[0]?.nombreLocal || '—'}</span></div>
+                      <div className="detail-row"><span>Dirección de entrega</span><span>{seguimiento.direccion || '—'}</span></div>
+                      <div className="detail-row"><span>Método de Pago</span><span>{seguimiento.metodoPago || '—'}</span></div>
+                      <div className="detail-row"><span>Modalidad</span><span>{seguimiento.tipoEntrega || '—'}</span></div>
+                      <div className="detail-row"><span>Total</span><span style={{ color: 'var(--red-600)', fontWeight: 'bold' }}>${Number(seguimiento.total || 0).toLocaleString('es-AR')}</span></div>
+                    </div>
                   </div>
                 )}
 
+                {/* 🗺️ SECCIÓN 2: VER MAPA */}
+                {trackingTab === 'mapa' && (
+                  <div className="animate-fade-in">
+                    {/* Calculador de Tiempo Aproximado (ETA) */}
+                    {(() => {
+                      const localInfo = seguimiento.locales?.[0];
+                      const originCoords = driverCoords || (localInfo?.lat ? { lat: Number(localInfo.lat), lng: Number(localInfo.lng) } : null);
+                      const destCoords = (seguimiento.lat && seguimiento.lng) ? { lat: Number(seguimiento.lat), lng: Number(seguimiento.lng) } : null;
+                      const eta = calculateETA(originCoords, destCoords);
 
-                {/* Order details */}
-                <div className="order-details">
-                  <h3>Datos del pedido</h3>
-                  <div className="detail-row"><span>Local</span><span>{seguimiento.locales?.[0]?.nombreLocal || '—'}</span></div>
-                  <div className="detail-row"><span>Repartidor</span><span>{seguimiento.repartidor?.nombre || 'Sin asignar'}</span></div>
-                  {seguimiento.repartidor?.telefono && (
-                    <div className="detail-row"><span>Teléfono Repartidor</span><span>{seguimiento.repartidor.telefono}</span></div>
-                  )}
-                  {seguimiento.repartidor?.marca_modelo && (
-                    <div className="detail-row"><span>Vehículo</span><span>{seguimiento.repartidor.marca_modelo} {seguimiento.repartidor.patente && `(${seguimiento.repartidor.patente})`}</span></div>
-                  )}
-                  <div className="detail-row"><span>Dirección</span><span>{seguimiento.direccion || '—'}</span></div>
-                  <div className="detail-row"><span>Pago</span><span>{seguimiento.metodoPago || '—'}</span></div>
-                  <div className="detail-row"><span>Entrega</span><span>{seguimiento.tipoEntrega || '—'}</span></div>
-                  {seguimiento.numConfirmacion && seguimiento.tipoEntrega?.toLowerCase().includes('env') && (
-                    <div className="detail-row"><span style={{color: '#d32f2f', fontWeight: 'bold'}}>PIN de Recepción</span><span style={{color: '#d32f2f', fontWeight: 'bold', fontSize: '1.2rem'}}>{seguimiento.numConfirmacion}</span></div>
-                  )}
-                </div>
+                      return (
+                        <div style={{ 
+                          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', 
+                          color: 'white', 
+                          padding: '14px 18px', 
+                          borderRadius: '12px', 
+                          marginBottom: '14px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between', 
+                          border: '1px solid #334155', 
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)' 
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ background: '#0284c7', width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', flexShrink: 0 }}>
+                              ⏱️
+                            </div>
+                            <div>
+                              <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600, display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Tiempo estimado de llegada
+                              </span>
+                              <strong style={{ fontSize: '1.15rem', color: '#38bdf8' }}>
+                                {eta ? `${eta.minutes} min aprox. desde retiro` : ['Retirado', 'En camino'].includes(seguimiento.estadoGeneral) ? '15-25 min aprox.' : 'Esperando retiro del pedido'}
+                              </strong>
+                            </div>
+                          </div>
+                          {eta && (
+                            <div style={{ textAlign: 'right', fontSize: '0.8rem', color: '#cbd5e1' }}>
+                              Distancia: <strong style={{ color: '#fff' }}>{eta.distanceKm} km</strong>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
-                <button className="btn btn-ghost btn-full" style={{ marginTop: 16 }} onClick={() => toast('Función próximamente disponible')}>
-                  ❗ Reportar problema
+                    {/* Google Map con Pepo Marcador de Moto */}
+                    {isMapLoaded ? (
+                      <div className="mp-map-container" style={{ height: '320px' }}>
+                        <GoogleMap
+                          mapContainerClassName="mp-google-map"
+                          center={driverCoords || (seguimiento.lat ? { lat: Number(seguimiento.lat), lng: Number(seguimiento.lng) } : { lat: -28.48, lng: -56.04 })}
+                          zoom={15}
+                          options={{
+                            disableDefaultUI: true,
+                            zoomControl: true,
+                            styles: [{ "featureType": "poi", "stylers": [{ "visibility": "off" }] }]
+                          }}
+                        >
+                          {/* Marcador Destino (Cliente) */}
+                          {seguimiento.lat && seguimiento.lng && (
+                            <Marker 
+                              position={{ lat: Number(seguimiento.lat), lng: Number(seguimiento.lng) }} 
+                              icon={{
+                                url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+                                scaledSize: new window.google.maps.Size(40, 40)
+                              }}
+                              title="Dirección de Entrega"
+                            />
+                          )}
+
+                          {/* Marcador Local */}
+                          {seguimiento.locales?.[0]?.lat && (
+                            <Marker 
+                              position={{ lat: Number(seguimiento.locales[0].lat), lng: Number(seguimiento.locales[0].lng) }} 
+                              icon={{
+                                url: 'https://maps.google.com/mapfiles/ms/icons/orange-dot.png',
+                                scaledSize: new window.google.maps.Size(36, 36)
+                              }}
+                              title={seguimiento.locales[0].nombre || 'Local'}
+                            />
+                          )}
+
+                          {/* Marcador Repartidor Pepo en Moto */}
+                          {(driverCoords || ['Retirado', 'En camino'].includes(seguimiento.estadoGeneral)) && (
+                            <Marker 
+                              position={driverCoords || (seguimiento.locales?.[0]?.lat ? { lat: Number(seguimiento.locales[0].lat), lng: Number(seguimiento.locales[0].lng) } : { lat: Number(seguimiento.lat), lng: Number(seguimiento.lng) })} 
+                              icon={{
+                                url: PEPO_MOTO_MARKER,
+                                scaledSize: new window.google.maps.Size(52, 52),
+                                anchor: new window.google.maps.Point(26, 26)
+                              }}
+                              title={`Repartidor Pepo: ${seguimiento.repartidor?.nombre || 'Wepi Moto'}`}
+                            />
+                          )}
+
+                          {/* Ruta Polyline */}
+                          {(driverCoords || seguimiento.locales?.[0]?.lat) && seguimiento.lat && (
+                            <Polyline 
+                              path={[
+                                driverCoords || { lat: Number(seguimiento.locales[0].lat), lng: Number(seguimiento.locales[0].lng) },
+                                { lat: Number(seguimiento.lat), lng: Number(seguimiento.lng) }
+                              ]}
+                              options={{
+                                strokeColor: "#0284c7",
+                                strokeOpacity: 0.8,
+                                strokeWeight: 4,
+                                icons: [{
+                                  icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 4 },
+                                  offset: '0',
+                                  repeat: '20px'
+                                }],
+                              }}
+                            />
+                          )}
+                        </GoogleMap>
+                      </div>
+                    ) : (
+                      <div className="map-placeholder">
+                        <div className="spinner" /> Cargando mapa...
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 🛵 SECCIÓN 3: DATOS DE REPARTIDOR */}
+                {trackingTab === 'repartidor' && (
+                  <div className="animate-fade-in">
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '20px', borderRadius: '16px', textAlign: 'center', marginBottom: '16px' }}>
+                      <div style={{ position: 'relative', width: '80px', height: '80px', margin: '0 auto 12px' }}>
+                        <img 
+                          src={PEPO_MOTO_MARKER} 
+                          alt="Repartidor Pepo" 
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                        />
+                      </div>
+
+                      <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', color: '#0f172a', fontWeight: 800 }}>
+                        {seguimiento.repartidor?.nombre || 'Repartidor Wepi (Asignando...)'}
+                      </h3>
+
+                      <span style={{ display: 'inline-block', background: '#e0f2fe', color: '#0369a1', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 700, marginBottom: '16px', border: '1px solid #bae6fd' }}>
+                        🛵 {seguimiento.estadoGeneral === 'En camino' ? 'En camino a tu domicilio' : 'Repartidor oficial Wepi'}
+                      </span>
+
+                      <div className="order-details" style={{ textAlign: 'left', background: '#fff', border: '1px solid #cbd5e1' }}>
+                        <div className="detail-row"><span>Nombre</span><strong>{seguimiento.repartidor?.nombre || 'Buscando repartidor...'}</strong></div>
+                        <div className="detail-row"><span>Vehículo</span><strong>{seguimiento.repartidor?.marca_modelo || 'Motocicleta Wepi'}</strong></div>
+                        {seguimiento.repartidor?.patente && (
+                          <div className="detail-row"><span>Patente</span><strong>{seguimiento.repartidor.patente}</strong></div>
+                        )}
+                        <div className="detail-row"><span>Teléfono</span><strong>{seguimiento.repartidor?.telefono || 'No especificado'}</strong></div>
+                      </div>
+
+                      {seguimiento.repartidor?.telefono ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+                          <a 
+                            href={`tel:${seguimiento.repartidor.telefono}`}
+                            className="btn btn-primary btn-full" 
+                            style={{ background: '#25D366', borderColor: '#25D366', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 700 }}
+                          >
+                            📞 Llamar al Repartidor ({seguimiento.repartidor.telefono})
+                          </a>
+
+                          <button 
+                            type="button"
+                            className="btn btn-outline btn-full"
+                            style={{ borderColor: '#25D366', color: '#15803d', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontWeight: 600 }}
+                            onClick={() => {
+                              const cleanPhone = seguimiento.repartidor.telefono.replace(/\D/g, '');
+                              const msg = encodeURIComponent(`Hola ${seguimiento.repartidor.nombre}, me contacto por el pedido #${seguimiento.idPedido}.`);
+                              window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+                            }}
+                          >
+                            💬 Mensaje por WhatsApp
+                          </button>
+
+                          <button 
+                            type="button"
+                            className="btn btn-secondary btn-full"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                            onClick={() => {
+                              setSeguimiento(null);
+                              setActiveChatPedidoId(seguimiento.idPedido);
+                            }}
+                          >
+                            💬 Chat Interno Wepi
+                          </button>
+                        </div>
+                      ) : (
+                        <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: 16 }}>
+                          Los datos de contacto y chat se habilitarán una vez que el repartidor tome tu pedido.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <button className="btn btn-ghost btn-full" style={{ marginTop: 16 }} onClick={() => toast('Para asistencia con tu pedido podés usar nuestro chatbot de Ayuda')}>
+                  ❗ Reportar un problema
                 </button>
               </>
             )}

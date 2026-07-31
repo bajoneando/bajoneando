@@ -405,3 +405,38 @@
 
 .star-btn:hover { transform: scale(1.15); }
 .star-btn.active { color: #f59e0b; }
+
+/* ─── Tracking Modal Sub-Tabs ─── */
+.tracking-tabs-container {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  margin: 12px 0 20px 0;
+  gap: 4px;
+}
+
+.tracking-tab-btn {
+  flex: 1;
+  padding: 10px 6px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tracking-tab-btn:hover {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.tracking-tab-btn.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}

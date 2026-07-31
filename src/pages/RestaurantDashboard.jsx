@@ -10,6 +10,7 @@ import { getCitySlug } from '../utils/city';
 import toast from 'react-hot-toast';
 import './RestaurantDashboard.css';
 import { isLocalOpen, getNextStatusChange } from '../utils/businessHours';
+import LocalHelpChatbot from '../components/LocalHelpChatbot';
 
 const GOOGLE_MAPS_LIBRARIES = ['places'];
 
@@ -198,6 +199,7 @@ export default function RestaurantDashboard() {
   const [cierreReport, setCierreReport] = React.useState(null);
   const [cierreLoading, setCierreLoading] = React.useState(false);
   const [cierreSubTab, setCierreSubTab] = React.useState('generar'); // generar, historial, estadisticas
+  const [hideStatsInCierre, setHideStatsInCierre] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
 
   // Pending order alert refs (30s re-trigger)
@@ -265,6 +267,168 @@ export default function RestaurantDashboard() {
   const [quickUploadItemId, setQuickUploadItemId] = React.useState(null);
   const quickImageInputRef = React.useRef(null);
   const [menuAddOpen, setMenuAddOpen] = React.useState(false);
+
+  const handleGlobalPrintTicket = React.useCallback((o) => {
+    if (!o) return;
+    const logoUrl = profileData?.foto_url || 'https://jskxfescamdjesdrcnkf.supabase.co/storage/v1/object/public/locales/default-logo.png';
+    const dateObj = o.fecha ? new Date(o.fecha) : new Date();
+    const formattedDate = dateObj.toLocaleString('es-AR', {
+      day: '2-digit',
+      month: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    }).replace(/\./g, '');
+
+    const isOnlinePayment = String(o.metodoPago).toLowerCase().includes('transfer') || 
+                            String(o.metodoPago).toLowerCase().includes('mercado') || 
+                            String(o.metodoPago).toLowerCase().includes('online') || 
+                            String(o.metodoPago).toLowerCase().includes('tarjeta') || 
+                            String(o.metodoPago).toLowerCase() === 'mp';
+    const opNumber = o.paymentId || o.numConfirmacion || o.idPedido.substring(0, 8);
+    const metodoPagoClean = (isOnlinePayment || String(o.metodoPago).toLowerCase().includes('mercado') || String(o.metodoPago).toLowerCase().includes('mp'))
+      ? 'MERCADO PAGO' 
+      : String(o.metodoPago).toUpperCase();
+
+    const isEnvio = String(o.tipoEntrega).toLowerCase().includes('env') || String(o.tipoEntrega).toLowerCase().includes('domicilio') || String(o.tipoEntrega).toLowerCase() === 'con envío';
+    const costoEnvioVal = Number(o.precioEnvio || o.costoEnvio || 0);
+    const subtotalVal = Number(o.totalLocal || o.total || 0);
+    const finalTotalVal = subtotalVal + (isEnvio ? costoEnvioVal : 0);
+
+    const itemsHtml = (o.items || []).map(item => {
+      let rawNombre = (item[4] || 'Producto').trim();
+      const descRaw = item[9] || item[3] || item.descripcion || item.observaciones || '';
+      const desc = (descRaw && descRaw !== 'Ninguna') ? descRaw.trim() : '';
+
+      let displayTitle = rawNombre;
+      let displayDesc = desc;
+
+      const matchParen = rawNombre.match(/^(.*?)\s*\((.*?)\)$/);
+      if (matchParen) {
+        displayTitle = matchParen[1].trim();
+        displayDesc = matchParen[2].trim();
+      } else if (desc && !rawNombre.toLowerCase().includes(desc.toLowerCase())) {
+        displayDesc = desc;
+      } else if (desc && rawNombre.toLowerCase().includes(desc.toLowerCase())) {
+        displayDesc = '';
+      }
+
+      const qty = item[6] || 1;
+      const sub = Number(item[7] || 0);
+
+      return `
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <div>
+            <strong>${qty} x</strong> ${displayTitle}
+            ${displayDesc ? `<div style="font-size:0.75rem; padding-left:12px;">- ${displayDesc}</div>` : ''}
+          </div>
+          <div>$${sub.toFixed(2)}</div>
+        </div>
+      `;
+    }).join('');
+
+    const totalSectionHtml = isEnvio ? `
+      <div style="font-weight:bold; text-align:right; margin-top:6px; font-size:0.95rem;">
+        <div>Subtotal: $${subtotalVal.toFixed(2)}</div>
+        <div>Envío Wepi: $${costoEnvioVal.toFixed(2)}</div>
+        <div style="font-size: 1.1rem; margin-top: 4px;">TOTAL: $${finalTotalVal.toFixed(2)}</div>
+      </div>
+    ` : `
+      <div style="font-weight:bold; text-align:right; margin-top:6px; font-size:0.95rem;">
+        <div>TOTAL: $${subtotalVal.toFixed(2)}</div>
+      </div>
+    `;
+
+    const ticketContentHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Ticket #${o.idPedido}</title>
+        <style>
+          @page { size: 80mm auto; margin: 0; }
+          body { font-family: 'Courier New', Courier, monospace; width: 78mm; padding: 4mm; margin: 0; font-size: 0.85rem; color: #000; line-height: 1.3; }
+          .header { text-align: center; margin-bottom: 8px; }
+          .logo-box { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px; }
+          .logo-box img { max-height: 38px; width: auto; object-fit: contain; }
+          .divider { border-left: 2px solid #000; height: 32px; margin: 0 4px; }
+          .order-info { font-size: 1.1rem; font-weight: bold; margin-bottom: 2px; text-align: center; }
+          .date-info { font-size: 0.75rem; text-align: center; margin-bottom: 8px; }
+          .client-info { margin-bottom: 8px; }
+          .dashed-separator { border-top: 1px dashed #000; margin: 6px 0; }
+          .footer { text-align: center; font-size: 0.75rem; margin-top: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo-box">
+            <img src="${logoUrl}" alt="Local">
+            <div class="divider"></div>
+            <img src="https://i.postimg.cc/htHr0QMM/Tarde-de-superclasico-(1)-(1).png" alt="Wepi">
+          </div>
+        </div>
+        <div class="order-info">#${o.idPedido}</div>
+        <div class="date-info">${formattedDate} ${o.numConfirmacion ? `(PIN: ${o.numConfirmacion})` : ''}</div>
+        <div class="client-info">
+          <strong>CLIENTE:</strong><br>
+          ${o.nombreCliente}<br>
+          ${o.direccion}<br>
+          Tel: ${o.clienteTelefono || 'N/A'}
+        </div>
+        <div class="dashed-separator"></div>
+        <div>${itemsHtml}</div>
+        <div class="dashed-separator"></div>
+        <div>
+          <strong>PAGO:</strong> ${metodoPagoClean} ${opNumber ? `(N° Op: ${opNumber})` : ''}<br>
+          ${o.observaciones && o.observaciones !== 'Ninguna' ? `<strong>OBS Gral:</strong> ${o.observaciones}` : ''}
+        </div>
+        ${totalSectionHtml}
+        <div class="footer">
+          ¡Gracias por su compra!<br>
+          <strong>Wepi - Pedidos y Delivery</strong>
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.focus();
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            }, 250);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '_blank', 'width=450,height=650');
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(ticketContentHtml);
+      printWindow.document.close();
+    } else {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '10px';
+      iframe.style.height = '10px';
+      iframe.style.opacity = '0.01';
+      document.body.appendChild(iframe);
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(ticketContentHtml);
+      doc.close();
+      setTimeout(() => {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+        setTimeout(() => {
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        }, 1000);
+      }, 300);
+    }
+  }, [profileData?.foto_url]);
 
   // ─── Wepi Sync V1 States ───
   const [syncFile, setSyncFile] = React.useState(null);
@@ -1010,10 +1174,14 @@ export default function RestaurantDashboard() {
 
 
   const handleSaveCierre = async () => {
+    if (cierreLoading || !cierreReport) return;
     try {
       setCierreLoading(true);
       await api.saveLocalCierre({ ...cierreReport, localId: restaurant.id });
       toast.success('Cierre de caja guardado con éxito');
+      setCierreReport(null);
+      await loadHistorialCierres();
+      setCierreSubTab('historial');
     } catch (e) {
       toast.error('Error al guardar: ' + e.message);
     } finally {
@@ -3153,18 +3321,6 @@ export default function RestaurantDashboard() {
                     <span>➕</span> Agregar
                   </button>
                 </li>
-                {(profileData?.rubro === 'Heladeria' || profileData?.rubro === 'Heladería' || (Array.isArray(profileData?.rubros) && profileData.rubros.some(r => String(r).toLowerCase().includes('helad'))) || String(profileData?.nombre).toLowerCase().includes('helad')) && (
-                  <li>
-                    <button 
-                      className={`rd-sidebar-btn ${view === 'sabores' ? 'active' : ''}`} 
-                      onClick={() => {
-                        setView('sabores'); loadSabores(); setMobileSidebarOpen(false);
-                      }}
-                    >
-                      <span>🍨</span> Sabores y Adicionales
-                    </button>
-                  </li>
-                )}
                 <li>
                   <button className={`rd-sidebar-btn ${view === 'sync' ? 'active' : ''}`} onClick={() => { setView('sync'); setMobileSidebarOpen(false); }}>
                     <span>📥</span> Carga masiva
@@ -5470,28 +5626,32 @@ export default function RestaurantDashboard() {
                       </p>
                       <button 
                         className="btn" 
-                        disabled={waConnecting}
+                        disabled={true}
                         style={{ 
-                          background: '#1877F2', 
+                          background: '#94a3b8', 
                           color: 'white', 
                           border: 'none', 
                           padding: '12px 24px', 
                           borderRadius: '10px', 
                           fontWeight: 700, 
-                          cursor: waConnecting ? 'wait' : 'pointer',
+                          cursor: 'not-allowed',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '10px',
-                          boxShadow: '0 4px 12px rgba(24, 119, 242, 0.25)',
-                          fontSize: '0.9rem'
+                          boxShadow: 'none',
+                          fontSize: '0.9rem',
+                          opacity: 0.75
                         }}
-                        onClick={handleConnectWAMeta}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toast.info('🔒 La vinculación de WhatsApp Assistant estará disponible próximamente');
+                        }}
                       >
                         <span style={{ fontSize: '1.1rem' }}>💬</span>
-                        {waConnecting ? 'Vinculando con Meta...' : 'Vincular WhatsApp Oficial'}
+                        🔒 Vincular WhatsApp Oficial (Próximamente)
                       </button>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--gray-400)', fontWeight: 500 }}>
-                        🔒 API Oficial de Meta Cloud • Modo Coexistencia • Sin riesgo de baneo
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>
+                        ⏳ Funcionalidad en desarrollo • Próximamente disponible
                       </span>
                     </div>
                   ) : (
@@ -5858,6 +6018,20 @@ export default function RestaurantDashboard() {
             setQuickUploadItemId(null);
             e.target.value = ''; // Limpiar el input
           }
+        }}
+      />
+      {/* Chatbot de Ayuda para Locales */}
+      <LocalHelpChatbot 
+        orders={orders}
+        onRefreshOrders={() => loadOrders(false)}
+        onReavisarRepartidor={async (o) => {
+          const direccionLocal = profileData?.direccion || localNombre || 'Local';
+          await api.notifyOrderListo(o, direccionLocal);
+          await api.reavisarRepartidorOrder(o.idPedidoLocal);
+          toast.success(`¡Aviso re-enviado al repartidor para el pedido #${o.idPedido}! 🛵🔔`, { icon: '🛵' });
+        }}
+        onPrintTicket={(o) => {
+          handleGlobalPrintTicket(o);
         }}
       />
     </div>

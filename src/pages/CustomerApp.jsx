@@ -779,6 +779,12 @@ export default function CustomerApp() {
 
     const currentLocal = selectedLocal || (cart.items.length > 0 ? locals.find(l => l.id === cart.items[0].local_id) : null);
 
+    // Validación estricta de horario de comercio cerrado antes de iniciar confirmación
+    if (currentLocal && !isLocalOpen(currentLocal)) {
+      toast.error(`El local "${currentLocal.nombre || 'seleccionado'}" se encuentra cerrado en este momento y no está aceptando pedidos.`);
+      return;
+    }
+
     // Check repartidores active strictly before proceeding if envio is selected
     if (cart.deliveryType === 'envio') {
       const freshRiders = await api.checkActiveRepartidores();
