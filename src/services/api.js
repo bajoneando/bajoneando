@@ -2523,7 +2523,7 @@ export async function adminGetPedidoDetalle(pedidoId) {
 // ADMIN — Update Pedido Status (Global + Local)
 // ═══════════════════════════════════════════════════
 export async function adminUpdatePedidoStatus(pedidoId, status) {
-  // 0. Seguridad: Si intentamos volver a 'Confirmado' pero el pedido ya es final, abortar.
+  // 0. Seguridad: Si intentamos volver a 'Confirmado' pero el pedido ya es final o fue rechazado por expirar el periodo de gracia, abortar.
   if (status === 'Confirmado') {
     const { data: current } = await supabase.from('pedidos_general').select('estado').eq('id', pedidoId).single();
     if (current && ['Entregado', 'Cancelado', 'Rechazado', 'En camino', 'Retirado', 'Listo'].includes(current.estado)) {
@@ -4139,7 +4139,7 @@ export async function markOrderAsPaid(pedidoId, paymentId, preferenceId, externa
   });
   if (error) return { success: false, error: error.message };
 
-  // Ensure status transitions to 'Confirmado' in both tables to trigger printer/restaurant dashboard
+  // Asegurar transición a 'Confirmado' en ambas tablas si el pago se realizó dentro del periodo de gracia
   try {
     await adminUpdatePedidoStatus(pedidoId, 'Confirmado');
   } catch (e) {

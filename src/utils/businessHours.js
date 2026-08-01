@@ -16,24 +16,34 @@ const normalize = (str) => {
 const getDayIntervals = (local, dayName) => {
   const dayNorm = normalize(dayName);
 
-  // 1. New flexible configuration (config_horarios)
-  if (local.config_horarios && typeof local.config_horarios === 'object' && Object.keys(local.config_horarios).length > 0) {
-    const dayConfigKey = Object.keys(local.config_horarios).find(k => normalize(k) === dayNorm);
-    const dayConfig = dayConfigKey ? local.config_horarios[dayConfigKey] : null;
+  // Parsear JSON config_horarios si viene como string
+  let config = local.config_horarios;
+  if (typeof config === 'string') {
+    try { config = JSON.parse(config); } catch (e) {}
+  }
 
-    if (!dayConfig || dayConfig.tipo === 'cerrado') return { tipo: 'cerrado', intervalos: [] };
-    if (dayConfig.tipo === '24hs') return { tipo: '24hs', intervalos: [] };
+  // 1. Configuración flexible (config_horarios)
+  if (config && typeof config === 'object' && Object.keys(config).length > 0) {
+    const dayConfigKey = Object.keys(config).find(k => normalize(k) === dayNorm);
+    const dayConfig = dayConfigKey ? config[dayConfigKey] : null;
 
-    if (dayConfig.tipo === 'especifico' && Array.isArray(dayConfig.intervalos)) {
-      return { tipo: 'especifico', intervalos: dayConfig.intervalos };
+    if (dayConfig) {
+      if (dayConfig.tipo === 'cerrado') return { tipo: 'cerrado', intervalos: [] };
+      if (dayConfig.tipo === '24hs') return { tipo: '24hs', intervalos: [] };
+      if (dayConfig.tipo === 'especifico' && Array.isArray(dayConfig.intervalos)) {
+        return { tipo: 'especifico', intervalos: dayConfig.intervalos };
+      }
     }
   }
 
-  // 2. Fallback to legacy columns
+  // 2. Fallback a columnas heredadas
   const { horario_apertura, horario_cierre, horario_apertura2, horario_cierre2, dias_apertura } = local;
 
   if (dias_apertura && Array.isArray(dias_apertura) && dias_apertura.length > 0) {
     const normalizedDays = dias_apertura.map(normalize);
+    if (!normalizedDays.includes(dayNorm)) return { tipo: 'cerrado', intervalos: [] };
+  } else if (typeof dias_apertura === 'string' && dias_apertura.trim()) {
+    const normalizedDays = dias_apertura.split(',').map(d => normalize(d.trim()));
     if (!normalizedDays.includes(dayNorm)) return { tipo: 'cerrado', intervalos: [] };
   }
 
@@ -57,8 +67,8 @@ export const isLocalOpen = (local) => {
 
   const estadoNorm = (local.estado || '').toLowerCase().trim();
 
-  // Si el estado explícito del local es cerrado, inactivo o desactivado, NUNCA acepta pedidos
-  if (['cerrado', 'inactivo', 'desactivado', 'inhabilitado'].includes(estadoNorm)) {
+  // Si el local fue inhabilitado o suspendido administrativamente por el superadmin, NUNCA abre
+  if (['inhabilitado', 'suspendido'].includes(estadoNorm)) {
     return false;
   }
 
@@ -71,12 +81,12 @@ export const isLocalOpen = (local) => {
     if (today < availableDate) return false;
   }
 
-  // 2. Si no está en modo automático, depende del estado manual ('abierto' o 'activo')
+  // 2. Si NO está en modo automático, depende 100% del estado manual ('abierto' o 'activo')
   if (!local.modo_automatico) {
     return estadoNorm === 'abierto' || estadoNorm === 'activo';
   }
 
-  // 3. Evaluar horario y día en la zona horaria oficial de Argentina (America/Argentina/Buenos_Aires)
+  // 3. Si SÍ está en modo automático, el estado de apertura lo determina el horario semanal (Argentina UTC-3)
   const nowArgStr = new Date().toLocaleString('en-US', { timeZone: 'America/Argentina/Buenos_Aires' });
   const now = new Date(nowArgStr);
   const currentMinutes = now.getHours() * 60 + now.getMinutes();

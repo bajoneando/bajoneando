@@ -16,7 +16,7 @@ BEGIN
   WHERE estado = 'Buscando Repartidor'
     AND created_at <= NOW() - INTERVAL '12 minutes';
 
-  -- B. Cancelar pedidos en "Pendiente de Pago" por más de 5 minutos
+  -- B. Cancelar pedidos en "Pendiente de Pago" por más de 8 minutos
   -- (El usuario probablemente cerró la pestaña o abandonó el checkout de MP)
   -- Importante: Liberar también al repartidor asignado.
   
@@ -26,14 +26,14 @@ BEGIN
   WHERE id IN (
     SELECT repartidor_id FROM public.pedidos_general 
     WHERE estado = 'Pendiente de Pago' 
-      AND COALESCE(pago_pendiente_at, created_at) <= NOW() - INTERVAL '5 minutes'
+      AND COALESCE(pago_pendiente_at, NOW()) <= NOW() - INTERVAL '8 minutes'
   );
 
   -- Marcamos el pedido como Rechazado
   UPDATE public.pedidos_general
   SET estado = 'Rechazado'
   WHERE estado = 'Pendiente de Pago'
-    AND COALESCE(pago_pendiente_at, created_at) <= NOW() - INTERVAL '5 minutes';
+    AND COALESCE(pago_pendiente_at, NOW()) <= NOW() - INTERVAL '8 minutes';
 
 END;
 $$ LANGUAGE plpgsql;

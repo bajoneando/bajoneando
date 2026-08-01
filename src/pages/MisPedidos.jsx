@@ -398,7 +398,7 @@ export default function MisPedidos() {
                       <small style={{ color: '#c2410c', display: 'block', marginBottom: '4px' }}>Tu pedido se cancelará en:</small>
                       <CountdownTimer 
                         startTime={p.pago_pendiente_at || p.created_at} 
-                        limitMinutes={5} 
+                        limitMinutes={8} 
                         onTimeout={() => loadPedidos()} 
                       />
                       <button 
@@ -423,7 +423,7 @@ export default function MisPedidos() {
                       </div>
                     ))}
                   </div>
-                  {p.numConfirmacion && p.tipoEntrega?.toLowerCase().includes('env') && p.estado !== 'Entregado' && p.estado !== 'Cancelado' && (
+                  {p.numConfirmacion && p.tipoEntrega?.toLowerCase().includes('env') && !['Entregado', 'Cancelado', 'Rechazado'].includes(p.estado) && (
                     <div style={{ background: '#eef2f5', padding: '8px', borderRadius: '6px', marginBottom: '12px', textAlign: 'center' }}>
                       <strong style={{ color: '#d32f2f' }}>PIN de Recepción: {p.numConfirmacion}</strong>
                       <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#666' }}>
@@ -436,9 +436,11 @@ export default function MisPedidos() {
                     <span className="pedido-date">{formatDate(p.fecha)}</span>
                   </div>
                   <div className="pedido-card-actions-row" style={{ gap: 8 }}>
-                    <button className="btn btn-primary btn-sm btn-full" onClick={() => openSeguimiento(p.idPedido)}>
-                      Ver seguimiento →
-                    </button>
+                    {!['Rechazado', 'Cancelado'].includes(p.estado) && (
+                      <button className="btn btn-primary btn-sm btn-full" onClick={() => openSeguimiento(p.idPedido)}>
+                        Ver seguimiento →
+                      </button>
+                    )}
                     {p.estado === 'Rechazado' && (
                       <button className="btn btn-primary btn-sm btn-full" style={{ background: 'var(--green-600)' }} onClick={() => handleReorder(p.idPedido)}>
                         🔄 Pedir de nuevo
@@ -554,7 +556,7 @@ export default function MisPedidos() {
                         <small style={{ color: '#c2410c', display: 'block', marginBottom: '8px' }}>Tu pedido se cancelará automáticamente si no recibimos el pago en:</small>
                         <CountdownTimer 
                           startTime={seguimiento.pago_pendiente_at || seguimiento.created_at} 
-                          limitMinutes={5} 
+                          limitMinutes={8} 
                           onTimeout={() => loadPedidos()} 
                         />
                       </div>

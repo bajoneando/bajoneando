@@ -15,7 +15,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-    -- Actualizar el pedido en la tabla general (Solo si está en estado inicial)
+    -- Actualizar el pedido en la tabla general (Solo si se realiza el pago dentro del periodo de gracia de 8 min)
     UPDATE public.pedidos_general
     SET 
         estado = 'Confirmado',
@@ -26,7 +26,7 @@ BEGIN
     WHERE id = p_pedido_id 
       AND (estado IS NULL OR estado IN ('Pendiente', 'Pendiente de Pago', 'Buscando Repartidor'));
 
-    -- Actualizar el pedido en la tabla local (Solo si está en estado inicial)
+    -- Actualizar el pedido en la tabla local
     UPDATE public.pedidos_locales
     SET estado = 'Confirmado'
     WHERE pedido_id = p_pedido_id

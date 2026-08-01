@@ -1092,10 +1092,10 @@ export default function RestaurantDashboard() {
     
     const intervalId = setInterval(() => {
       verificarEstadoAutomatico();
-    }, 60000);
+    }, 30000);
 
     return () => clearInterval(intervalId);
-  }, [profileData?.modo_automatico, profileData?.horario_apertura, profileData?.horario_cierre, verificarEstadoAutomatico]);
+  }, [profileData?.modo_automatico, profileData?.horario_apertura, profileData?.horario_cierre, profileData?.config_horarios, profileData?.dias_apertura, verificarEstadoAutomatico]);
 
   // Click outside to close dropdowns
   React.useEffect(() => {
