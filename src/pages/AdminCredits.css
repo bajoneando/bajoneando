@@ -22,17 +22,18 @@
 }
 
 .config-card {
-    background: #1e293b; /* Solid background to avoid transparency issues */
+    background: #ffffff;
     border-radius: 1.25rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid #e2e8f0;
     position: relative;
     overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
 }
 
 .config-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 12px 24px rgba(225, 29, 72, 0.1);
 }
 
 .config-card.inactive {

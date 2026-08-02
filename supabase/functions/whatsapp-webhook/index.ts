@@ -83,25 +83,17 @@ Deno.serve(async (req) => {
           console.warn("Error consultando local por whatsapp_phone_id:", e.message);
         }
 
-        // B. FALLBACK DE PRUEBAS
+        // B. SI NO ES UN COMERCIO INDIVIDUAL ESPECÍFICO, TRATAR COMO BOT GLOBAL DE WEPI (3756543670)
         if (!local) {
-          console.log("Local no encontrado por phoneId. Buscando local por defecto.");
-          const { data: defaultLocal } = await supabase
-            .from('locales')
-            .select('id, nombre, ciudad, slug, whatsapp_access_token')
-            .eq('id', 'LOC-1774567661603')
-            .single();
-          local = defaultLocal;
-        }
-
-        if (!local) {
-          console.error("No se pudo obtener ningún local de la base de datos.");
-          return new Response("Local no encontrado", { status: 200 });
+          console.log("Mensaje para Wepi Bot Global (3756543670). Procesando flujo configurado de /admin...");
+          const textContent = message.text?.body || message.interactive?.button_reply?.id || '';
+          await enviarRespuestaWepiBotGlobal(from, phoneId, textContent, supabase, accessToken);
+          return new Response("EVENT_RECEIVED", { status: 200 });
         }
 
         const accessToken = local.whatsapp_access_token || Deno.env.get("META_ACCESS_TOKEN");
 
-        // C. Detectar el tipo de interacción
+        // C. Detectar el tipo de interacción para Comercios Individuales (Wepi Assistant)
         const messageType = message.type;
         console.log(`Mensaje recibido de ${from}. Tipo: ${messageType}. Local: ${local.nombre}`);
 
@@ -129,7 +121,7 @@ Deno.serve(async (req) => {
             }
           }
         } else {
-          // Cualquier texto regular envía mensaje de bienvenida con botones
+          // Texto regular para un comercio individual
           await enviarMensajeBienvenida(from, phoneId, local.nombre, local.id, supabase, accessToken);
         }
       }
@@ -325,3 +317,58 @@ async function enviarLinkMenuCompleto(to: string, phoneId: string, local: any, s
 
   await callMetaAPI(phoneId, payload, accessToken, local.id, supabase);
 }
+
+async function enviarRespuestaWepiBotGlobal(to: string, phoneId: string, text: string, supabase: any, accessToken?: string) {
+  let flowData: any = null;
+  let supportPhone = '3756543610';
+
+  try {
+    const { data } = await supabase.from('whatsapp_bot_flows').select('flow_data, support_phone').eq('id', 'main_flow').maybeSingle();
+    if (data?.flow_data) {
+      flowData = data.flow_data;
+      if (data.support_phone) supportPhone = data.support_phone;
+    }
+  } catch (e) {}
+
+  if (!flowData) {
+    try {
+      const { data } = await supabase.from('configuracion').select('whatsapp_bot_flows').eq('id', 'global').maybeSingle();
+      if (data?.whatsapp_bot_flows) flowData = data.whatsapp_bot_flows;
+    } catch (e) {}
+  }
+
+  const cleanText = (text || '').toLowerCase().trim();
+
+  let bodyText = flowData?.inicio?.mensaje || `👋 ¡Hola! Soy Wepi Bot.\n\n¿En qué puedo ayudarte?\n\n1️⃣ 🍔 Hacer un pedido\n2️⃣ 📦 Estado de mi pedido\n3️⃣ ❓ Ayuda\n4️⃣ 👨 Hablar con soporte`;
+
+  if (cleanText === '1' || cleanText.includes('pedir') || cleanText.includes('hacer un pedido') || cleanText.includes('carta')) {
+    bodyText = (flowData?.hacer_pedido?.mensaje || '🍔 Elegí tu ciudad.\n(O usar ubicación)') + '\n\n' +
+      '• Santo Tomé: https://wepi.com.ar/pedir/santo-tome\n' +
+      '• Oberá: https://wepi.com.ar/pedir/obera\n' +
+      '• Apóstoles: https://wepi.com.ar/pedir/apostoles\n' +
+      '• Alem: https://wepi.com.ar/pedir/alem\n' +
+      '• Goya: https://wepi.com.ar/pedir/goya\n\n' +
+      (flowData?.hacer_pedido?.footer || '↓\nAbrí Wepi y hacé tu pedido 👇\nhttps://wepi.com.ar/pedir/');
+  } else if (cleanText === '2' || cleanText.includes('estado')) {
+    bodyText = flowData?.estado_pedido?.mensaje || '📦 Podés consultar el estado de tu pedido aquí:\nhttps://wepi.com.ar/mis-pedidos';
+  } else if (cleanText === '3' || cleanText.includes('ayuda')) {
+    bodyText = (flowData?.ayuda?.mensaje || '¿Sobre qué necesitás ayuda?') + '\n\n' +
+      `1️⃣ 💳 Cómo pagar\n` +
+      `2️⃣ 📍 Cómo seguir mi pedido\n` +
+      `3️⃣ 🔑 Recuperar contraseña\n` +
+      `4️⃣ 📞 Hablar con soporte`;
+  } else if (cleanText === '4' || cleanText.includes('soporte') || cleanText.includes('humano')) {
+    bodyText = `👨 Te estamos conectando con un agente de soporte de Wepi.\n\nHacé clic en el siguiente enlace para chatear con un representante:\nhttps://wa.me/549${supportPhone}`;
+  }
+
+  const payload = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: to,
+    type: "text",
+    text: { body: bodyText }
+  };
+
+  await callMetaAPI(phoneId, payload, accessToken);
+}
+

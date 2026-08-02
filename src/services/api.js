@@ -7156,3 +7156,195 @@ export async function desvincularWhatsAppMeta(localId) {
   return data;
 }
 
+// ═══════════════════════════════════════════════════
+// CHATBOT GLOBAL (3756543670) Y OPT-INS
+// ═══════════════════════════════════════════════════
+
+export async function getWhatsappBotFlows() {
+  try {
+    const { data, error } = await supabase
+      .from('whatsapp_bot_flows')
+      .select('*')
+      .eq('id', 'main_flow')
+      .maybeSingle();
+
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("Error leyendo whatsapp_bot_flows:", e);
+  }
+
+  // Fallback a tabla configuracion
+  try {
+    const { data: config } = await supabase
+      .from('configuracion')
+      .select('whatsapp_bot_flows')
+      .eq('id', 'global')
+      .maybeSingle();
+
+    if (config && config.whatsapp_bot_flows) {
+      return {
+        id: 'main_flow',
+        phone_number: '3756543670',
+        support_phone: '3756543610',
+        flow_data: config.whatsapp_bot_flows
+      };
+    }
+  } catch (err) {
+    console.error("Error fallback configuracion:", err);
+  }
+
+  return null;
+}
+
+export async function updateWhatsappBotFlows(flowData) {
+  try {
+    const { data, error } = await supabase
+      .from('whatsapp_bot_flows')
+      .upsert({
+        id: 'main_flow',
+        phone_number: '3756543670',
+        support_phone: '3756543610',
+        flow_data: flowData,
+        is_active: true,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .maybeSingle();
+
+    if (!error && data) return data;
+
+    // Si la tabla no existe en el schema cache (PGRST204 / 42P01 / Could not find table)
+    if (error && (error.message.includes('Could not find the table') || error.code === 'PGRST204' || error.code === '42P01')) {
+      console.warn("La tabla whatsapp_bot_flows no existe aún en Supabase. Guardando en tabla 'configuracion' como fallback...");
+      const { error: fallbackError } = await supabase
+        .from('configuracion')
+        .update({
+          whatsapp_bot_flows: flowData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 'global');
+
+      if (fallbackError) {
+        throw new Error("No se pudo guardar: " + fallbackError.message);
+      }
+
+      return {
+        id: 'main_flow',
+        phone_number: '3756543670',
+        support_phone: '3756543610',
+        flow_data: flowData
+      };
+    }
+
+    if (error) throw new Error(error.message);
+    return data;
+  } catch (err) {
+    // Si la tabla no existe en la BD
+    if (err.message && err.message.includes('Could not find the table')) {
+      const { error: fallbackError } = await supabase
+        .from('configuracion')
+        .update({
+          whatsapp_bot_flows: flowData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 'global');
+
+      if (fallbackError) throw new Error(fallbackError.message);
+      return {
+        id: 'main_flow',
+        phone_number: '3756543670',
+        support_phone: '3756543610',
+        flow_data: flowData
+      };
+    }
+    throw err;
+  }
+}
+
+export async function registerWhatsappOptin({ phoneNumber, ciudad, pedidoId, userId, tipo = 'driver_available' }) {
+  if (!phoneNumber) throw new Error('Número de teléfono requerido para Opt-in');
+  
+  try {
+    const { data, error } = await supabase
+      .from('whatsapp_optins')
+      .insert({
+        phone_number: phoneNumber,
+        ciudad: ciudad || 'Santo Tomé',
+        pedido_id: pedidoId || null,
+        user_id: userId || null,
+        tipo,
+        status: 'PENDING'
+      })
+      .select()
+      .single();
+
+    if (!error) return data;
+  } catch (e) {
+    console.warn("whatsapp_optins error:", e);
+  }
+
+  // Fallback a localStorage / console
+  console.log("Opt-in registrado (fallback local):", { phoneNumber, ciudad, pedidoId, userId, tipo });
+  return { success: true, phone_number: phoneNumber, status: 'PENDING' };
+}
+
+export async function getWhatsappOptins() {
+  try {
+    const { data, error } = await supabase
+      .from('whatsapp_optins')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("getWhatsappOptins error:", e);
+  }
+  return [];
+}
+
+export async function getWhatsappTemplates() {
+  try {
+    const { data, error } = await supabase
+      .from('whatsapp_templates')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error && data) return data;
+  } catch (e) {
+    console.warn("getWhatsappTemplates error:", e);
+  }
+  return [];
+}
+
+export async function saveWhatsappTemplate(templateData) {
+  try {
+    const { data, error } = await supabase
+      .from('whatsapp_templates')
+      .upsert(templateData)
+      .select()
+      .single();
+
+    if (!error && data) return data;
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function deleteWhatsappTemplate(id) {
+  try {
+    const { error } = await supabase
+      .from('whatsapp_templates')
+      .delete()
+      .eq('id', id);
+
+    if (!error) return { success: true };
+    if (error) throw new Error(error.message);
+  } catch (err) {
+    throw err;
+  }
+}
+
+
+

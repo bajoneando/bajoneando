@@ -19,6 +19,7 @@ import AdminPromos from './AdminPromos';
 import AdminCRM from './AdminCRM';
 import AdminAds from './AdminAds';
 import AdminMetricas from './AdminMetricas';
+import AdminChatbot from './AdminChatbot';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -80,6 +81,7 @@ const AdminDashboard = () => {
             case 'crm': return <AdminCRM />;
             case 'ads': return <AdminAds />;
             case 'metricas': return <AdminMetricas />;
+            case 'chatbot': return <AdminChatbot />;
             default: return <AdminLocales />;
         }
     };
@@ -115,6 +117,9 @@ const AdminDashboard = () => {
                     </button>
                     <button className={activeTab === 'banners' ? 'active' : ''} onClick={() => handleTabClick('banners')}>
                         <span className="icon">🖼️</span> Banners
+                    </button>
+                    <button className={activeTab === 'chatbot' ? 'active' : ''} style={{ background: 'rgba(37, 211, 102, 0.1)', color: '#059669', fontWeight: 'bold' }} onClick={() => handleTabClick('chatbot')}>
+                        <span className="icon">💬</span> Chatbot WhatsApp
                     </button>
                     <button className={activeTab === 'config' ? 'active' : ''} onClick={() => handleTabClick('config')}>
                         <span className="icon">⚙️</span> Configuración

@@ -446,6 +446,33 @@ export default function PruebasWalletApp() {
   const [searchSeconds, setSearchSeconds] = React.useState(0);
   const [pendingOrderId, setPendingOrderId] = React.useState(null);
   const [estimatedTime, setEstimatedTime] = React.useState(null);
+  const [optInRegistered, setOptInRegistered] = React.useState(false);
+  const [optInLoading, setOptInLoading] = React.useState(false);
+
+  const handleRegisterWhatsappOptin = async () => {
+    let phone = userPhone || (user && user.telefono) || '';
+    if (!phone) {
+      phone = prompt("Ingresá tu número de WhatsApp para avisarte (con código de área):");
+      if (!phone) return;
+    }
+    setOptInLoading(true);
+    try {
+      await api.registerWhatsappOptin({
+        phoneNumber: phone,
+        ciudad: currentCity || 'Santo Tomé',
+        pedidoId: pendingOrderId,
+        userId: user?.id || null
+      });
+      setOptInRegistered(true);
+      toast.success('¡Listo! Te avisaremos por WhatsApp apenas haya repartidores disponibles. 🛵');
+    } catch (e) {
+      console.error(e);
+      toast.error('Error al registrar aviso por WhatsApp');
+    } finally {
+      setOptInLoading(false);
+    }
+  };
+
 
   // Mundial 2026: States and checking logic for points earned (Commented out/Deleted)
   // const [oldMundialPoints, setOldMundialPoints] = React.useState(0);
@@ -5025,7 +5052,50 @@ export default function PruebasWalletApp() {
             <h2>Seguimos buscando...</h2>
             <p>Los repartidores están un poco ocupados en este momento. ¿Quieres seguir esperando un poco más? Seguiremos notificándolos.</p>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginTop: '20px' }}>
+            <div style={{
+              background: optInRegistered ? '#ecfdf5' : '#f0fdf4',
+              border: optInRegistered ? '1px solid #10b981' : '1px solid #6ee7b7',
+              borderRadius: '12px',
+              padding: '12px',
+              marginTop: '10px',
+              marginBottom: '10px',
+              textAlign: 'center'
+            }}>
+              {optInRegistered ? (
+                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: '700', color: '#065f46' }}>
+                  ✅ ¡Aviso activado! Te enviaremos un WhatsApp cuando haya repartidores disponibles.
+                </p>
+              ) : (
+                <>
+                  <p style={{ margin: '0 0 6px', fontSize: '0.82rem', fontWeight: '700', color: '#065f46' }}>
+                    💬 ¿No querés mantener la app abierta?
+                  </p>
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      background: '#25D366',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: '700',
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                    disabled={optInLoading}
+                    onClick={handleRegisterWhatsappOptin}
+                  >
+                    📲 {optInLoading ? 'Guardando...' : 'Recibir aviso cuando haya un repartidor disponible'}
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginTop: '10px' }}>
               <button 
                 className="btn btn-primary btn-full"
                 onClick={() => {

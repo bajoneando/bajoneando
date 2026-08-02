@@ -1,11 +1,11 @@
 /* AdminPromos.css — Premium Promotions Dashboard */
 :root {
-    --promo-primary: #e63946;
-    --promo-secondary: #457b9d;
-    --promo-accent: #f1faee;
-    --promo-dark: #1d3557;
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.3);
+    --promo-primary: #e11d48;
+    --promo-secondary: #be123c;
+    --promo-accent: #fff1f2;
+    --promo-dark: #9f1239;
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --glass-border: rgba(255, 228, 230, 0.5);
 }
 
 .admin-promos-container {
@@ -26,11 +26,11 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2.5rem;
-    background: linear-gradient(135deg, var(--promo-dark) 0%, #2c3e50 100%);
+    background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
     padding: 2rem;
     border-radius: 20px;
     color: white;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 10px 30px rgba(225, 29, 72, 0.2);
 }
 
 .panel-header h2 {

@@ -1,0 +1,19 @@
+{
+  "name": "wepi-whatsapp-server",
+  "version": "1.0.0",
+  "description": "Servidor de automatización de WhatsApp para comercios de Wepi usando Baileys",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.8",
+    "@whiskeysockets/baileys": "^7.0.0-rc13",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pino": "^8.19.0",
+    "qrcode": "^1.5.3"
+  }
+}
