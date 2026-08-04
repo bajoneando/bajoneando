@@ -7262,30 +7262,37 @@ export async function updateWhatsappBotFlows(flowData) {
 }
 
 export async function registerWhatsappOptin({ phoneNumber, ciudad, pedidoId, userId, tipo = 'driver_available' }) {
-  if (!phoneNumber) throw new Error('Número de teléfono requerido para Opt-in');
+  const cleanPhone = phoneNumber ? String(phoneNumber).replace(/\D/g, '') : '';
+  if (!cleanPhone) {
+    console.warn('registerWhatsappOptin: Número de teléfono requerido');
+    return { success: false, error: 'Número no válido' };
+  }
   
   try {
     const { data, error } = await supabase
       .from('whatsapp_optins')
       .insert({
-        phone_number: phoneNumber,
+        phone_number: cleanPhone,
         ciudad: ciudad || 'Santo Tomé',
         pedido_id: pedidoId || null,
         user_id: userId || null,
         tipo,
         status: 'PENDING'
       })
-      .select()
-      .single();
+      .select();
 
-    if (!error) return data;
+    if (!error) {
+      return (data && data[0]) || { success: true, phone_number: cleanPhone, status: 'PENDING' };
+    } else {
+      console.warn("whatsapp_optins insert error:", error);
+    }
   } catch (e) {
-    console.warn("whatsapp_optins error:", e);
+    console.warn("whatsapp_optins exception:", e);
   }
 
   // Fallback a localStorage / console
-  console.log("Opt-in registrado (fallback local):", { phoneNumber, ciudad, pedidoId, userId, tipo });
-  return { success: true, phone_number: phoneNumber, status: 'PENDING' };
+  console.log("Opt-in registrado (fallback local):", { cleanPhone, ciudad, pedidoId, userId, tipo });
+  return { success: true, phone_number: cleanPhone, status: 'PENDING' };
 }
 
 export async function getWhatsappOptins() {
@@ -7345,6 +7352,35 @@ export async function deleteWhatsappTemplate(id) {
     throw err;
   }
 }
+
+// Enviar plantilla de WhatsApp Meta API (HSM) como sin_repartidores
+export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repartidores', languageCode = 'es_AR', phoneId, components }) {
+  if (!to) return { success: false, error: 'Sin teléfono de destino' };
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/whatsapp-webhook`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'send_template',
+        to: to,
+        templateName: templateName,
+        languageCode: languageCode,
+        phoneId: phoneId,
+        components: components
+      })
+    });
+    
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error("Error enviando plantilla WhatsApp Meta:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 
 
 

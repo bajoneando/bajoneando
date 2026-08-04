@@ -1551,6 +1551,71 @@
 }
 
 /* ═══════════ SEARCHING DRIVER MODAL ═══════════ */
+@keyframes liveStatusGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(3, 105, 161, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(3, 105, 161, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(3, 105, 161, 0);
+  }
+}
+
+@keyframes liveDotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.5;
+  }
+}
+
+@keyframes textPopFade {
+  0% {
+    opacity: 0.3;
+    transform: translateY(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.live-status-box {
+  background: #f0f9ff;
+  color: #0369a1;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-top: 8px;
+  border: 1.5px solid #bae6fd;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  animation: liveStatusGlow 2.5s infinite ease-in-out;
+}
+
+.live-status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #0284c7;
+  border-radius: 50%;
+  display: inline-block;
+  animation: liveDotPulse 1.2s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+.live-status-text {
+  animation: textPopFade 0.4s ease-out;
+}
+
 .searching-modal-overlay {
   position: fixed;
   inset: 0;

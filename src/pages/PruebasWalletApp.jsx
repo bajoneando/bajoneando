@@ -443,6 +443,7 @@ export default function PruebasWalletApp() {
   const [searchingDriver, setSearchingDriver] = React.useState(false);
   const [foundDriver, setFoundDriver] = React.useState(null);
   const [driverSearchTimeout, setDriverSearchTimeout] = React.useState(false);
+  const [showCancelOptIn, setShowCancelOptIn] = React.useState(false);
   const [searchSeconds, setSearchSeconds] = React.useState(0);
   const [pendingOrderId, setPendingOrderId] = React.useState(null);
   const [estimatedTime, setEstimatedTime] = React.useState(null);
@@ -450,23 +451,35 @@ export default function PruebasWalletApp() {
   const [optInLoading, setOptInLoading] = React.useState(false);
 
   const handleRegisterWhatsappOptin = async () => {
-    let phone = userPhone || (user && user.telefono) || '';
+    let phone = (user && user.telefono) || '';
     if (!phone) {
-      phone = prompt("Ingresá tu número de WhatsApp para avisarte (con código de área):");
+      phone = prompt("Ingresá tu número de WhatsApp con código de área (ej: 5493756543610):");
       if (!phone) return;
     }
     setOptInLoading(true);
     try {
-      await api.registerWhatsappOptin({
+      const res = await api.registerWhatsappOptin({
         phoneNumber: phone,
-        ciudad: currentCity || 'Santo Tomé',
+        ciudad: activeCity || 'Santo Tomé',
         pedidoId: pendingOrderId,
         userId: user?.id || null
       });
-      setOptInRegistered(true);
-      toast.success('¡Listo! Te avisaremos por WhatsApp apenas haya repartidores disponibles. 🛵');
+
+      if (res && res.error) {
+        toast.error(res.error || 'Por favor ingresá un número de teléfono válido');
+      } else {
+        setOptInRegistered(true);
+        toast.success('¡Listo! Te avisaremos por WhatsApp apenas haya repartidores disponibles. 🛵');
+        
+        // Enviar plantilla "sin_repartidores" como confirmación por WhatsApp
+        api.sendWhatsappTemplateMessage({
+          to: phone,
+          templateName: 'sin_repartidores',
+          languageCode: 'es_AR'
+        }).catch(err => console.error("Error enviando plantilla sin_repartidores en opt-in:", err));
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Opt-in error:", e);
       toast.error('Error al registrar aviso por WhatsApp');
     } finally {
       setOptInLoading(false);
@@ -2330,6 +2343,7 @@ export default function PruebasWalletApp() {
             setFoundDriver(null);
             setDriverSearchTimeout(false);
             setCartOpen(false);
+            setCheckoutLoading(false);
 
             // Iniciamos el broadcast centralizado
             await api.broadcastOrderToDrivers(pregeneratedId, exactTotal, cart.items[0]?.local_id, shipping).catch(console.error);
@@ -2337,6 +2351,7 @@ export default function PruebasWalletApp() {
          } else {
             // RETIRO O ENVIO DE SHOPS + EFECTIVO
             if (mp === 'efectivo') {
+              setCheckoutLoading(false);
               toast.success(`¡Pedido #${pregeneratedId} registrado exitosamente!`);
               setConfirmedOrderId(pregeneratedId);
               setShowConfirmedModal(true);
@@ -2423,7 +2438,7 @@ export default function PruebasWalletApp() {
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [searchingDriver, foundDriver, driverSearchTimeout, pendingOrderId, cart.total]);
+  }, [searchingDriver, foundDriver, driverSearchTimeout, pendingOrderId, cart.total, user]);
 
   // Effect to listen for driver acceptance via Realtime + Polling Fallback
   React.useEffect(() => {
@@ -2440,17 +2455,25 @@ export default function PruebasWalletApp() {
           .single();
           
         if (data) {
+          // Si ya se asignó repartidor o estamos en el modal de repartidor encontrado, no cancelar
+          if (data.repartidor_id || foundDriver) {
+            if (!foundDriver) handleDriverFound(data);
+            return true;
+          }
+
           if (['Cancelado', 'Rechazado'].includes(data.estado)) {
             console.log("❌ Order canceled or rejected (Detected via Polling/Initial Check)!");
             setSearchingDriver(false);
             setDriverSearchTimeout(false);
             setPendingOrderId(null);
+            setMpRedirectUrl(null);
+            setCheckoutLoading(false);
             localStorage.removeItem('pendingOrderDataPruebas');
             localStorage.removeItem('pendingOrderData');
             toast.error('El pedido fue cancelado o rechazado.');
             return true;
           }
-          if ((data.estado === 'Pendiente de Pago' || data.estado === 'Confirmado') && data.repartidor_id && !foundDriver) {
+          if ((data.estado === 'Pendiente de Pago' || data.estado === 'Confirmado' || data.estado === 'Aceptado') && data.repartidor_id && !foundDriver) {
             console.log("✅ Order accepted with driver (Detected via Polling/Initial Check)!");
             handleDriverFound(data);
             return true;
@@ -2476,15 +2499,23 @@ export default function PruebasWalletApp() {
       }, (payload) => {
         const newOrder = payload.new;
         console.log("🔄 Realtime update:", newOrder.id, newOrder.estado, "Driver ID:", newOrder.repartidor_id);
+        
+        if (newOrder.repartidor_id || foundDriver) {
+          if (!foundDriver) handleDriverFound(newOrder);
+          return;
+        }
+
         if (['Cancelado', 'Rechazado'].includes(newOrder.estado)) {
           console.log("❌ Order canceled or rejected (Realtime Update)!");
           setSearchingDriver(false);
           setDriverSearchTimeout(false);
           setPendingOrderId(null);
+          setMpRedirectUrl(null);
+          setCheckoutLoading(false);
           localStorage.removeItem('pendingOrderDataPruebas');
           localStorage.removeItem('pendingOrderData');
           toast.error('El pedido fue cancelado o rechazado.');
-        } else if ((newOrder.estado === 'Pendiente de Pago' || newOrder.estado === 'Confirmado') && newOrder.repartidor_id && !foundDriver) {
+        } else if ((newOrder.estado === 'Pendiente de Pago' || newOrder.estado === 'Confirmado' || newOrder.estado === 'Aceptado') && newOrder.repartidor_id && !foundDriver) {
           handleDriverFound(newOrder);
         }
       })
@@ -2550,6 +2581,7 @@ export default function PruebasWalletApp() {
 
   const handleCancelPendingOrder = async () => {
     const orderIdToCancel = pendingOrderId;
+    const recipientPhone = user && user.telefono;
     setSearchingDriver(false);
     setFoundDriver(null);
     setAcceptedOrder(null);
@@ -2564,6 +2596,16 @@ export default function PruebasWalletApp() {
           api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
           api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
         ]);
+
+        // Enviar plantilla "sin_repartidores" (Meta API HSM) ÚNICAMENTE al rechazarse/cancelarse el pedido
+        if (recipientPhone) {
+          api.sendWhatsappTemplateMessage({
+            to: recipientPhone,
+            templateName: 'sin_repartidores',
+            languageCode: 'es_AR'
+          }).catch(err => console.error("Error enviando plantilla sin_repartidores:", err));
+        }
+
         toast.success('Búsqueda cancelada');
       } catch (e) {
         console.error("Error cancelling order:", e);
@@ -4844,7 +4886,7 @@ export default function PruebasWalletApp() {
       )}
 
       {/* Mercado Pago Standalone Loading Overlay (for pickup/shops orders while link is generating) */}
-      {checkoutLoading && !cartOpen && !searchingDriver && (
+      {checkoutLoading && !cartOpen && !searchingDriver && !showConfirmedModal && metodoPago !== 'efectivo' && (
         <div className="searching-modal-overlay" style={{ zIndex: 9999 }}>
           <div className="searching-modal-card animate-slide-up" style={{ maxWidth: '320px', padding: '24px', textAlign: 'center' }}>
             <div className="spinner-small" style={{ width: '40px', height: '40px', border: '3px solid #f3f3f3', borderTop: '3px solid #009ee3', borderRadius: '50%', margin: '0 auto 16px', animation: 'spin 1s linear infinite' }}></div>
@@ -4908,37 +4950,49 @@ export default function PruebasWalletApp() {
                   <img src="https://i.postimg.cc/QCcjwFRf/18611-(1).png" alt="Buscando" className="moving-moto" />
                 </div>
 
-                <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: 'var(--gray-800, #1e293b)', marginBottom: '16px', textAlign: 'center' }}>
-                  🔎Buscando repartidor para tu pedido
+                <h2 style={{ fontSize: '1.3rem', fontWeight: '800', color: '#1e293b', marginBottom: '8px', textAlign: 'center' }}>
+                  🔎 Buscando un repartidor para tu pedido
                 </h2>
                 
-                <div style={{
-                  background: 'rgba(239, 68, 68, 0.08)',
-                  color: '#dc2626',
-                  padding: '14px',
-                  borderRadius: '12px',
-                  fontSize: '0.85rem',
-                  fontWeight: '600',
-                  marginTop: '10px',
-                  border: '1px solid rgba(239, 68, 68, 0.15)',
-                  textAlign: 'left',
-                  lineHeight: '1.4'
-                }}>
-                  ⚠️ Mantené esta ventana abierta. Una vez que un repartidor acepte el viaje, podrás realizar el pago y confirmar tu pedido.
+                <div className="live-status-box">
+                  <span className="live-status-dot"></span>
+                  <span key={searchSeconds < 10 ? 'p1' : (searchSeconds < 20 ? 'p2' : (searchSeconds < 35 ? 'p3' : (searchSeconds < 50 ? 'p4' : 'p5')))} className="live-status-text">
+                    {searchSeconds < 10 && '🚀 Enviando la solicitud...'}
+                    {searchSeconds >= 10 && searchSeconds < 20 && '📲 Notificando repartidores cercanos...'}
+                    {searchSeconds >= 20 && searchSeconds < 35 && '⏳ Esperando respuestas...'}
+                    {searchSeconds >= 35 && searchSeconds < 50 && '🔎 Ampliando la búsqueda...'}
+                    {searchSeconds >= 50 && '🔄 Reenviando notificaciones...'}
+                  </span>
                 </div>
 
-                <div className="searching-timer" style={{ marginTop: '20px', fontSize: '1rem', fontWeight: '500', textAlign: 'center' }}>
-                  ⏳ Tiempo de espera...{' '}
-                  <span style={{ fontWeight: 800, color: 'var(--red-600)', fontSize: '1.1rem' }}>
-                    0{Math.floor((60 - searchSeconds) / 60)}:{( (60 - searchSeconds) % 60 ).toString().padStart(2, '0')}
+                <div className="searching-timer" style={{ marginTop: '16px', fontSize: '0.95rem', fontWeight: '600', color: '#475569', textAlign: 'center' }}>
+                  ⏱ Buscando hace{' '}
+                  <span style={{ fontWeight: 800, color: 'var(--red-600, #dc2626)', fontSize: '1.1rem' }}>
+                    {Math.floor(searchSeconds / 60).toString().padStart(2, '0')}:{(searchSeconds % 60).toString().padStart(2, '0')}
                   </span>
+                </div>
+
+                <div style={{
+                  background: '#fffbebf0',
+                  color: '#b45309',
+                  padding: '10px 14px',
+                  borderRadius: '12px',
+                  fontSize: '0.82rem',
+                  fontWeight: '600',
+                  marginTop: '14px',
+                  border: '1px solid #fef3c7',
+                  textAlign: 'center',
+                  lineHeight: '1.4'
+                }}>
+                  💡 La mayoría de los pedidos encuentra un repartidor en menos de 2 minutos.
                 </div>
 
                 <button 
                   className="searching-cancel-btn"
+                  style={{ marginTop: '16px' }}
                   onClick={handleCancelPendingOrder}
                 >
-                  Cancelar búsqueda
+                  Cancelar pedido
                 </button>
               </>
             ) : (
@@ -5047,92 +5101,191 @@ export default function PruebasWalletApp() {
 
       {driverSearchTimeout && (
         <div className="searching-modal-overlay">
-          <div className="searching-modal-card animate-slide-up">
-            <div className="timeout-icon">📢</div>
-            <h2>Seguimos buscando...</h2>
-            <p>Los repartidores están un poco ocupados en este momento. ¿Quieres seguir esperando un poco más? Seguiremos notificándolos.</p>
-            
-            <div style={{
-              background: optInRegistered ? '#ecfdf5' : '#f0fdf4',
-              border: optInRegistered ? '1px solid #10b981' : '1px solid #6ee7b7',
-              borderRadius: '12px',
-              padding: '12px',
-              marginTop: '10px',
-              marginBottom: '10px',
-              textAlign: 'center'
-            }}>
-              {optInRegistered ? (
-                <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: '700', color: '#065f46' }}>
-                  ✅ ¡Aviso activado! Te enviaremos un WhatsApp cuando haya repartidores disponibles.
-                </p>
-              ) : (
-                <>
-                  <p style={{ margin: '0 0 6px', fontSize: '0.82rem', fontWeight: '700', color: '#065f46' }}>
-                    💬 ¿No querés mantener la app abierta?
-                  </p>
-                  <button
+          <div className="searching-modal-card animate-slide-up" style={{ padding: '24px', maxWidth: '360px', borderRadius: '24px' }}>
+            {!showCancelOptIn ? (
+              <>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px', textAlign: 'center' }}>
+                  🔎 Seguimos buscando
+                </h2>
+                
+                <div style={{
+                  background: '#fefce8',
+                  color: '#854d0e',
+                  padding: '12px 14px',
+                  borderRadius: '12px',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  marginBottom: '16px',
+                  border: '1px solid #fef08a',
+                  textAlign: 'center',
+                  lineHeight: '1.4'
+                }}>
+                  💡 Muchos pedidos encuentran repartidor en este segundo intento.
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                  <button 
+                    className="btn btn-full"
                     style={{
-                      width: '100%',
-                      padding: '10px 12px',
-                      background: '#25D366',
+                      background: '#10b981',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '8px',
                       fontWeight: '700',
-                      fontSize: '0.82rem',
-                      cursor: 'pointer',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      fontSize: '0.92rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '6px'
+                      gap: '6px',
+                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)'
                     }}
-                    disabled={optInLoading}
-                    onClick={handleRegisterWhatsappOptin}
+                    onClick={() => {
+                      setDriverSearchTimeout(false);
+                      setSearchSeconds(0); 
+                      const currentShipping = cart.deliveryType === 'envio' ? (cart.shippingCost || 0) : 0;
+                      api.broadcastOrderToDrivers(pendingOrderId, cart.total, cart.items[0]?.local_id, currentShipping);
+                      toast.success('¡Reenviamos la solicitud a los repartidores! 🛵');
+                    }}
                   >
-                    📲 {optInLoading ? 'Guardando...' : 'Recibir aviso cuando haya un repartidor disponible'}
+                    🟢 Repetir pedido
                   </button>
-                </>
-              )}
-            </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginTop: '10px' }}>
-              <button 
-                className="btn btn-primary btn-full"
-                onClick={() => {
-                  setDriverSearchTimeout(false);
-                  setSearchSeconds(0); 
-                  const currentShipping = cart.deliveryType === 'envio' ? (cart.shippingCost || 0) : 0;
-                  api.broadcastOrderToDrivers(pendingOrderId, cart.total, cart.items[0]?.local_id, currentShipping);
-                  toast.success('¡Enviamos otro aviso a los repartidores! 🛵');
-                }}
-              >
-                ✅ Sí, seguir esperando
-              </button>
-              <button 
-                className="btn btn-outline btn-full"
-                onClick={async () => {
-                  const orderIdToCancel = pendingOrderId;
-                  setDriverSearchTimeout(false);
-                  setSearchingDriver(false);
-                  setPendingOrderId(null);
-                  localStorage.removeItem('pendingOrderDataPruebas');
-                  
-                  if (orderIdToCancel) {
-                    try {
-                      await Promise.all([
-                        api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
-                        api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
-                      ]);
-                      toast.success('Búsqueda cancelada');
-                    } catch (e) {
-                      console.error("Error cancelling order:", e);
+                  <button 
+                    className="btn btn-outline btn-full"
+                    style={{
+                      padding: '10px',
+                      fontWeight: '600',
+                      fontSize: '0.85rem',
+                      color: '#64748b',
+                      borderColor: '#cbd5e1',
+                      borderRadius: '12px'
+                    }}
+                    onClick={async () => {
+                      if (!optInRegistered) {
+                        setShowCancelOptIn(true);
+                        return;
+                      }
+                      
+                      const orderIdToCancel = pendingOrderId;
+                      const recipientPhone = user && user.telefono;
+                      setDriverSearchTimeout(false);
+                      setSearchingDriver(false);
+                      setPendingOrderId(null);
+                      localStorage.removeItem('pendingOrderDataPruebas');
+                      
+                      if (orderIdToCancel) {
+                        try {
+                          await Promise.all([
+                            api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
+                            api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
+                          ]);
+
+                          // Enviar plantilla "sin_repartidores" (Meta API HSM) al cancelarse el pedido sin repartidores
+                          if (recipientPhone) {
+                            api.sendWhatsappTemplateMessage({
+                              to: recipientPhone,
+                              templateName: 'sin_repartidores',
+                              languageCode: 'es_AR'
+                            }).catch(err => console.error("Error enviando plantilla sin_repartidores:", err));
+                          }
+
+                          toast.success('Búsqueda cancelada');
+                        } catch (e) {
+                          console.error("Error cancelling order:", e);
+                        }
+                      }
+                    }}
+                  >
+                    ⚪ Cancelar pedido
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px', textAlign: 'center' }}>
+                  ¿Te avisamos por WhatsApp?
+                </h2>
+                <div style={{ textAlign: 'center', fontSize: '0.9rem', color: '#475569', marginBottom: '20px' }}>
+                  Activá los avisos para que nuestro bot te notifique en cuanto haya un repartidor disponible.
+                </div>
+                
+                <button
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: '#25D366',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontWeight: '700',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    marginBottom: '10px'
+                  }}
+                  disabled={optInLoading}
+                  onClick={async () => {
+                    await handleRegisterWhatsappOptin();
+                    // Después de registrar, cancelar el pedido automáticamente si se registró con éxito
+                    if (!optInLoading) {
+                       const orderIdToCancel = pendingOrderId;
+                       const recipientPhone = user && user.telefono;
+                       setDriverSearchTimeout(false);
+                       setSearchingDriver(false);
+                       setPendingOrderId(null);
+                       setShowCancelOptIn(false);
+                       localStorage.removeItem('pendingOrderDataPruebas');
+                       
+                       if (orderIdToCancel) {
+                         try {
+                           await Promise.all([
+                             api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
+                             api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
+                           ]);
+                           toast.success('Búsqueda cancelada. Te avisaremos por WhatsApp.');
+                         } catch (e) {
+                           console.error("Error cancelling order after opt-in:", e);
+                         }
+                       }
                     }
-                  }
-                }}
-              >
-                ✖ No, cancelar pedido
-              </button>
-            </div>
+                  }}
+                >
+                  📲 {optInLoading ? 'Guardando...' : 'Sí, avisarme'}
+                </button>
+                
+                <button 
+                  className="btn btn-full"
+                  style={{ padding: '10px', fontSize: '0.85rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600' }}
+                  onClick={async () => {
+                      const orderIdToCancel = pendingOrderId;
+                      const recipientPhone = user && user.telefono;
+                      setDriverSearchTimeout(false);
+                      setSearchingDriver(false);
+                      setPendingOrderId(null);
+                      setShowCancelOptIn(false);
+                      localStorage.removeItem('pendingOrderDataPruebas');
+                      
+                      if (orderIdToCancel) {
+                        try {
+                          await Promise.all([
+                            api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
+                            api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
+                          ]);
+                          toast.success('Búsqueda cancelada');
+                        } catch (e) {
+                          console.error("Error cancelling order:", e);
+                        }
+                      }
+                  }}
+                >
+                  No, sólo cancelar
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

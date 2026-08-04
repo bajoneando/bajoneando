@@ -50,6 +50,34 @@ Deno.serve(async (req) => {
     const expiresIn = tokenData.expires_in || 15552000 // 180 días por defecto
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString()
 
+    // Obtener información extendida del usuario de MP
+    let mpUserInfo = null
+    try {
+      const userRes = await fetch('https://api.mercadopago.com/users/me', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+      })
+      const uData = await userRes.json()
+      if (uData && uData.id) {
+        mpUserInfo = {
+          id: uData.id,
+          nickname: uData.nickname,
+          email: uData.email,
+          first_name: uData.first_name,
+          last_name: uData.last_name,
+          brand_name: uData.company?.brand_name
+        }
+      }
+    } catch (e) {
+      console.warn('No se pudieron obtener datos extendidos de usuario MP:', e)
+    }
+
+    // Obtener sync_config_data previo para no sobrescribir
+    const { data: existingLocal } = await supabase.from('locales').select('sync_config_data').eq('id', state).single()
+    const syncData = existingLocal?.sync_config_data || {}
+    if (mpUserInfo) {
+      syncData.mp_user_info = mpUserInfo
+    }
+
     const { error: updateError } = await supabase
       .from('locales')
       .update({
@@ -57,7 +85,8 @@ Deno.serve(async (req) => {
         mp_refresh_token: tokenData.refresh_token,
         mp_public_key: tokenData.public_key,
         mp_user_id: tokenData.user_id?.toString(),
-        mp_token_expires_at: expiresAt
+        mp_token_expires_at: expiresAt,
+        sync_config_data: syncData
       })
       .eq('id', state)
 

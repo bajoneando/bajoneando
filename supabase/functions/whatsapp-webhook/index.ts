@@ -43,6 +43,47 @@ Deno.serve(async (req) => {
       const body = await req.json();
       console.log("Webhook POST recibido. Payload completo:", JSON.stringify(body));
 
+      // A0. MANEJO DE ENVÍO DIRECTO DE PLANTILLAS META API (HSM) COMO "sin_repartidores"
+      if (body?.action === 'send_template') {
+        const { to, templateName = 'sin_repartidores', languageCode = 'es_AR', phoneId, components } = body;
+        const accessToken = Deno.env.get("META_ACCESS_TOKEN");
+        const targetPhoneId = phoneId || Deno.env.get("META_PHONE_NUMBER_ID");
+
+        if (!to) {
+          return new Response(JSON.stringify({ error: "Falta el parámetro 'to' con el teléfono." }), {
+            status: 400,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        const payload: any = {
+          messaging_product: "whatsapp",
+          recipient_type: "individual",
+          to: String(to).replace(/\D/g, ''),
+          type: "template",
+          template: {
+            name: templateName,
+            language: { code: languageCode }
+          }
+        };
+
+        if (components && Array.isArray(components)) {
+          payload.template.components = components;
+        }
+
+        console.log(`[Meta HSM] Enviando plantilla '${templateName}' a ${to}...`);
+        const metaResponse = await callMetaAPI(targetPhoneId, payload, accessToken);
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: `Plantilla ${templateName} procesada`,
+          metaResponse 
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
       const entry = body.entry?.[0];
       const changes = entry?.changes?.[0];
       const field = changes?.field;
@@ -68,20 +109,25 @@ Deno.serve(async (req) => {
         );
 
         // A. Buscar el comercio en la base de datos por whatsapp_phone_id
-        let local = null;
-        try {
-          const { data, error } = await supabase
-            .from('locales')
-            .select('id, nombre, ciudad, slug, whatsapp_phone_id, whatsapp_access_token')
-            .eq('whatsapp_phone_id', phoneId)
-            .maybeSingle();
+        let local: any = null;
+        if (phoneId && phoneId !== '3756543670' && phoneId !== 'global' && phoneId !== 'main_bot') {
+          try {
+            const { data, error } = await supabase
+              .from('locales')
+              .select('id, nombre, ciudad, slug, whatsapp_phone_id, whatsapp_access_token')
+              .eq('whatsapp_phone_id', phoneId)
+              .maybeSingle();
 
-          if (!error && data) {
-            local = data;
+            if (!error && data) {
+              local = data;
+            }
+          } catch (e: any) {
+            console.warn("Error consultando local por whatsapp_phone_id:", e.message);
           }
-        } catch (e: any) {
-          console.warn("Error consultando local por whatsapp_phone_id:", e.message);
         }
+
+        // A2. Obtener el Token de Acceso (Access Token)
+        const accessToken = local?.whatsapp_access_token || Deno.env.get("META_ACCESS_TOKEN");
 
         // B. SI NO ES UN COMERCIO INDIVIDUAL ESPECÍFICO, TRATAR COMO BOT GLOBAL DE WEPI (3756543670)
         if (!local) {
@@ -90,8 +136,6 @@ Deno.serve(async (req) => {
           await enviarRespuestaWepiBotGlobal(from, phoneId, textContent, supabase, accessToken);
           return new Response("EVENT_RECEIVED", { status: 200 });
         }
-
-        const accessToken = local.whatsapp_access_token || Deno.env.get("META_ACCESS_TOKEN");
 
         // C. Detectar el tipo de interacción para Comercios Individuales (Wepi Assistant)
         const messageType = message.type;
@@ -150,11 +194,21 @@ async function callMetaAPI(phoneId: string, payload: any, accessToken?: string, 
   const token = accessToken || Deno.env.get("META_ACCESS_TOKEN");
   if (!token) {
     console.error("No hay Token de Acceso de Meta disponible.");
-    return;
+    return { error: "No hay Token de Acceso de Meta" };
+  }
+
+  const activePhoneId = phoneId || Deno.env.get("META_PHONE_NUMBER_ID");
+  if (!activePhoneId) {
+    console.error("No hay Phone Number ID de Meta disponible.");
+    return { error: "No hay Phone Number ID de Meta" };
+  }
+
+  if (payload?.to) {
+    payload.to = payload.to.replace(/\D/g, '');
   }
 
   try {
-    const res = await fetch(`https://graph.facebook.com/v20.0/${phoneId}/messages`, {
+    const res = await fetch(`https://graph.facebook.com/v20.0/${activePhoneId}/messages`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -168,8 +222,11 @@ async function callMetaAPI(phoneId: string, payload: any, accessToken?: string, 
     if (localId && supabase && data?.messages?.[0]?.id) {
       await supabase.rpc('increment_whatsapp_messages', { local_id: localId });
     }
-  } catch (err) {
-    console.error("Error llamando a la API de Meta:", err);
+    
+    return data;
+  } catch (err: any) {
+    console.error("Error in callMetaAPI:", err);
+    return { error: err.message };
   }
 }
 
@@ -339,7 +396,7 @@ async function enviarRespuestaWepiBotGlobal(to: string, phoneId: string, text: s
 
   const cleanText = (text || '').toLowerCase().trim();
 
-  let bodyText = flowData?.inicio?.mensaje || `👋 ¡Hola! Soy Wepi Bot.\n\n¿En qué puedo ayudarte?\n\n1️⃣ 🍔 Hacer un pedido\n2️⃣ 📦 Estado de mi pedido\n3️⃣ ❓ Ayuda\n4️⃣ 👨 Hablar con soporte`;
+  let bodyText = '';
 
   if (cleanText === '1' || cleanText.includes('pedir') || cleanText.includes('hacer un pedido') || cleanText.includes('carta')) {
     bodyText = (flowData?.hacer_pedido?.mensaje || '🍔 Elegí tu ciudad.\n(O usar ubicación)') + '\n\n' +
@@ -351,14 +408,27 @@ async function enviarRespuestaWepiBotGlobal(to: string, phoneId: string, text: s
       (flowData?.hacer_pedido?.footer || '↓\nAbrí Wepi y hacé tu pedido 👇\nhttps://wepi.com.ar/pedir/');
   } else if (cleanText === '2' || cleanText.includes('estado')) {
     bodyText = flowData?.estado_pedido?.mensaje || '📦 Podés consultar el estado de tu pedido aquí:\nhttps://wepi.com.ar/mis-pedidos';
-  } else if (cleanText === '3' || cleanText.includes('ayuda')) {
-    bodyText = (flowData?.ayuda?.mensaje || '¿Sobre qué necesitás ayuda?') + '\n\n' +
-      `1️⃣ 💳 Cómo pagar\n` +
-      `2️⃣ 📍 Cómo seguir mi pedido\n` +
-      `3️⃣ 🔑 Recuperar contraseña\n` +
-      `4️⃣ 📞 Hablar con soporte`;
-  } else if (cleanText === '4' || cleanText.includes('soporte') || cleanText.includes('humano')) {
-    bodyText = `👨 Te estamos conectando con un agente de soporte de Wepi.\n\nHacé clic en el siguiente enlace para chatear con un representante:\nhttps://wa.me/549${supportPhone}`;
+  } else if (cleanText === '3' || cleanText === '4' || cleanText.includes('soporte') || cleanText.includes('humano') || cleanText.includes('agente') || cleanText.includes('hablar')) {
+    bodyText = flowData?.soporte?.mensaje || `👨 Te estamos conectando con un agente de soporte de Wepi.\n\nHacé clic en el siguiente enlace para chatear con un representante:\nhttps://wa.me/549${supportPhone}`;
+  } else {
+    // Mensaje de saludo de bienvenida inicial + Opciones 1, 2, 3
+    let defaultOpts = `1️⃣ 🍔 Hacer un pedido\n2️⃣ 📦 Estado de mi pedido\n3️⃣ 👨 Hablar con soporte`;
+    let mainHeader = flowData?.inicio?.mensaje || `👋 ¡Hola! Soy Wepi Bot.\n\n¿En qué puedo ayudarte?`;
+    let optsText = '';
+
+    if (Array.isArray(flowData?.inicio?.opciones) && flowData.inicio.opciones.length > 0) {
+      optsText = flowData.inicio.opciones.map((o: any) => o.label || o.titulo || o.text).filter(Boolean).join('\n');
+    }
+
+    if (!optsText) {
+      optsText = defaultOpts;
+    }
+
+    if (mainHeader.includes('1️⃣') || mainHeader.includes('Hacer un pedido')) {
+      bodyText = mainHeader;
+    } else {
+      bodyText = `${mainHeader}\n\n${optsText}`;
+    }
   }
 
   const payload = {

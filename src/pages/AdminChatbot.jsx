@@ -10,8 +10,7 @@ const DEFAULT_FLOW_DATA = {
         opciones: [
             { key: "1", label: "1️⃣ 🍔 Hacer un pedido", action: "hacer_pedido", keywords: "1, pedir, hacer un pedido, carta, menu, comprar, orden" },
             { key: "2", label: "2️⃣ 📦 Estado de mi pedido", action: "estado_pedido", keywords: "2, estado, mi pedido, donde esta, seguimiento, rastrear" },
-            { key: "3", label: "3️⃣ ❓ Ayuda", action: "ayuda", keywords: "3, ayuda, consulta, duda, faq" },
-            { key: "4", label: "4️⃣ 👨 Hablar con soporte", action: "soporte", keywords: "4, hablar con soporte, soporte, humano, agente, reclamo" }
+            { key: "3", label: "3️⃣ 👨 Hablar con soporte", action: "soporte", keywords: "3, 4, hablar con soporte, soporte, humano, agente, reclamo" }
         ]
     },
     hacer_pedido: {
@@ -30,39 +29,9 @@ const DEFAULT_FLOW_DATA = {
         mensaje: "📦 Podés consultar el estado de tu pedido en tiempo real ingresando aquí 👇\nhttps://wepi.com.ar/mis-pedidos",
         keywords: "2, estado, mi pedido, donde esta, seguimiento, rastrear"
     },
-    ayuda: {
-        mensaje: "¿Sobre qué necesitás ayuda?",
-        keywords: "3, ayuda, consulta, duda, faq",
-        opciones: [
-            {
-                key: "1",
-                titulo: "💳 Cómo pagar",
-                respuesta: "💳 *Métodos de pago en Wepi*:\n\nPodés pagar en efectivo al recibir, con transferencia o mediante tarjeta/Mercado Pago desde la web. También podés utilizar tu saldo de Wepi Wallet.",
-                keywords: "1, 3.1, pagar, pago, efectivo, mercadopago, mp, tarjeta, transferencia"
-            },
-            {
-                key: "2",
-                titulo: "📍 Cómo seguir mi pedido",
-                respuesta: "📍 *Seguimiento de pedidos*:\n\nIngresá a https://wepi.com.ar/mis-pedidos para ver el estado de tu pedido en vivo y la ubicación del repartidor.",
-                keywords: "2, 3.2, seguir, seguimiento, rastreo, mapa, repartidor"
-            },
-            {
-                key: "3",
-                titulo: "🔑 Recuperar contraseña",
-                respuesta: "🔑 *Recuperar contraseña*:\n\nAl iniciar sesión en Wepi, elegí la opción '¿Olvidaste tu contraseña?' e ingresá tu email para recibir el enlace de restablecimiento.",
-                keywords: "3, 3.3, clave, contraseña, password, olvide, recuperar"
-            },
-            {
-                key: "4",
-                titulo: "📞 Hablar con soporte",
-                respuesta: "📞 *Contacto con Soporte Wepi*:\n\nUn representante te atenderá de inmediato aquí: https://wa.me/5493756543610",
-                keywords: "4, 3.4, hablar con soporte, agente, persona, representante, reclamo, problema"
-            }
-        ]
-    },
     soporte: {
         mensaje: "👨 Te estamos derivando con el equipo de Soporte de Wepi.\n\nHacé clic en el siguiente enlace para chatear con un agente:\nhttps://wa.me/5493756543610",
-        keywords: "4, soporte, humano, agente, persona, reclamo, ayuda humana"
+        keywords: "3, 4, soporte, humano, agente, persona, reclamo, ayuda humana"
     },
     seguimientos: {
         sin_repartidor: "😔 No encontramos un repartidor disponible en este momento.\nPodés repetirlo en un solo clic: https://wepi.com.ar/mis-pedidos\n\nApenas haya repartidores disponibles te avisaremos.",
@@ -248,16 +217,10 @@ const AdminChatbot = () => {
                                 2. Estado de mi pedido
                             </button>
                             <button 
-                                className={`btn ${selectedStep === 'ayuda' ? 'btn-primary' : 'btn-outline'}`}
-                                onClick={() => setSelectedStep('ayuda')}
-                            >
-                                3. Ayuda (Submenú)
-                            </button>
-                            <button 
                                 className={`btn ${selectedStep === 'soporte' ? 'btn-primary' : 'btn-outline'}`}
                                 onClick={() => setSelectedStep('soporte')}
                             >
-                                4. Hablar con Soporte
+                                3. Hablar con Soporte
                             </button>
                         </div>
 

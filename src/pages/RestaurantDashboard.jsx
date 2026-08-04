@@ -80,6 +80,10 @@ export default function RestaurantDashboard() {
     profileDataRef.current = profileData;
   }, [profileData]);
 
+  const [mpAccountInfo, setMpAccountInfo] = React.useState(null);
+  const [mpAccountLoading, setMpAccountLoading] = React.useState(false);
+  const [mpUnlinking, setMpUnlinking] = React.useState(false);
+
   const [waConnecting, setWaConnecting] = React.useState(false);
 
   // Cargar SDK de Facebook para Embedded Signup
@@ -699,6 +703,88 @@ export default function RestaurantDashboard() {
       loadCajeros();
     }
   }, [view, profileSubView, restaurant?.id, loadCajeros]);
+
+  React.useEffect(() => {
+    if (profileSubView === 'edit_mercadopago' && profileData?.mp_access_token) {
+      setMpAccountLoading(true);
+
+      const fetchMpUser = async () => {
+        // 1. Intentar fetch directo desde el navegador
+        try {
+          const res = await fetch('https://api.mercadopago.com/users/me', {
+            headers: { Authorization: `Bearer ${profileData.mp_access_token}` }
+          });
+          const data = await res.json();
+          if (data && (data.id || data.nickname)) {
+            setMpAccountInfo(data);
+            return;
+          }
+        } catch (e) {
+          console.warn('Fetch directo a MP con CORS falló, intentando Edge Function...', e);
+        }
+
+        // 2. Fallback a Edge Function para evitar problemas de CORS
+        try {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://jskxfescamdjesdrcnkf.supabase.co';
+          const res = await fetch(`${supabaseUrl}/functions/v1/get-mp-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: profileData.mp_access_token })
+          });
+          const data = await res.json();
+          if (data && (data.id || data.nickname)) {
+            setMpAccountInfo(data);
+            return;
+          }
+        } catch (err) {
+          console.error('Error invocando get-mp-user edge function:', err);
+        }
+
+        setMpAccountInfo({ error: true });
+      };
+
+      fetchMpUser().finally(() => {
+        setMpAccountLoading(false);
+      });
+    }
+  }, [profileSubView, profileData?.mp_access_token]);
+
+  const handleDesvincularMP = async () => {
+    if (!window.confirm('¿Estás seguro de que deseas desvincular la cuenta de Mercado Pago de tu local? Los clientes no podrán abonar con MP en tu comercio hasta que vuelvas a vincular una cuenta.')) {
+      return;
+    }
+    try {
+      setMpUnlinking(true);
+      const { error } = await api.supabase
+        .from('locales')
+        .update({
+          mp_access_token: null,
+          mp_refresh_token: null,
+          mp_public_key: null,
+          mp_user_id: null,
+          mp_token_expires_at: null
+        })
+        .eq('id', profileData.id);
+
+      if (error) throw error;
+
+      setProfileData(prev => ({
+        ...prev,
+        mp_access_token: null,
+        mp_refresh_token: null,
+        mp_public_key: null,
+        mp_user_id: null,
+        mp_token_expires_at: null
+      }));
+      setMpAccountInfo(null);
+      toast.success('Cuenta de Mercado Pago desvinculada correctamente.');
+    } catch (err) {
+      console.error('Error desvinculando Mercado Pago:', err);
+      toast.error('Error al desvincular: ' + (err.message || err));
+    } finally {
+      setMpUnlinking(false);
+    }
+  };
 
   const loadEstado = React.useCallback(async () => {
     if (!restaurant) return;
@@ -5123,7 +5209,7 @@ export default function RestaurantDashboard() {
             )}
 
             {profileSubView === 'edit_mercadopago' && (
-              <div className="card card-body" style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left' }}>
+              <div className="card card-body" style={{ maxWidth: '650px', margin: '0 auto', textAlign: 'left' }}>
                 <button 
                   onClick={() => setProfileSubView('edit')}
                   className="btn btn-ghost" 
@@ -5134,17 +5220,56 @@ export default function RestaurantDashboard() {
                 <h2 style={{ color: 'var(--red-600)', marginBottom: 20, fontSize: '1.4rem', fontWeight: 800 }}>💳 Cobros con Mercado Pago</h2>
                 
                 <div style={{ backgroundColor: '#f0f9ff', padding: '24px', borderRadius: '12px', border: '1px solid #bae6fd', marginBottom: 24 }}>
-                  <h3 style={{ color: '#0369a1', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', fontWeight: 700 }}>
-                    <img src="https://i.postimg.cc/k47vV4h3/mercadopago.png" alt="MP" style={{ height: 24 }} onError={(e) => e.target.style.display = 'none'} />
-                    Mercado Pago
-                  </h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                    <h3 style={{ color: '#0369a1', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', fontWeight: 700 }}>
+                      <img src="https://i.postimg.cc/k47vV4h3/mercadopago.png" alt="MP" style={{ height: 24 }} onError={(e) => e.target.style.display = 'none'} />
+                      Mercado Pago
+                    </h3>
+                    {profileData?.mp_access_token ? (
+                      <span className="badge badge-green" style={{ padding: '6px 12px', fontSize: '0.85rem', background: '#d1fae5', color: '#065f46', borderRadius: '12px', fontWeight: 600 }}>✓ Cuenta Vinculada</span>
+                    ) : (
+                      <span className="badge badge-red" style={{ padding: '6px 12px', fontSize: '0.85rem', background: '#fee2e2', color: '#991b1b', borderRadius: '12px', fontWeight: 600 }}>✗ Desvinculada</span>
+                    )}
+                  </div>
+
                   <p style={{ color: '#0c4a6e', fontSize: '0.9rem', marginBottom: '20px', lineHeight: 1.5 }}>
                     Conectá tu cuenta de Mercado Pago para recibir pagos online de forma automática en tu cuenta bancaria o billetera digital.
                   </p>
+
+                  {profileData?.mp_access_token && (
+                    <div style={{ background: '#ffffff', padding: '16px', borderRadius: '10px', border: '1px solid #bae6fd', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                      <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: '#0284c7', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        📌 Información de la Cuenta Vinculada
+                      </h4>
+                      {mpAccountLoading ? (
+                        <div style={{ fontSize: '0.85rem', color: '#64748b' }}>⏳ Cargando datos de Mercado Pago...</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.9rem', color: '#334155' }}>
+                          <div>
+                            <strong>Usuario de Mercado Pago:</strong>{' '}
+                            <span style={{ color: '#0284c7', fontWeight: 700 }}>
+                              {mpAccountInfo?.nickname || 
+                               (mpAccountInfo?.first_name ? `${mpAccountInfo.first_name} ${mpAccountInfo.last_name || ''}`.trim() : null) ||
+                               profileData?.sync_config_data?.mp_user_info?.nickname ||
+                               (profileData?.sync_config_data?.mp_user_info?.first_name ? `${profileData.sync_config_data.mp_user_info.first_name} ${profileData.sync_config_data.mp_user_info.last_name || ''}`.trim() : null) ||
+                               'Cuenta Vinculada'}
+                            </span>
+                          </div>
+                          {(mpAccountInfo?.email || profileData?.sync_config_data?.mp_user_info?.email) && (
+                            <div><strong>Email de Mercado Pago:</strong> <span style={{ color: '#334155', fontWeight: 600 }}>{mpAccountInfo?.email || profileData?.sync_config_data?.mp_user_info?.email}</span></div>
+                          )}
+                          {(mpAccountInfo?.company?.brand_name || profileData?.sync_config_data?.mp_user_info?.brand_name) && (
+                            <div><strong>Marca / Negocio MP:</strong> {mpAccountInfo?.company?.brand_name || profileData?.sync_config_data?.mp_user_info?.brand_name}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <button 
                       className="btn btn-primary" 
-                      style={{ backgroundColor: '#009ee3', borderColor: '#009ee3', padding: '10px 24px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#fff' }}
+                      style={{ backgroundColor: '#009ee3', borderColor: '#009ee3', padding: '10px 20px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#fff', fontSize: '0.9rem' }}
                       onClick={() => {
                         const clientId = import.meta.env.VITE_MP_CLIENT_ID || prompt("Por favor, ingresa el CLIENT_ID de tu aplicación de Mercado Pago:");
                         if (!clientId) return;
@@ -5153,10 +5278,18 @@ export default function RestaurantDashboard() {
                         window.location.href = authUrl;
                       }}
                     >
-                      Vincular MercadoPago
+                      {profileData?.mp_access_token ? '🔄 Cambiar / Re-vincular Cuenta' : '💳 Vincular MercadoPago'}
                     </button>
+
                     {profileData?.mp_access_token && (
-                      <span className="badge badge-green" style={{ padding: '6px 12px', fontSize: '0.85rem', background: '#d1fae5', color: '#065f46', borderRadius: '12px', fontWeight: 600 }}>✓ Vinculada</span>
+                      <button
+                        className="btn btn-danger"
+                        disabled={mpUnlinking}
+                        onClick={handleDesvincularMP}
+                        style={{ backgroundColor: '#ef4444', borderColor: '#ef4444', padding: '10px 18px', fontWeight: 600, border: 'none', borderRadius: '8px', cursor: 'pointer', color: '#fff', fontSize: '0.9rem' }}
+                      >
+                        {mpUnlinking ? 'Desvinculando...' : '🗑️ Desvincular Cuenta'}
+                      </button>
                     )}
                   </div>
                 </div>

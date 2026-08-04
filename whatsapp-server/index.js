@@ -214,32 +214,30 @@ async function initSession(localId, retryCount = 0) {
 // Enviar mensaje simulando escritura humana y con retraso aleatorio (Anti-Ban)
 async function sendSmartMessage(localId, sock, to, content) {
   try {
-    // 1. Mostrar estado "Escribiendo..." (composing)
-    await sock.sendPresenceUpdate('composing', to);
+    // 1. Mostrar estado "Escribiendo..." (composing) de forma segura
+    try {
+      await sock.sendPresenceUpdate('composing', to);
+      const textLength = content.text ? content.text.length : 100;
+      const finalDelay = Math.min(2500, Math.max(1000, textLength * 5));
+      await new Promise(resolve => setTimeout(resolve, finalDelay));
+      await sock.sendPresenceUpdate('paused', to);
+    } catch (presenceErr) {
+      console.warn("Aviso de presencia no enviado (omitido):", presenceErr.message);
+    }
     
-    // 2. Calcular retraso proporcional a la longitud del texto
-    const textLength = content.text ? content.text.length : 100;
-    // Velocidad de escritura promedio: ~10ms por caracter + pausa humana aleatoria de 1s a 2s
-    const baseDelay = textLength * 10;
-    const randomDelay = Math.floor(Math.random() * 1000) + 1000;
-    // Margen de seguridad: Entre 1.5s y 5.0s
-    const finalDelay = Math.min(5000, Math.max(1500, baseDelay + randomDelay));
-    
-    await new Promise(resolve => setTimeout(resolve, finalDelay));
-    
-    // 3. Detener estado "Escribiendo..." y enviar el mensaje
-    await sock.sendPresenceUpdate('paused', to);
-    await sock.sendMessage(to, content);
+    // 2. Enviar el mensaje por el socket
+    const sent = await sock.sendMessage(to, content);
+    console.log(`[Bot ${localId}] Mensaje enviado a ${to}:`, content.text ? content.text.substring(0, 50) + '...' : 'OK');
 
-    // 4. Incrementar de forma atómica el contador de mensajes de WhatsApp enviados
-    if (localId) {
+    // 3. Incrementar contador solo para locales comerciales
+    if (localId && localId !== 'global' && localId !== 'main_bot' && localId !== '3756543670' && !localId.includes('3756543670')) {
       supabase.rpc('increment_whatsapp_messages', { local_id: localId })
         .then(({ error }) => {
           if (error) console.error(`[Metrics] Error incrementando whatsapp_messages_sent para ${localId}:`, error);
         });
     }
   } catch (err) {
-    console.error(`Error al enviar mensaje inteligente a ${to}:`, err);
+    console.error(`Error al enviar mensaje a ${to}:`, err);
   }
 }
 
@@ -300,13 +298,7 @@ async function handleIncomingMessage(localId, sock, from, msg) {
 
     const kwPedido = flows.hacer_pedido?.keywords || flows.inicio?.opciones?.find(o => o.action === 'hacer_pedido')?.keywords;
     const kwEstado = flows.estado_pedido?.keywords || flows.inicio?.opciones?.find(o => o.action === 'estado_pedido')?.keywords;
-    const kwAyuda = flows.ayuda?.keywords || flows.inicio?.opciones?.find(o => o.action === 'ayuda')?.keywords;
     const kwSoporte = flows.soporte?.keywords || flows.inicio?.opciones?.find(o => o.action === 'soporte')?.keywords;
-
-    const subPagar = flows.ayuda?.opciones?.find(o => o.key === '1');
-    const subSeguir = flows.ayuda?.opciones?.find(o => o.key === '2');
-    const subClave = flows.ayuda?.opciones?.find(o => o.key === '3');
-    const subSoporte = flows.ayuda?.opciones?.find(o => o.key === '4');
 
     if (matchesKeywords(text, kwPedido, ['1', 'pedir', 'hacer un pedido', 'carta', 'menu', 'comprar'])) {
       const msgText = (flows.hacer_pedido?.mensaje || '🍔 Elegí tu ciudad.\n(O usar ubicación)') + '\n\n' +
@@ -320,30 +312,28 @@ async function handleIncomingMessage(localId, sock, from, msg) {
     } else if (matchesKeywords(text, kwEstado, ['2', 'estado', 'mi pedido', 'donde esta', 'seguimiento'])) {
       const msgText = flows.estado_pedido?.mensaje || '📦 Podés consultar el estado de tu pedido aquí:\nhttps://wepi.com.ar/mis-pedidos';
       await sendSmartMessage(localId, sock, from, { text: msgText });
-    } else if (matchesKeywords(text, subPagar?.keywords, ['1', '3.1', '31', 'pagar', 'pago', 'efectivo', 'mercadopago', 'tarjeta'])) {
-      const ans = subPagar?.respuesta || 
-        "💳 *Métodos de pago en Wepi*:\n\nPodés pagar en efectivo al recibir, con transferencia o mediante tarjeta/Mercado Pago desde la web. También podés utilizar tu saldo de Wepi Wallet.";
-      await sendSmartMessage(localId, sock, from, { text: ans });
-    } else if (matchesKeywords(text, subSeguir?.keywords, ['2', '3.2', '32', 'seguir', 'seguimiento', 'mapa'])) {
-      const ans = subSeguir?.respuesta || 
-        "📍 *Seguimiento de pedidos*:\n\nIngresá a https://wepi.com.ar/mis-pedidos para ver el estado de tu pedido en vivo.";
-      await sendSmartMessage(localId, sock, from, { text: ans });
-    } else if (matchesKeywords(text, subClave?.keywords, ['3', '3.3', '33', 'contraseña', 'clave', 'password'])) {
-      const ans = subClave?.respuesta || 
-        "🔑 *Recuperar contraseña*:\n\nAl iniciar sesión en Wepi, elegí la opción '¿Olvidaste tu contraseña?' e ingresá tu email.";
-      await sendSmartMessage(localId, sock, from, { text: ans });
-    } else if (matchesKeywords(text, subSoporte?.keywords, ['3.4', '34']) || matchesKeywords(text, kwSoporte, ['4', 'soporte', 'humano', 'agente'])) {
-      const msgText = `👨 Te estamos conectando con un agente de soporte de Wepi.\n\nHacé clic en el siguiente enlace para chatear con un representante:\nhttps://wa.me/549${supportPhone}`;
-      await sendSmartMessage(localId, sock, from, { text: msgText });
-    } else if (matchesKeywords(text, kwAyuda, ['3', 'ayuda', 'duda', 'faq'])) {
-      const msgText = (flows.ayuda?.mensaje || '¿Sobre qué necesitás ayuda?') + '\n\n' +
-        `1️⃣ 💳 Cómo pagar\n` +
-        `2️⃣ 📍 Cómo seguir mi pedido\n` +
-        `3️⃣ 🔑 Recuperar contraseña\n` +
-        `4️⃣ 📞 Hablar con soporte`;
+    } else if (matchesKeywords(text, kwSoporte, ['3', '4', 'soporte', 'humano', 'agente', 'persona', 'reclamo', 'hablar'])) {
+      const msgText = flows.soporte?.mensaje || `👨 Te estamos conectando con un agente de soporte de Wepi.\n\nHacé clic en el siguiente enlace para chatear con un representante:\nhttps://wa.me/549${supportPhone}`;
       await sendSmartMessage(localId, sock, from, { text: msgText });
     } else {
-      const msgText = flows.inicio?.mensaje || `👋 ¡Hola! Soy Wepi Bot.\n\n¿En qué puedo ayudarte?\n\n1️⃣ 🍔 Hacer un pedido\n2️⃣ 📦 Estado de mi pedido\n3️⃣ ❓ Ayuda\n4️⃣ 👨 Hablar con soporte`;
+      let mainHeader = flows.inicio?.mensaje || `👋 ¡Hola! Soy Wepi Bot.\n\n¿En qué puedo ayudarte?`;
+      let optsText = '';
+
+      if (Array.isArray(flows.inicio?.opciones) && flows.inicio.opciones.length > 0) {
+        optsText = flows.inicio.opciones.map(o => o.label || o.titulo || o.text).filter(Boolean).join('\n');
+      }
+
+      if (!optsText) {
+        optsText = `1️⃣ 🍔 Hacer un pedido\n2️⃣ 📦 Estado de mi pedido\n3️⃣ 👨 Hablar con soporte`;
+      }
+
+      let msgText = '';
+      if (mainHeader.includes('1️⃣') || mainHeader.includes('Hacer un pedido')) {
+        msgText = mainHeader;
+      } else {
+        msgText = `${mainHeader}\n\n${optsText}`;
+      }
+
       await sendSmartMessage(localId, sock, from, { text: msgText });
     }
     return;
