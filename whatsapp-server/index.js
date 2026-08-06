@@ -615,6 +615,74 @@ async function autostartSessions() {
   }
 }
 
+// === Cron Job: Carritos Abandonados de Mercado Pago ===
+async function checkAbandonedPayments() {
+  try {
+    const { data: flows } = await supabase.from('configuracion').select('flow_data').eq('id', 'global').maybeSingle();
+    const config = flows?.flow_data?.seguimientos_adquisicion || {};
+    
+    // Si está desactivado, salimos temprano
+    if (config.falta_pago && config.falta_pago.enabled === false) return;
+    const templateName = config.falta_pago?.template || 'falta_pago';
+
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    
+    // Fetch pending MercadoPago orders older than 5 mins
+    const { data: orders, error } = await supabase
+      .from('pedidos_general')
+      .select('id, user_id, estado, metodoPago, observaciones, created_at')
+      .eq('estado', 'Pendiente de Pago')
+      .eq('metodoPago', 'Mercadopago')
+      .lte('created_at', fiveMinsAgo);
+      
+    if (error || !orders) return;
+
+    for (const order of orders) {
+      if (order.observaciones && order.observaciones.includes('[FALTA_PAGO_SENT]')) continue;
+
+      // Check if user has given whatsapp permission anywhere
+      const { data: optin } = await supabase
+        .from('whatsapp_optins')
+        .select('phone_number')
+        .eq('user_id', order.user_id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (optin && optin.phone_number) {
+        console.log(`[Abandoned Payments] Sending ${templateName} template to ${optin.phone_number} for order ${order.id}`);
+        // Trigger Meta HSM via Edge Function
+        await fetch('https://jskxfescamdjesdrcnkf.supabase.co/functions/v1/whatsapp-webhook', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            type: 'SEND_TEMPLATE',
+            to: optin.phone_number,
+            templateName: templateName,
+            languageCode: 'es_AR'
+          })
+        }).catch(err => console.error("Error invoking edge function:", err));
+      }
+
+      // Mark as sent via metadata in observaciones (schema-less approach)
+      const newObs = (order.observaciones || '') + " [FALTA_PAGO_SENT]";
+      await supabase
+        .from('pedidos_general')
+        .update({ observaciones: newObs })
+        .eq('id', order.id);
+    }
+  } catch (err) {
+    console.error("[Abandoned Payments] Error:", err);
+  }
+}
+
+// Start interval for abandoned carts (every 1 minute)
+setInterval(checkAbandonedPayments, 60000);
+// ====================================================
+
 app.listen(PORT, async () => {
   console.log(`====================================================`);
   console.log(`🔌 Servidor de WhatsApp Wepi corriendo en puerto ${PORT}`);

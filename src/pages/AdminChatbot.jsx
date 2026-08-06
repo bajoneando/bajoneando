@@ -36,6 +36,16 @@ const DEFAULT_FLOW_DATA = {
     seguimientos: {
         sin_repartidor: "😔 No encontramos un repartidor disponible en este momento.\nPodés repetirlo en un solo clic: https://wepi.com.ar/mis-pedidos\n\nApenas haya repartidores disponibles te avisaremos.",
         repartidores_disponibles: "🛵 Ya tenemos repartidores disponibles\nPodés repetir tu pedido en un solo clic: https://wepi.com.ar/mis-pedidos"
+    },
+    seguimientos_adquisicion: {
+        sin_repartidor: { enabled: true, template: 'sin_repartidores' },
+        falta_pago: { enabled: true, template: 'falta_pago' },
+        alerta_repartidor: { enabled: true, template: 'estas_disponible' },
+        rescate_demanda: { enabled: true, template: 'tenemos_repartidor' }
+    },
+    crm_automatizado: {
+        enabled: false,
+        niveles: []
     }
 };
 
@@ -144,6 +154,46 @@ const AdminChatbot = () => {
         );
     }
 
+    const handleAddCrmLevel = () => {
+        const currentCrm = flowData.crm_automatizado || { enabled: false, niveles: [] };
+        const newNiveles = [...(currentCrm.niveles || [])];
+        newNiveles.push({
+            id: Date.now().toString(),
+            dias_espera: 1,
+            plantilla_meta: '',
+            usa_variables: false,
+            variables: '',
+            enabled: true
+        });
+        setFlowData({
+            ...flowData,
+            crm_automatizado: { ...currentCrm, niveles: newNiveles }
+        });
+    };
+
+    const handleRemoveCrmLevel = (idToRemove) => {
+        const currentCrm = flowData.crm_automatizado || { enabled: false, niveles: [] };
+        const newNiveles = (currentCrm.niveles || []).filter(n => n.id !== idToRemove);
+        setFlowData({
+            ...flowData,
+            crm_automatizado: { ...currentCrm, niveles: newNiveles }
+        });
+    };
+
+    const handleUpdateCrmLevel = (id, field, value) => {
+        const currentCrm = flowData.crm_automatizado || { enabled: false, niveles: [] };
+        const newNiveles = (currentCrm.niveles || []).map(n => {
+            if (n.id === id) {
+                return { ...n, [field]: value };
+            }
+            return n;
+        });
+        setFlowData({
+            ...flowData,
+            crm_automatizado: { ...currentCrm, niveles: newNiveles }
+        });
+    };
+
     return (
         <div className="admin-chatbot-container animate-fade-in">
             <div className="chatbot-header">
@@ -188,6 +238,12 @@ const AdminChatbot = () => {
                     onClick={() => setActiveSubTab('optins')}
                 >
                     📋 Registros Opt-in ({optins.length})
+                </button>
+                <button 
+                    className={`tab-btn ${activeSubTab === 'crm' ? 'active' : ''}`}
+                    onClick={() => setActiveSubTab('crm')}
+                >
+                    🤖 CRM Automatizado
                 </button>
             </div>
 
@@ -612,6 +668,141 @@ const AdminChatbot = () => {
                             />
                         </div>
 
+                        <hr style={{ borderColor: '#e2e8f0', margin: '30px 0' }} />
+
+                        <h2>🚀 Plantillas Meta de Rescate y Adquisición</h2>
+                        <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '20px' }}>
+                            Estos flujos disparan plantillas oficiales de Meta API (HSM). Actívalos y define el nombre exacto de la plantilla creada en tu WhatsApp Manager.
+                        </p>
+
+                        {/* Plantilla: Sin Repartidores (Cancelar) */}
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <div>
+                                    <h4 style={{ margin: 0, color: '#1e293b' }}>1. Aviso "Sin Repartidores" al cliente</h4>
+                                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Se envía al cancelar la búsqueda de Fase 2.</span>
+                                </div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                    <input type="checkbox" style={{ width: '18px', height: '18px', accentColor: '#0ea5e9' }}
+                                        checked={flowData.seguimientos_adquisicion?.sin_repartidor?.enabled ?? true}
+                                        onChange={(e) => setFlowData({
+                                            ...flowData,
+                                            seguimientos_adquisicion: {
+                                                ...flowData.seguimientos_adquisicion,
+                                                sin_repartidor: { ...flowData.seguimientos_adquisicion?.sin_repartidor, enabled: e.target.checked }
+                                            }
+                                        })}
+                                    /> <span style={{fontSize: '0.85rem', fontWeight: 'bold'}}>Activo</span>
+                                </label>
+                            </div>
+                            <input type="text" className="form-control" placeholder="Nombre de plantilla (ej: sin_repartidores)"
+                                value={flowData.seguimientos_adquisicion?.sin_repartidor?.template || ''}
+                                onChange={(e) => setFlowData({
+                                    ...flowData,
+                                    seguimientos_adquisicion: {
+                                        ...flowData.seguimientos_adquisicion,
+                                        sin_repartidor: { ...flowData.seguimientos_adquisicion?.sin_repartidor, template: e.target.value }
+                                    }
+                                })}
+                            />
+                        </div>
+
+                        {/* Plantilla: Falta Pago (Abandono MP) */}
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <div>
+                                    <h4 style={{ margin: 0, color: '#1e293b' }}>2. Recordatorio "Falta Pago" (Abandono MP)</h4>
+                                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Se envía si el pago por Mercado Pago está pendiente por más de 5 minutos.</span>
+                                </div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                    <input type="checkbox" style={{ width: '18px', height: '18px', accentColor: '#0ea5e9' }}
+                                        checked={flowData.seguimientos_adquisicion?.falta_pago?.enabled ?? true}
+                                        onChange={(e) => setFlowData({
+                                            ...flowData,
+                                            seguimientos_adquisicion: {
+                                                ...flowData.seguimientos_adquisicion,
+                                                falta_pago: { ...flowData.seguimientos_adquisicion?.falta_pago, enabled: e.target.checked }
+                                            }
+                                        })}
+                                    /> <span style={{fontSize: '0.85rem', fontWeight: 'bold'}}>Activo</span>
+                                </label>
+                            </div>
+                            <input type="text" className="form-control" placeholder="Nombre de plantilla (ej: falta_pago)"
+                                value={flowData.seguimientos_adquisicion?.falta_pago?.template || ''}
+                                onChange={(e) => setFlowData({
+                                    ...flowData,
+                                    seguimientos_adquisicion: {
+                                        ...flowData.seguimientos_adquisicion,
+                                        falta_pago: { ...flowData.seguimientos_adquisicion?.falta_pago, template: e.target.value }
+                                    }
+                                })}
+                            />
+                        </div>
+
+                        {/* Plantilla: Alerta a Repartidores */}
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <div>
+                                    <h4 style={{ margin: 0, color: '#1e293b' }}>3. Alerta a Repartidores (Hay clientes en espera)</h4>
+                                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Se envía a repartidores inactivos cuando un cliente rebota.</span>
+                                </div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                    <input type="checkbox" style={{ width: '18px', height: '18px', accentColor: '#0ea5e9' }}
+                                        checked={flowData.seguimientos_adquisicion?.alerta_repartidor?.enabled ?? true}
+                                        onChange={(e) => setFlowData({
+                                            ...flowData,
+                                            seguimientos_adquisicion: {
+                                                ...flowData.seguimientos_adquisicion,
+                                                alerta_repartidor: { ...flowData.seguimientos_adquisicion?.alerta_repartidor, enabled: e.target.checked }
+                                            }
+                                        })}
+                                    /> <span style={{fontSize: '0.85rem', fontWeight: 'bold'}}>Activo</span>
+                                </label>
+                            </div>
+                            <input type="text" className="form-control" placeholder="Nombre de plantilla (ej: estas_disponible)"
+                                value={flowData.seguimientos_adquisicion?.alerta_repartidor?.template || ''}
+                                onChange={(e) => setFlowData({
+                                    ...flowData,
+                                    seguimientos_adquisicion: {
+                                        ...flowData.seguimientos_adquisicion,
+                                        alerta_repartidor: { ...flowData.seguimientos_adquisicion?.alerta_repartidor, template: e.target.value }
+                                    }
+                                })}
+                            />
+                        </div>
+
+                        {/* Plantilla: Rescate de Demanda (Aviso a clientes) */}
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <div>
+                                    <h4 style={{ margin: 0, color: '#1e293b' }}>4. Tenemos Repartidor (Rescate de Demanda)</h4>
+                                    <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Se envía a los clientes en espera (menos de 1h) cuando un repartidor se conecta.</span>
+                                </div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                    <input type="checkbox" style={{ width: '18px', height: '18px', accentColor: '#0ea5e9' }}
+                                        checked={flowData.seguimientos_adquisicion?.rescate_demanda?.enabled ?? true}
+                                        onChange={(e) => setFlowData({
+                                            ...flowData,
+                                            seguimientos_adquisicion: {
+                                                ...flowData.seguimientos_adquisicion,
+                                                rescate_demanda: { ...flowData.seguimientos_adquisicion?.rescate_demanda, enabled: e.target.checked }
+                                            }
+                                        })}
+                                    /> <span style={{fontSize: '0.85rem', fontWeight: 'bold'}}>Activo</span>
+                                </label>
+                            </div>
+                            <input type="text" className="form-control" placeholder="Nombre de plantilla (ej: tenemos_repartidor)"
+                                value={flowData.seguimientos_adquisicion?.rescate_demanda?.template || ''}
+                                onChange={(e) => setFlowData({
+                                    ...flowData,
+                                    seguimientos_adquisicion: {
+                                        ...flowData.seguimientos_adquisicion,
+                                        rescate_demanda: { ...flowData.seguimientos_adquisicion?.rescate_demanda, template: e.target.value }
+                                    }
+                                })}
+                            />
+                        </div>
+
                         <div style={{ display: 'flex', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
                             <button 
                                 className="btn-whatsapp-save"
@@ -778,6 +969,147 @@ const AdminChatbot = () => {
                             </tbody>
                         </table>
                     )}
+                </div>
+            )}
+
+            {/* TAB 5: CRM AUTOMATIZADO */}
+            {activeSubTab === 'crm' && (
+                <div className="card-panel animate-fade-in">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                        <div>
+                            <h2>🤖 CRM Automatizado (Retención Post-Entrega)</h2>
+                            <p style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '4px' }}>
+                                Configura mensajes automáticos a través de plantillas de WhatsApp para hacer seguimiento a clientes que ya recibieron su pedido.
+                            </p>
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: (flowData.crm_automatizado?.enabled) ? '#dcfce7' : '#f1f5f9', padding: '8px 16px', borderRadius: '8px', border: '1px solid', borderColor: (flowData.crm_automatizado?.enabled) ? '#bbf7d0' : '#e2e8f0' }}>
+                            <input 
+                                type="checkbox"
+                                checked={flowData.crm_automatizado?.enabled || false}
+                                onChange={(e) => setFlowData({
+                                    ...flowData,
+                                    crm_automatizado: {
+                                        ...flowData.crm_automatizado,
+                                        enabled: e.target.checked,
+                                        niveles: flowData.crm_automatizado?.niveles || []
+                                    }
+                                })}
+                                style={{ width: '18px', height: '18px', accentColor: '#059669' }}
+                            />
+                            <span style={{ fontWeight: 'bold', color: (flowData.crm_automatizado?.enabled) ? '#166534' : '#475569' }}>
+                                {flowData.crm_automatizado?.enabled ? 'CRM Activado' : 'CRM Desactivado'}
+                            </span>
+                        </label>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', marginTop: '30px' }}>
+                        <h3>Niveles de Seguimiento Configurados</h3>
+                        <button className="btn btn-primary" onClick={handleAddCrmLevel} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>➕</span> Añadir Nivel
+                        </button>
+                    </div>
+
+                    {!(flowData.crm_automatizado?.niveles?.length > 0) ? (
+                        <div style={{ padding: '30px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '2px dashed #cbd5e1' }}>
+                            <span style={{ fontSize: '2rem' }}>📭</span>
+                            <p style={{ color: '#475569', marginTop: '10px' }}>No hay niveles de seguimiento configurados.</p>
+                            <button className="btn btn-outline" onClick={handleAddCrmLevel} style={{ marginTop: '10px' }}>Crear Primer Nivel</button>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {flowData.crm_automatizado.niveles.map((nivel, index) => (
+                                <div key={nivel.id} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', position: 'relative' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                        <h4 style={{ margin: 0, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ background: '#3b82f6', color: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>{index + 1}</span>
+                                            Nivel de Seguimiento
+                                        </h4>
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={nivel.enabled} 
+                                                    onChange={(e) => handleUpdateCrmLevel(nivel.id, 'enabled', e.target.checked)} 
+                                                />
+                                                Activo
+                                            </label>
+                                            <button 
+                                                onClick={() => handleRemoveCrmLevel(nivel.id)}
+                                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center' }}
+                                                title="Eliminar Nivel"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label>Días después de entrega:</label>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <input 
+                                                    type="number" 
+                                                    className="form-control" 
+                                                    min="1" 
+                                                    value={nivel.dias_espera || ''} 
+                                                    onChange={(e) => handleUpdateCrmLevel(nivel.id, 'dias_espera', parseInt(e.target.value) || 1)}
+                                                />
+                                                <span style={{ color: '#64748b', fontSize: '0.9rem' }}>días</span>
+                                            </div>
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label>Nombre de la Plantilla (Meta API):</label>
+                                            <select 
+                                                className="form-control"
+                                                value={nivel.plantilla_meta || ''}
+                                                onChange={(e) => handleUpdateCrmLevel(nivel.id, 'plantilla_meta', e.target.value)}
+                                            >
+                                                <option value="">-- Seleccionar Plantilla --</option>
+                                                {templates.map(t => (
+                                                    <option key={t.id} value={t.name}>{t.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', marginBottom: nivel.usa_variables ? '10px' : '0' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                checked={nivel.usa_variables || false} 
+                                                onChange={(e) => handleUpdateCrmLevel(nivel.id, 'usa_variables', e.target.checked)} 
+                                            />
+                                            Enviar con variables dinámicas
+                                        </label>
+                                        {nivel.usa_variables && (
+                                            <div className="form-group" style={{ marginBottom: 0 }}>
+                                                <label style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                                    Variables (separadas por coma). Ejemplo: <span style={{ color: '#0ea5e9' }}>nombre_cliente, url_encuesta</span>
+                                                </label>
+                                                <input 
+                                                    type="text" 
+                                                    className="form-control" 
+                                                    placeholder="nombre_cliente, url_encuesta" 
+                                                    value={nivel.variables || ''} 
+                                                    onChange={(e) => handleUpdateCrmLevel(nivel.id, 'variables', e.target.value)}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div style={{ marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+                        <button 
+                            className="btn-whatsapp-save"
+                            disabled={saving}
+                            onClick={handleSaveFlows}
+                        >
+                            💾 {saving ? 'Guardando...' : 'Guardar Configuración CRM'}
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

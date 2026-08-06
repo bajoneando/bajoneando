@@ -7381,6 +7381,118 @@ export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repa
   }
 }
 
+// ==========================================
+// RESCATE DE DEMANDA (WhatsApp Templates)
+// ==========================================
+
+export async function handleCancelOrderSinRepartidores({ orderId, phone, city, optIn }) {
+  try {
+    // 1. Cancel the order in DB
+    if (orderId) {
+      await Promise.all([
+        supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderId),
+        supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderId)
+      ]);
+    }
+
+    // 2. Register opt-in if requested
+    if (optIn && phone) {
+      await registerWhatsappOptin({
+        phoneNumber: phone,
+        ciudad: city || 'Santo Tomé',
+        pedidoId: orderId,
+        userId: null,
+        tipo: 'esperando_repartidor'
+      });
+    }
+
+    // 3. Get Bot Config
+    const flows = await getWhatsappBotFlows();
+    const config = flows?.flow_data?.seguimientos_adquisicion || {};
+
+    // 4. Send "Sin Repartidores" template to client
+    if (phone && config.sin_repartidor?.enabled) {
+      await sendWhatsappTemplateMessage({
+        to: phone,
+        templateName: config.sin_repartidor?.template || 'sin_repartidores'
+      }).catch(console.error);
+    }
+
+    // 5. Alert inactive drivers if enabled
+    if (config.alerta_repartidor?.enabled) {
+      const { data: drivers } = await supabase
+        .from('repartidores')
+        .select('whatsapp')
+        .eq('ciudad', city || 'Santo Tomé')
+        .eq('verificado', true)
+        .neq('estado', 'Activo');
+
+      if (drivers && drivers.length > 0) {
+        const templateName = config.alerta_repartidor?.template || 'estas_disponible';
+        for (const d of drivers) {
+          if (d.whatsapp) {
+            sendWhatsappTemplateMessage({
+              to: d.whatsapp,
+              templateName
+            }).catch(console.error);
+          }
+        }
+      }
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error("Error handleCancelOrderSinRepartidores:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function notifyWaitingClients(ciudad) {
+  try {
+    const flows = await getWhatsappBotFlows();
+    const config = flows?.flow_data?.seguimientos_adquisicion || {};
+    
+    if (!config.rescate_demanda?.enabled) return { success: true, count: 0 };
+    
+    const templateName = config.rescate_demanda?.template || 'tenemos_repartidor';
+    
+    // Find waiting clients in the last 60 minutes
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    
+    const { data: optins, error } = await supabase
+      .from('whatsapp_optins')
+      .select('id, phone_number')
+      .eq('tipo', 'esperando_repartidor')
+      .eq('status', 'PENDING')
+      .eq('ciudad', ciudad)
+      .gte('created_at', oneHourAgo);
+      
+    if (error || !optins || optins.length === 0) return { success: true, count: 0 };
+    
+    let count = 0;
+    for (const opt of optins) {
+      if (opt.phone_number) {
+        await sendWhatsappTemplateMessage({
+          to: opt.phone_number,
+          templateName
+        }).catch(console.error);
+        
+        await supabase
+          .from('whatsapp_optins')
+          .update({ status: 'NOTIFIED' })
+          .eq('id', opt.id);
+          
+        count++;
+      }
+    }
+    
+    return { success: true, count };
+  } catch (err) {
+    console.error("Error notifyWaitingClients:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 
 
 

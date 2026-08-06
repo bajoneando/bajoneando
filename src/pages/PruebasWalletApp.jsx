@@ -446,6 +446,7 @@ export default function PruebasWalletApp() {
   const [showCancelOptIn, setShowCancelOptIn] = React.useState(false);
   const [searchSeconds, setSearchSeconds] = React.useState(0);
   const [pendingOrderId, setPendingOrderId] = React.useState(null);
+  const [whatsappCheckoutOptIn, setWhatsappCheckoutOptIn] = React.useState(true);
   const [estimatedTime, setEstimatedTime] = React.useState(null);
   const [optInRegistered, setOptInRegistered] = React.useState(false);
   const [optInLoading, setOptInLoading] = React.useState(false);
@@ -2315,6 +2316,19 @@ export default function PruebasWalletApp() {
 
          if (!response.success) throw new Error("No se pudo crear el pedido base.");
 
+         // Registrar WhatsApp Opt-in silenciosamente si está marcado
+         if (!optInRegistered && whatsappCheckoutOptIn && user && user.telefono) {
+           api.registerWhatsappOptin({
+             phoneNumber: user.telefono,
+             ciudad: activeCity || 'Santo Tomé',
+             pedidoId: pregeneratedId,
+             userId: user.id,
+             tipo: 'delivery_update'
+           }).then(res => {
+             if (!res.error) setOptInRegistered(true);
+           }).catch(err => console.error("Error auto-optin whatsapp:", err));
+         }
+
          // Registrar métrica de Pedido Creado (Entrega o Efectivo/Transferencia)
          const localIdForMetric = cart.items[0]?.local_id;
          if (localIdForMetric) {
@@ -3821,6 +3835,20 @@ export default function PruebasWalletApp() {
                     Esta dirección está fuera del área de cobertura por el momento.
                   </div>
                 )}
+                {!optInRegistered && (
+                  <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+                    <input 
+                      type="checkbox" 
+                      id="wa-optin-checkout"
+                      checked={whatsappCheckoutOptIn}
+                      onChange={e => setWhatsappCheckoutOptIn(e.target.checked)}
+                      style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#25D366' }}
+                    />
+                    <label htmlFor="wa-optin-checkout" style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.4', cursor: 'pointer', margin: 0, marginTop: '2px', fontWeight: '500' }}>
+                      Recibir avisos sobre el estado de mi pedido en WhatsApp
+                    </label>
+                  </div>
+                )}
                 <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={checkoutLoading || isOutofCoverage}>
                   {checkoutLoading ? <span className="spinner spinner-white" /> : 'Realizar Pedido'}
                 </button>
@@ -4324,8 +4352,59 @@ export default function PruebasWalletApp() {
                 setShowPwaSteps(true);
               }}
             >
-              🔔 Activar Notificaciones
+              🔔 Activar Notificaciones PWA
             </button>
+
+            {!optInRegistered && (
+              <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+                <input 
+                  type="checkbox" 
+                  id="wa-optin-confirmed"
+                  checked={whatsappCheckoutOptIn}
+                  onChange={async (e) => {
+                    const isChecked = e.target.checked;
+                    setWhatsappCheckoutOptIn(isChecked);
+                    if (isChecked) {
+                      let phone = (user && user.telefono) || '';
+                      if (!phone) {
+                        phone = prompt("Ingresá tu número de WhatsApp con código de área (ej: 5493756543610):");
+                        if (!phone) {
+                          setWhatsappCheckoutOptIn(false);
+                          return;
+                        }
+                      }
+                      setOptInLoading(true);
+                      try {
+                        const res = await api.registerWhatsappOptin({
+                          phoneNumber: phone,
+                          ciudad: activeCity || 'Santo Tomé',
+                          pedidoId: confirmedOrderId,
+                          userId: user?.id || null,
+                          tipo: 'delivery_update'
+                        });
+                        if (!res.error) {
+                          setOptInRegistered(true);
+                          toast.success('¡Listo! Te avisaremos cuando llegue tu pedido. 🛵');
+                        } else {
+                           toast.error(res.error || 'Por favor ingresá un número válido');
+                           setWhatsappCheckoutOptIn(false);
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        toast.error('Error al registrar aviso por WhatsApp');
+                        setWhatsappCheckoutOptIn(false);
+                      } finally {
+                        setOptInLoading(false);
+                      }
+                    }
+                  }}
+                  style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#25D366' }}
+                />
+                <label htmlFor="wa-optin-confirmed" style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.4', cursor: 'pointer', margin: 0, marginTop: '2px', fontWeight: '500', textAlign: 'left' }}>
+                  {optInLoading ? 'Guardando...' : 'Avisarme por WhatsApp al llegar mi pedido'}
+                </label>
+              </div>
+            )}
             <button 
               className="btn btn-secondary btn-full"
               style={{ padding: '14px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}
@@ -5102,190 +5181,112 @@ export default function PruebasWalletApp() {
       {driverSearchTimeout && (
         <div className="searching-modal-overlay">
           <div className="searching-modal-card animate-slide-up" style={{ padding: '24px', maxWidth: '360px', borderRadius: '24px' }}>
-            {!showCancelOptIn ? (
-              <>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px', textAlign: 'center' }}>
-                  🔎 Seguimos buscando
-                </h2>
-                
-                <div style={{
-                  background: '#fefce8',
-                  color: '#854d0e',
-                  padding: '12px 14px',
+            <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px', textAlign: 'center' }}>
+              🔎 Seguimos buscando
+            </h2>
+            
+            <div style={{
+              background: '#fefce8',
+              color: '#854d0e',
+              padding: '12px 14px',
+              borderRadius: '12px',
+              fontSize: '0.85rem',
+              fontWeight: '600',
+              marginBottom: '16px',
+              border: '1px solid #fef08a',
+              textAlign: 'center',
+              lineHeight: '1.4'
+            }}>
+              💡 Muchos pedidos encuentran repartidor en este segundo intento.
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <button 
+                className="btn btn-full"
+                style={{
+                  background: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  fontWeight: '700',
+                  padding: '12px',
                   borderRadius: '12px',
-                  fontSize: '0.85rem',
+                  fontSize: '0.92rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)'
+                }}
+                onClick={() => {
+                  setDriverSearchTimeout(false);
+                  setSearchSeconds(0); 
+                  const currentShipping = cart.deliveryType === 'envio' ? (cart.shippingCost || 0) : 0;
+                  api.broadcastOrderToDrivers(pendingOrderId, cart.total, cart.items[0]?.local_id, currentShipping);
+                  toast.success('¡Reenviamos la solicitud a los repartidores! 🛵');
+                }}
+              >
+                🟢 Repetir pedido
+              </button>
+
+              {!optInRegistered && (
+                <div style={{ margin: '6px 0', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+                  <input 
+                    type="checkbox" 
+                    id="wa-optin-cancel"
+                    checked={whatsappCheckoutOptIn}
+                    onChange={e => setWhatsappCheckoutOptIn(e.target.checked)}
+                    style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#25D366' }}
+                  />
+                  <label htmlFor="wa-optin-cancel" style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.4', cursor: 'pointer', margin: 0, marginTop: '2px', fontWeight: '500' }}>
+                    Recibir aviso en WhatsApp si no hay repartidores
+                  </label>
+                </div>
+              )}
+
+              <button 
+                className="btn btn-full"
+                style={{
+                  padding: '10px',
                   fontWeight: '600',
-                  marginBottom: '16px',
-                  border: '1px solid #fef08a',
-                  textAlign: 'center',
-                  lineHeight: '1.4'
-                }}>
-                  💡 Muchos pedidos encuentran repartidor en este segundo intento.
-                </div>
+                  fontSize: '0.85rem',
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px'
+                }}
+                onClick={async () => {
+                  const orderIdToCancel = pendingOrderId;
+                  const recipientPhone = user && user.telefono;
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-                  <button 
-                    className="btn btn-full"
-                    style={{
-                      background: '#10b981',
-                      color: 'white',
-                      border: 'none',
-                      fontWeight: '700',
-                      padding: '12px',
-                      borderRadius: '12px',
-                      fontSize: '0.92rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.25)'
-                    }}
-                    onClick={() => {
-                      setDriverSearchTimeout(false);
-                      setSearchSeconds(0); 
-                      const currentShipping = cart.deliveryType === 'envio' ? (cart.shippingCost || 0) : 0;
-                      api.broadcastOrderToDrivers(pendingOrderId, cart.total, cart.items[0]?.local_id, currentShipping);
-                      toast.success('¡Reenviamos la solicitud a los repartidores! 🛵');
-                    }}
-                  >
-                    🟢 Repetir pedido
-                  </button>
+                  setDriverSearchTimeout(false);
+                  setSearchingDriver(false);
+                  setPendingOrderId(null);
+                  localStorage.removeItem('pendingOrderDataPruebas');
+                  
+                  if (orderIdToCancel) {
+                    try {
+                      // Disparamos la cancelación, el opt-in, el envío de plantilla al usuario y la alerta a repartidores
+                      await api.handleCancelOrderSinRepartidores({
+                        orderId: orderIdToCancel,
+                        phone: recipientPhone,
+                        city: activeCity,
+                        optIn: !optInRegistered && whatsappCheckoutOptIn
+                      });
 
-                  <button 
-                    className="btn btn-outline btn-full"
-                    style={{
-                      padding: '10px',
-                      fontWeight: '600',
-                      fontSize: '0.85rem',
-                      color: '#64748b',
-                      borderColor: '#cbd5e1',
-                      borderRadius: '12px'
-                    }}
-                    onClick={async () => {
-                      if (!optInRegistered) {
-                        setShowCancelOptIn(true);
-                        return;
+                      if (!optInRegistered && whatsappCheckoutOptIn) {
+                         setOptInRegistered(true);
                       }
-                      
-                      const orderIdToCancel = pendingOrderId;
-                      const recipientPhone = user && user.telefono;
-                      setDriverSearchTimeout(false);
-                      setSearchingDriver(false);
-                      setPendingOrderId(null);
-                      localStorage.removeItem('pendingOrderDataPruebas');
-                      
-                      if (orderIdToCancel) {
-                        try {
-                          await Promise.all([
-                            api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
-                            api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
-                          ]);
 
-                          // Enviar plantilla "sin_repartidores" (Meta API HSM) al cancelarse el pedido sin repartidores
-                          if (recipientPhone) {
-                            api.sendWhatsappTemplateMessage({
-                              to: recipientPhone,
-                              templateName: 'sin_repartidores',
-                              languageCode: 'es_AR'
-                            }).catch(err => console.error("Error enviando plantilla sin_repartidores:", err));
-                          }
-
-                          toast.success('Búsqueda cancelada');
-                        } catch (e) {
-                          console.error("Error cancelling order:", e);
-                        }
-                      }
-                    }}
-                  >
-                    ⚪ Cancelar pedido
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px', textAlign: 'center' }}>
-                  ¿Te avisamos por WhatsApp?
-                </h2>
-                <div style={{ textAlign: 'center', fontSize: '0.9rem', color: '#475569', marginBottom: '20px' }}>
-                  Activá los avisos para que nuestro bot te notifique en cuanto haya un repartidor disponible.
-                </div>
-                
-                <button
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    background: '#25D366',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontWeight: '700',
-                    fontSize: '0.9rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    marginBottom: '10px'
-                  }}
-                  disabled={optInLoading}
-                  onClick={async () => {
-                    await handleRegisterWhatsappOptin();
-                    // Después de registrar, cancelar el pedido automáticamente si se registró con éxito
-                    if (!optInLoading) {
-                       const orderIdToCancel = pendingOrderId;
-                       const recipientPhone = user && user.telefono;
-                       setDriverSearchTimeout(false);
-                       setSearchingDriver(false);
-                       setPendingOrderId(null);
-                       setShowCancelOptIn(false);
-                       localStorage.removeItem('pendingOrderDataPruebas');
-                       
-                       if (orderIdToCancel) {
-                         try {
-                           await Promise.all([
-                             api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
-                             api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
-                           ]);
-                           toast.success('Búsqueda cancelada. Te avisaremos por WhatsApp.');
-                         } catch (e) {
-                           console.error("Error cancelling order after opt-in:", e);
-                         }
-                       }
+                      toast.success('Búsqueda cancelada');
+                    } catch (e) {
+                      console.error("Error cancelling order:", e);
                     }
-                  }}
-                >
-                  📲 {optInLoading ? 'Guardando...' : 'Sí, avisarme'}
-                </button>
-                
-                <button 
-                  className="btn btn-full"
-                  style={{ padding: '10px', fontSize: '0.85rem', background: '#ef4444', color: 'white', border: 'none', borderRadius: '12px', fontWeight: '600' }}
-                  onClick={async () => {
-                      const orderIdToCancel = pendingOrderId;
-                      const recipientPhone = user && user.telefono;
-                      setDriverSearchTimeout(false);
-                      setSearchingDriver(false);
-                      setPendingOrderId(null);
-                      setShowCancelOptIn(false);
-                      localStorage.removeItem('pendingOrderDataPruebas');
-                      
-                      if (orderIdToCancel) {
-                        try {
-                          await Promise.all([
-                            api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
-                            api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
-                          ]);
-                          toast.success('Búsqueda cancelada');
-                        } catch (e) {
-                          console.error("Error cancelling order:", e);
-                        }
-                      }
-                  }}
-                >
-                  No, sólo cancelar
-                </button>
-              </>
-            )}
+                  }
+                }}
+              >
+                ⚪ Cancelar pedido
+              </button>
+            </div>
           </div>
         </div>
       )}

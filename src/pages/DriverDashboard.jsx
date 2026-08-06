@@ -783,6 +783,27 @@ export default function DriverDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driver]);
 
+  // Intercepción Deep Link para rescate de demanda (whatsapp)
+  React.useEffect(() => {
+    if (driver && driver.ciudad) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const conectar = searchParams.get('conectar');
+      if (conectar === 'true') {
+        api.notifyWaitingClients(driver.ciudad).then(res => {
+          if (res.success && res.count > 0) {
+            toast.success(`¡Acabamos de avisar a ${res.count} clientes en espera que estás disponible!`);
+          } else if (res.success) {
+            toast.success("¡Estás activo para recibir pedidos!");
+          }
+        }).catch(err => console.error("Error notifyWaitingClients:", err));
+        
+        // Limpiar URL
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path: newUrl}, '', newUrl);
+      }
+    }
+  }, [driver]);
+
   // Polling para pedidos disponibles y Heartbeat
   React.useEffect(() => {
     let interval;
