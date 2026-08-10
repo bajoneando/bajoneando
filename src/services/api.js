@@ -7493,6 +7493,36 @@ export async function notifyWaitingClients(ciudad) {
   }
 }
 
+export async function getHasAnsweredSurvey(userId) {
+  if (!userId) return false;
+  try {
+    const { data, error } = await supabase
+      .from('respuestas_encuesta_app')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(1);
+    
+    if (error) {
+      console.error("Error checking survey status:", error);
+      return false;
+    }
+    return data && data.length > 0;
+  } catch (err) {
+    console.error("Exception in getHasAnsweredSurvey:", err);
+    return false;
+  }
+}
 
-
-
+export async function saveSurveyResponse(response) {
+  try {
+    const { data, error } = await supabase
+      .from('respuestas_encuesta_app')
+      .insert(response);
+    
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error("Error saving survey response:", err);
+    throw err;
+  }
+}
