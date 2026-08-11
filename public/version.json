@@ -1,5 +1,5 @@
 {
-  "version": "1.0.5",
-  "build": "2026-06-26_19:35",
-  "reason": "Backend delivery validation and cache breaking"
+  "version": "1.1.2",
+  "build": "2026-08-11_13:00",
+  "reason": "Push FCM update"
 }
