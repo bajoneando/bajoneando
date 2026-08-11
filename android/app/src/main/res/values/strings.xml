@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Wepi</string>
+    <string name="title_activity_main">Wepi</string>
+    <string name="package_name">com.wepi.app</string>
+    <string name="custom_url_scheme">com.wepi.app</string>
+</resources>

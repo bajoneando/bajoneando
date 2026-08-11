@@ -16,10 +16,13 @@ import MisPedidos from './pages/MisPedidos';
 import ConfirmarEmail from './pages/ConfirmarEmail';
 import AdminDashboard from './pages/AdminDashboard';
 import ConsentBanner from './components/ConsentBanner';
+import PushNotificationManager from './components/PushNotificationManager';
 import Mundialista from './pages/Mundialista';
 import WepiAds from './pages/WepiAds';
 import { useAuth } from './context/AuthContext';
 import * as api from './services/api';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { Capacitor } from '@capacitor/core';
 
 function AdminRoute({ children }) {
   const { user } = useAuth();
@@ -102,6 +105,14 @@ export default function App() {
       }
     };
     checkVersion();
+
+    // Notify Capgo Updater that app is ready
+    try {
+      CapacitorUpdater.notifyAppReady();
+    } catch (e) {
+      console.error('Error in CapacitorUpdater:', e);
+    }
+
 
     // 1. Google Analytics Tracking
     if (window.gtag) {
@@ -190,8 +201,9 @@ export default function App() {
   return (
     <AuthProvider>
       <CartProvider>
+        <PushNotificationManager />
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={Capacitor.isNativePlatform() ? <Navigate to="/pedir" replace /> : <Landing />} />
           <Route path="/mantenimiento" element={<Maintenance />} />
           <Route path="/pedir" element={
             <MaintenanceGuard configKey="mantenimiento_pedir">

@@ -1727,15 +1727,12 @@ export default function RestaurantDashboard() {
               }
             }).catch(e => console.error(e));
           }
+          */
         } else if (action === 'Listo') {
           const direccionLocal = profileData?.direccion || 'Dirección del local';
-          /*
           await api.notifyOrderListo(pedido, direccionLocal);
-          */
         } else if (action === 'Entregado') {
-          /*
           await api.notifyOrderEntregado(pedido);
-          */
         } else if (action === 'Rechazado') {
           await api.notifyOrderRechazado(pedido, reason);
         }
@@ -2188,8 +2185,10 @@ export default function RestaurantDashboard() {
             </div>
           </div>
           {/* Círculos decorativos */}
-          <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }} />
-          <div style={{ position: 'absolute', bottom: '-30px', left: '10%', width: '100px', height: '100px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }} />
+          <>
+            <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }} />
+            <div style={{ position: 'absolute', bottom: '-30px', left: '10%', width: '100px', height: '100px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%' }} />
+          </>
         </div>
 
         <div className="card" style={{ padding: '32px', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>

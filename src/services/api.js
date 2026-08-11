@@ -1956,6 +1956,7 @@ export async function getPedidosLocalesCompletosByLocal(localId) {
       emailCliente: gen.email_cliente || '',
       nombreCliente: gen.nombre_cliente || 'Cliente',
       clienteTelefono: gen.usuarios?.telefono || null,
+      usuario_id: gen.usuario_id || null,
       fecha: gen.fecha,
       numConfirmacion: gen.num_confirmacion,
       paymentId: gen.payment_id || gen.preference_id || null,
@@ -4349,6 +4350,19 @@ export async function sendPushNotification({ subscriptionIds, title, message, da
   }
 }
 
+export async function sendFirebasePushNotification({ tokens, title, message, data, url }) {
+  try {
+    const { data: res, error } = await supabase.functions.invoke('send-firebase-push', {
+      body: { tokens, title, message, data, url }
+    });
+    if (error) throw error;
+    return { success: true, data: res };
+  } catch (err) {
+    console.error("Error in sendFirebasePushNotification:", err);
+    return { success: false, error: err.message };
+  }
+}
+
 export async function notifyDriverAboutNewOrder(pedidoId, cart, direccion, observaciones, total, metodoPago, repartidorEmail) {
   try {
     if (!repartidorEmail) return;
@@ -4462,21 +4476,23 @@ export async function notifyOrderListo(pedido, direccionLocal) {
             Coordinar retiro lo antes posible.
         </p>
       `;
+      await supabase.functions.invoke('send-email', { body: { to, subject, htmlBody } });
     } else {
-      to = pedido.emailCliente;
-      if (!to) return { success: false, error: 'No hay email del cliente' };
-      subject = `¡Tu pedido está listo para retirar! #${pedido.idPedido}`;
-      htmlBody = `
-        ${LOGO_HTML}
-        <h2 style="color:#d32f2f; text-align:center;">¡Tu pedido está listo!</h2>
-        <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
-        <p>Tu pedido ya está preparado para que pases a retirarlo.</p>
-        <p><strong>Dirección del local:</strong> ${direccionLocal}</p>
-        <p>¡Te esperamos!</p>
-      `;
+      // Retiro en local - Notificación Push
+      if (pedido.usuario_id) {
+        const { data: user } = await supabase.from('usuarios').select('onesignal_id').eq('id', pedido.usuario_id).single();
+        if (user?.onesignal_id) {
+          await sendFirebasePushNotification({
+            tokens: [user.onesignal_id],
+            title: '¡Tu pedido está listo! 🏃‍♂️',
+            message: `Hola ${pedido.nombreCliente}, tu pedido ya está preparado para que pases a retirarlo en ${direccionLocal}.`,
+            url: 'https://wepi.com.ar/pedir',
+            data: { type: 'order_listo', pedidoId: pedido.idPedido }
+          });
+        }
+      }
     }
 
-    await supabase.functions.invoke('send-email', { body: { to, subject, htmlBody } });
     return { success: true };
   } catch (err) {
     console.error('Error in notifyOrderListo:', err);
@@ -4486,19 +4502,18 @@ export async function notifyOrderListo(pedido, direccionLocal) {
 
 export async function notifyOrderEntregado(pedido) {
   try {
-    const to = pedido.emailCliente;
-    if (!to) return { success: false, error: 'No hay email del cliente' };
-
-    const subject = `¡Tu pedido #${pedido.idPedido} fue entregado!`;
-    const htmlBody = `
-      ${LOGO_HTML}
-      <h2 style="color:#2e7d32; text-align:center;">¡Pedido Entregado!</h2>
-      <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
-      <p>Tu pedido ha sido marcado como entregado. Esperamos que lo disfrutes.</p>
-      <p>¡Gracias por elegir Wepi!</p>
-    `;
-
-    await supabase.functions.invoke('send-email', { body: { to, subject, htmlBody } });
+    if (pedido.usuario_id) {
+      const { data: user } = await supabase.from('usuarios').select('onesignal_id').eq('id', pedido.usuario_id).single();
+      if (user?.onesignal_id) {
+        await sendFirebasePushNotification({
+          tokens: [user.onesignal_id],
+          title: '¡Pedido Entregado! 🎉',
+          message: `Hola ${pedido.nombreCliente}, esperamos que disfrutes tu pedido. ¡No olvides calificar tu experiencia!`,
+          url: 'https://wepi.com.ar/pedir',
+          data: { type: 'order_entregado', pedidoId: pedido.idPedido }
+        });
+      }
+    }
     return { success: true };
   } catch (err) {
     console.error('Error in notifyOrderEntregado:', err);
@@ -4508,21 +4523,24 @@ export async function notifyOrderEntregado(pedido) {
 
 export async function notifyOrderRechazado(pedido, reason = '') {
   try {
-    const to = pedido.emailCliente;
-    if (!to) return { success: false, error: 'No hay email del cliente' };
-
-    const subject = `Estado actualizado de tu pedido #${pedido.idPedido}`;
-    const htmlBody = `
-      ${LOGO_HTML}
-      <h2 style="color:#d32f2f; text-align:center;">Pedido Cancelado</h2>
-      <p>Hola <strong>${pedido.nombreCliente}</strong>,</p>
-      <p>Lamentablemente el local no pudo aceptar tu pedido en esta ocasión.</p>
-      ${reason ? `<p><strong>Motivo:</strong> ${reason}</p>` : ''}
-      <p>Cualquier pago realizado será reembolsado a la brevedad.</p>
-      <p>Te pedimos disculpas por los inconvenientes.</p>
-    `;
-
-    await supabase.functions.invoke('send-email', { body: { to, subject, htmlBody } });
+    if (pedido.usuario_id) {
+      const { data: user } = await supabase.from('usuarios').select('onesignal_id').eq('id', pedido.usuario_id).single();
+      if (user?.onesignal_id) {
+        const isNoDriver = reason && reason.toLowerCase().includes('repartidor');
+        const title = isNoDriver ? 'Repetí tu pedido en unos minutos 🛵' : 'Pedido Cancelado ❌';
+        const message = isNoDriver 
+          ? `Hola ${pedido.nombreCliente}, no encontramos repartidor en este momento. Por favor intentá pedir nuevamente en 10 minutos.`
+          : `Hola ${pedido.nombreCliente}, lamentablemente tu pedido fue rechazado por el local.${reason ? ` Motivo: ${reason}` : ''}`;
+        
+        await sendFirebasePushNotification({
+          tokens: [user.onesignal_id],
+          title: title,
+          message: message,
+          url: 'https://wepi.com.ar/pedir',
+          data: { type: 'order_rechazado', pedidoId: pedido.idPedido }
+        });
+      }
+    }
     return { success: true };
   } catch (err) {
     console.error('Error in notifyOrderRechazado:', err);
@@ -6128,17 +6146,17 @@ export async function adminSendCRMMessage(userId, channel, message, title = "Wep
   let success = false;
   let logDetail = '';
 
-  // CANAL PUSH (OneSignal) - Prioritario
+  // CANAL PUSH (Firebase) - Prioritario
   if (channel === 'push') {
     if (user.onesignal_id) {
       try {
-        await sendPushNotification({
-          subscriptionIds: [user.onesignal_id],
+        await sendFirebasePushNotification({
+          tokens: [user.onesignal_id],
           title,
           message: personalizedMessage
         });
         success = true;
-        logDetail = 'Enviado por Push Notification (OneSignal)';
+        logDetail = 'Enviado por Push Notification (Firebase FCM)';
       } catch (e) {
         logDetail = `Fallo de envío por Push: ${e.message}. Intentando fallback a WhatsApp...`;
       }

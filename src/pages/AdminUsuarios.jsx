@@ -6,6 +6,10 @@ const AdminUsuarios = () => {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [pushModalOpen, setPushModalOpen] = useState(false);
+    const [pushTitle, setPushTitle] = useState('');
+    const [pushMessage, setPushMessage] = useState('');
+    const [pushLoading, setPushLoading] = useState(false);
 
     const loadUsuarios = async () => {
         setLoading(true);
@@ -61,6 +65,45 @@ const AdminUsuarios = () => {
 
     if (loading) return <div className="loading-state">Cargando usuarios...</div>;
 
+    const handleSendMassivePush = async () => {
+        if (!pushTitle || !pushMessage) {
+            toast.error("Completá título y mensaje");
+            return;
+        }
+        if (!window.confirm("¿Seguro que deseas enviar esta notificación Push a TODOS los usuarios de la app?")) return;
+        
+        setPushLoading(true);
+        try {
+            const pushTokens = usuarios
+                .filter(u => u.onesignal_id)
+                .map(u => u.onesignal_id);
+            
+            if (pushTokens.length === 0) {
+                toast.error("Ningún usuario tiene la app instalada o permisos aceptados.");
+                setPushLoading(false);
+                return;
+            }
+
+            await api.sendPushNotification({
+                subscriptionIds: pushTokens,
+                title: pushTitle,
+                message: pushMessage,
+                url: 'https://wepi.com.ar/pedir',
+                data: { type: 'marketing' }
+            });
+
+            toast.success(`Notificación enviada a ${pushTokens.length} dispositivos.`);
+            setPushModalOpen(false);
+            setPushTitle('');
+            setPushMessage('');
+        } catch (err) {
+            console.error(err);
+            toast.error("Error al enviar notificaciones masivas");
+        } finally {
+            setPushLoading(false);
+        }
+    };
+
     return (
         <div className="panel-card animate-fade-in">
             <header className="panel-header">
@@ -74,9 +117,47 @@ const AdminUsuarios = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{ width: '250px' }}
                     />
+                    <button className="btn btn-warning" onClick={() => setPushModalOpen(true)}>Enviar Aviso (Push)</button>
                     <button className="btn btn-primary" onClick={loadUsuarios}>Refrescar</button>
                 </div>
             </header>
+
+            {pushModalOpen && (
+                <div className="modal-overlay" onClick={() => setPushModalOpen(false)} style={{ zIndex: 9999 }}>
+                    <div className="modal-box animate-fade-in" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                        <h3>Enviar Push de Marketing</h3>
+                        <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '15px' }}>
+                            Se enviará una notificación a todos los celulares que tengan la app instalada.
+                        </p>
+                        <div className="form-group">
+                            <label>Título del Aviso</label>
+                            <input 
+                                type="text" 
+                                className="form-control" 
+                                placeholder="Ej: ¡Envío Gratis Hoy! 🛵"
+                                value={pushTitle}
+                                onChange={e => setPushTitle(e.target.value)}
+                            />
+                        </div>
+                        <div className="form-group" style={{ marginTop: '10px' }}>
+                            <label>Mensaje</label>
+                            <textarea 
+                                className="form-control" 
+                                rows="3"
+                                placeholder="Ej: Pedí ahora con envío gratis en todos los locales usando el código..."
+                                value={pushMessage}
+                                onChange={e => setPushMessage(e.target.value)}
+                            ></textarea>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                            <button className="btn btn-primary" onClick={handleSendMassivePush} disabled={pushLoading}>
+                                {pushLoading ? 'Enviando...' : 'Enviar a todos'}
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => setPushModalOpen(false)}>Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="table-responsive">
                 <table className="admin-table">

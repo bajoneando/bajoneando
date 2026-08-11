@@ -1,0 +1,14 @@
+{
+  "appId": "com.wepi.app",
+  "appName": "Wepi",
+  "webDir": "dist",
+  "plugins": {
+    "CapacitorUpdater": {
+      "appId": "com.wepi.app",
+      "autoUpdate": true
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}

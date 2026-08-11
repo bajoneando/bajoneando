@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "626257239107",
+    "project_id": "wepi-f0b21",
+    "storage_bucket": "wepi-f0b21.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:626257239107:android:434bc280dd93e4f95708f6",
+        "android_client_info": {
+          "package_name": "com.wepi.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "626257239107-ghmealct7mgo09f649vgi52roeen2bh4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-OwcMb4SeRuSFRszMVSYnYQh0Kr-2Zyw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "626257239107-ghmealct7mgo09f649vgi52roeen2bh4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
