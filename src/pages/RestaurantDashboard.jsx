@@ -1729,8 +1729,8 @@ export default function RestaurantDashboard() {
           }
           */
         } else if (action === 'Listo') {
-          const direccionLocal = profileData?.direccion || 'Dirección del local';
-          await api.notifyOrderListo(pedido, direccionLocal);
+          const nombreLocal = profileData?.nombre || 'el local';
+          await api.notifyOrderListo(pedido, nombreLocal);
         } else if (action === 'Entregado') {
           await api.notifyOrderEntregado(pedido);
         } else if (action === 'Rechazado') {
@@ -6157,8 +6157,8 @@ export default function RestaurantDashboard() {
         orders={orders}
         onRefreshOrders={() => loadOrders(false)}
         onReavisarRepartidor={async (o) => {
-          const direccionLocal = profileData?.direccion || localNombre || 'Local';
-          await api.notifyOrderListo(o, direccionLocal);
+          const nombreLocal = profileData?.nombre || 'Local';
+          await api.notifyOrderListo(o, nombreLocal);
           await api.reavisarRepartidorOrder(o.idPedidoLocal);
           toast.success(`¡Aviso re-enviado al repartidor para el pedido #${o.idPedido}! 🛵🔔`, { icon: '🛵' });
         }}

@@ -3928,6 +3928,17 @@ export async function updateEstadoPedido(pedidoId, nuevoEstado, repartidorId, pi
       }
     }
     
+    if (nuevoEstado === 'Retirado') {
+      try {
+        const { data: pg } = await supabase.from('pedidos_general').select('usuario_id, id').eq('id', pedidoId).single();
+        if (pg) {
+          await notifyOrderRetirado({ usuario_id: pg.usuario_id, idPedido: pg.id });
+        }
+      } catch (e) {
+        console.error('Error enviando notificacion de retirado:', e);
+      }
+    }
+
     if (nuevoEstado === 'Entregado') {
       // Liberar repartidor si no tiene más pedidos
       const { data: activeCountRem } = await supabase.from('pedidos_general')
@@ -4462,6 +4473,8 @@ export async function notifyOrderListo(pedido, direccionLocal) {
     let subject = '';
     let htmlBody = '';
 
+    console.log("notifyOrderListo START", { isEnvio, tipoEntrega: pedido.tipoEntrega, usuario_id: pedido.usuario_id });
+
     if (isEnvio) {
       to = 'bajoneando.st@gmail.com'; // Email del motomandado
       subject = `¡Pedido listo para envío! #${pedido.idPedido}`;
@@ -4477,25 +4490,57 @@ export async function notifyOrderListo(pedido, direccionLocal) {
         </p>
       `;
       await supabase.functions.invoke('send-email', { body: { to, subject, htmlBody } });
-    } else {
-      // Retiro en local - Notificación Push
-      if (pedido.usuario_id) {
-        const { data: user } = await supabase.from('usuarios').select('onesignal_id').eq('id', pedido.usuario_id).single();
-        if (user?.onesignal_id) {
-          await sendFirebasePushNotification({
-            tokens: [user.onesignal_id],
-            title: '¡Tu pedido está listo! 🏃‍♂️',
-            message: `Hola ${pedido.nombreCliente}, tu pedido ya está preparado para que pases a retirarlo en ${direccionLocal}.`,
-            url: 'https://wepi.com.ar/pedir',
-            data: { type: 'order_listo', pedidoId: pedido.idPedido }
-          });
-        }
+      console.log("notifyOrderListo: send-email invocado.");
+    }
+
+    // Notificación Push al Usuario (SOLO PARA RETIRO)
+    if (!isEnvio && pedido.usuario_id) {
+      const { data: user, error: userErr } = await supabase.from('usuarios').select('onesignal_id').eq('id', pedido.usuario_id).single();
+      console.log("notifyOrderListo: db user fetched:", { user, error: userErr });
+      if (user?.onesignal_id) {
+        const title = '¡Tu pedido está listo para retirar!';
+        const message = `Ya podés pasar a retirarlo en ${direccionLocal}.`;
+        
+        console.log("notifyOrderListo: invoking send-firebase-push with token:", user.onesignal_id);
+        const res = await sendFirebasePushNotification({
+          tokens: [user.onesignal_id],
+          title,
+          message,
+          url: 'https://wepi.com.ar/mis-pedidos',
+          data: { type: 'order_listo', pedidoId: pedido.idPedido }
+        });
+        console.log("notifyOrderListo: sendFirebasePushNotification result:", res);
+      } else {
+        console.log("notifyOrderListo: El usuario no tiene un onesignal_id (token push) válido en la DB.");
       }
+    } else {
+      console.log("notifyOrderListo: El pedido es con envío o no tiene usuario_id asignado. No se manda Push de Listo.");
     }
 
     return { success: true };
   } catch (err) {
     console.error('Error in notifyOrderListo:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function notifyOrderRetirado(pedido) {
+  try {
+    if (pedido.usuario_id) {
+      const { data: user } = await supabase.from('usuarios').select('onesignal_id').eq('id', pedido.usuario_id).single();
+      if (user?.onesignal_id) {
+        await sendFirebasePushNotification({
+          tokens: [user.onesignal_id],
+          title: '¡Tu pedido está en camino!',
+          message: 'Nuestro repartidor ya retiró tu pedido, en minutos llega a tu dirección.',
+          url: 'https://wepi.com.ar/mis-pedidos',
+          data: { type: 'order_retirado', pedidoId: pedido.idPedido || pedido.id }
+        });
+      }
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('Error in notifyOrderRetirado:', err);
     return { success: false, error: err.message };
   }
 }
@@ -4508,8 +4553,8 @@ export async function notifyOrderEntregado(pedido) {
         await sendFirebasePushNotification({
           tokens: [user.onesignal_id],
           title: '¡Pedido Entregado! 🎉',
-          message: `Hola ${pedido.nombreCliente}, esperamos que disfrutes tu pedido. ¡No olvides calificar tu experiencia!`,
-          url: 'https://wepi.com.ar/pedir',
+          message: `Esperamos que disfrutes tu pedido. ¡No olvides calificar tu experiencia! Gracias por elegirnos`,
+          url: 'https://wepi.com.ar/mis-pedidos',
           data: { type: 'order_entregado', pedidoId: pedido.idPedido }
         });
       }
@@ -4527,16 +4572,16 @@ export async function notifyOrderRechazado(pedido, reason = '') {
       const { data: user } = await supabase.from('usuarios').select('onesignal_id').eq('id', pedido.usuario_id).single();
       if (user?.onesignal_id) {
         const isNoDriver = reason && reason.toLowerCase().includes('repartidor');
-        const title = isNoDriver ? 'Repetí tu pedido en unos minutos 🛵' : 'Pedido Cancelado ❌';
+        const title = isNoDriver ? 'No encontramos repartidor para tu pedido 🛵' : 'Pedido Cancelado ❌';
         const message = isNoDriver 
-          ? `Hola ${pedido.nombreCliente}, no encontramos repartidor en este momento. Por favor intentá pedir nuevamente en 10 minutos.`
-          : `Hola ${pedido.nombreCliente}, lamentablemente tu pedido fue rechazado por el local.${reason ? ` Motivo: ${reason}` : ''}`;
+          ? `Podés intentar en unos minutos con un solo clic desde el menú Mis Pedidos. TOCÁ PARA REPETIR`
+          : `Lamentablemente tu pedido fue rechazado por el local. Motivo: ${reason}`;
         
         await sendFirebasePushNotification({
           tokens: [user.onesignal_id],
           title: title,
           message: message,
-          url: 'https://wepi.com.ar/pedir',
+          url: 'https://wepi.com.ar/mis-pedidos',
           data: { type: 'order_rechazado', pedidoId: pedido.idPedido }
         });
       }
