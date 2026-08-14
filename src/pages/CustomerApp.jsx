@@ -1932,10 +1932,77 @@ export default function CustomerApp() {
                   <button className="btn btn-primary btn-full" onClick={() => setModal('editProfile')}>✏️ Editar perfil</button>
                   <button className="btn btn-secondary btn-full" onClick={() => setModal('editAddress')}>📍 Cambiar dirección</button>
                   <button className="btn btn-secondary btn-full" onClick={() => navigate('/mis-pedidos')}>📦 Mis Pedidos</button>
+                  <button className="btn btn-secondary btn-full" onClick={() => setModal('configuracion')}>⚙️ Configuración</button>
                   <button className="btn btn-ghost btn-full" onClick={() => { doLogout(); setModal(null); toast.success('Sesión cerrada'); }}>
                     Cerrar sesión
                   </button>
                 </div>
+              </div>
+            )}
+
+            {modal === 'configuracion' && user && (
+              <div>
+                <h2>Configuración</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0', padding: '16px', background: '#262626', borderRadius: '12px' }}>
+                  <span style={{ color: 'white', fontSize: '14px' }}>Notificaciones para el dispositivo</span>
+                  <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
+                    <input 
+                      type="checkbox" 
+                      style={{ opacity: 0, width: 0, height: 0 }}
+                      checked={!!user.onesignal_id}
+                      onChange={async (e) => {
+                        const checked = e.target.checked;
+                        if (checked) {
+                          try {
+                            const { PushNotifications } = await import('@capacitor/push-notifications');
+                            const { Capacitor } = await import('@capacitor/core');
+                            if (!Capacitor.isNativePlatform()) {
+                               toast.error("Notificaciones solo disponibles en celular nativo");
+                               return;
+                            }
+                            let permStatus = await PushNotifications.checkPermissions();
+                            if (permStatus.receive === 'prompt') {
+                               permStatus = await PushNotifications.requestPermissions();
+                            }
+                            if (permStatus.receive !== 'granted') {
+                               toast.error("Permisos denegados. Actívalos en Ajustes del teléfono.");
+                               return;
+                            }
+                            await PushNotifications.register();
+                            toast.loading("Activando notificaciones...", { id: 'push-toast' });
+                            // The actual saving is done by PushNotificationManager which listens to 'registration'
+                            // Let's manually trigger a reload of the user after 3 seconds to see if it saved
+                            setTimeout(() => {
+                              window.location.reload();
+                            }, 3000);
+                          } catch (err) {
+                            toast.error("Error al activar: " + err.message);
+                          }
+                        } else {
+                           toast.loading("Desactivando...", { id: 'push-toast' });
+                           import('../services/api').then(api => {
+                             api.usuarioUpdateOneSignalId(user.id, null).then(() => {
+                               toast.success("Notificaciones desactivadas", { id: 'push-toast' });
+                               setTimeout(() => window.location.reload(), 1000);
+                             });
+                           });
+                        }
+                      }} 
+                    />
+                    <span className="slider round" style={{ 
+                      position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, 
+                      backgroundColor: user.onesignal_id ? '#e63946' : '#ccc', 
+                      transition: '.4s', borderRadius: '24px' 
+                    }}>
+                      <span style={{
+                        position: 'absolute', content: '""', height: '18px', width: '18px', 
+                        left: user.onesignal_id ? '22px' : '3px', bottom: '3px', 
+                        backgroundColor: 'white', transition: '.4s', borderRadius: '50%'
+                      }}></span>
+                    </span>
+                  </label>
+                </div>
+                <button className="btn btn-ghost btn-full" onClick={() => setModal('profile')}>Volver</button>
               </div>
             )}
 
