@@ -1,0 +1,50 @@
+name: iOS Build
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build_ios:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install Dependencies
+        run: npm install
+        
+      - name: Build Web Assets
+        run: npm run build
+        
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods
+
+      - name: Sync Capacitor iOS
+        run: npx cap sync ios
+        
+      - name: Build iOS App
+        run: |
+          cd ios/App
+          # This builds an unsigned .xcarchive. To build an .ipa you will need to setup 
+          # provisioning profiles and certificates in GitHub Secrets.
+          xcodebuild clean archive \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -archivePath $PWD/build/App.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+            
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcarchive
+          path: ios/App/build/App.xcarchive
