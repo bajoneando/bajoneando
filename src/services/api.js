@@ -1307,7 +1307,7 @@ export async function validateOrderAvailability(localIds, itemIds) {
 // ═══════════════════════════════════════════════════
 // PEDIDOS
 // ═══════════════════════════════════════════════════
-export async function crearPedido({ userId, pedidoId, direccion, metodoPago, observaciones, tipoEntrega, items, emailCliente, nombreCliente, estadoInicial, totalCalculado, lat, lng, precioEnvio, cuponId = null, descuentoCupon = 0, creditoWallet = 0, promociones_aplicadas = [], ganancia_credito = 0 }) {
+export async function crearPedido({ userId, pedidoId, direccion, metodoPago, observaciones, tipoEntrega, items, emailCliente, nombreCliente, estadoInicial, totalCalculado, lat, lng, precioEnvio, cuponId = null, descuentoCupon = 0, creditoWallet = 0, promociones_aplicadas = [], ganancia_credito = 0, origen_pedido = 'enlace_local' }) {
   const total = totalCalculado !== undefined ? totalCalculado : items.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
   const estado = estadoInicial || 'Pendiente';
 
@@ -1375,7 +1375,7 @@ export async function crearPedido({ userId, pedidoId, direccion, metodoPago, obs
     }
   }
 
-  // Actualizar el "total" (subtotal del local) en pedidos_locales
+  // Actualizar el "total" (subtotal del local) en pedidos_locales y el origen_pedido
   try {
     const localTotals = {};
     for (const i of items) {
@@ -1385,12 +1385,35 @@ export async function crearPedido({ userId, pedidoId, direccion, metodoPago, obs
     }
     for (const [lid, totalLocal] of Object.entries(localTotals)) {
       await supabase.from('pedidos_locales')
-        .update({ total: totalLocal })
+        .update({ total: totalLocal, origen_pedido })
         .eq('pedido_id', data.pedido_id)
         .eq('local_id', lid);
     }
   } catch (err) {
     console.error("Error actualizando totales en pedidos_locales:", err);
+  }
+
+  // Atribución de Campaña CRM y Motor de Hábitos (Ventana de 24 hs)
+  try {
+    const rawAttribution = localStorage.getItem('wepi_crm_attribution');
+    if (rawAttribution) {
+      const attr = JSON.parse(rawAttribution);
+      const attrAgeMs = new Date() - new Date(attr.timestamp);
+      // Validar ventana de 24 horas (86.400.000 ms)
+      if (attrAgeMs <= 24 * 60 * 60 * 1000 && attr.campaign) {
+        await supabase.from('pedidos_general')
+          .update({
+            origen_campana: attr.campaign,
+            origen_canal: attr.channel || 'desconocido',
+            origen_medio: attr.medium || 'direct'
+          })
+          .eq('id', data.pedido_id);
+
+        console.log(`🎯 Atribución CRM registrada para pedido ${data.pedido_id}:`, attr.campaign);
+      }
+    }
+  } catch (errAttr) {
+    console.warn("Error asociando atribución CRM al pedido:", errAttr);
   }
 
   // Otorgar puntos de campaña mundialista (try-catch para no romper el flujo de pedidos)
@@ -1877,7 +1900,7 @@ export async function getPedidosLocalesCompletosByLocal(localId) {
   // 1. Fetch orders from pedidos_locales (Limit 50 to guarantee massive performance)
   const { data: localOrders, error: localErr } = await supabase
     .from('pedidos_locales')
-    .select('id, pedido_id, local_id, total, estado')
+    .select('id, pedido_id, local_id, total, estado, origen_pedido')
     .eq('local_id', localId)
     .order('created_at', { ascending: false })
     .limit(50);
@@ -1964,6 +1987,7 @@ export async function getPedidosLocalesCompletosByLocal(localId) {
       repartidorNombre: rep.nombre || null,
       repartidorTelefono: rep.telefono || null,
       localId: p.local_id,
+      origen_pedido: p.origen_pedido || 'enlace_local',
       precioEnvio: Number(gen.precio_envio || gen.costo_envio || gen.envio || gen.costo_delivery) || 0,
       totalLocal: Number(p.total) || items.reduce((acc, item) => acc + (Number(item[7]) || 0), 0),
     };
@@ -6123,6 +6147,156 @@ export async function adminDeleteCRMAutomation(id) {
     .eq('id', id);
   if (error) throw error;
   return { success: true };
+}
+
+export async function adminGetCRMAutomationMatrix() {
+  try {
+    const { data, error } = await supabase
+      .from('crm_automation_matrix')
+      .select('*')
+      .eq('id', 'main_matrix')
+      .maybeSingle();
+
+    if (!error && data && data.matrix_data) return data.matrix_data;
+  } catch (e) {
+    console.warn("Table crm_automation_matrix not found, trying fallback configuracion:", e);
+  }
+
+  try {
+    const { data: config } = await supabase
+      .from('configuracion')
+      .select('crm_automation_matrix')
+      .eq('id', 'global')
+      .maybeSingle();
+
+    if (config && config.crm_automation_matrix) {
+      return config.crm_automation_matrix;
+    }
+  } catch (err) {
+    console.error("Error fallback configuracion matrix:", err);
+  }
+
+  return null;
+}
+
+export async function adminSaveCRMAutomationMatrix(matrixData) {
+  try {
+    const { data, error } = await supabase
+      .from('crm_automation_matrix')
+      .upsert({
+        id: 'main_matrix',
+        matrix_data: matrixData,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .maybeSingle();
+
+    if (!error && data) return data;
+
+    if (error && (error.message.includes('Could not find the table') || error.code === 'PGRST204' || error.code === '42P01')) {
+      const { error: fallbackError } = await supabase
+        .from('configuracion')
+        .update({
+          crm_automation_matrix: matrixData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 'global');
+
+      if (fallbackError) throw new Error(fallbackError.message);
+      return { id: 'main_matrix', matrix_data: matrixData };
+    }
+
+    if (error) throw new Error(error.message);
+    return data;
+  } catch (err) {
+    if (err.message && err.message.includes('Could not find the table')) {
+      const { error: fallbackError } = await supabase
+        .from('configuracion')
+        .update({
+          crm_automation_matrix: matrixData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 'global');
+      if (fallbackError) throw new Error(fallbackError.message);
+      return { id: 'main_matrix', matrix_data: matrixData };
+    }
+    throw err;
+  }
+}
+
+export async function adminGetWepiHabitsConfig() {
+  try {
+    const { data, error } = await supabase
+      .from('wepi_habit_config')
+      .select('*')
+      .eq('id', 'main_habits')
+      .maybeSingle();
+
+    if (!error && data && data.config_data) return data.config_data;
+  } catch (e) {
+    console.warn("Table wepi_habit_config not found, trying fallback configuracion:", e);
+  }
+
+  try {
+    const { data: config } = await supabase
+      .from('configuracion')
+      .select('wepi_habit_config')
+      .eq('id', 'global')
+      .maybeSingle();
+
+    if (config && config.wepi_habit_config) {
+      return config.wepi_habit_config;
+    }
+  } catch (err) {
+    console.error("Error fallback configuracion habits:", err);
+  }
+
+  return null;
+}
+
+export async function adminSaveWepiHabitsConfig(habitsConfig) {
+  try {
+    const { data, error } = await supabase
+      .from('wepi_habit_config')
+      .upsert({
+        id: 'main_habits',
+        config_data: habitsConfig,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .maybeSingle();
+
+    if (!error && data) return data;
+
+    if (error && (error.message.includes('Could not find the table') || error.code === 'PGRST204' || error.code === '42P01')) {
+      const { error: fallbackError } = await supabase
+        .from('configuracion')
+        .update({
+          wepi_habit_config: habitsConfig,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 'global');
+
+      if (fallbackError) throw new Error(fallbackError.message);
+      return { id: 'main_habits', config_data: habitsConfig };
+    }
+
+    if (error) throw new Error(error.message);
+    return data;
+  } catch (err) {
+    if (err.message && err.message.includes('Could not find the table')) {
+      const { error: fallbackError } = await supabase
+        .from('configuracion')
+        .update({
+          wepi_habit_config: habitsConfig,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 'global');
+      if (fallbackError) throw new Error(fallbackError.message);
+      return { id: 'main_habits', config_data: habitsConfig };
+    }
+    throw err;
+  }
 }
 
 export async function adminGetCRMCampaigns() {

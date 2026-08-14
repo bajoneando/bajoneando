@@ -4054,8 +4054,11 @@ export default function PruebasWalletApp() {
                             await PushNotifications.register();
                             toast.loading("Activando notificaciones...", { id: 'push-toast' });
                             setTimeout(() => {
-                              window.location.reload();
-                            }, 3000);
+                              if (user) user.onesignal_id = 'activado'; // Actualizar visualmente
+                              toast.success("¡Notificaciones activadas correctamente!", { id: 'push-toast' });
+                              setModal('configuracion_refresh'); // Forzar render
+                              setTimeout(() => setModal('configuracion'), 10);
+                            }, 2000);
                           } catch (err) {
                             toast.error("Error al activar: " + err.message);
                           }
@@ -4063,8 +4066,10 @@ export default function PruebasWalletApp() {
                            toast.loading("Desactivando...", { id: 'push-toast' });
                            import('../services/api').then(api => {
                              api.usuarioUpdateOneSignalId(user.id, null).then(() => {
+                               if (user) user.onesignal_id = null; // Actualizar visualmente
                                toast.success("Notificaciones desactivadas", { id: 'push-toast' });
-                               setTimeout(() => window.location.reload(), 1000);
+                               setModal('configuracion_refresh');
+                               setTimeout(() => setModal('configuracion'), 10);
                              });
                            });
                         }

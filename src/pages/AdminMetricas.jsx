@@ -105,18 +105,26 @@ const AdminMetricas = () => {
                     ciudad: m.locales?.ciudad || 'Desconocida',
                     slug: m.locales?.slug || '',
                     visitas_totales: 0,
-                    visitas_whatsapp: 0,
+                    visitas_wepi: 0,
                     visitas_enlace_propio: 0,
+                    visitas_whatsapp: 0,
                     carritos_creados: 0,
-                    pedidos_creados: 0
+                    pedidos_creados: 0,
+                    pedidos_entregados_totales: 0,
+                    pedidos_entregados_wepi: 0,
+                    pedidos_entregados_enlace_propio: 0
                 };
             }
 
             groups[localId].visitas_totales += (m.visitas_totales || 0);
-            groups[localId].visitas_whatsapp += (m.visitas_whatsapp || 0);
+            groups[localId].visitas_wepi += (m.visitas_wepi || 0);
             groups[localId].visitas_enlace_propio += (m.visitas_enlace_propio || 0);
+            groups[localId].visitas_whatsapp += (m.visitas_whatsapp || 0);
             groups[localId].carritos_creados += (m.carritos_creados || 0);
             groups[localId].pedidos_creados += (m.pedidos_creados || 0);
+            groups[localId].pedidos_entregados_totales += (m.pedidos_entregados_totales || 0);
+            groups[localId].pedidos_entregados_wepi += (m.pedidos_entregados_wepi || 0);
+            groups[localId].pedidos_entregados_enlace_propio += (m.pedidos_entregados_enlace_propio || 0);
         });
 
         // Convertir a array y ordenar
@@ -152,19 +160,27 @@ const AdminMetricas = () => {
     const globals = useMemo(() => {
         const totals = {
             visitas_totales: 0,
-            visitas_whatsapp: 0,
+            visitas_wepi: 0,
             visitas_enlace_propio: 0,
+            visitas_whatsapp: 0,
             carritos_creados: 0,
             pedidos_creados: 0,
+            pedidos_entregados_totales: 0,
+            pedidos_entregados_wepi: 0,
+            pedidos_entregados_enlace_propio: 0,
             carritos_abandonados: 0
         };
 
         metricsByLocal.forEach(l => {
             totals.visitas_totales += l.visitas_totales;
-            totals.visitas_whatsapp += l.visitas_whatsapp;
+            totals.visitas_wepi += l.visitas_wepi;
             totals.visitas_enlace_propio += l.visitas_enlace_propio;
+            totals.visitas_whatsapp += l.visitas_whatsapp;
             totals.carritos_creados += l.carritos_creados;
             totals.pedidos_creados += l.pedidos_creados;
+            totals.pedidos_entregados_totales += l.pedidos_entregados_totales;
+            totals.pedidos_entregados_wepi += l.pedidos_entregados_wepi;
+            totals.pedidos_entregados_enlace_propio += l.pedidos_entregados_enlace_propio;
             totals.carritos_abandonados += l.carritos_abandonados;
         });
 
@@ -367,19 +383,20 @@ const AdminMetricas = () => {
                         <tr style={{ borderBottom: '2px solid var(--gray-200)', textAlign: 'left', fontSize: '0.85rem', color: 'var(--gray-500)', userSelect: 'none' }}>
                             <th style={{ padding: '12px 8px', cursor: 'pointer' }} onClick={() => handleSort('nombre')}>Local {sortField === 'nombre' && (sortAsc ? '▲' : '▼')}</th>
                             <th style={{ padding: '12px 8px', cursor: 'pointer' }} onClick={() => handleSort('ciudad')}>Ciudad {sortField === 'ciudad' && (sortAsc ? '▲' : '▼')}</th>
-                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('visitas_totales')}>Visitas {sortField === 'visitas_totales' && (sortAsc ? '▲' : '▼')}</th>
-                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('visitas_whatsapp')}>Visitas WA {sortField === 'visitas_whatsapp' && (sortAsc ? '▲' : '▼')}</th>
-                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('visitas_enlace_propio')}>Enlace Propio {sortField === 'visitas_enlace_propio' && (sortAsc ? '▲' : '▼')}</th>
-                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('carritos_creados')}>Carritos {sortField === 'carritos_creados' && (sortAsc ? '▲' : '▼')}</th>
+                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('visitas_totales')}>Visitas Tot. {sortField === 'visitas_totales' && (sortAsc ? '▲' : '▼')}</th>
+                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('visitas_wepi')}>Visitas Wepi {sortField === 'visitas_wepi' && (sortAsc ? '▲' : '▼')}</th>
+                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('visitas_enlace_propio')}>Visitas Enlace {sortField === 'visitas_enlace_propio' && (sortAsc ? '▲' : '▼')}</th>
                             <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('carritos_abandonados')}>Abandonos {sortField === 'carritos_abandonados' && (sortAsc ? '▲' : '▼')}</th>
-                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('pedidos_creados')}>Pedidos {sortField === 'pedidos_creados' && (sortAsc ? '▲' : '▼')}</th>
+                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('pedidos_entregados_totales')}>Compras Tot. {sortField === 'pedidos_entregados_totales' && (sortAsc ? '▲' : '▼')}</th>
+                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('pedidos_entregados_wepi')}>Compras Wepi {sortField === 'pedidos_entregados_wepi' && (sortAsc ? '▲' : '▼')}</th>
+                            <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('pedidos_entregados_enlace_propio')}>Compras Enlace {sortField === 'pedidos_entregados_enlace_propio' && (sortAsc ? '▲' : '▼')}</th>
                             <th style={{ padding: '12px 8px', cursor: 'pointer', textAlign: 'center' }} onClick={() => handleSort('conversion')}>Conv. % {sortField === 'conversion' && (sortAsc ? '▲' : '▼')}</th>
                         </tr>
                     </thead>
                     <tbody style={{ fontSize: '0.9rem', color: 'var(--gray-700)' }}>
                         {metricsByLocal.length === 0 ? (
                             <tr>
-                                <td colSpan="9" style={{ textAlign: 'center', padding: '24px', color: 'var(--gray-400)' }}>No hay datos disponibles para el período o ciudad seleccionados.</td>
+                                <td colSpan="10" style={{ textAlign: 'center', padding: '24px', color: 'var(--gray-400)' }}>No hay datos disponibles para el período o ciudad seleccionados.</td>
                             </tr>
                         ) : (
                             metricsByLocal.map(l => (
@@ -387,11 +404,12 @@ const AdminMetricas = () => {
                                     <td style={{ padding: '12px 8px', fontWeight: 700 }}>{l.nombre}</td>
                                     <td style={{ padding: '12px 8px', color: 'var(--gray-500)' }}>{l.ciudad}</td>
                                     <td style={{ padding: '12px 8px', textAlign: 'center', fontWeight: 600 }}>{l.visitas_totales}</td>
-                                    <td style={{ padding: '12px 8px', textAlign: 'center', color: '#0369a1', fontWeight: 600 }}>{l.visitas_whatsapp}</td>
+                                    <td style={{ padding: '12px 8px', textAlign: 'center', color: '#0369a1', fontWeight: 600 }}>{l.visitas_wepi}</td>
                                     <td style={{ padding: '12px 8px', textAlign: 'center', color: '#0f766e', fontWeight: 600 }}>{l.visitas_enlace_propio}</td>
-                                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>{l.carritos_creados}</td>
                                     <td style={{ padding: '12px 8px', textAlign: 'center', color: '#dc2626', fontWeight: 600 }}>{l.carritos_abandonados}</td>
-                                    <td style={{ padding: '12px 8px', textAlign: 'center', color: '#16a34a', fontWeight: 600 }}>{l.pedidos_creados}</td>
+                                    <td style={{ padding: '12px 8px', textAlign: 'center', color: '#16a34a', fontWeight: 600 }}>{l.pedidos_entregados_totales}</td>
+                                    <td style={{ padding: '12px 8px', textAlign: 'center', color: '#0369a1', fontWeight: 600 }}>{l.pedidos_entregados_wepi}</td>
+                                    <td style={{ padding: '12px 8px', textAlign: 'center', color: '#0f766e', fontWeight: 600 }}>{l.pedidos_entregados_enlace_propio}</td>
                                     <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                                         <span style={{ 
                                             padding: '4px 8px', 

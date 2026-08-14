@@ -1733,6 +1733,13 @@ export default function RestaurantDashboard() {
           await api.notifyOrderListo(pedido, nombreLocal);
         } else if (action === 'Entregado') {
           await api.notifyOrderEntregado(pedido);
+          // Increment metric for delivered orders
+          api.incrementarUsoMetrica(pedido.localId, 'pedidos_entregados_totales').catch(() => {});
+          if (pedido.origen_pedido === 'wepi') {
+            api.incrementarUsoMetrica(pedido.localId, 'pedidos_entregados_wepi').catch(() => {});
+          } else {
+            api.incrementarUsoMetrica(pedido.localId, 'pedidos_entregados_enlace').catch(() => {});
+          }
         } else if (action === 'Rechazado') {
           await api.notifyOrderRechazado(pedido, reason);
         }

@@ -1,0 +1,14 @@
+ios:
+  targets:
+    App:
+      buildSettings:
+        CODE_SIGN_ENTITLEMENTS: App/App.entitlements
+      xml:
+        - path: App/Info.plist
+          entries:
+            - UIBackgroundModes:
+                - remote-notification
+      entitlements:
+        - path: App/App.entitlements
+          entries:
+            - aps-environment: development

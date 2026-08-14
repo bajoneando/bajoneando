@@ -13,17 +13,24 @@ export default function PushNotificationManager() {
 
     PushNotifications.removeAllListeners();
 
-    PushNotifications.addListener('registration', (token) => {
-      console.log('Token registrado:', token.value);
-      setPushToken(token.value);
-      localStorage.setItem('push_token_temporal', token.value);
-      // ALERTA TEMPORAL PARA DEPUREAR EN IOS
-      window.alert("¡Exito! iOS nos dio un Token de Notificaciones: " + token.value.substring(0, 10) + "...");
+    PushNotifications.addListener('registration', async (token) => {
+      console.log('Token APNs o Android registrado:', token.value);
+      try {
+        const { FCM } = await import('@capacitor-community/fcm');
+        const fcmTokenResponse = await FCM.getToken();
+        const finalToken = fcmTokenResponse.token || token.value;
+        console.log('FCM Token obtenido:', finalToken);
+        setPushToken(finalToken);
+        localStorage.setItem('push_token_temporal', finalToken);
+      } catch (err) {
+        console.error("Error obteniendo FCM Token (usando fallback):", err);
+        setPushToken(token.value);
+        localStorage.setItem('push_token_temporal', token.value);
+      }
     });
 
     PushNotifications.addListener('registrationError', (error) => {
       console.error('Error al registrar:', JSON.stringify(error));
-      window.alert("Error registrando notificaciones en iOS: " + JSON.stringify(error));
     });
 
     const registerPush = async () => {
