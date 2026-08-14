@@ -271,6 +271,7 @@ export default function PruebasWalletApp() {
   const [menus, setMenus] = React.useState([]);
   const [menuTitle, setMenuTitle] = React.useState('');
   const [showMenus, setShowMenus] = React.useState(false);
+  const [orderOrigin, setOrderOrigin] = React.useState('enlace_local');
   const [loadingMenus, setLoadingMenus] = React.useState(false);
   const [favorites, setFavorites] = React.useState([]);
   const [cartOpen, setCartOpen] = React.useState(false);
@@ -1496,7 +1497,7 @@ export default function PruebasWalletApp() {
     setTargetMenuCategory(null);
   }, [search]);
 
-  const fetchMenusByLocal = React.useCallback((localId, catId = null) => {
+  const fetchMenusByLocal = React.useCallback((localId, catId = null, fromDirectLink = false) => {
     const local = (filteredLocals || locals).find(l => l.id === localId) || locals.find(l => l.id === localId);
     if (local && checkIsComingSoon(local)) {
       toast.error(`${local.nombre} estará disponible próximamente.`);
@@ -1504,9 +1505,15 @@ export default function PruebasWalletApp() {
     }
     setLoadingMenus(true);
     setSelectedLocal(local);
+    setOrderOrigin(fromDirectLink ? 'enlace_propio' : 'wepi');
 
     // Tracking: Local View
     api.trackDemandSignal('local_view', sessionId).catch(() => {});
+    
+    if (!fromDirectLink) {
+      api.incrementarUsoMetrica(localId, 'visitas_totales').catch(() => {});
+      api.incrementarUsoMetrica(localId, 'visitas_wepi').catch(() => {});
+    }
     
     // Auto-select delivery type if only one is available
     if (local) {
@@ -1607,7 +1614,7 @@ export default function PruebasWalletApp() {
             api.incrementarUsoMetrica(local.id, 'visitas_enlace_propio').catch(() => {});
           }
 
-          fetchMenusByLocal(local.id);
+          fetchMenusByLocal(local.id, null, true);
         } else if (local && local.admin_status !== 'Aceptado') {
           console.warn("⚠️ PruebasWalletApp: Local no aceptado:", local.nombre);
           toast.error("Este local aún no está habilitado.");
@@ -2363,6 +2370,7 @@ export default function PruebasWalletApp() {
             cart: cart.items,
             total: exactTotal,
             localId: cart.items[0]?.local_id,
+            origen_pedido: orderOrigin,
             metodoPago: mp,
             orderItems: orderItems,
             direccion: orderDataForCreation.direccion,
@@ -2649,7 +2657,6 @@ export default function PruebasWalletApp() {
       }
     }
   };
-
   const triggerMPCheckout = async (originalOrder) => {
     try {
       const pendingRaw = localStorage.getItem('pendingOrderDataPruebas');
@@ -2661,6 +2668,14 @@ export default function PruebasWalletApp() {
       if (pendingData.localId) {
         api.incrementarUsoMetrica(pendingData.localId, 'pedidos_creados').catch(() => {});
       }
+
+      const orderData = {
+        pedidoId: pendingData.pedidoId,
+        cart: pendingData.cart,
+        total: pendingData.total,
+        localId: pendingData.localId,
+        origen_pedido: pendingData.origen_pedido || 'enlace_local',
+      };
 
       const successUrl = "https://wepi.com.ar/pedir";
       
@@ -4000,10 +4015,75 @@ export default function PruebasWalletApp() {
                   <button className="btn btn-primary btn-full" onClick={() => setModal('editProfile')}>✍️  Editar perfil</button>
                   <button className="btn btn-secondary btn-full" onClick={() => { setModal(null); navigate('/mis-pedidos'); }}>📦 Mis pedidos</button>
                   <button className="btn btn-secondary btn-full" onClick={() => { fetchByCategory('favoritos', 'Mis favoritos'); setModal(null); }}>❤️ Mis favoritos</button>
+                  <button className="btn btn-secondary btn-full" onClick={() => setModal('configuracion')}>⚙️ Configuración</button>
                   <button className="btn btn-ghost btn-full" style={{ marginTop: '12px' }} onClick={() => { doLogout(); setModal(null); toast.success('Sesión cerrada'); }}>
                     Cerrar sesión
                   </button>
                 </div>
+              </div>
+            )}
+
+            {modal === 'configuracion' && user && (
+              <div>
+                <h2>Configuración</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0', padding: '16px', background: '#262626', borderRadius: '12px' }}>
+                  <span style={{ color: 'white', fontSize: '14px' }}>Notificaciones push</span>
+                  <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px' }}>
+                    <input 
+                      type="checkbox" 
+                      style={{ opacity: 0, width: 0, height: 0 }}
+                      checked={!!user.onesignal_id}
+                      onChange={async (e) => {
+                        const checked = e.target.checked;
+                        if (checked) {
+                          try {
+                            const { PushNotifications } = await import('@capacitor/push-notifications');
+                            const { Capacitor } = await import('@capacitor/core');
+                            if (!Capacitor.isNativePlatform()) {
+                               toast.error("Notificaciones solo disponibles en celular nativo");
+                               return;
+                            }
+                            let permStatus = await PushNotifications.checkPermissions();
+                            if (permStatus.receive === 'prompt') {
+                               permStatus = await PushNotifications.requestPermissions();
+                            }
+                            if (permStatus.receive !== 'granted') {
+                               toast.error("Permisos denegados. Actívalos en Ajustes del teléfono.");
+                               return;
+                            }
+                            await PushNotifications.register();
+                            toast.loading("Activando notificaciones...", { id: 'push-toast' });
+                            setTimeout(() => {
+                              window.location.reload();
+                            }, 3000);
+                          } catch (err) {
+                            toast.error("Error al activar: " + err.message);
+                          }
+                        } else {
+                           toast.loading("Desactivando...", { id: 'push-toast' });
+                           import('../services/api').then(api => {
+                             api.usuarioUpdateOneSignalId(user.id, null).then(() => {
+                               toast.success("Notificaciones desactivadas", { id: 'push-toast' });
+                               setTimeout(() => window.location.reload(), 1000);
+                             });
+                           });
+                        }
+                      }} 
+                    />
+                    <span className="slider round" style={{ 
+                      position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, 
+                      backgroundColor: user.onesignal_id ? '#e63946' : '#ccc', 
+                      transition: '.4s', borderRadius: '24px' 
+                    }}>
+                      <span style={{
+                        position: 'absolute', content: '""', height: '18px', width: '18px', 
+                        left: user.onesignal_id ? '22px' : '3px', bottom: '3px', 
+                        backgroundColor: 'white', transition: '.4s', borderRadius: '50%'
+                      }}></span>
+                    </span>
+                  </label>
+                </div>
+                <button className="btn btn-ghost btn-full" onClick={() => setModal('profile')}>Volver</button>
               </div>
             )}
 
