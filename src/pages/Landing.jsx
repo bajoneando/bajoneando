@@ -579,6 +579,7 @@ export default function Landing() {
           <div className="footer-links-col">
             <h5>Nosotros</h5>
             <a href="#vision-mision">Visión y Misión</a>
+            <Link to="/politicas-privacidad">Políticas de Privacidad</Link>
             <a href="https://wa.me/543756543610" target="_blank" rel="noopener noreferrer">Contacto</a>
           </div>
         </div>

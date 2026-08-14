@@ -23,6 +23,7 @@ import { useAuth } from './context/AuthContext';
 import * as api from './services/api';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Capacitor } from '@capacitor/core';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 function AdminRoute({ children }) {
   const { user } = useAuth();
@@ -66,6 +67,31 @@ function MaintenanceGuard({ children, configKey }) {
 
 export default function App() {
   const location = useLocation();
+
+  useEffect(() => {
+    // Captura de UTMs de Campañas CRM y Motor de Hábitos (Ventana de 24 hs)
+    try {
+      const searchParams = new URLSearchParams(location.search);
+      const utmSource = searchParams.get('utm_source');
+      const utmCampaign = searchParams.get('utm_campaign') || searchParams.get('campaign');
+      const utmMedium = searchParams.get('utm_medium');
+      const userId = searchParams.get('u') || searchParams.get('user_id');
+
+      if (utmSource || utmCampaign) {
+        const attributionData = {
+          campaign: utmCampaign || 'general',
+          channel: utmSource || 'link',
+          medium: utmMedium || 'direct',
+          user_id: userId || null,
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('wepi_crm_attribution', JSON.stringify(attributionData));
+        console.log('🎯 Atribución CRM capturada (Ventana 24h):', attributionData);
+      }
+    } catch (e) {
+      console.warn("Error capturando UTMs CRM:", e);
+    }
+  }, [location]);
 
   useEffect(() => {
     // 0. Version Check & Hard Update
@@ -288,6 +314,7 @@ export default function App() {
 
           <Route path="/confirmar-email" element={<ConfirmarEmail />} />
           <Route path="/ads" element={<WepiAds />} />
+          <Route path="/politicas-privacidad" element={<PrivacyPolicy />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
