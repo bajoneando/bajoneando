@@ -69,7 +69,8 @@ jobs:
             -configuration Release \
             -archivePath $PWD/build/App.xcarchive \
             CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE_SPECIFIER="Wepi_AppStore_Profile"
+            PROVISIONING_PROFILE_SPECIFIER="Wepi_AppStore_Profile" \
+            DEVELOPMENT_TEAM="JHVX9U858F"
 
           # Create ExportOptions.plist
           cat <<EOF > ExportOptions.plist
@@ -79,6 +80,8 @@ jobs:
           <dict>
             <key>method</key>
             <string>app-store</string>
+            <key>teamID</key>
+            <string>JHVX9U858F</string>
             <key>provisioningProfiles</key>
             <dict>
               <key>com.wepi.app</key>
