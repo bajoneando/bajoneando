@@ -4452,346 +4452,68 @@ export default function PruebasWalletApp() {
               Tu pedido <strong style={{color: '#0f172a'}}>#{confirmedOrderId}</strong> ha sido registrado con éxito y ya está en preparación.
             </p>
 
-            {surveyStepActive ? (
-              <div className="survey-container" style={{ textAlign: 'left', marginTop: '8px', borderTop: '1px solid #f1f5f9', paddingTop: '20px' }}>
-                <h4 style={{ fontSize: '1.05rem', fontWeight: '800', color: '#0f172a', marginBottom: '8px', fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  📱 ¡Ayudanos a mejorar Wepi!
-                </h4>
-                <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '18px', lineHeight: '1.4' }}>
-                  Queremos saber tu opinión sobre el desarrollo de nuestra App móvil oficial.
-                </p>
-
-                {/* Pregunta 1: Quiere App */}
-                <div style={{ marginBottom: '18px' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#334155', marginBottom: '8px' }}>
-                    ¿Te gustaría que sumemos una App de Wepi para celulares?
-                  </label>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      type="button"
-                      onClick={() => setSurveyQuiereApp(true)}
-                      style={{
-                        flex: 1,
-                        padding: '12px 10px',
-                        borderRadius: '12px',
-                        border: surveyQuiereApp === true ? '2px solid var(--red-600)' : '1px solid #e2e8f0',
-                        background: surveyQuiereApp === true ? '#fff1f2' : '#f8fafc',
-                        color: surveyQuiereApp === true ? 'var(--red-600)' : '#475569',
-                        fontWeight: '700',
-                        fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        boxShadow: surveyQuiereApp === true ? '0 4px 6px -1px rgba(225, 29, 72, 0.1)' : 'none'
-                      }}
-                    >
-                      Sí, me encantaría 👍
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSurveyQuiereApp(false);
-                        setSurveyDispositivo('');
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: '12px 10px',
-                        borderRadius: '12px',
-                        border: surveyQuiereApp === false ? '2px solid #64748b' : '1px solid #e2e8f0',
-                        background: surveyQuiereApp === false ? '#f1f5f9' : '#f8fafc',
-                        color: surveyQuiereApp === false ? '#334155' : '#475569',
-                        fontWeight: '700',
-                        fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        boxShadow: surveyQuiereApp === false ? '0 4px 6px -1px rgba(100, 116, 139, 0.1)' : 'none'
-                      }}
-                    >
-                      Prefiero usar la web 💻
-                    </button>
-                  </div>
-                </div>
-
-                {/* Pregunta 2: Tipo de dispositivo (Solo si quiere App) */}
-                {surveyQuiereApp === true && (
-                  <div style={{ marginBottom: '18px' }}>
-                    <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#334155', marginBottom: '8px' }}>
-                      ¿Qué tipo de dispositivo celular usás?
-                    </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      {[
-                        { value: 'Android', label: '🤖 Android' },
-                        { value: 'Apple', label: '🍎 iPhone' }
-                      ].map(option => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setSurveyDispositivo(option.value)}
-                          style={{
-                            padding: '11px 8px',
-                            borderRadius: '12px',
-                            border: surveyDispositivo === option.value ? '2px solid var(--red-600)' : '1px solid #e2e8f0',
-                            background: surveyDispositivo === option.value ? '#fff1f2' : '#f8fafc',
-                            color: surveyDispositivo === option.value ? 'var(--red-600)' : '#475569',
-                            fontWeight: '600',
-                            fontSize: '0.8rem',
-                            cursor: 'pointer',
-                            textAlign: 'center',
-                            transition: 'all 0.2s',
-                            boxShadow: surveyDispositivo === option.value ? '0 4px 6px -1px rgba(225, 29, 72, 0.1)' : 'none'
-                          }}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Pregunta 3: Motivo */}
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>
-                    ¿Por qué o qué te gustaría ver en la App? (Opcional)
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={surveyMotivo}
-                    onChange={(e) => setSurveyMotivo(e.target.value)}
-                    placeholder="Escribí tu motivo o comentario aquí..."
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '12px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '0.85rem',
-                      fontFamily: 'inherit',
-                      outline: 'none',
-                      resize: 'none',
-                      boxSizing: 'border-box',
-                      transition: 'border-color 0.2s',
-                      background: '#f8fafc'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = 'var(--red-600)'}
-                    onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
-                  />
-                </div>
-
-                {/* Botones de acción */}
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (surveyQuiereApp === null) {
-                        toast.error('Por favor, selecciona si te gustaría que sumemos la App.');
-                        return;
-                      }
-                      if (surveyQuiereApp === true && !surveyDispositivo) {
-                        toast.error('Por favor, selecciona tu tipo de dispositivo.');
-                        return;
-                      }
-                      setSurveySubmitting(true);
-                      try {
-                        await api.saveSurveyResponse({
-                          user_id: user.id,
-                          pedido_id: confirmedOrderId || null,
-                          quiere_app: surveyQuiereApp,
-                          motivo: surveyMotivo || null,
-                          dispositivo: surveyQuiereApp ? surveyDispositivo : null
-                        });
-                        toast.success('¡Gracias por tu respuesta! ❤️');
-                        setHasAnsweredSurvey(true);
-                        setSurveyStepActive(false);
-                      } catch (err) {
-                        toast.error('Error al guardar respuestas.');
-                      } finally {
-                        setSurveySubmitting(false);
-                      }
-                    }}
-                    disabled={surveySubmitting}
-                    style={{
-                      flex: 2,
-                      background: 'var(--red-600)',
-                      color: 'white',
-                      padding: '14px 20px',
-                      borderRadius: '12px',
-                      fontWeight: '700',
-                      fontSize: '0.9rem',
-                      border: 'none',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 15px rgba(220, 38, 38, 0.15)',
-                      transition: 'opacity 0.2s'
-                    }}
-                  >
-                    {surveySubmitting ? 'Enviando...' : 'Enviar y continuar'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setSurveySubmitting(true);
-                      try {
-                        await api.saveSurveyResponse({
-                          user_id: user.id,
-                          pedido_id: confirmedOrderId || null,
-                          quiere_app: null,
-                          motivo: null,
-                          dispositivo: null
-                        });
-                        setHasAnsweredSurvey(true);
-                        setSurveyStepActive(false);
-                      } catch (err) {
-                        console.error("Error saving skipped survey:", err);
-                        setSurveyStepActive(false);
-                      } finally {
-                        setSurveySubmitting(false);
-                      }
-                    }}
-                    disabled={surveySubmitting}
-                    style={{
-                      flex: 1,
-                      background: '#f1f5f9',
-                      color: '#475569',
-                      padding: '14px 20px',
-                      borderRadius: '12px',
-                      fontWeight: '700',
-                      fontSize: '0.9rem',
-                      border: 'none',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Omitir
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <button 
-                  className="btn btn-full" 
-                  style={{ marginBottom: '12px', background: 'var(--red-600)', color: 'white', padding: '14px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', border: 'none', cursor: 'pointer', boxShadow: '0 4px 15px rgba(220, 38, 38, 0.2)' }}
-                  onClick={() => {
-                    setShowConfirmedModal(false);
-                    setShowPwaSteps(true);
-                  }}
-                >
-                  🔔 Activar Notificaciones PWA
-                </button>
-
-                {!optInRegistered && (
-                  <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
-                    <input 
-                      type="checkbox" 
-                      id="wa-optin-confirmed"
-                      checked={whatsappCheckoutOptIn}
-                      onChange={async (e) => {
-                        const isChecked = e.target.checked;
-                        setWhatsappCheckoutOptIn(isChecked);
-                        if (isChecked) {
-                          let phone = (user && user.telefono) || '';
-                          if (!phone) {
-                            phone = prompt("Ingresá tu número de WhatsApp con código de área (ej: 5493756543610):");
-                            if (!phone) {
-                              setWhatsappCheckoutOptIn(false);
-                              return;
-                            }
-                          }
-                          setOptInLoading(true);
-                          try {
-                            const res = await api.registerWhatsappOptin({
-                              phoneNumber: phone,
-                              ciudad: activeCity || 'Santo Tomé',
-                              pedidoId: confirmedOrderId,
-                              userId: user?.id || null,
-                              tipo: 'delivery_update'
-                            });
-                            if (!res.error) {
-                              setOptInRegistered(true);
-                              toast.success('¡Listo! Te avisaremos cuando llegue tu pedido. 🛵');
-                            } else {
-                               toast.error(res.error || 'Por favor ingresá un número válido');
-                               setWhatsappCheckoutOptIn(false);
-                            }
-                          } catch (err) {
-                            console.error(err);
-                            toast.error('Error al registrar aviso por WhatsApp');
-                            setWhatsappCheckoutOptIn(false);
-                          } finally {
-                            setOptInLoading(false);
-                          }
+            {!optInRegistered && (
+              <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+                <input 
+                  type="checkbox" 
+                  id="wa-optin-confirmed"
+                  checked={whatsappCheckoutOptIn}
+                  onChange={async (e) => {
+                    const isChecked = e.target.checked;
+                    setWhatsappCheckoutOptIn(isChecked);
+                    if (isChecked) {
+                      let phone = (user && user.telefono) || '';
+                      if (!phone) {
+                        phone = prompt("Ingresá tu número de WhatsApp con código de área (ej: 5493756543610):");
+                        if (!phone) {
+                          setWhatsappCheckoutOptIn(false);
+                          return;
                         }
-                      }}
-                      style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#25D366' }}
-                    />
-                    <label htmlFor="wa-optin-confirmed" style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.4', cursor: 'pointer', margin: 0, marginTop: '2px', fontWeight: '500', textAlign: 'left' }}>
-                      {optInLoading ? 'Guardando...' : 'Avisarme por WhatsApp al llegar mi pedido'}
-                    </label>
-                  </div>
-                )}
-                <button 
-                  className="btn btn-secondary btn-full"
-                  style={{ padding: '14px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}
-                  onClick={() => setShowConfirmedModal(false)}
-                >
-                  Cerrar
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {showPwaSteps && (
-        <div className="modal-overlay" style={{ zIndex: 11000 }} onClick={() => setShowPwaSteps(false)}>
-          <div className="modal-box animate-fade-in" style={{ maxWidth: '450px', textAlign: 'left', padding: '24px', background: 'white', borderRadius: '24px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.3rem', fontWeight: '800', marginBottom: '12px', color: '#0f172a', fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
-              📲 Recibí alertas en tiempo real
-            </h3>
-            <p style={{ color: '#475569', fontSize: '0.9rem', marginBottom: '16px', lineHeight: '1.5' }}>
-              Para recibir notificaciones del estado de tu envío en tu celular, debés agregar Wepi a tu pantalla de inicio:
-            </p>
-            
-            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', marginBottom: '12px', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '6px', color: '#0f172a' }}>🤖 En Android (Chrome):</h4>
-              <ol style={{ paddingLeft: '18px', fontSize: '0.85rem', color: '#475569', margin: 0, lineHeight: '1.4' }}>
-                <li style={{ marginBottom: '4px' }}>Presioná el menú de tres puntos <strong>⫶</strong> arriba a la derecha.</li>
-                <li>Seleccioná <strong>"Instalar aplicación"</strong> o <strong>"Agregar a la pantalla principal"</strong>.</li>
-              </ol>
-            </div>
-
-            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ fontWeight: '700', fontSize: '0.9rem', marginBottom: '6px', color: '#0f172a' }}>🍎 En iOS (Safari / iPhone):</h4>
-              <ol style={{ paddingLeft: '18px', fontSize: '0.85rem', color: '#475569', margin: 0, lineHeight: '1.4' }}>
-                <li style={{ marginBottom: '4px' }}>Presioná el botón de compartir <strong>📤</strong> abajo en la barra.</li>
-                <li>Deslizá y seleccioná <strong>"Agregar al inicio"</strong> <strong>➕</strong>.</li>
-              </ol>
-            </div>
-
-            {deferredPrompt && (
-              <button 
-                className="btn btn-full"
-                style={{ marginBottom: '10px', background: 'var(--red-600)', color: 'white', padding: '14px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', border: 'none', cursor: 'pointer' }}
-                onClick={() => {
-                  deferredPrompt.prompt();
-                  deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                      console.log('User accepted the install prompt');
+                      }
+                      setOptInLoading(true);
+                      try {
+                        const res = await api.registerWhatsappOptin({
+                          phoneNumber: phone,
+                          ciudad: activeCity || 'Santo Tomé',
+                          pedidoId: confirmedOrderId,
+                          userId: user?.id || null,
+                          tipo: 'delivery_update'
+                        });
+                        if (!res.error) {
+                          setOptInRegistered(true);
+                          toast.success('¡Listo! Te avisaremos cuando llegue tu pedido. 🛵');
+                        } else {
+                           toast.error(res.error || 'Por favor ingresá un número válido');
+                           setWhatsappCheckoutOptIn(false);
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        toast.error('Error al registrar aviso por WhatsApp');
+                        setWhatsappCheckoutOptIn(false);
+                      } finally {
+                        setOptInLoading(false);
+                      }
                     }
-                    setDeferredPrompt(null);
-                    setShowPwaSteps(false);
-                  });
-                }}
-              >
-                Instalar Ahora
-              </button>
+                  }}
+                  style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#25D366' }}
+                />
+                <label htmlFor="wa-optin-confirmed" style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.4', cursor: 'pointer', margin: 0, marginTop: '2px', fontWeight: '500', textAlign: 'left' }}>
+                  {optInLoading ? 'Guardando...' : 'Avisarme por WhatsApp al llegar mi pedido'}
+                </label>
+              </div>
             )}
-
             <button 
               className="btn btn-secondary btn-full"
               style={{ padding: '14px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}
-              onClick={() => setShowPwaSteps(false)}
+              onClick={() => setShowConfirmedModal(false)}
             >
-              Entendido
+              Cerrar
             </button>
           </div>
         </div>
       )}
+
+
 
       {/* ——— Ice Cream Modal ——— */}
       {iceCreamModal && (

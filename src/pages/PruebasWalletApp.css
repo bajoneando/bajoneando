@@ -13,7 +13,7 @@
   right: 0;
   z-index: 100;
   background: var(--red-800);
-  padding: 10px 16px;
+  padding: max(10px, env(safe-area-inset-top)) 16px 10px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -176,11 +176,11 @@
   max-width: 1000px;
   width: 100%;
   margin: 0 auto;
-  padding: 90px 16px 40px;
+  padding: calc(90px + env(safe-area-inset-top)) 16px 40px;
 }
 
 @media (max-width: 768px) {
-  .app-main { padding-top: 120px; }
+  .app-main { padding-top: calc(120px + env(safe-area-inset-top)); }
   .app-header {
     display: grid;
     grid-template-columns: auto 1fr;
