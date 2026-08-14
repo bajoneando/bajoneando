@@ -72,11 +72,7 @@ jobs:
             -project App.xcodeproj \
             -scheme App \
             -configuration Release \
-            -archivePath $PWD/build/App.xcarchive \
-            CODE_SIGN_STYLE=Manual \
-            PROVISIONING_PROFILE_SPECIFIER="Wepi_AppStore_Profile" \
-            DEVELOPMENT_TEAM="JHVX9U858F" \
-            "CODE_SIGN_IDENTITY=Apple Distribution"
+            -archivePath $PWD/build/App.xcarchive
 
       - name: Export IPA
         run: |
