@@ -64,7 +64,7 @@ jobs:
           cd ios/App
           # Build the Archive
           xcodebuild archive \
-            -workspace App.xcworkspace \
+            -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -archivePath $PWD/build/App.xcarchive \
