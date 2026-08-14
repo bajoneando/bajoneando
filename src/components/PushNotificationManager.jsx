@@ -8,45 +8,38 @@ export default function PushNotificationManager() {
   const { user } = useAuth();
   const [pushToken, setPushToken] = useState(null);
 
-  // Efecto 1: Registrar el dispositivo una sola vez al abrir la app
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    // Limpiar listeners viejos para evitar duplicados en re-renders
     PushNotifications.removeAllListeners();
 
     PushNotifications.addListener('registration', (token) => {
-      console.log('Token de notificaciones registrado:', token.value);
+      console.log('Token registrado:', token.value);
       setPushToken(token.value);
-      // Guardar también en localStorage por si acaso
       localStorage.setItem('push_token_temporal', token.value);
+      // ALERTA TEMPORAL PARA DEPUREAR EN IOS
+      window.alert("¡Exito! iOS nos dio un Token de Notificaciones: " + token.value.substring(0, 10) + "...");
     });
 
     PushNotifications.addListener('registrationError', (error) => {
-      console.error('Error al registrar notificaciones:', JSON.stringify(error));
-    });
-
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('Notificación recibida en primer plano:', JSON.stringify(notification));
-    });
-
-    PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-      console.log('Usuario tocó la notificación:', JSON.stringify(notification));
+      console.error('Error al registrar:', JSON.stringify(error));
+      window.alert("Error registrando notificaciones en iOS: " + JSON.stringify(error));
     });
 
     const registerPush = async () => {
-      let permStatus = await PushNotifications.checkPermissions();
-
-      if (permStatus.receive === 'prompt') {
-        permStatus = await PushNotifications.requestPermissions();
+      try {
+        let permStatus = await PushNotifications.checkPermissions();
+        if (permStatus.receive === 'prompt') {
+          permStatus = await PushNotifications.requestPermissions();
+        }
+        if (permStatus.receive !== 'granted') {
+          window.alert("Permiso denegado por el usuario de iOS.");
+          return;
+        }
+        await PushNotifications.register();
+      } catch (err) {
+        window.alert("Crash al pedir permisos: " + err.message);
       }
-
-      if (permStatus.receive !== 'granted') {
-        console.warn('El usuario denegó los permisos de notificaciones push');
-        return;
-      }
-
-      await PushNotifications.register();
     };
 
     registerPush();
@@ -54,16 +47,16 @@ export default function PushNotificationManager() {
     return () => {
       PushNotifications.removeAllListeners();
     };
-  }, []); // Se ejecuta solo al montar el componente
+  }, []);
 
-  // Efecto 2: Guardar en base de datos cuando tengamos AMBOS (usuario y token)
   useEffect(() => {
     const token = pushToken || localStorage.getItem('push_token_temporal');
     
     if (user?.id && token) {
-      console.log('Guardando token en la base de datos para el usuario:', user.id);
-      api.usuarioUpdateOneSignalId(user.id, token).catch(err => {
-        console.error("Error guardando token push:", err);
+      api.usuarioUpdateOneSignalId(user.id, token).then(() => {
+        // window.alert("Token guardado en base de datos correctamente para el usuario.");
+      }).catch(err => {
+        window.alert("Error guardando en Supabase: " + err.message);
       });
     }
   }, [user, pushToken]);
