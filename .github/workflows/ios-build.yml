@@ -59,17 +59,28 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
 
-      - name: Build and Export iOS App
+      - name: Set Build Number
         run: |
           cd ios/App
-          # Build the Archive
+          # Usa el número de ejecución de GitHub Actions como Build Number para evitar duplicados en TestFlight
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" App/Info.plist
+
+      - name: Build and Archive
+        run: |
+          cd ios/App
           xcodebuild archive \
             -project App.xcodeproj \
             -scheme App \
             -configuration Release \
-            -archivePath $PWD/build/App.xcarchive
+            -archivePath $PWD/build/App.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="Wepi_AppStore_Profile" \
+            DEVELOPMENT_TEAM="JHVX9U858F" \
+            "CODE_SIGN_IDENTITY=Apple Distribution"
 
-          # Create ExportOptions.plist
+      - name: Export IPA
+        run: |
+          cd ios/App
           cat <<EOF > ExportOptions.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -77,8 +88,6 @@ jobs:
           <dict>
             <key>method</key>
             <string>app-store</string>
-            <key>teamID</key>
-            <string>JHVX9U858F</string>
             <key>provisioningProfiles</key>
             <dict>
               <key>com.wepi.app</key>
@@ -87,8 +96,7 @@ jobs:
           </dict>
           </plist>
           EOF
-
-          # Export the IPA
+          
           xcodebuild -exportArchive \
             -archivePath $PWD/build/App.xcarchive \
             -exportOptionsPlist ExportOptions.plist \
