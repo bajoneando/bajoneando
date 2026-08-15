@@ -654,6 +654,23 @@ export async function repartidorUpdateOneSignalId(driverId, onesignalId) {
   return { success: true };
 }
 
+export async function repartidorUpdateFcmToken(driverId, fcmToken) {
+  if (!fcmToken || typeof fcmToken !== 'string') return { success: false };
+  console.log(`🚀 DB: Actualizando FCM Token para Driver ${driverId}:`, fcmToken);
+  
+  // Update in database
+  const { error } = await supabase.from('repartidores')
+    .update({ fcm_token: fcmToken })
+    .eq('id', driverId);
+    
+  if (error) {
+    console.error("❌ Error actualizando FCM Token en DB:", error);
+    throw new Error(error.message);
+  }
+  console.log("✅ DB: FCM Token actualizado exitosamente.");
+  return { success: true };
+}
+
 export async function updateDriverCoords(driverId, lat, lng) {
   const { error } = await supabase
     .from('repartidores')

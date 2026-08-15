@@ -86,12 +86,11 @@ Deno.serve(async (req) => {
       // 2. Obtener repartidores aceptados con su partner_id
       const { data: drivers, error: driversErr } = await supabase
         .from('repartidores')
-        .select('onesignal_id, locales_prioridad, ciudad, partner_id')
-        .eq('admin_status', 'Aceptado')
-        .not('onesignal_id', 'is', null);
+        .select('onesignal_id, fcm_token, locales_prioridad, ciudad, partner_id')
+        .eq('admin_status', 'Aceptado');
 
       if (driversErr || !drivers || drivers.length === 0) {
-        console.log("⚠️ [Broadcast] No hay repartidores con OneSignal ID en la base de datos.");
+        console.log("⚠️ [Broadcast] No hay repartidores en la base de datos.");
         return new Response(JSON.stringify({ success: true, message: 'No drivers to notify' }), {
           headers: corsHeaders
         });
@@ -136,35 +135,59 @@ Deno.serve(async (req) => {
       const priorityDrivers = finalLocalId ? targetDrivers.filter(d => d.locales_prioridad?.includes(finalLocalId)) : [];
       const otherDrivers = targetDrivers.filter(d => !priorityDrivers.includes(d));
 
-      const sendToOneSignal = async (targetDriversList: any[]) => {
-        const ids = targetDriversList.map(d => d.onesignal_id).filter(Boolean);
-        if (ids.length === 0) return;
+      const sendToHybrid = async (targetDriversList: any[]) => {
+        const osIds = targetDriversList.map(d => d.onesignal_id).filter(Boolean);
+        const fcmTokens = targetDriversList.map(d => d.fcm_token).filter(Boolean);
+        
+        if (osIds.length === 0 && fcmTokens.length === 0) return;
 
-        const payload = {
-          app_id: onesignalAppId,
-          include_subscription_ids: ids,
-          headings: { "es": titleStr, "en": titleStr },
-          contents: { "es": messageStr, "en": messageStr },
-          url: "https://wepi.com.ar/repartidores",
-          data: { pedidoId: broadcastOrderId, type: 'new_order_broadcast' }
-        };
+        // Enviar por OneSignal
+        if (osIds.length > 0) {
+          const payloadOS = {
+            app_id: onesignalAppId,
+            include_subscription_ids: osIds,
+            headings: { "es": titleStr, "en": titleStr },
+            contents: { "es": messageStr, "en": messageStr },
+            url: "https://wepi.com.ar/repartidores",
+            data: { pedidoId: broadcastOrderId, type: 'new_order_broadcast' }
+          };
 
-        const response = await fetch("https://onesignal.com/api/v1/notifications", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-            "Authorization": `Basic ${onesignalApiKey}`,
-          },
-          body: JSON.stringify(payload),
-        });
-        const result = await response.json();
-        console.log(`📡 [Broadcast OneSignal] Enviado a ${ids.length} repartidores. Respuesta:`, JSON.stringify(result));
+          fetch("https://onesignal.com/api/v1/notifications", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json; charset=utf-8",
+              "Authorization": `Basic ${onesignalApiKey}`,
+            },
+            body: JSON.stringify(payloadOS),
+          }).then(res => res.json()).then(res => console.log(`📡 [Broadcast OS] Enviado a ${osIds.length}.`, JSON.stringify(res))).catch(console.error);
+        }
+
+        // Enviar por Firebase FCM (llamando a la otra Edge Function para reusar SDK Admin)
+        if (fcmTokens.length > 0) {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+          const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+          
+          fetch(`${supabaseUrl}/functions/v1/send-firebase-push`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseServiceRole}`
+            },
+            body: JSON.stringify({
+              tokens: fcmTokens,
+              title: titleStr,
+              message: messageStr,
+              data: { pedidoId: broadcastOrderId, type: 'new_order_broadcast' },
+              url: "https://wepi.com.ar/repartidores"
+            })
+          }).then(res => res.json()).then(res => console.log(`🔥 [Broadcast FCM] Enviado a ${fcmTokens.length}.`, JSON.stringify(res))).catch(console.error);
+        }
       };
 
       // Si hay repartidores con prioridad, enviamos inmediato a ellos, y programamos con waitUntil el resto
       if (priorityDrivers.length > 0) {
         console.log(`🔔 [Broadcast] Enviando notificación inmediata a ${priorityDrivers.length} repartidores prioritarios.`);
-        await sendToOneSignal(priorityDrivers);
+        await sendToHybrid(priorityDrivers);
 
         if (otherDrivers.length > 0) {
           const delayedTask = async () => {
@@ -196,7 +219,7 @@ Deno.serve(async (req) => {
               }
 
               console.log(`[Broadcast-Delayed] El pedido sigue libre. Enviando al resto de los ${otherDrivers.length} repartidores.`);
-              await sendToOneSignal(otherDrivers);
+              await sendToHybrid(otherDrivers);
             } catch (err) {
               console.error("[Broadcast-Delayed] Error en tarea diferida:", err);
             }
@@ -214,7 +237,7 @@ Deno.serve(async (req) => {
         }
       } else {
         console.log(`🔔 [Broadcast] No hay prioritarios. Enviando notificación inmediata a todos los ${targetDrivers.length} repartidores.`);
-        await sendToOneSignal(targetDrivers);
+        await sendToHybrid(targetDrivers);
       }
 
       return new Response(JSON.stringify({ success: true, message: 'Broadcast initiated successfully' }), {

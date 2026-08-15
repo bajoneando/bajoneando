@@ -8,6 +8,8 @@ import { isValidEmail } from '../utils/validation';
 import toast from 'react-hot-toast';
 import MapProbandoComponent from '../components/MapProbandoComponent';
 import './DriverDashboard.css';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 function getDistanceMeters(lat1, lng1, lat2, lng2) {
   const R = 6371000; // Radio de la Tierra en metros
@@ -710,71 +712,88 @@ export default function DriverDashboard() {
       }
       loadData();
       
-      // ─── Sync OneSignal ID ───
-      if (window.OneSignalDeferred) {
-        window.OneSignalDeferred.push(async (OneSignal) => {
-          try {
-            console.log("🔔 OneSignal: Checking subscription for driver...");
-            
-            const updateStatus = () => {
-              const perm = OneSignal.Notifications.permission;
-              setNotificationStatus(perm ? 'granted' : (OneSignal.Notifications.permissionNative === 'denied' ? 'denied' : 'default'));
-            };
-
-            updateStatus();
-
-            // 1. Initial Sync
-            const currentSubscription = OneSignal.User.PushSubscription;
-            if (currentSubscription.id) {
-              console.log("🔔 OneSignal Current ID:", currentSubscription.id);
-              await api.repartidorUpdateOneSignalId(driver.id, currentSubscription.id);
-              console.log("✅ OneSignal ID synced to database.");
-            }
-
-            // 2. Listeners for changes (e.g. user clears cache/re-registers)
-            OneSignal.Notifications.addEventListener("permissionChange", async (permission) => {
-              console.log("🔔 OneSignal Permission changed:", permission);
-              updateStatus();
-              // Si se concedió permiso, intentar sincronizar el ID de inmediato
-              if (permission) {
-                const sub = OneSignal.User.PushSubscription;
-                if (sub.id) {
-                  console.log("🔔 OneSignal Syncing on Permission Change:", sub.id);
-                  await api.repartidorUpdateOneSignalId(driver.id, sub.id).catch(console.error);
-                }
+      // ─── Sync Push Notifications (Hybrid Native/Web) ───
+      const platform = Capacitor.getPlatform();
+      if (platform === 'ios' || platform === 'android') {
+        // Native App: Use Firebase Cloud Messaging (FCM) via Capacitor PushNotifications
+        console.log("🔔 Push: Native environment detected. Using Firebase FCM.");
+        
+        PushNotifications.checkPermissions().then((res) => {
+          if (res.receive !== 'granted') {
+            PushNotifications.requestPermissions().then((res) => {
+              if (res.receive === 'denied') {
+                console.log("Push permissions denied.");
+                setNotificationStatus('denied');
+              } else {
+                setNotificationStatus('granted');
+                PushNotifications.register();
               }
             });
-
-            OneSignal.User.PushSubscription.addEventListener("change", async (event) => {
-              const newId = event.current?.id || OneSignal.User.PushSubscription.id;
-              console.log("🔔 OneSignal ID Change Event:", newId);
-              if (newId) {
-                await api.repartidorUpdateOneSignalId(driver.id, newId).catch(console.error);
-              }
-            });
-
-            // 3. Prompt logic (Refined for Safari)
-            // On iOS/Safari, autoprompting is blocked. We rely on the UI banner.
-            // On other platforms, we can try to prompt if active.
-            if (!isIOS && OneSignal.Notifications.permissionNative === 'default' && isActive) {
-              console.log("🔔 OneSignal: Autoprompting (Non-iOS)...");
-              const granted = await OneSignal.Notifications.requestPermission();
-              if (granted) {
-                // Pequeña espera para asegurar que la suscripción se cree
-                setTimeout(async () => {
-                  const subId = OneSignal.User.PushSubscription.id;
-                  if (subId) {
-                    console.log("🔔 OneSignal Syncing after Prompt (Deferred):", subId);
-                    await api.repartidorUpdateOneSignalId(driver.id, subId).catch(console.error);
-                  }
-                }, 1000);
-              }
-            }
-
-          } catch (err) {
-            console.error("❌ OneSignal Sync Error:", err);
+          } else {
+            setNotificationStatus('granted');
+            PushNotifications.register();
           }
         });
+
+        PushNotifications.addListener('registration', async (token) => {
+          console.log("✅ Firebase FCM Token obtained:", token.value);
+          await api.repartidorUpdateFcmToken(driver.id, token.value).catch(console.error);
+        });
+
+        PushNotifications.addListener('registrationError', (error) => {
+          console.error("❌ Firebase FCM Error:", error);
+        });
+
+      } else {
+        // PWA/Web: Use OneSignal
+        console.log("🔔 Push: Web environment detected. Using OneSignal.");
+        if (window.OneSignalDeferred) {
+          window.OneSignalDeferred.push(async (OneSignal) => {
+            try {
+              const updateStatus = () => {
+                const perm = OneSignal.Notifications.permission;
+                setNotificationStatus(perm ? 'granted' : (OneSignal.Notifications.permissionNative === 'denied' ? 'denied' : 'default'));
+              };
+              updateStatus();
+
+              const currentSubscription = OneSignal.User.PushSubscription;
+              if (currentSubscription.id) {
+                await api.repartidorUpdateOneSignalId(driver.id, currentSubscription.id);
+              }
+
+              OneSignal.Notifications.addEventListener("permissionChange", async (permission) => {
+                updateStatus();
+                if (permission) {
+                  const sub = OneSignal.User.PushSubscription;
+                  if (sub.id) {
+                    await api.repartidorUpdateOneSignalId(driver.id, sub.id).catch(console.error);
+                  }
+                }
+              });
+
+              OneSignal.User.PushSubscription.addEventListener("change", async (event) => {
+                const newId = event.current?.id || OneSignal.User.PushSubscription.id;
+                if (newId) {
+                  await api.repartidorUpdateOneSignalId(driver.id, newId).catch(console.error);
+                }
+              });
+
+              if (!isIOS && OneSignal.Notifications.permissionNative === 'default' && isActive) {
+                const granted = await OneSignal.Notifications.requestPermission();
+                if (granted) {
+                  setTimeout(async () => {
+                    const subId = OneSignal.User.PushSubscription.id;
+                    if (subId) {
+                      await api.repartidorUpdateOneSignalId(driver.id, subId).catch(console.error);
+                    }
+                  }, 1000);
+                }
+              }
+            } catch (err) {
+              console.error("❌ OneSignal Sync Error:", err);
+            }
+          });
+        }
       }
 
       fetchActiveLocales();
