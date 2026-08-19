@@ -70,5 +70,19 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.wepi.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.wepi.app</string>
+				<string>wepi</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

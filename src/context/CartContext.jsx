@@ -42,6 +42,8 @@ export function CartProvider({ children }) {
     return () => clearInterval(interval);
   }, []);
 
+  const [isCheckoutInProgress, setIsCheckoutInProgress] = useState(false);
+
   // ─────────────────────────────────────────────────────────────
   // DETECTOR Y REGISTRO AUTOMÁTICO DE CARRITO ABANDONADO
   // ─────────────────────────────────────────────────────────────
@@ -49,6 +51,11 @@ export function CartProvider({ children }) {
     if (!items || items.length === 0) return;
 
     const checkAndLogAbandonment = () => {
+      // Si el usuario está realizando la compra, confirmando o pagando vía Mercado Pago, NO es abandono
+      if (isCheckoutInProgress || sessionStorage.getItem('wepi_checkout_in_progress') === 'true') {
+        return;
+      }
+
       const uId = localStorage.getItem('userId');
       if (!uId) return;
 
@@ -86,7 +93,7 @@ export function CartProvider({ children }) {
       document.removeEventListener('visibilitychange', handleVisibilityOrPageHide);
       window.removeEventListener('pagehide', handleVisibilityOrPageHide);
     };
-  }, [items]);
+  }, [items, isCheckoutInProgress]);
 
   const isShops = window.location.pathname.startsWith('/shops');
   const costoEnvio = customShippingCost !== null ? customShippingCost : (isShops ? costoEnvioShops : costoEnvioDelivery);
@@ -122,7 +129,16 @@ export function CartProvider({ children }) {
     }).filter(Boolean));
   }, []);
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const markCheckoutStarted = useCallback(() => {
+    setIsCheckoutInProgress(true);
+    sessionStorage.setItem('wepi_checkout_in_progress', 'true');
+  }, []);
+
+  const clearCart = useCallback(() => {
+    setItems([]);
+    setIsCheckoutInProgress(false);
+    sessionStorage.removeItem('wepi_checkout_in_progress');
+  }, []);
 
   const subtotal = items.reduce((sum, i) => sum + (Number(i.precio) * i.qty), 0);
   const hasDrink = items.some(i => i.categoria?.toLowerCase().includes('bebida'));
@@ -133,7 +149,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider value={{
-      items, addItem, removeItem, updateQty, clearCart,
+      items, addItem, removeItem, updateQty, clearCart, markCheckoutStarted, setIsCheckoutInProgress,
       deliveryType, setDeliveryType,
       subtotal, shippingCost, total, totalItems, hasDrink,
       COSTO_ENVIO: costoEnvio,

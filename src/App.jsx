@@ -17,6 +17,7 @@ import ConfirmarEmail from './pages/ConfirmarEmail';
 import AdminDashboard from './pages/AdminDashboard';
 import ConsentBanner from './components/ConsentBanner';
 import PushNotificationManager from './components/PushNotificationManager';
+import AppRedirectHandler from './components/AppRedirectHandler';
 import Mundialista from './pages/Mundialista';
 import WepiAds from './pages/WepiAds';
 import { useAuth } from './context/AuthContext';
@@ -228,6 +229,7 @@ export default function App() {
     <AuthProvider>
       <CartProvider>
         <PushNotificationManager />
+        <AppRedirectHandler />
         <Routes>
           <Route path="/" element={Capacitor.isNativePlatform() ? <Navigate to="/pedir" replace /> : <Landing />} />
           <Route path="/mantenimiento" element={<Maintenance />} />

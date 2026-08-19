@@ -845,6 +845,11 @@ export default function CustomerApp() {
       }
       // --- FIN VALIDACIÓN ---
 
+      // Marcar que el usuario está realizando la compra para evitar falsos positivos de CARRITO_ABANDONADO
+      if (cart.markCheckoutStarted) {
+        cart.markCheckoutStarted();
+      }
+
       // 7. Calculate exact prices using new logic
       const calcSubtotal = cart.items.reduce((sum, i) => sum + (Number(i.precio) * i.qty), 0);
       const tieneBebida = cart.items.some(i => i.categoria?.toLowerCase() === 'bebidas');
