@@ -1765,13 +1765,16 @@ const AdminCRM = () => {
                                 </thead>
                                 <tbody>
                                     {historyLog
-                                        .filter(h => h.canal === 'whatsapp' || h.tipo?.includes('whatsapp') || h.metadata?.channel === 'whatsapp' || h.tipo?.includes('habit') || h.tipo?.includes('campana'))
+                                        .filter(h => h.canal === 'whatsapp' || h.tipo?.includes('whatsapp') || h.metadata?.channel === 'whatsapp' || h.tipo?.includes('habit') || h.tipo?.includes('campana') || h.tipo?.includes('rescate'))
                                         .filter(h => {
                                             const u = usuarios.find(usr => usr.id === h.usuario_id);
                                             const q = waSearchTerm.toLowerCase();
                                             const matchesSearch = !q || 
                                                 (u?.nombre && u.nombre.toLowerCase().includes(q)) ||
                                                 (u?.telefono && u.telefono.toLowerCase().includes(q)) ||
+                                                (h.metadata?.customer_name && h.metadata.customer_name.toLowerCase().includes(q)) ||
+                                                (h.metadata?.phone && h.metadata.phone.toLowerCase().includes(q)) ||
+                                                (h.metadata?.to && h.metadata.to.toLowerCase().includes(q)) ||
                                                 (h.descripcion && h.descripcion.toLowerCase().includes(q)) ||
                                                 (h.metadata?.template_name && h.metadata.template_name.toLowerCase().includes(q));
 
@@ -1779,13 +1782,13 @@ const AdminCRM = () => {
                                             if (waModuleFilter === 'habitos') matchesModule = h.tipo?.includes('habit') || h.tipo?.includes('desayuno') || h.tipo?.includes('almuerzo') || h.tipo?.includes('cena');
                                             else if (waModuleFilter === 'matriz') matchesModule = h.tipo?.includes('auto') || h.tipo?.includes('matriz') || h.tipo?.includes('carrito');
                                             else if (waModuleFilter === 'campanas') matchesModule = h.tipo?.includes('campana');
-                                            else if (waModuleFilter === 'seguimientos') matchesModule = h.tipo?.includes('seguimiento') || h.tipo?.includes('rescate');
+                                            else if (waModuleFilter === 'seguimientos') matchesModule = h.tipo?.includes('seguimiento') || h.tipo?.includes('rescate') || h.metadata?.template_name === 'sin_repartidores';
 
                                             return matchesSearch && matchesModule;
                                         })
                                         .map((log) => {
                                             const u = usuarios.find(usr => usr.id === log.usuario_id);
-                                            const rawPhone = u?.telefono || 'Sin teléfono';
+                                            const rawPhone = u?.telefono || log.metadata?.phone || log.metadata?.to || 'Sin teléfono';
                                             let cleanPhone = rawPhone.replace(/[\s-]/g, '');
                                             if (cleanPhone.length >= 10 && !cleanPhone.startsWith('+') && !cleanPhone.startsWith('5')) {
                                                 cleanPhone = '549' + cleanPhone;
@@ -1793,18 +1796,19 @@ const AdminCRM = () => {
                                                 cleanPhone = cleanPhone.substring(1);
                                             }
 
-                                            const templateName = log.metadata?.template_name || 'plantilla_meta';
+                                            const templateName = log.metadata?.template_name || (log.descripcion?.includes('sin_repartidores') ? 'sin_repartidores' : 'plantilla_meta');
+                                            const isRescate = log.tipo?.includes('rescate') || templateName === 'sin_repartidores' || log.tipo?.includes('seguimiento');
 
                                             return (
                                                 <tr key={log.id}>
                                                     <td>{formatDateStr(log.created_at)} {new Date(log.created_at).toLocaleTimeString()}</td>
                                                     <td>
-                                                        <strong>{u?.nombre || 'Cliente Wepi'}</strong>
+                                                        <strong>{u?.nombre || log.metadata?.customer_name || 'Cliente Wepi'}</strong>
                                                         <br /><span style={{ fontSize: '0.78rem', color: '#64748b' }}>{rawPhone}</span>
                                                     </td>
                                                     <td>
-                                                        <span style={{ fontSize: '0.78rem', padding: '2px 8px', borderRadius: '6px', fontWeight: 'bold', background: log.tipo?.includes('habit') ? '#e0f2fe' : log.tipo?.includes('campana') ? '#fef3c7' : '#f3e8ff', color: log.tipo?.includes('habit') ? '#0369a1' : log.tipo?.includes('campana') ? '#b45309' : '#7e22ce' }}>
-                                                            {log.tipo?.includes('habit') ? '🧠 Hábitos' : log.tipo?.includes('campana') ? '🚀 Campaña' : '⚙️ Matriz CRM'}
+                                                        <span style={{ fontSize: '0.78rem', padding: '2px 8px', borderRadius: '6px', fontWeight: 'bold', background: log.tipo?.includes('habit') ? '#e0f2fe' : log.tipo?.includes('campana') ? '#fef3c7' : isRescate ? '#ffedd5' : '#f3e8ff', color: log.tipo?.includes('habit') ? '#0369a1' : log.tipo?.includes('campana') ? '#b45309' : isRescate ? '#c2410c' : '#7e22ce' }}>
+                                                            {log.tipo?.includes('habit') ? '🧠 Hábitos' : log.tipo?.includes('campana') ? '🚀 Campaña' : isRescate ? '🔄 Seguimientos y Opt-in' : '⚙️ Matriz CRM'}
                                                         </span>
                                                     </td>
                                                     <td>
@@ -1818,15 +1822,19 @@ const AdminCRM = () => {
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <a 
-                                                            href={`https://wa.me/${cleanPhone}`} 
-                                                            target="_blank" 
-                                                            rel="noreferrer"
-                                                            className="btn-small"
-                                                            style={{ textDecoration: 'none', background: '#25d366', color: '#fff', fontSize: '0.75rem', padding: '4px 10px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                                        >
-                                                            💬 Abrir Chat
-                                                        </a>
+                                                        {cleanPhone ? (
+                                                            <a 
+                                                                href={`https://wa.me/${cleanPhone}`} 
+                                                                target="_blank" 
+                                                                rel="noreferrer"
+                                                                className="btn-small"
+                                                                style={{ textDecoration: 'none', background: '#25d366', color: '#fff', fontSize: '0.75rem', padding: '4px 10px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                                            >
+                                                                💬 Abrir Chat
+                                                            </a>
+                                                        ) : (
+                                                            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>-</span>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             );

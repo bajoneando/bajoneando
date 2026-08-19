@@ -6201,7 +6201,8 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
                 const res = await sendWhatsappTemplateMessage({
                   to: cleanPhone,
                   templateName: tName,
-                  languageCode: 'es_AR'
+                  languageCode: 'es_AR',
+                  skipHistoryLog: true
                 });
                 if (res && res.success !== false) {
                   success = true;
@@ -6568,7 +6569,8 @@ export async function adminSendCRMMessage(userId, channel, message, title = "Wep
         const res = await sendWhatsappTemplateMessage({
           to: cleanPhone,
           templateName: tName,
-          languageCode: 'es_AR'
+          languageCode: 'es_AR',
+          skipHistoryLog: true
         });
         if (res && res.success !== false) {
           success = true;
@@ -7734,7 +7736,7 @@ export async function deleteWhatsappTemplate(id) {
 }
 
 // Enviar plantilla de WhatsApp Meta API (HSM) como sin_repartidores
-export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repartidores', languageCode = 'es_AR', phoneId, components }) {
+export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repartidores', languageCode = 'es_AR', phoneId, components, skipHistoryLog = false }) {
   if (!to) return { success: false, error: 'Sin teléfono de destino' };
 
   try {
@@ -7754,6 +7756,37 @@ export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repa
     });
     
     const data = await res.json();
+
+    // Registrar en crm_history para auditoría visual en el monitor de plantillas (ej: sin_repartidores)
+    if (!skipHistoryLog) {
+      try {
+        const cleanPhoneDigits = to.replace(/[\s-+]/g, '');
+        const { data: usr } = await supabase
+          .from('usuarios')
+          .select('id, nombre, telefono')
+          .or(`telefono.ilike.%${cleanPhoneDigits.slice(-8)}%,telefono.eq.${to}`)
+          .maybeSingle();
+
+        await supabase.from('crm_history').insert({
+          usuario_id: usr?.id || null,
+          tipo: templateName === 'sin_repartidores' ? 'rescate_sin_repartidores' : 'plantilla_whatsapp',
+          canal: 'whatsapp',
+          descripcion: `Disparo plantilla HSM "${templateName}" a ${to}`,
+          metadata: {
+            template_name: templateName,
+            channel: 'whatsapp',
+            to: to,
+            phone: to,
+            customer_name: usr?.nombre || null,
+            dispatch_result: data
+          },
+          created_at: new Date().toISOString()
+        });
+      } catch (logErr) {
+        console.warn("Notice logging WhatsApp HSM dispatch to crm_history:", logErr.message);
+      }
+    }
+
     return data;
   } catch (err) {
     console.error("Error enviando plantilla WhatsApp Meta:", err);
