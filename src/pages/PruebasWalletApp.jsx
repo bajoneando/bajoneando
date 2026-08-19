@@ -13,6 +13,8 @@ import CountdownTimer from '../components/CountdownTimer';
 import { isLocalOpen as isLocalOpenFlexible, getNextStatusChange } from '../utils/businessHours';
 import { evaluatePromotions } from '../utils/promoEngine';
 import { getCitySlug, citiesMatch } from '../utils/city';
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { Capacitor } from '@capacitor/core';
 import './PruebasWalletApp.css';
 
 const GOOGLE_MAPS_LIBRARIES = ['places'];
@@ -68,6 +70,24 @@ export default function PruebasWalletApp() {
   const { user, loginAsUser, loginWithGoogle, logoutUser: doLogout, updateUserAddress } = useAuth();
   const cart = useCart();
   const navigate = useNavigate();
+
+  const [capgoVersion, setCapgoVersion] = React.useState(null);
+
+  React.useEffect(() => {
+    async function fetchCapgoVersion() {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const res = await CapacitorUpdater.current();
+          if (res?.bundle?.version) {
+            setCapgoVersion(res.bundle.version);
+          }
+        }
+      } catch (err) {
+        console.log('Error fetching Capgo version:', err);
+      }
+    }
+    fetchCapgoVersion();
+  }, []);
 
   const [activeCity, setActiveCity] = React.useState(() => {
     try {
@@ -4910,7 +4930,24 @@ export default function PruebasWalletApp() {
 
       <footer className="footer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px 20px' }}>
         <img src="https://i.postimg.cc/htHr0QMM/Tarde-de-superclasico-(1)-(1).png" alt="Wepi" style={{ height: '80px', objectFit: 'contain' }} />
-        <p>© 2026 <strong>Wepi</strong> — Plataforma de Pedidos y Delivery</p>
+        <p>
+          © 2026 <strong>Wepi</strong> — Plataforma de Pedidos y Delivery
+          {capgoVersion && (
+            <span style={{
+              display: 'inline-block',
+              marginLeft: '8px',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              background: 'rgba(56, 189, 248, 0.15)',
+              color: '#38bdf8',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              fontSize: '0.75rem',
+              fontWeight: 'bold'
+            }}>
+              ⚡ OTA v{capgoVersion}
+            </span>
+          )}
+        </p>
         <p>
           <Link to="/locales">Registrá tu local</Link> •{' '}
           <button className="footer-link" style={{ color: 'white' }} onClick={() => setModal('terms')}>Términos</button> •{' '}
