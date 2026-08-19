@@ -347,6 +347,17 @@ const AdminRepartidores = () => {
         }
     };
 
+    const handleDeleteRepartidor = async (id) => {
+        if (!window.confirm('¿Estás seguro de que deseas ELIMINAR a este repartidor por completo? Esta acción desvinculará todos sus pedidos y no se puede deshacer.')) return;
+        try {
+            await api.adminDeleteRepartidor(id);
+            toast.success('Repartidor eliminado correctamente');
+            loadRepartidores();
+        } catch (err) {
+            toast.error('Error al eliminar repartidor: ' + err.message);
+        }
+    };
+
     const handleOpenPriorityModal = (rep) => {
         setSelectedRep(rep);
         setTempPriorities(rep.locales_prioridad || []);
@@ -510,6 +521,9 @@ _Este es un mensaje de difusión. No responder_`;
                                             <div>
                                                 <div style={{ fontWeight: 600 }}>{rep.nombre}</div>
                                                 <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{rep.email}</div>
+                                                <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '2px', background: '#f1f5f9', display: 'inline-block', padding: '1px 4px', borderRadius: '4px' }}>
+                                                    📍 {rep.ciudad || 'No definida'}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -668,6 +682,13 @@ _Este es un mensaje de difusión. No responder_`;
                                                 onClick={() => handleToggleEstado(rep.id, rep.estado || 'Inactivo')}
                                             >
                                                 {rep.estado === 'Inactivo' ? 'Marcar Activo' : 'Forzar Inactivo'}
+                                            </button>
+                                            <button 
+                                                className="btn btn-danger btn-sm"
+                                                style={{ fontSize: '0.75rem', padding: '6px', width: '100%', marginTop: '4px', background: '#dc2626' }}
+                                                onClick={() => handleDeleteRepartidor(rep.id)}
+                                            >
+                                                Eliminar
                                             </button>
                                         </div>
                                     </td>

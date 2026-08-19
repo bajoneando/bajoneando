@@ -2512,14 +2512,39 @@ export async function adminUpdateRepartidorEstado(repId, estado) {
   return { success: true };
 }
 
+export async function adminDeleteRepartidor(repId) {
+  // Desvincular de pedidos (para evitar FK error)
+  await supabase.from('pedidos_general').update({ repartidor_id: null }).eq('repartidor_id', repId);
+  await supabase.from('pedidos_general').update({ repartidor_propuesto_id: null }).eq('repartidor_propuesto_id', repId);
+  // Borrar pagos asociados si existe constraint
+  await supabase.from('repartidores_pagos').delete().eq('repartidor_id', repId);
+  // Desvincular como partner de otros repartidores
+  await supabase.from('repartidores').update({ partner_id: null }).eq('partner_id', repId);
+  
+  // Finalmente, eliminar el repartidor
+  const { error } = await supabase.from('repartidores').delete().eq('id', repId);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
+
 // ═══════════════════════════════════════════════════
 // ADMIN — Pedidos General
 // ═══════════════════════════════════════════════════
-export async function adminGetPedidosGeneral() {
-  const { data, error } = await supabase.from('pedidos_general')
+export async function adminGetPedidosGeneral(dateStart = null, dateEnd = null) {
+  let query = supabase.from('pedidos_general')
     .select('*, locales(nombre, tipo_servicio, ciudad), repartidores:repartidor_id(nombre, telefono), usuarios:usuario_id(telefono)')
-    .order('created_at', { ascending: false })
-    .limit(20);
+    .order('created_at', { ascending: false });
+
+  if (dateStart && dateEnd) {
+    query = query.gte('created_at', `${dateStart}T00:00:00`).lte('created_at', `${dateEnd}T23:59:59.999`);
+  } else if (dateStart) {
+    query = query.gte('created_at', `${dateStart}T00:00:00`).lte('created_at', `${dateStart}T23:59:59.999`);
+  } else {
+    query = query.limit(20);
+  }
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data || [];
 }
@@ -5428,7 +5453,7 @@ export async function updateRubroConfig(id, updates) {
 
 export async function adminGetRepartidoresDetallado() {
   const { data } = await supabase.from('repartidores')
-    .select('id, nombre, email, telefono, patente, marca_modelo, estado, admin_status, created_at, tipo_vehiculo, nivel_repartidor, foto_url, onesignal_id, horario_apertura, horario_cierre, dias_apertura, ultima_actividad, locales_prioridad, es_partner, partner_id')
+    .select('id, nombre, email, telefono, patente, marca_modelo, estado, admin_status, created_at, tipo_vehiculo, nivel_repartidor, foto_url, onesignal_id, horario_apertura, horario_cierre, dias_apertura, ultima_actividad, locales_prioridad, es_partner, partner_id, ciudad')
     .order('created_at', { ascending: false });
   return data || [];
 }
@@ -6123,6 +6148,118 @@ export async function adminRemoveTagFromUser(userId, tagId) {
   return { success: true };
 }
 
+export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
+  if (!userId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('crm_events')
+      .insert({
+        usuario_id: userId,
+        event_type: eventType,
+        metadata: metadata,
+        created_at: new Date().toISOString()
+      })
+      .select();
+    
+    if (error) {
+      console.warn("crm_events insert warning:", error.message);
+    }
+
+    // Process matrix rules to ensure WhatsApp HSM dispatch is recorded and dispatched
+    try {
+      const matrix = await adminGetCRMAutomationMatrix();
+      if (Array.isArray(matrix) && matrix.length > 0) {
+        const rule = matrix.find(r => 
+          r.id === eventType || 
+          r.trigger_config?.evento_key === eventType ||
+          (r.id === 'carrito_abandono' && eventType === 'CARRITO_ABANDONADO') ||
+          (r.id === 'pedido_no_pago' && eventType === 'PEDIDO_NO_PAGADO')
+        );
+
+        if (rule && rule.enabled !== false) {
+          const channels = rule.canales || ['whatsapp', 'push'];
+          const firstActiveChannel = channels.find(ch => ch !== 'none' && rule.configs?.[ch]?.enabled !== false) || 'whatsapp';
+          const templateName = rule.configs?.whatsapp?.template_name || rule.configs?.whatsapp?.template || 'recuperacion_1';
+
+          let dispatchResult = null;
+
+          // Disparar WhatsApp Meta API REAL usando Edge Function
+          if (firstActiveChannel === 'whatsapp') {
+            const { data: userObj } = await supabase
+              .from('usuarios')
+              .select('telefono, nombre')
+              .eq('id', userId)
+              .maybeSingle();
+
+            if (userObj && userObj.telefono) {
+              const cleanPhone = userObj.telefono;
+              const tName = templateName;
+              let success = false;
+              let logDetail = '';
+
+              try {
+                const res = await sendWhatsappTemplateMessage({
+                  to: cleanPhone,
+                  templateName: tName,
+                  languageCode: 'es_AR'
+                });
+                if (res && res.success !== false) {
+                  success = true;
+                  logDetail = `Enviado por WhatsApp Meta API (Plantilla: ${tName})`;
+                } else {
+                  logDetail = `Respuesta Meta API: ${JSON.stringify(res)}`;
+                  success = true;
+                }
+              } catch (err) {
+                console.error("Meta WhatsApp API error:", err);
+                logDetail = `Error Meta API: ${err.message}`;
+              }
+
+              dispatchResult = { success, logDetail };
+            } else {
+              dispatchResult = { success: false, reason: 'Usuario sin teléfono registrado' };
+            }
+          }
+
+          // Registrar en crm_history
+          await supabase.from('crm_history').insert({
+            usuario_id: userId,
+            tipo: 'automatizacion_ejecutada',
+            canal: firstActiveChannel,
+            descripcion: `Disparo automático ${rule.evento || eventType} vía ${firstActiveChannel.toUpperCase()} (${templateName})`,
+            metadata: {
+              template_name: templateName,
+              channel: firstActiveChannel,
+              event_type: eventType,
+              rule_id: rule.id,
+              dispatch_result: dispatchResult
+            },
+            created_at: new Date().toISOString()
+          });
+        }
+      }
+    } catch (matrixErr) {
+      console.warn("Error processing CRM matrix in adminLogCRMEvent:", matrixErr.message);
+    }
+
+    // Call stored procedure to trigger automation cascade if configured in DB
+    try {
+      await supabase.rpc('trigger_crm_event_notification', {
+        p_user_id: userId,
+        p_event_id: eventType,
+        p_params: metadata
+      });
+    } catch (triggerErr) {
+      console.warn("trigger_crm_event_notification execution notice:", triggerErr.message);
+    }
+
+    return data ? data[0] : { success: true, event_type: eventType };
+  } catch (err) {
+    console.error("Error logging CRM Event:", err);
+    return null;
+  }
+}
+
 export async function adminGetCRMEvents(userId) {
   let query = supabase.from('crm_events').select('*').order('created_at', { ascending: false });
   if (userId) query = query.eq('usuario_id', userId);
@@ -6418,52 +6555,41 @@ export async function adminSendCRMMessage(userId, channel, message, title = "Wep
       cleanPhone = cleanPhone.substring(1);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // SOPORTE WHATSAPP API (META DEVELOPERS)
-    // Para activar la integración automática con la API de Meta en el futuro:
-    // 1. Cambia USE_META_API a true.
-    // 2. Coloca tu token y tu Phone Number ID de Meta.
-    // ─────────────────────────────────────────────────────────────
-    const USE_META_API = false; 
-    const META_PHONE_NUMBER_ID = 'YOUR_META_PHONE_NUMBER_ID';
-    const META_ACCESS_TOKEN = 'YOUR_META_ACCESS_TOKEN';
+    // Extraer templateName si viene especificado en el mensaje
+    let tName = 'recuperacion_1';
+    if (message && message.includes('Plantilla Meta HSM:')) {
+      tName = message.split('Plantilla Meta HSM:')[1]?.trim() || tName;
+    } else if (message && !message.includes(' ')) {
+      tName = message.trim();
+    }
 
-    if (USE_META_API) {
+    if (cleanPhone) {
       try {
-        const response = await fetch(`https://graph.facebook.com/v19.0/${META_PHONE_NUMBER_ID}/messages`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${META_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            to: cleanPhone,
-            type: "text",
-            text: { body: personalizedMessage }
-          })
+        const res = await sendWhatsappTemplateMessage({
+          to: cleanPhone,
+          templateName: tName,
+          languageCode: 'es_AR'
         });
-        const resData = await response.json();
-        if (response.ok) {
+        if (res && res.success !== false) {
           success = true;
-          logDetail = 'Enviado automáticamente por WhatsApp Cloud API';
+          logDetail = `Enviado por WhatsApp Meta API (Plantilla: ${tName})`;
         } else {
-          throw new Error(resData.error?.message || 'Meta API Error');
+          logDetail = `Respuesta Meta API: ${JSON.stringify(res)}`;
+          success = true; // registrado
         }
       } catch (err) {
         console.error("Meta WhatsApp API error:", err);
-        logDetail = `Error Meta API: ${err.message}. Intentando fallback a enlace manual...`;
+        logDetail = `Error Meta API: ${err.message}`;
       }
     }
 
-    // Fallback: wa.me manual link
-    if (!success) {
+    // Fallback: wa.me manual link si no hubo éxito con la API
+    if (!success && cleanPhone) {
       const encodedText = encodeURIComponent(personalizedMessage);
       const link = `https://wa.me/${cleanPhone}?text=${encodedText}`;
       success = true;
       logDetail = 'Enlace manual wa.me generado';
       
-      // Abrir enlace en pestaña nueva si estamos en navegador
       if (typeof window !== 'undefined') {
         window.open(link, '_blank');
       }

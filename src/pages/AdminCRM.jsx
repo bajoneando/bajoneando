@@ -47,7 +47,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'none'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'recuperacion_carrito_1' },
+            whatsapp: { enabled: true, template_name: 'recuperacion_1' },
             push: { enabled: true, title: '¡Olvidaste productos en tu carrito!', body: 'Concluye tu pedido en 1 solo clic.', url: '/checkout' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
@@ -407,7 +407,9 @@ const AdminCRM = () => {
             categoria_favorita: 'Todos',
             score_min: 0
         },
-        canal: 'push',
+        canal: 'whatsapp',
+        template_name: '',
+        asunto: '',
         mensaje: '',
         estado: 'Borrador',
         fecha_programada: ''
@@ -415,7 +417,20 @@ const AdminCRM = () => {
 
     // Quick template message sender in User Ficha
     const [selectedUserTemplateText, setSelectedUserTemplateText] = useState('');
-    const [selectedUserTemplateChannel, setSelectedUserTemplateChannel] = useState('push');
+    // Additional states for Bot Flows & WhatsApp Optins
+    const [botFlowData, setBotFlowData] = useState({
+        seguimientos: { sin_repartidor: '', repartidores_disponibles: '', enabled: true },
+        seguimientos_adquisicion: {
+            sin_repartidor: { enabled: true, template: 'sin_repartidores' },
+            falta_pago: { enabled: true, template: 'falta_pago' },
+            alerta_repartidor: { enabled: true, template: 'estas_disponible' },
+            rescate_demanda: { enabled: true, template: 'tenemos_repartidor' }
+        }
+    });
+    const [optins, setOptins] = useState([]);
+    const [savingFlows, setSavingFlows] = useState(false);
+    const [waSearchTerm, setWaSearchTerm] = useState('');
+    const [waModuleFilter, setWaModuleFilter] = useState('Todos');
 
     useEffect(() => {
         loadAllCRMData();
@@ -424,7 +439,7 @@ const AdminCRM = () => {
     const loadAllCRMData = async () => {
         setLoading(true);
         try {
-            const [usersRes, tagsRes, autoRes, campRes, scoreRes, eventsRes, historyRes, matrixRes, habitsRes] = await Promise.all([
+            const [usersRes, tagsRes, autoRes, campRes, scoreRes, eventsRes, historyRes, matrixRes, habitsRes, botFlowsRes, optinsRes] = await Promise.all([
                 api.adminGetCRMUsers(),
                 api.adminGetCRMTags(),
                 api.adminGetCRMAutomations(),
@@ -433,7 +448,9 @@ const AdminCRM = () => {
                 api.adminGetCRMEvents(),
                 api.adminGetCRMHistory(),
                 api.adminGetCRMAutomationMatrix().catch(() => null),
-                api.adminGetWepiHabitsConfig().catch(() => null)
+                api.adminGetWepiHabitsConfig().catch(() => null),
+                api.getWhatsappBotFlows().catch(() => null),
+                api.getWhatsappOptins().catch(() => [])
             ]);
 
             setUsuarios(usersRes || []);
@@ -443,6 +460,7 @@ const AdminCRM = () => {
             setScoreConfig(scoreRes || []);
             setEventsLog(eventsRes || []);
             setHistoryLog(historyRes || []);
+            setOptins(optinsRes || []);
             
             if (matrixRes && Array.isArray(matrixRes) && matrixRes.length > 0) {
                 setMatrixData(matrixRes);
@@ -450,11 +468,26 @@ const AdminCRM = () => {
             if (habitsRes && habitsRes.moments) {
                 setHabitsConfig(habitsRes);
             }
+            if (botFlowsRes && botFlowsRes.flow_data) {
+                setBotFlowData(botFlowsRes.flow_data);
+            }
         } catch (err) {
             console.error("Error loading CRM datasets:", err);
             toast.error("Error al cargar datos del CRM. Revisa la base de datos.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveBotFlows = async () => {
+        setSavingFlows(true);
+        try {
+            await api.updateWhatsappBotFlows(botFlowData);
+            toast.success("Flujos de seguimiento y plantillas de rescate guardados con éxito 🟢");
+        } catch (err) {
+            toast.error("Error al guardar flujos de seguimiento: " + err.message);
+        } finally {
+            setSavingFlows(false);
         }
     };
 
@@ -475,6 +508,28 @@ const AdminCRM = () => {
         } catch (err) {
             toast.dismiss(loadToast);
             toast.error("Error al ejecutar scan: " + err.message);
+        }
+    };
+
+    // Event Simulation Handler
+    const [simEventUser, setSimEventUser] = useState('');
+    const [simEventType, setSimEventType] = useState('CARRITO_ABANDONADO');
+
+    const handleSimulateCRMEvent = async () => {
+        const targetUserId = simEventUser || (usuarios[0]?.id);
+        if (!targetUserId) {
+            toast.error("Selecciona un usuario para simular el evento");
+            return;
+        }
+        const loadToast = toast.loading(`Disparando evento ${simEventType}...`);
+        try {
+            await api.adminLogCRMEvent(targetUserId, simEventType, { simulated: true, triggered_at: new Date().toISOString() });
+            toast.dismiss(loadToast);
+            toast.success(`¡Evento ${simEventType} registrado en el CRM y disparado en la matriz!`);
+            loadAllCRMData();
+        } catch (err) {
+            toast.dismiss(loadToast);
+            toast.error("Error al simular evento: " + err.message);
         }
     };
 
@@ -1130,8 +1185,18 @@ const AdminCRM = () => {
     }, [usuarios, campaignForm.filtros]);
 
     const handleLaunchCampaign = async () => {
-        if (!campaignForm.nombre || !campaignForm.mensaje) {
-            toast.error("Completa el nombre y el mensaje de la campaña");
+        if (!campaignForm.nombre) {
+            toast.error("Por favor ingresa un nombre para la campaña");
+            return;
+        }
+
+        if (campaignForm.canal === 'whatsapp' && !campaignForm.template_name) {
+            toast.error("Para campañas por WhatsApp debes ingresar el Nombre de la Plantilla Meta (HSM)");
+            return;
+        }
+
+        if ((campaignForm.canal === 'push' || campaignForm.canal === 'email') && !campaignForm.mensaje) {
+            toast.error("Completa el contenido del mensaje de la campaña");
             return;
         }
 
@@ -1144,45 +1209,62 @@ const AdminCRM = () => {
 
         const loader = toast.loading(`${isScheduled ? 'Programando' : 'Ejecutando'} campaña...`);
         try {
-            // Save Campaign
-            const data = {
-                ...campaignForm,
-                estado: isScheduled ? 'Programada' : 'Enviada',
-                fecha_programada: isScheduled ? new Date(campaignForm.fecha_programada).toISOString() : null
-            };
-            
-            const saved = await api.adminSaveCRMCampaign(data);
+            const f = campaignForm.filtros;
+            const targets = usuarios.filter(user => {
+                const matchesCity = f.ciudad === 'Todos' || user.ciudad === f.ciudad;
+                const matchesState = f.estado_crm === 'Todos' || user.estado_crm === f.estado_crm;
+                const matchesTag = f.tag === 'Todos' || (user.crm_usuario_tags && user.crm_usuario_tags.some(t => t.tag_id === f.tag));
+                const matchesOrders = (Number(user.cantidad_pedidos) || 0) >= (Number(f.pedidos_min) || 0);
+                
+                const daysVal = user.fecha_ultimo_pedido ? Math.floor((new Date() - new Date(user.fecha_ultimo_pedido)) / (1000 * 60 * 60 * 24)) : 999;
+                const matchesInact = daysVal >= (Number(f.dias_inactivo_min) || 0);
+                
+                const matchesCat = f.categoria_favorita === 'Todos' || user.categoria_favorita === f.categoria_favorita;
+                const matchesScore = (Number(user.wepi_score) || 0) >= (Number(f.score_min) || 0);
+
+                return matchesCity && matchesState && matchesTag && matchesOrders && matchesInact && matchesCat && matchesScore;
+            });
+
+            let successCount = 0;
+            let failedCount = 0;
 
             if (!isScheduled) {
-                // Execute immediately for matched users
-                const f = campaignForm.filtros;
-                const targets = usuarios.filter(user => {
-                    const matchesCity = f.ciudad === 'Todos' || user.ciudad === f.ciudad;
-                    const matchesState = f.estado_crm === 'Todos' || user.estado_crm === f.estado_crm;
-                    const matchesTag = f.tag === 'Todos' || (user.crm_usuario_tags && user.crm_usuario_tags.some(t => t.tag_id === f.tag));
-                    const matchesOrders = (Number(user.cantidad_pedidos) || 0) >= (Number(f.pedidos_min) || 0);
-                    
-                    const daysVal = user.fecha_ultimo_pedido ? Math.floor((new Date() - new Date(user.fecha_ultimo_pedido)) / (1000 * 60 * 60 * 24)) : 999;
-                    const matchesInact = daysVal >= (Number(f.dias_inactivo_min) || 0);
-                    
-                    const matchesCat = f.categoria_favorita === 'Todos' || user.categoria_favorita === f.categoria_favorita;
-                    const matchesScore = (Number(user.wepi_score) || 0) >= (Number(f.score_min) || 0);
-
-                    return matchesCity && matchesState && matchesTag && matchesOrders && matchesInact && matchesCat && matchesScore;
-                });
-
                 // Send messages
-                let successCount = 0;
+                const msgContent = campaignForm.canal === 'whatsapp' 
+                    ? `Plantilla Meta HSM: ${campaignForm.template_name}` 
+                    : campaignForm.mensaje;
+
                 for (const u of targets) {
                     try {
-                        const result = await api.adminSendCRMMessage(u.id, campaignForm.canal, campaignForm.mensaje, campaignForm.nombre);
-                        if (result.success) successCount++;
+                        const result = await api.adminSendCRMMessage(u.id, campaignForm.canal, msgContent, campaignForm.nombre);
+                        if (result.success) {
+                            successCount++;
+                        } else {
+                            failedCount++;
+                        }
                     } catch (e) {
+                        failedCount++;
                         console.error("Failed sending message to user during campaign:", u.id, e);
                     }
                 }
+            }
+
+            // Save Campaign with execution metrics
+            const data = {
+                ...campaignForm,
+                mensaje: campaignForm.canal === 'whatsapp' ? `Plantilla Meta HSM: ${campaignForm.template_name}` : campaignForm.mensaje,
+                estado: isScheduled ? 'Programada' : 'Enviada',
+                fecha_programada: isScheduled ? new Date(campaignForm.fecha_programada).toISOString() : null,
+                total_audiencia: targets.length,
+                enviados_exito: successCount,
+                fallidos: failedCount
+            };
+            
+            await api.adminSaveCRMCampaign(data);
+
+            if (!isScheduled) {
                 toast.dismiss(loader);
-                toast.success(`Campaña enviada con éxito. Mensajes entregados: ${successCount} de ${targets.length}`);
+                toast.success(`¡Campaña enviada! Despachos exitosos: ${successCount} de ${targets.length} (Fallidos/Sin Opt-in: ${failedCount})`);
             } else {
                 toast.dismiss(loader);
                 toast.success("Campaña programada exitosamente");
@@ -1200,7 +1282,9 @@ const AdminCRM = () => {
                     categoria_favorita: 'Todos',
                     score_min: 0
                 },
-                canal: 'push',
+                canal: 'whatsapp',
+                template_name: '',
+                asunto: '',
                 mensaje: '',
                 estado: 'Borrador',
                 fecha_programada: ''
@@ -1370,6 +1454,12 @@ const AdminCRM = () => {
                 <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>
                     📊 Dashboard
                 </button>
+                <button className={activeTab === 'monitor_wa' ? 'active' : ''} onClick={() => setActiveTab('monitor_wa')}>
+                    💬 Monitor WA HSM
+                </button>
+                <button className={activeTab === 'seguimientos' ? 'active' : ''} onClick={() => setActiveTab('seguimientos')}>
+                    🔄 Seguimientos y Opt-in
+                </button>
                 <button className={activeTab === 'clientes' ? 'active' : ''} onClick={() => setActiveTab('clientes')}>
                     👥 Clientes y Listas
                 </button>
@@ -1442,9 +1532,55 @@ const AdminCRM = () => {
                             </div>
                         </div>
 
-                        {/* Recent Events Feed */}
+                        {/* Recent Events Feed with Event Simulator */}
                         <div className="dashboard-card feed">
-                            <h3>Eventos Recientes del CRM</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <h3 style={{ margin: 0 }}>Eventos Recientes del CRM</h3>
+                            </div>
+
+                            {/* BARRA DISPARADORA Y SIMULADORA DE EVENTOS */}
+                            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '14px' }}>
+                                <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+                                    🧪 Probador / Disparador de Eventos CRM en Tiempo Real:
+                                </label>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    <select 
+                                        className="form-control"
+                                        style={{ fontSize: '0.82rem', flex: 1, minWidth: '130px' }}
+                                        value={simEventUser}
+                                        onChange={(e) => setSimEventUser(e.target.value)}
+                                    >
+                                        <option value="">-- Seleccionar Cliente --</option>
+                                        {usuarios.map(u => (
+                                            <option key={u.id} value={u.id}>{u.nombre || 'Cliente'} ({u.telefono || u.email || u.id})</option>
+                                        ))}
+                                    </select>
+
+                                    <select 
+                                        className="form-control"
+                                        style={{ fontSize: '0.82rem', flex: 1, minWidth: '160px' }}
+                                        value={simEventType}
+                                        onChange={(e) => setSimEventType(e.target.value)}
+                                    >
+                                        <option value="CARRITO_ABANDONADO">🛒 CARRITO_ABANDONADO</option>
+                                        <option value="PEDIDO_NO_PAGADO">💳 PEDIDO_NO_PAGADO</option>
+                                        <option value="USUARIO_REGISTRADO">👤 USUARIO_REGISTRADO</option>
+                                        <option value="VISITA_SIN_COMPRA">👀 VISITA_SIN_COMPRA</option>
+                                        <option value="ESPERANDO_REPARTIDOR">🛵 ESPERANDO_REPARTIDOR</option>
+                                        <option value="PEDIDO_ENTREGADO">🎉 PEDIDO_ENTREGADO</option>
+                                    </select>
+
+                                    <button 
+                                        type="button" 
+                                        className="btn btn-primary"
+                                        style={{ fontSize: '0.8rem', padding: '6px 12px', whiteSpace: 'nowrap' }}
+                                        onClick={handleSimulateCRMEvent}
+                                    >
+                                        🚀 Disparar Evento
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="events-feed-list">
                                 {eventsLog.slice(0, 8).map(ev => {
                                     const u = usuarios.find(usr => usr.id === ev.usuario_id);
@@ -1453,7 +1589,7 @@ const AdminCRM = () => {
                                             <div className="feed-icon">💡</div>
                                             <div className="feed-info">
                                                 <p>
-                                                    <strong>{u?.nombre || 'Usuario desc.'}</strong> disparó event <code>{ev.event_type}</code>
+                                                    <strong>{u?.nombre || 'Usuario desc.'}</strong> disparó event <code style={{ background: ev.event_type === 'CARRITO_ABANDONADO' ? '#fef3c7' : ev.event_type === 'PEDIDO_NO_PAGADO' ? '#fee2e2' : '#e0f2fe', color: ev.event_type === 'CARRITO_ABANDONADO' ? '#b45309' : ev.event_type === 'PEDIDO_NO_PAGADO' ? '#b91c1c' : '#0369a1', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{ev.event_type}</code>
                                                 </p>
                                                 <span>{formatDateStr(ev.created_at)} - {new Date(ev.created_at).toLocaleTimeString()}</span>
                                             </div>
@@ -1544,6 +1680,387 @@ const AdminCRM = () => {
                                     })}
                                     {historyLog.filter(h => h.tipo === 'automatizacion_ejecutada').length === 0 && (
                                         <tr><td colSpan="5" style={{ textAlign: 'center' }}>No hay automatizaciones ejecutadas recientemente.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB CONTENT: MONITOR WHATSAPP HSM */}
+            {activeTab === 'monitor_wa' && (
+                <div className="tab-pane">
+                    <div style={{ background: '#f0fdf4', padding: '16px 20px', borderRadius: '12px', border: '1px solid #bbf7d0', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#166534' }}>💬 Auditoría y Monitor de Envíos WhatsApp API (HSM)</h2>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: '#15803d' }}>
+                                Supervisión en tiempo real de todas las plantillas Meta despachadas por Motor de Hábitos, Matriz CRM, Campañas y Flujos de Seguimiento.
+                            </p>
+                        </div>
+                        <span style={{ fontSize: '0.85rem', background: '#dcfce7', color: '#15803d', padding: '6px 14px', borderRadius: '20px', fontWeight: 'bold' }}>
+                            🟢 Opt-ins Activos: {optins.length} clientes
+                        </span>
+                    </div>
+
+                    {/* KPI Cards for WA Dispatches */}
+                    <div className="crm-kpis" style={{ marginBottom: '24px' }}>
+                        <div className="kpi-card" style={{ borderLeft: '4px solid #25d366' }}>
+                            <h3>{historyLog.filter(h => h.canal === 'whatsapp' || h.tipo?.includes('whatsapp') || h.metadata?.channel === 'whatsapp').length || 0}</h3>
+                            <p>Total Envíos WA</p>
+                        </div>
+                        <div className="kpi-card" style={{ borderLeft: '4px solid #0284c7' }}>
+                            <h3>{historyLog.filter(h => (h.canal === 'whatsapp' || h.tipo?.includes('whatsapp')) && (h.tipo?.includes('habit') || h.tipo?.includes('desayuno') || h.tipo?.includes('almuerzo') || h.tipo?.includes('cena'))).length || 0}</h3>
+                            <p>🧠 Motor de Hábitos WA</p>
+                        </div>
+                        <div className="kpi-card" style={{ borderLeft: '4px solid #7c3aed' }}>
+                            <h3>{historyLog.filter(h => (h.canal === 'whatsapp' || h.tipo?.includes('whatsapp')) && (h.tipo?.includes('auto') || h.tipo?.includes('matriz') || h.tipo?.includes('carrito'))).length || 0}</h3>
+                            <p>⚙️ Matriz CRM WA</p>
+                        </div>
+                        <div className="kpi-card" style={{ borderLeft: '4px solid #f59e0b' }}>
+                            <h3>{campaigns.filter(c => c.canal === 'whatsapp').reduce((acc, curr) => acc + (curr.enviados_exito || 0), 0)}</h3>
+                            <p>🚀 Campañas WA</p>
+                        </div>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="filters-panel" style={{ marginBottom: '20px' }}>
+                        <div className="filters-grid">
+                            <div className="filter-item">
+                                <label>Buscar por Cliente / Teléfono / Plantilla</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Nombre, teléfono o plantilla..." 
+                                    value={waSearchTerm}
+                                    onChange={(e) => setWaSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <div className="filter-item">
+                                <label>Filtrar por Módulo de Origen</label>
+                                <select value={waModuleFilter} onChange={(e) => setWaModuleFilter(e.target.value)}>
+                                    <option value="Todos">Todos los módulos</option>
+                                    <option value="habitos">🧠 Motor de Hábitos</option>
+                                    <option value="matriz">⚙️ Matriz CRM</option>
+                                    <option value="campanas">🚀 Campañas</option>
+                                    <option value="seguimientos">🔄 Flujos de Seguimiento</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Log Table */}
+                    <div className="dashboard-card">
+                        <h3>Historial de Plantillas WhatsApp Despachadas</h3>
+                        <div className="table-responsive">
+                            <table className="crm-simple-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha / Hora</th>
+                                        <th>Cliente / Teléfono</th>
+                                        <th>Módulo CRM</th>
+                                        <th>Plantilla Meta HSM</th>
+                                        <th>Estado de Envío</th>
+                                        <th>Verificación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {historyLog
+                                        .filter(h => h.canal === 'whatsapp' || h.tipo?.includes('whatsapp') || h.metadata?.channel === 'whatsapp' || h.tipo?.includes('habit') || h.tipo?.includes('campana'))
+                                        .filter(h => {
+                                            const u = usuarios.find(usr => usr.id === h.usuario_id);
+                                            const q = waSearchTerm.toLowerCase();
+                                            const matchesSearch = !q || 
+                                                (u?.nombre && u.nombre.toLowerCase().includes(q)) ||
+                                                (u?.telefono && u.telefono.toLowerCase().includes(q)) ||
+                                                (h.descripcion && h.descripcion.toLowerCase().includes(q)) ||
+                                                (h.metadata?.template_name && h.metadata.template_name.toLowerCase().includes(q));
+
+                                            let matchesModule = true;
+                                            if (waModuleFilter === 'habitos') matchesModule = h.tipo?.includes('habit') || h.tipo?.includes('desayuno') || h.tipo?.includes('almuerzo') || h.tipo?.includes('cena');
+                                            else if (waModuleFilter === 'matriz') matchesModule = h.tipo?.includes('auto') || h.tipo?.includes('matriz') || h.tipo?.includes('carrito');
+                                            else if (waModuleFilter === 'campanas') matchesModule = h.tipo?.includes('campana');
+                                            else if (waModuleFilter === 'seguimientos') matchesModule = h.tipo?.includes('seguimiento') || h.tipo?.includes('rescate');
+
+                                            return matchesSearch && matchesModule;
+                                        })
+                                        .map((log) => {
+                                            const u = usuarios.find(usr => usr.id === log.usuario_id);
+                                            const rawPhone = u?.telefono || 'Sin teléfono';
+                                            let cleanPhone = rawPhone.replace(/[\s-]/g, '');
+                                            if (cleanPhone.length >= 10 && !cleanPhone.startsWith('+') && !cleanPhone.startsWith('5')) {
+                                                cleanPhone = '549' + cleanPhone;
+                                            } else if (cleanPhone.startsWith('+')) {
+                                                cleanPhone = cleanPhone.substring(1);
+                                            }
+
+                                            const templateName = log.metadata?.template_name || 'plantilla_meta';
+
+                                            return (
+                                                <tr key={log.id}>
+                                                    <td>{formatDateStr(log.created_at)} {new Date(log.created_at).toLocaleTimeString()}</td>
+                                                    <td>
+                                                        <strong>{u?.nombre || 'Cliente Wepi'}</strong>
+                                                        <br /><span style={{ fontSize: '0.78rem', color: '#64748b' }}>{rawPhone}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span style={{ fontSize: '0.78rem', padding: '2px 8px', borderRadius: '6px', fontWeight: 'bold', background: log.tipo?.includes('habit') ? '#e0f2fe' : log.tipo?.includes('campana') ? '#fef3c7' : '#f3e8ff', color: log.tipo?.includes('habit') ? '#0369a1' : log.tipo?.includes('campana') ? '#b45309' : '#7e22ce' }}>
+                                                            {log.tipo?.includes('habit') ? '🧠 Hábitos' : log.tipo?.includes('campana') ? '🚀 Campaña' : '⚙️ Matriz CRM'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <code style={{ background: '#f1f5f9', color: '#0f172a', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
+                                                            {templateName}
+                                                        </code>
+                                                    </td>
+                                                    <td>
+                                                        <span style={{ background: '#dcfce7', color: '#15803d', padding: '3px 10px', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                                                            ✅ Meta API Enviado
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <a 
+                                                            href={`https://wa.me/${cleanPhone}`} 
+                                                            target="_blank" 
+                                                            rel="noreferrer"
+                                                            className="btn-small"
+                                                            style={{ textDecoration: 'none', background: '#25d366', color: '#fff', fontSize: '0.75rem', padding: '4px 10px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                                        >
+                                                            💬 Abrir Chat
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    {historyLog.filter(h => h.canal === 'whatsapp' || h.tipo?.includes('whatsapp') || h.tipo?.includes('habit') || h.tipo?.includes('campana')).length === 0 && (
+                                        <tr>
+                                            <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+                                                No hay envíos registrados de plantillas WhatsApp todavía.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB CONTENT: FLUJOS DE SEGUIMIENTO Y OPT-IN */}
+            {activeTab === 'seguimientos' && (
+                <div className="tab-pane">
+                    <div style={{ background: '#f0fdf4', padding: '16px 20px', borderRadius: '12px', border: '1px solid #bbf7d0', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#166534' }}>🔄 Flujos de Seguimiento y Consentimiento Opt-in</h2>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: '#15803d' }}>
+                                Configuración de respuestas automáticas por rebote de repartidores, abandono de pago Mercado Pago y catálogo de registros Opt-in.
+                            </p>
+                        </div>
+                        <button 
+                            className="btn btn-primary"
+                            disabled={savingFlows}
+                            onClick={handleSaveBotFlows}
+                            style={{ background: '#059669', borderColor: '#059669', fontWeight: 'bold' }}
+                        >
+                            {savingFlows ? 'Guardando...' : '💾 Guardar Ajustes de Seguimiento'}
+                        </button>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+                        {/* Panel 1: Mensajes de Seguimiento en Caliente */}
+                        <div className="dashboard-card" style={{ margin: 0 }}>
+                            <h3>🛵 Mensajes Automáticos de Seguimiento</h3>
+                            
+                            <div style={{
+                                background: botFlowData.seguimientos?.enabled !== false ? '#f0fdf4' : '#fef2f2',
+                                border: botFlowData.seguimientos?.enabled !== false ? '1px solid #a7f3d0' : '1px solid #fecaca',
+                                padding: '14px',
+                                borderRadius: '10px',
+                                marginBottom: '16px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <div>
+                                    <strong style={{ fontSize: '0.9rem', color: botFlowData.seguimientos?.enabled !== false ? '#065f46' : '#991b1b' }}>
+                                        {botFlowData.seguimientos?.enabled !== false ? '🟢 Seguimientos Activados' : '🔴 Pausados'}
+                                    </strong>
+                                </div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                    <input 
+                                        type="checkbox"
+                                        checked={botFlowData.seguimientos?.enabled !== false}
+                                        onChange={(e) => setBotFlowData({
+                                            ...botFlowData,
+                                            seguimientos: { ...botFlowData.seguimientos, enabled: e.target.checked }
+                                        })}
+                                        style={{ width: '18px', height: '18px', accentColor: '#059669' }}
+                                    />
+                                    <span>{botFlowData.seguimientos?.enabled !== false ? 'ACTIVO' : 'DESACTIVO'}</span>
+                                </label>
+                            </div>
+
+                            <div className="form-group">
+                                <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>1. Sin repartidor asignado en 5 min:</label>
+                                <textarea 
+                                    className="form-control"
+                                    rows={3}
+                                    value={botFlowData.seguimientos?.sin_repartidor || ''}
+                                    onChange={(e) => setBotFlowData({
+                                        ...botFlowData,
+                                        seguimientos: { ...botFlowData.seguimientos, sin_repartidor: e.target.value }
+                                    })}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>2. Ya hay repartidores disponibles:</label>
+                                <textarea 
+                                    className="form-control"
+                                    rows={3}
+                                    value={botFlowData.seguimientos?.repartidores_disponibles || ''}
+                                    onChange={(e) => setBotFlowData({
+                                        ...botFlowData,
+                                        seguimientos: { ...botFlowData.seguimientos, repartidores_disponibles: e.target.value }
+                                    })}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Panel 2: Plantillas Meta de Rescate */}
+                        <div className="dashboard-card" style={{ margin: 0 }}>
+                            <h3>🚀 Plantillas Meta API de Rescate (HSM)</h3>
+
+                            {/* Sin Repartidor */}
+                            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', marginBottom: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                    <strong style={{ fontSize: '0.85rem' }}>1. Aviso Sin Repartidores (Fase 2)</strong>
+                                    <input 
+                                        type="checkbox"
+                                        checked={botFlowData.seguimientos_adquisicion?.sin_repartidor?.enabled ?? true}
+                                        onChange={(e) => setBotFlowData({
+                                            ...botFlowData,
+                                            seguimientos_adquisicion: {
+                                                ...botFlowData.seguimientos_adquisicion,
+                                                sin_repartidor: { ...botFlowData.seguimientos_adquisicion?.sin_repartidor, enabled: e.target.checked }
+                                            }
+                                        })}
+                                    />
+                                </div>
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    placeholder="Plantilla Meta (ej: sin_repartidores)"
+                                    value={botFlowData.seguimientos_adquisicion?.sin_repartidor?.template || ''}
+                                    onChange={(e) => setBotFlowData({
+                                        ...botFlowData,
+                                        seguimientos_adquisicion: {
+                                            ...botFlowData.seguimientos_adquisicion,
+                                            sin_repartidor: { ...botFlowData.seguimientos_adquisicion?.sin_repartidor, template: e.target.value }
+                                        }
+                                    })}
+                                />
+                            </div>
+
+                            {/* Falta Pago */}
+                            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1', marginBottom: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                    <strong style={{ fontSize: '0.85rem' }}>2. Recordatorio Pago Abondonado (MP)</strong>
+                                    <input 
+                                        type="checkbox"
+                                        checked={botFlowData.seguimientos_adquisicion?.falta_pago?.enabled ?? true}
+                                        onChange={(e) => setBotFlowData({
+                                            ...botFlowData,
+                                            seguimientos_adquisicion: {
+                                                ...botFlowData.seguimientos_adquisicion,
+                                                falta_pago: { ...botFlowData.seguimientos_adquisicion?.falta_pago, enabled: e.target.checked }
+                                            }
+                                        })}
+                                    />
+                                </div>
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    placeholder="Plantilla Meta (ej: falta_pago)"
+                                    value={botFlowData.seguimientos_adquisicion?.falta_pago?.template || ''}
+                                    onChange={(e) => setBotFlowData({
+                                        ...botFlowData,
+                                        seguimientos_adquisicion: {
+                                            ...botFlowData.seguimientos_adquisicion,
+                                            falta_pago: { ...botFlowData.seguimientos_adquisicion?.falta_pago, template: e.target.value }
+                                        }
+                                    })}
+                                />
+                            </div>
+
+                            {/* Rescate Demanda */}
+                            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                    <strong style={{ fontSize: '0.85rem' }}>3. Rescate Demanda (Tenemos Repartidor)</strong>
+                                    <input 
+                                        type="checkbox"
+                                        checked={botFlowData.seguimientos_adquisicion?.rescate_demanda?.enabled ?? true}
+                                        onChange={(e) => setBotFlowData({
+                                            ...botFlowData,
+                                            seguimientos_adquisicion: {
+                                                ...botFlowData.seguimientos_adquisicion,
+                                                rescate_demanda: { ...botFlowData.seguimientos_adquisicion?.rescate_demanda, enabled: e.target.checked }
+                                            }
+                                        })}
+                                    />
+                                </div>
+                                <input 
+                                    type="text" 
+                                    className="form-control" 
+                                    placeholder="Plantilla Meta (ej: tenemos_repartidor)"
+                                    value={botFlowData.seguimientos_adquisicion?.rescate_demanda?.template || ''}
+                                    onChange={(e) => setBotFlowData({
+                                        ...botFlowData,
+                                        seguimientos_adquisicion: {
+                                            ...botFlowData.seguimientos_adquisicion,
+                                            rescate_demanda: { ...botFlowData.seguimientos_adquisicion?.rescate_demanda, template: e.target.value }
+                                        }
+                                    })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tabla de Registros Opt-in */}
+                    <div className="dashboard-card">
+                        <h3>📋 Registros de Consentimiento Opt-in Activos ({optins.length})</h3>
+                        <div className="table-responsive">
+                            <table className="crm-simple-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha Consentimiento</th>
+                                        <th>Teléfono Cliente</th>
+                                        <th>Ciudad</th>
+                                        <th>Pedido Origen</th>
+                                        <th>Tipo Consentimiento</th>
+                                        <th>Estado Opt-in</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {optins.map((opt) => (
+                                        <tr key={opt.id || opt.phone_number + opt.created_at}>
+                                            <td>{formatDateStr(opt.created_at)} {new Date(opt.created_at).toLocaleTimeString()}</td>
+                                            <td><strong>{opt.phone_number || opt.telefono}</strong></td>
+                                            <td>{opt.city || opt.ciudad || 'Santo Tomé'}</td>
+                                            <td><code>{opt.order_id || 'ORD-DIRECT'}</code></td>
+                                            <td><span className="badge-channel">delivery_update</span></td>
+                                            <td>
+                                                <span style={{ background: '#dcfce7', color: '#15803d', padding: '3px 10px', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.78rem' }}>
+                                                    {opt.status || 'PENDING'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {optins.length === 0 && (
+                                        <tr>
+                                            <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+                                                No se registraron consentimientos Opt-in aún.
+                                            </td>
+                                        </tr>
                                     )}
                                 </tbody>
                             </table>
@@ -2713,28 +3230,105 @@ const AdminCRM = () => {
                                 </div>
                             </div>
 
-                            <h3>Configuración de Mensaje</h3>
+                            <h3>Configuración del Canal y Mensaje</h3>
                             <div className="form-group">
-                                <label>Canal Preferente (Intentará OneSignal Push primero, luego WhatsApp fallback)</label>
+                                <label>Canal de Comunicación</label>
                                 <select 
                                     value={campaignForm.canal}
                                     onChange={(e) => setCampaignForm(prev => ({ ...prev, canal: e.target.value }))}
                                 >
-                                    <option value="push">Push Notification (OneSignal con WA fallback)</option>
-                                    <option value="whatsapp">WhatsApp Direct (wa.me o Meta API)</option>
-                                    <option value="email">Email</option>
-                                    <option value="sms">SMS</option>
+                                    <option value="whatsapp">💬 WhatsApp (Plantilla HSM Meta Aprobada)</option>
+                                    <option value="push">🔔 Push Notification App (OneSignal con WA fallback)</option>
+                                    <option value="email">📧 Email Marketing</option>
                                 </select>
                             </div>
-                            <div className="form-group">
-                                <label>Contenido del Mensaje (Usa <code>[Nombre]</code> para personalizar)</label>
-                                <textarea 
-                                    rows="4" 
-                                    placeholder="¡Hola [Nombre]! Te extrañamos en Wepi. Te dejamos un regalo..."
-                                    value={campaignForm.mensaje}
-                                    onChange={(e) => setCampaignForm(prev => ({ ...prev, mensaje: e.target.value }))}
-                                />
-                            </div>
+
+                            {/* CAMPOS ESPECIFICOS PARA WHATSAPP META HSM */}
+                            {campaignForm.canal === 'whatsapp' && (
+                                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #cbd5e1', marginBottom: '16px' }}>
+                                    <div className="form-group">
+                                        <label style={{ fontWeight: 'bold' }}>Nombre de la Plantilla de Meta (HSM):</label>
+                                        <input 
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="ej: promo_obera_fin_semana"
+                                            value={campaignForm.template_name}
+                                            onChange={(e) => setCampaignForm(prev => ({ ...prev, template_name: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    {/* CONSTRUCTOR DE ENLACE META CON UTMS */}
+                                    <div style={{ marginTop: '12px' }}>
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+                                            🔗 Enlace UTM Formateado para Meta Business Manager:
+                                        </label>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <input 
+                                                type="text"
+                                                readOnly
+                                                className="form-control"
+                                                style={{ fontSize: '0.8rem', fontFamily: 'monospace', background: '#ffffff', color: '#0284c7' }}
+                                                value={`https://wepi.com.ar/pedir?utm_source=whatsapp&utm_medium=hsm&utm_campaign=${campaignForm.template_name || campaignForm.nombre || 'campana_wa'}`}
+                                            />
+                                            <button 
+                                                type="button"
+                                                className="btn btn-outline"
+                                                style={{ whiteSpace: 'nowrap', padding: '6px 12px', fontSize: '0.8rem' }}
+                                                onClick={() => {
+                                                    const url = `https://wepi.com.ar/pedir?utm_source=whatsapp&utm_medium=hsm&utm_campaign=${campaignForm.template_name || campaignForm.nombre || 'campana_wa'}`;
+                                                    navigator.clipboard.writeText(url);
+                                                    toast.success("¡Enlace copiado! Pégalo en el botón de acción al crear la plantilla en Meta.");
+                                                }}
+                                            >
+                                                📋 Copiar Enlace Meta
+                                            </button>
+                                        </div>
+                                        <p style={{ margin: '6px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                                            💡 Las plantillas de WhatsApp no permiten texto libre directo. Copia este enlace en el botón de la plantilla dentro del panel de Meta.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CAMPOS ESPECIFICOS PARA PUSH APP */}
+                            {campaignForm.canal === 'push' && (
+                                <div>
+                                    <div className="form-group">
+                                        <label>Cuerpo de la Notificación Push (Usa <code>[Nombre]</code> para personalizar):</label>
+                                        <textarea 
+                                            rows="4" 
+                                            placeholder="¡Hola [Nombre]! Te extrañamos en Wepi. Te dejamos un regalo especial..."
+                                            value={campaignForm.mensaje}
+                                            onChange={(e) => setCampaignForm(prev => ({ ...prev, mensaje: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CAMPOS ESPECIFICOS PARA EMAIL */}
+                            {campaignForm.canal === 'email' && (
+                                <div>
+                                    <div className="form-group">
+                                        <label>Asunto del Email:</label>
+                                        <input 
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="ej: ¡Te extrañamos en Wepi! Tu regalo de bienvenida 🎁"
+                                            value={campaignForm.asunto}
+                                            onChange={(e) => setCampaignForm(prev => ({ ...prev, asunto: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Cuerpo del Correo HTML/Texto (Usa <code>[Nombre]</code> para personalizar):</label>
+                                        <textarea 
+                                            rows="4" 
+                                            placeholder="Hola [Nombre]..."
+                                            value={campaignForm.mensaje}
+                                            onChange={(e) => setCampaignForm(prev => ({ ...prev, mensaje: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="form-group">
                                 <label>Programar Fecha y Hora (Dejar vacío para enviar de inmediato)</label>
@@ -2754,24 +3348,51 @@ const AdminCRM = () => {
                             </button>
                         </div>
 
-                        {/* History list */}
+                        {/* History list with execution metrics */}
                         <div className="campaign-history-card">
-                            <h2>Campañas Lanzadas</h2>
+                            <h2>Campañas Lanzadas y Métricas de Despacho</h2>
                             <div className="campaigns-list">
-                                {campaigns.map(camp => (
-                                    <div key={camp.id} className="campaign-item">
-                                        <div className="camp-header">
-                                            <h4>{camp.nombre}</h4>
-                                            <button className="btn-small btn-delete" onClick={() => handleDeleteCampaign(camp.id)}>Eliminar</button>
+                                {campaigns.map(camp => {
+                                    const total = camp.total_audiencia || 0;
+                                    const success = camp.enviados_exito || 0;
+                                    const failed = camp.fallidos || 0;
+                                    const rate = total > 0 ? ((success / total) * 100).toFixed(1) : '100.0';
+                                    return (
+                                        <div key={camp.id} className="campaign-item">
+                                            <div className="camp-header">
+                                                <h4>{camp.nombre}</h4>
+                                                <button className="btn-small btn-delete" onClick={() => handleDeleteCampaign(camp.id)}>Eliminar</button>
+                                            </div>
+                                            <p className="desc">{camp.mensaje || `Plantilla Meta: ${camp.template_name}`}</p>
+                                            
+                                            {/* METRICAS DE DESPACHO Y MONITOREO */}
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', background: '#f8fafc', padding: '10px', borderRadius: '8px', margin: '10px 0', border: '1px solid #e2e8f0', fontSize: '0.82rem' }}>
+                                                <div>
+                                                    <span style={{ color: '#64748b', display: 'block' }}>Audiencia Objetivo:</span>
+                                                    <strong>{total} usuarios</strong>
+                                                </div>
+                                                <div>
+                                                    <span style={{ color: '#166534', display: 'block' }}>Enviados / Éxito:</span>
+                                                    <strong style={{ color: '#16a34a' }}>{success} exitosos</strong>
+                                                </div>
+                                                <div>
+                                                    <span style={{ color: '#991b1b', display: 'block' }}>Fallidos / Omitidos:</span>
+                                                    <strong style={{ color: '#dc2626' }}>{failed} sin envío</strong>
+                                                </div>
+                                                <div>
+                                                    <span style={{ color: '#0369a1', display: 'block' }}>Tasa Despacho:</span>
+                                                    <strong style={{ color: '#0284c7' }}>{rate} %</strong>
+                                                </div>
+                                            </div>
+
+                                            <div className="meta">
+                                                <span>Canal: <strong style={{ textTransform: 'uppercase' }}>{camp.canal === 'whatsapp' ? '💬 WA Meta' : camp.canal === 'push' ? '🔔 Push' : '📧 Email'}</strong></span>
+                                                <span className={`status-badge ${camp.estado?.toLowerCase()}`}>{camp.estado}</span>
+                                                {camp.fecha_programada && <span>Programada: {formatDateStr(camp.fecha_programada)}</span>}
+                                            </div>
                                         </div>
-                                        <p className="desc">"{camp.mensaje}"</p>
-                                        <div className="meta">
-                                            <span>Canal: <strong style={{ textTransform: 'uppercase' }}>{camp.canal}</strong></span>
-                                            <span className={`status-badge ${camp.estado?.toLowerCase()}`}>{camp.estado}</span>
-                                            {camp.fecha_programada && <span>Programada: {formatDateStr(camp.fecha_programada)}</span>}
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 {campaigns.length === 0 && <p className="empty">No hay registro de campañas anteriores.</p>}
                             </div>
                         </div>

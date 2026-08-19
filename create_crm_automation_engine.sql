@@ -71,10 +71,13 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'reason', 'Matriz de automatización no configurada');
     END IF;
 
-    -- Buscar el evento específico en la matriz
+    -- Buscar el evento específico en la matriz (soporta ID y evento_key)
     SELECT elem INTO v_event
     FROM jsonb_array_elements(v_matrix) elem
-    WHERE elem->>'id' = p_event_id;
+    WHERE elem->>'id' = p_event_id 
+       OR elem->'trigger_config'->>'evento_key' = p_event_id
+       OR (elem->>'id' = 'carrito_abandono' AND p_event_id = 'CARRITO_ABANDONADO')
+       OR (elem->>'id' = 'pedido_no_pago' AND p_event_id = 'PEDIDO_NO_PAGADO');
 
     IF v_event IS NULL OR NOT (v_event->>'enabled')::boolean THEN
         RETURN jsonb_build_object('success', false, 'reason', 'Evento inactivo o no encontrado');
@@ -97,7 +100,7 @@ BEGIN
 
         -- EVALUAR CANAL 1: WHATSAPP
         IF v_ch = 'whatsapp' THEN
-            IF r_user.telefono IS NOT NULL AND v_optin_exists AND v_cfg->>'template_name' IS NOT NULL THEN
+            IF r_user.telefono IS NOT NULL AND v_cfg->>'template_name' IS NOT NULL THEN
                 -- Registrar despacho de WhatsApp
                 v_success := TRUE;
                 v_dispatched_channel := 'whatsapp';

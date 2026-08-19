@@ -948,6 +948,9 @@ export default function CustomerApp() {
           orderInfo: orderInfo
         });
 
+        // Registrar evento PEDIDO_NO_PAGADO en el CRM (se marcará pagado cuando vuelva de MP)
+        api.adminLogCRMEvent(user.id, 'PEDIDO_NO_PAGADO', { order_id: pregeneratedId, total: exactTotal }).catch(e => console.error(e));
+
         const loadingToast = toast.loading('Redirigiendo a Mercado Pago...');
         try {
           const extRef = pregeneratedId; 

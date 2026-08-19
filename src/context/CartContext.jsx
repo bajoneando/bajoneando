@@ -42,6 +42,52 @@ export function CartProvider({ children }) {
     return () => clearInterval(interval);
   }, []);
 
+  // ─────────────────────────────────────────────────────────────
+  // DETECTOR Y REGISTRO AUTOMÁTICO DE CARRITO ABANDONADO
+  // ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!items || items.length === 0) return;
+
+    const checkAndLogAbandonment = () => {
+      const uId = localStorage.getItem('userId');
+      if (!uId) return;
+
+      const lastLogged = Number(localStorage.getItem('wepi_last_cart_abandoned_time') || 0);
+      const now = Date.now();
+
+      // Evitar duplicar en menos de 2 minutos
+      if (now - lastLogged < 120000) return;
+
+      localStorage.setItem('wepi_last_cart_abandoned_time', String(now));
+      api.adminLogCRMEvent(uId, 'CARRITO_ABANDONADO', {
+        items_count: items.reduce((s, i) => s + i.qty, 0),
+        subtotal: items.reduce((sum, i) => sum + (Number(i.precio) * i.qty), 0),
+        items: items.map(i => i.nombre)
+      }).catch(e => console.error("Error al registrar carrito abandonado:", e));
+    };
+
+    // 1. Temporizador de inactividad (20 segundos tras modificar el carrito sin comprar)
+    const timer = setTimeout(() => {
+      checkAndLogAbandonment();
+    }, 20000);
+
+    // 2. Escuchadores de salida / ocultamiento de la PWA o pestaña
+    const handleVisibilityOrPageHide = () => {
+      if (document.visibilityState === 'hidden') {
+        checkAndLogAbandonment();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrPageHide);
+    window.addEventListener('pagehide', handleVisibilityOrPageHide);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityOrPageHide);
+      window.removeEventListener('pagehide', handleVisibilityOrPageHide);
+    };
+  }, [items]);
+
   const isShops = window.location.pathname.startsWith('/shops');
   const costoEnvio = customShippingCost !== null ? customShippingCost : (isShops ? costoEnvioShops : costoEnvioDelivery);
 

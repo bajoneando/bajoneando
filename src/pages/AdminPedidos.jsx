@@ -10,6 +10,8 @@ const AdminPedidos = () => {
     const [statusFilter, setStatusFilter] = useState('Todos');
     const [localFilter, setLocalFilter] = useState('Todos');
     const [cityFilter, setCityFilter] = useState('Todos');
+    const [dateStartFilter, setDateStartFilter] = useState('');
+    const [dateEndFilter, setDateEndFilter] = useState('');
     const [locales, setLocales] = useState([]);
     
     // Modal state
@@ -20,7 +22,7 @@ const AdminPedidos = () => {
     const loadPedidos = async () => {
         setLoading(true);
         try {
-            const data = await api.adminGetPedidosGeneral();
+            const data = await api.adminGetPedidosGeneral(dateStartFilter, dateEndFilter);
             setPedidos(data);
             
             // Fetch locales for filter
@@ -35,7 +37,7 @@ const AdminPedidos = () => {
 
     useEffect(() => {
         loadPedidos();
-    }, []);
+    }, [dateStartFilter, dateEndFilter]);
 
     const handleOpenDetail = async (id) => {
         setModalLoading(true);
@@ -114,6 +116,26 @@ const AdminPedidos = () => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Desde:</span>
+                        <input 
+                            type="date" 
+                            className="filter-input"
+                            value={dateStartFilter}
+                            onChange={(e) => setDateStartFilter(e.target.value)}
+                            title="Fecha inicio"
+                        />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Hasta:</span>
+                        <input 
+                            type="date" 
+                            className="filter-input"
+                            value={dateEndFilter}
+                            onChange={(e) => setDateEndFilter(e.target.value)}
+                            title="Fecha fin"
+                        />
+                    </div>
                     <select 
                         className="filter-select"
                         value={statusFilter}
