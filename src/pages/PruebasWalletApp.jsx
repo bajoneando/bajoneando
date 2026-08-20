@@ -2365,6 +2365,7 @@ export default function PruebasWalletApp() {
          const response = await api.crearPedido(orderDataForCreation);
 
          if (!response.success) throw new Error("No se pudo crear el pedido base.");
+         cart.markOrderCompleted?.();
 
          // Registrar WhatsApp Opt-in silenciosamente si está marcado
          if (!optInRegistered && whatsappCheckoutOptIn && user && user.telefono) {
@@ -4036,7 +4037,7 @@ export default function PruebasWalletApp() {
                   <button className="btn btn-secondary btn-full" onClick={() => { setModal(null); navigate('/mis-pedidos'); }}>📦 Mis pedidos</button>
                   <button className="btn btn-secondary btn-full" onClick={() => { fetchByCategory('favoritos', 'Mis favoritos'); setModal(null); }}>❤️ Mis favoritos</button>
                   <button className="btn btn-secondary btn-full" onClick={() => setModal('configuracion')}>⚙️ Configuración</button>
-                  <button className="btn btn-ghost btn-full" style={{ marginTop: '12px' }} onClick={() => { doLogout(); setModal(null); toast.success('Sesión cerrada'); }}>
+                  <button className="btn btn-ghost btn-full" style={{ marginTop: '12px' }} onClick={async () => { await doLogout(); setModal(null); toast.success('Sesión cerrada'); window.location.reload(); }}>
                     Cerrar sesión
                   </button>
                 </div>

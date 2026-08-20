@@ -56,6 +56,12 @@ export function CartProvider({ children }) {
         return;
       }
 
+      // Si el usuario acaba de realizar o confirmar un pedido (en los últimos 10 minutos), NO es abandono
+      const lastOrderTime = Number(sessionStorage.getItem('wepi_order_completed_time') || 0);
+      if (Date.now() - lastOrderTime < 600000) {
+        return;
+      }
+
       const uId = localStorage.getItem('userId');
       if (!uId) return;
 
@@ -134,7 +140,14 @@ export function CartProvider({ children }) {
     sessionStorage.setItem('wepi_checkout_in_progress', 'true');
   }, []);
 
+  const markOrderCompleted = useCallback(() => {
+    sessionStorage.setItem('wepi_order_completed_time', String(Date.now()));
+    setIsCheckoutInProgress(false);
+    sessionStorage.removeItem('wepi_checkout_in_progress');
+  }, []);
+
   const clearCart = useCallback(() => {
+    sessionStorage.setItem('wepi_order_completed_time', String(Date.now()));
     setItems([]);
     setIsCheckoutInProgress(false);
     sessionStorage.removeItem('wepi_checkout_in_progress');
@@ -149,7 +162,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider value={{
-      items, addItem, removeItem, updateQty, clearCart, markCheckoutStarted, setIsCheckoutInProgress,
+      items, addItem, removeItem, updateQty, clearCart, markCheckoutStarted, markOrderCompleted, setIsCheckoutInProgress,
       deliveryType, setDeliveryType,
       subtotal, shippingCost, total, totalItems, hasDrink,
       COSTO_ENVIO: costoEnvio,

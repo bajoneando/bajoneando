@@ -1713,6 +1713,8 @@ export async function updateEstadoLocalOrder(pedidoLocalId, estado) {
           } catch (e) {
             console.error("Error acreditando crédito Wallet (Local):", e);
           }
+          // Registrar evento CRM PEDIDO_ENTREGADO
+          adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pl.pedido_id }).catch(e => console.error("Error registrando CRM PEDIDO_ENTREGADO (Local):", e));
         }
       }
     }
@@ -2627,6 +2629,8 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
         } catch (e) {
           console.error("Error acreditando crédito Wallet:", e);
         }
+        // Registrar evento CRM PEDIDO_ENTREGADO
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pedidoId }).catch(e => console.error("Error registrando CRM PEDIDO_ENTREGADO (Driver):", e));
       } else {
         console.warn(`[Wallet] El pedido ${pedidoId} no tiene usuario_id asignado. No se puede acreditar crédito.`);
       }
@@ -6173,7 +6177,8 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
           r.id === eventType || 
           r.trigger_config?.evento_key === eventType ||
           (r.id === 'carrito_abandono' && eventType === 'CARRITO_ABANDONADO') ||
-          (r.id === 'pedido_no_pago' && eventType === 'PEDIDO_NO_PAGADO')
+          (r.id === 'pedido_no_pago' && eventType === 'PEDIDO_NO_PAGADO') ||
+          (r.id === 'pedido_entregado' && eventType === 'PEDIDO_ENTREGADO')
         );
 
         if (rule && rule.enabled !== false) {

@@ -72,13 +72,27 @@ export function AuthProvider({ children }) {
   };
 
   const logoutUser = async () => {
+    // Limpiar estado React e historial local de inmediato
+    setUser(null);
+    try {
+      const keysToRemove = [
+        'userId', 'userName', 'userEmail', 'userAddress', 'userTelefono',
+        'userEmailConfirmado', 'userRole', 'userYaRealizoPedidos', 'userCiudad',
+        'pendingOrderData', 'pendingOrderDataPruebas', 'wepi_checkout_in_progress'
+      ];
+      keysToRemove.forEach(k => {
+        localStorage.removeItem(k);
+        sessionStorage.removeItem(k);
+      });
+    } catch (e) {
+      console.error("Error al limpiar storage:", e);
+    }
+
     try {
       await signOut(auth);
     } catch (e) {
       console.error("Firebase logout error:", e);
     }
-    ['userId', 'userName', 'userEmail', 'userAddress', 'userTelefono', 'userEmailConfirmado', 'userRole', 'userYaRealizoPedidos', 'userCiudad'].forEach(k => localStorage.removeItem(k));
-    setUser(null);
   };
 
   const loginWithGoogle = async () => {
