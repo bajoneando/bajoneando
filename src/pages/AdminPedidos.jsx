@@ -18,6 +18,7 @@ const AdminPedidos = () => {
     const [selectedPedido, setSelectedPedido] = useState(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [pedidoDetalle, setPedidoDetalle] = useState(null);
+    const [forceMode, setForceMode] = useState(false);
 
     const loadPedidos = async () => {
         setLoading(true);
@@ -56,20 +57,28 @@ const AdminPedidos = () => {
     const handleCloseModal = () => {
         setSelectedPedido(null);
         setPedidoDetalle(null);
+        setForceMode(false);
     };
 
     const handleUpdateStatus = async (pedidoId, newStatus) => {
-        if (!window.confirm(`¿Cambiar estado a ${newStatus}?`)) return;
+        if (forceMode) {
+            if (!window.confirm(`⚠️ ADVERTENCIA: ¿Seguro que deseas FORZAR el cambio de estado a "${newStatus}"? Esto saltará las restricciones de la base de datos.`)) return;
+        } else {
+            if (!window.confirm(`¿Cambiar estado a ${newStatus}?`)) return;
+        }
         try {
-            await api.adminUpdatePedidoStatus(pedidoId, newStatus);
-            toast.success('Estado actualizado');
+            if (forceMode) {
+                await api.adminForceUpdatePedidoStatus(pedidoId, newStatus);
+            } else {
+                await api.adminUpdatePedidoStatus(pedidoId, newStatus);
+            }
+            toast.success(forceMode ? 'Estado forzado con éxito' : 'Estado actualizado');
             setPedidoDetalle(prev => ({ ...prev, estado: newStatus }));
             loadPedidos();
         } catch (err) {
             console.error(err);
             toast.error('Error al actualizar estado: ' + (err.message || 'Error desconocido'));
         }
-
     };
 
     const formatFecha = (fechaStr) => {
@@ -469,7 +478,17 @@ const AdminPedidos = () => {
                                 </section>
 
                                 <footer className="detail-footer">
-                                    <h4>Acciones de Estado</h4>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
+                                        <h4 style={{ margin: 0 }}>Acciones de Estado</h4>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.85rem', color: '#dc2626', fontWeight: 'bold' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                checked={forceMode} 
+                                                onChange={(e) => setForceMode(e.target.checked)} 
+                                            />
+                                            ⚠️ Modo Forzar (Desactivar seguros)
+                                        </label>
+                                    </div>
                                     <div className="action-buttons">
                                         {estadosPosibles.map(est => (
                                             <button 

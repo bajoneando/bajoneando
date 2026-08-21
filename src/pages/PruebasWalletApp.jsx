@@ -1897,6 +1897,9 @@ export default function PruebasWalletApp() {
         ciudad
       );
       if (d.success) {
+        if (fd.get('whatsapp_optin') === 'on' || !!fd.get('whatsapp_optin')) {
+          api.registerWhatsappOptin({ phoneNumber: telefono, ciudad, userId: d.userId, tipo: 'promociones_novedades' }).catch(() => {});
+        }
         loginAsUser({ 
           userId: d.userId, 
           name: nombre, 
@@ -4007,6 +4010,13 @@ export default function PruebasWalletApp() {
                   </label>
                 </div>
 
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px', textAlign: 'left' }}>
+                  <input type="checkbox" id="whatsapp_optin" name="whatsapp_optin" defaultChecked style={{ width: 'auto', marginTop: '4px' }} />
+                  <label htmlFor="whatsapp_optin" style={{ fontSize: '0.85rem', color: 'var(--gray-600)', lineHeight: '1.4' }}>
+                    Acepto recibir novedades y seguimiento de pedidos por WhatsApp
+                  </label>
+                </div>
+
                 <button type="submit" className="btn btn-primary btn-full" disabled={authLoading}>
                   {authLoading ? <span className="spinner spinner-white" /> : 'Registrarme'}
                 </button>
@@ -4523,6 +4533,21 @@ export default function PruebasWalletApp() {
                 </label>
               </div>
             )}
+
+            {(!user || !user.onesignal_id) && !Capacitor.isNativePlatform() && (
+              <div style={{ marginTop: '24px', marginBottom: '24px', padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '12px', color: '#1e293b' }}>Ahora tenés Wepi más cerca que nunca.</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+                  <a href="https://apps.apple.com/ar/app/wepi-app/id6801576564" target="_blank" rel="noopener noreferrer">
+                    <img src="https://i.postimg.cc/3xLdFwyB/disponible-app-store-rtt.png" alt="App Store" style={{ height: '40px' }} />
+                  </a>
+                  <a href="https://api.whatsapp.com/send/?phone=3756543610&text=Quiero+la+App+de+Wepi+para+Android" target="_blank" rel="noopener noreferrer">
+                    <img src="https://i.postimg.cc/TYddN6vJ/disponible-en-google-play-badge-1.png" alt="Google Play" style={{ height: '40px' }} />
+                  </a>
+                </div>
+              </div>
+            )}
+
             <button 
               className="btn btn-secondary btn-full"
               style={{ padding: '14px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}

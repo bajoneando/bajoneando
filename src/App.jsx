@@ -25,6 +25,7 @@ import * as api from './services/api';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Capacitor } from '@capacitor/core';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import DownloadAppPopup from './components/DownloadAppPopup';
 
 function AdminRoute({ children }) {
   const { user } = useAuth();
@@ -321,6 +322,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <ConsentBanner />
+        {location.pathname.startsWith('/pedir') && <DownloadAppPopup />}
       </CartProvider>
     </AuthProvider>
   );
