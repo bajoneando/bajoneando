@@ -140,6 +140,24 @@ export default function PruebasWalletApp() {
     }
   }, [location.pathname, activeCity]);
 
+  // ── DETECTOR CRM: VISITA_SIN_COMPRA ──
+  React.useEffect(() => {
+    if (!user?.id) return;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const lastVisitLogged = localStorage.getItem(`wepi_last_crm_visit_logged_${user.id}`);
+    if (lastVisitLogged === todayStr) return;
+
+    const timer = setTimeout(() => {
+      const hasCompletedOrder = sessionStorage.getItem('wepi_order_completed_time');
+      if (!hasCompletedOrder && (!cart.items || cart.items.length === 0)) {
+        localStorage.setItem(`wepi_last_crm_visit_logged_${user.id}`, todayStr);
+        api.adminLogCRMEvent(user.id, 'VISITA_SIN_COMPRA', { path: location.pathname }).catch(e => console.error("Error CRM visita sin compra:", e));
+      }
+    }, 45000);
+
+    return () => clearTimeout(timer);
+  }, [user?.id, location.pathname, cart.items]);
+
   const selectCity = React.useCallback((city) => {
     setActiveCity(city);
     sessionStorage.setItem('sessionCity', city);

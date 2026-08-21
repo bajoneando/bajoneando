@@ -78,6 +78,9 @@ export async function registerUsuario(nombre, email, password, direccion, telefo
     }
     throw new Error(error.message);
   }
+
+  // Registrar evento CRM USUARIO_REGISTRADO
+  adminLogCRMEvent(id, 'USUARIO_REGISTRADO', { source: 'register_form' }).catch(err => console.error("Error CRM registrado:", err));
   
   // Enviar email de confirmación
   sendConfirmationEmail(email, code, 'usuario', nombre).catch(console.error);
@@ -126,6 +129,9 @@ export async function syncFirebaseUser(firebaseUser) {
   });
   
   if (error) throw new Error(error.message);
+  
+  // Registrar evento CRM USUARIO_REGISTRADO
+  adminLogCRMEvent(id, 'USUARIO_REGISTRADO', { source: 'firebase_google' }).catch(err => console.error("Error CRM usuario registrado:", err));
   
   return { 
     success: true, 
@@ -2610,6 +2616,15 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
   const { error: errGen } = await supabase.from('pedidos_general').update({ estado: status }).eq('id', pedidoId);
   if (errGen) throw errGen;
 
+
+  try {
+    if (status === 'En camino' || status === 'Retirado') {
+      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
+      if (pg?.usuario_id) {
+        adminLogCRMEvent(pg.usuario_id, 'REPARTIDOR_ASIGNADO', { order_id: pedidoId }).catch(e => console.error("Error CRM en camino:", e));
+      }
+    }
+  } catch (e) { console.warn("CRM En camino skipped:", e.message); }
 
   try {
     if (status === 'Rechazado' || status === 'Cancelado') {
@@ -6215,8 +6230,11 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
         const rule = matrix.find(r => 
           r.id === eventType || 
           r.trigger_config?.evento_key === eventType ||
+          (r.id === 'registrado_sin_pedidos' && eventType === 'USUARIO_REGISTRADO') ||
+          (r.id === 'visito_no_compro' && eventType === 'VISITA_SIN_COMPRA') ||
           (r.id === 'carrito_abandono' && eventType === 'CARRITO_ABANDONADO') ||
           (r.id === 'pedido_no_pago' && eventType === 'PEDIDO_NO_PAGADO') ||
+          (r.id === 'en_camino' && eventType === 'REPARTIDOR_ASIGNADO') ||
           (r.id === 'pedido_entregado' && eventType === 'PEDIDO_ENTREGADO')
         );
 
