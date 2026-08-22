@@ -85,6 +85,54 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         }
     },
     {
+        id: 'pedido_aceptado',
+        evento: '👨‍🍳 Pedido Aceptado',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'En preparación',
+        trigger_config: { evento_key: 'PEDIDO_ACEPTADO' },
+        comunicacion: 'Confirmación',
+        enabled: true,
+        canales: ['push', 'whatsapp', 'none'],
+        configs: {
+            push: { enabled: true, title: '¡Tu pedido fue aceptado! 🍳', body: 'El comercio ya está preparando tu comida.', url: '/mis-pedidos' },
+            whatsapp: { enabled: true, template_name: 'pedido_en_preparacion' },
+            email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
+        }
+    },
+    {
+        id: 'pedido_retirado',
+        evento: '📦 Pedido Retirado',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'Retirado por repartidor',
+        trigger_config: { evento_key: 'PEDIDO_RETIRADO' },
+        comunicacion: 'En camino',
+        enabled: true,
+        canales: ['push', 'whatsapp', 'none'],
+        configs: {
+            push: { enabled: true, title: '¡Pedido retirado! 🛵', body: 'El repartidor ya lleva tu pedido en camino.', url: '/mis-pedidos' },
+            whatsapp: { enabled: true, template_name: 'pedido_retirado_camino' },
+            email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
+        }
+    },
+    {
+        id: 'repartidor_cerca',
+        evento: '📍 Repartidor cerca',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'A menos de 500m',
+        trigger_config: { evento_key: 'REPARTIDOR_CERCA' },
+        comunicacion: 'Aviso de llegada',
+        enabled: true,
+        canales: ['push', 'whatsapp', 'none'],
+        configs: {
+            push: { enabled: true, title: '🛵 ¡Tu repartidor está cerca!', body: 'Está a menos de 500 metros de tu domicilio. Prepárate para recibirlo.', url: '/mis-pedidos' },
+            whatsapp: { enabled: true, template_name: 'repartidor_cerca_alerta' },
+            email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
+        }
+    },
+    {
         id: 'en_camino',
         evento: '🚴 En camino',
         estado: 'TODOS',
@@ -462,9 +510,18 @@ const AdminCRM = () => {
             setHistoryLog(historyRes || []);
             setOptins(optinsRes || []);
             
+            let finalMatrix = [...DEFAULT_CRM_AUTOMATION_MATRIX];
             if (matrixRes && Array.isArray(matrixRes) && matrixRes.length > 0) {
-                setMatrixData(matrixRes);
+                const merged = [...matrixRes];
+                DEFAULT_CRM_AUTOMATION_MATRIX.forEach(defItem => {
+                    const exists = merged.some(m => m.id === defItem.id || (m.trigger_config?.evento_key && m.trigger_config?.evento_key === defItem.trigger_config?.evento_key));
+                    if (!exists) {
+                        merged.push(defItem);
+                    }
+                });
+                finalMatrix = merged;
             }
+            setMatrixData(finalMatrix);
             if (habitsRes && habitsRes.moments) {
                 setHabitsConfig(habitsRes);
             }

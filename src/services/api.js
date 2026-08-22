@@ -79,9 +79,6 @@ export async function registerUsuario(nombre, email, password, direccion, telefo
     throw new Error(error.message);
   }
 
-  // Registrar evento CRM USUARIO_REGISTRADO
-  adminLogCRMEvent(id, 'USUARIO_REGISTRADO', { source: 'register_form' }).catch(err => console.error("Error CRM registrado:", err));
-  
   // Enviar email de confirmación
   sendConfirmationEmail(email, code, 'usuario', nombre).catch(console.error);
   
@@ -129,9 +126,6 @@ export async function syncFirebaseUser(firebaseUser) {
   });
   
   if (error) throw new Error(error.message);
-  
-  // Registrar evento CRM USUARIO_REGISTRADO
-  adminLogCRMEvent(id, 'USUARIO_REGISTRADO', { source: 'firebase_google' }).catch(err => console.error("Error CRM usuario registrado:", err));
   
   return { 
     success: true, 
@@ -679,12 +673,53 @@ export async function repartidorUpdateFcmToken(driverId, fcmToken) {
   return { success: true };
 }
 
+function getHaversineDistanceMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export async function updateDriverCoords(driverId, lat, lng) {
   const { error } = await supabase
     .from('repartidores')
     .update({ lat, lng, ultima_actividad: new Date().toISOString() })
     .eq('id', driverId);
   if (error) throw new Error(error.message);
+
+  // 📍 Chequeo Proximidad Repartidor Cerca (< 500 metros)
+  try {
+    const { data: activeOrders } = await supabase
+      .from('pedidos_general')
+      .select('id, usuario_id, lat, lng, ubicacion_lat, ubicacion_lng, repartidor_cerca_notified')
+      .eq('repartidor_id', driverId)
+      .in('estado', ['Retirado', 'En camino']);
+
+    if (activeOrders && activeOrders.length > 0) {
+      for (const order of activeOrders) {
+        if (order.repartidor_cerca_notified) continue;
+        const destLat = Number(order.lat || order.ubicacion_lat);
+        const destLng = Number(order.lng || order.ubicacion_lng);
+
+        if (destLat && destLng && !isNaN(destLat) && !isNaN(destLng)) {
+          const distMeters = getHaversineDistanceMeters(Number(lat), Number(lng), destLat, destLng);
+          if (distMeters <= 500) {
+            await supabase.from('pedidos_general').update({ repartidor_cerca_notified: true }).eq('id', order.id);
+            adminLogCRMEvent(order.usuario_id, 'REPARTIDOR_CERCA', { order_id: order.id, dist_meters: Math.round(distMeters) })
+              .catch(e => console.error("Error CRM REPARTIDOR_CERCA:", e));
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Proximity check skipped:", e.message);
+  }
+
   return { success: true };
 }
 
@@ -1712,6 +1747,13 @@ export async function updateEstadoLocalOrder(pedidoLocalId, estado) {
         }
       }
       
+      if (['Aceptado', 'Confirmado', 'En preparacion'].includes(estado) && pg?.usuario_id) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ACEPTADO', { order_id: pl.pedido_id }).catch(e => console.error("Error CRM PEDIDO_ACEPTADO (Local):", e));
+      }
+      if (['Retirado', 'Listo'].includes(estado) && pg?.usuario_id) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RETIRADO', { order_id: pl.pedido_id }).catch(e => console.error("Error CRM PEDIDO_RETIRADO (Local):", e));
+      }
+      
       if (estado === 'Entregado') {
         if (pg?.usuario_id && pg.usuario_id.length > 20) {
           await supabase.from('usuarios').update({ ya_realizo_pedidos: true }).eq('id', pg.usuario_id);
@@ -2618,13 +2660,25 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
 
 
   try {
-    if (status === 'En camino' || status === 'Retirado') {
+    if (['Aceptado', 'Confirmado', 'En preparacion'].includes(status)) {
+      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
+      if (pg?.usuario_id) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ACEPTADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ACEPTADO:", e));
+      }
+    }
+    if (status === 'Retirado') {
+      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
+      if (pg?.usuario_id) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RETIRADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RETIRADO:", e));
+      }
+    }
+    if (status === 'En camino') {
       const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
       if (pg?.usuario_id) {
         adminLogCRMEvent(pg.usuario_id, 'REPARTIDOR_ASIGNADO', { order_id: pedidoId }).catch(e => console.error("Error CRM en camino:", e));
       }
     }
-  } catch (e) { console.warn("CRM En camino skipped:", e.message); }
+  } catch (e) { console.warn("CRM status triggers skipped:", e.message); }
 
   try {
     if (status === 'Rechazado' || status === 'Cancelado') {
@@ -6230,10 +6284,13 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
         const rule = matrix.find(r => 
           r.id === eventType || 
           r.trigger_config?.evento_key === eventType ||
-          (r.id === 'registrado_sin_pedidos' && eventType === 'USUARIO_REGISTRADO') ||
+          (r.id === 'registrado_sin_pedidos' && (eventType === 'USUARIO_REGISTRADO' || eventType === 'USER_REGISTERED')) ||
           (r.id === 'visito_no_compro' && eventType === 'VISITA_SIN_COMPRA') ||
           (r.id === 'carrito_abandono' && eventType === 'CARRITO_ABANDONADO') ||
           (r.id === 'pedido_no_pago' && eventType === 'PEDIDO_NO_PAGADO') ||
+          (r.id === 'pedido_aceptado' && eventType === 'PEDIDO_ACEPTADO') ||
+          (r.id === 'pedido_retirado' && eventType === 'PEDIDO_RETIRADO') ||
+          (r.id === 'repartidor_cerca' && eventType === 'REPARTIDOR_CERCA') ||
           (r.id === 'en_camino' && eventType === 'REPARTIDOR_ASIGNADO') ||
           (r.id === 'pedido_entregado' && eventType === 'PEDIDO_ENTREGADO')
         );

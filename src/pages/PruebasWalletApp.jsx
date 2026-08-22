@@ -143,20 +143,37 @@ export default function PruebasWalletApp() {
   // ── DETECTOR CRM: VISITA_SIN_COMPRA ──
   React.useEffect(() => {
     if (!user?.id) return;
+    // Si el usuario ya realizó pedidos en la plataforma, no es una visita sin compra
+    if (user.ya_realizo_pedidos) return;
+
     const todayStr = new Date().toISOString().split('T')[0];
     const lastVisitLogged = localStorage.getItem(`wepi_last_crm_visit_logged_${user.id}`);
     if (lastVisitLogged === todayStr) return;
 
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       const hasCompletedOrder = sessionStorage.getItem('wepi_order_completed_time');
-      if (!hasCompletedOrder && (!cart.items || cart.items.length === 0)) {
+      if (hasCompletedOrder) return;
+      if (cart.items && cart.items.length > 0) return;
+
+      try {
+        // Verificar en la DB si el usuario tiene pedidos en su historial
+        const { data: userOrders } = await api.supabase
+          .from('pedidos_general')
+          .select('id')
+          .eq('usuario_id', user.id)
+          .limit(1);
+
+        if (userOrders && userOrders.length > 0) return;
+
         localStorage.setItem(`wepi_last_crm_visit_logged_${user.id}`, todayStr);
         api.adminLogCRMEvent(user.id, 'VISITA_SIN_COMPRA', { path: location.pathname }).catch(e => console.error("Error CRM visita sin compra:", e));
+      } catch (e) {
+        console.warn("Visita sin compra check skipped:", e.message);
       }
     }, 45000);
 
     return () => clearTimeout(timer);
-  }, [user?.id, location.pathname, cart.items]);
+  }, [user?.id, user?.ya_realizo_pedidos, location.pathname, cart.items]);
 
   const selectCity = React.useCallback((city) => {
     setActiveCity(city);
