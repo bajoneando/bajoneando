@@ -1,4 +1,4 @@
-package com.wepi.app;
+package com.wepi.logistic;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,10 +1,10 @@
 {
-  "appId": "com.wepi.app",
-  "appName": "Wepi",
+  "appId": "com.wepi.logistic",
+  "appName": "Wepi Logistic",
   "webDir": "dist",
   "plugins": {
     "CapacitorUpdater": {
-      "appId": "com.wepi.app",
+      "appId": "com.wepi.logistic",
       "autoUpdate": true
     },
     "PushNotifications": {

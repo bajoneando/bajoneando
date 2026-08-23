@@ -1823,7 +1823,40 @@ export default function DriverDashboard() {
           <div className="dd-stat-item highlight" style={{ background: 'var(--red-50)', border: '1px solid var(--red-200)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
             <small style={{ color: 'var(--gray-600)', display: 'block', marginBottom: '8px', fontSize: '1rem' }}>Saldo a Cobrar (Transferencia/Tarjeta)</small>
             <strong style={{ fontSize: '2.5rem', color: 'var(--red-600)' }}>${Number(cobrosData?.totalDisponible || 0).toLocaleString('es-AR')}</strong>
+            {cobrosData?.cantidadEntregas > 0 && (
+              <div style={{ marginTop: '8px', fontSize: '0.9rem', color: 'var(--red-500)', fontWeight: 'bold' }}>
+                {cobrosData.cantidadEntregas} {cobrosData.cantidadEntregas === 1 ? 'entrega pendiente' : 'entregas pendientes'} de cobro
+              </div>
+            )}
           </div>
+        </div>
+
+        <div className="dd-card" style={{ marginBottom: '24px', padding: '20px', background: '#fff', borderRadius: '12px', border: '1px solid #eee' }}>
+          <h4 style={{ marginBottom: '15px' }}>Datos para Transferencia</h4>
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const alias = fd.get('alias_cbu');
+            const cuenta = fd.get('nombre_cuenta');
+            const loading = toast.loading('Guardando datos...');
+            const res = await api.repartidorUpdatePerfil({ driverId: driver.id, alias_cbu: alias, nombre_cuenta: cuenta });
+            if (res.success) {
+              toast.success('Datos guardados', { id: loading });
+              loadData(); // reload driverData
+            } else {
+              toast.error(res.error || 'Error al guardar', { id: loading });
+            }
+          }}>
+            <div className="dd-form-group" style={{ marginBottom: '15px' }}>
+              <label>Alias / CBU</label>
+              <input type="text" name="alias_cbu" className="dd-input" defaultValue={driverData?.alias_cbu || ''} placeholder="Ej: mimoto.mp" required />
+            </div>
+            <div className="dd-form-group" style={{ marginBottom: '15px' }}>
+              <label>Nombre de la Cuenta</label>
+              <input type="text" name="nombre_cuenta" className="dd-input" defaultValue={driverData?.nombre_cuenta || ''} placeholder="Ej: Juan Perez" required />
+            </div>
+            <button type="submit" className="dd-btn-outline" style={{ width: '100%', padding: '12px', borderRadius: '8px' }}>Guardar Datos Bancarios</button>
+          </form>
         </div>
 
         <button 
@@ -2073,7 +2106,7 @@ export default function DriverDashboard() {
             <button className="dd-header-menu-btn" onClick={() => setProfileMenuOpen(true)}>☰ Menú</button>
           )}
         </div>
-        <h1>Panel de Repartidores</h1>
+        
       </header>
 
       <main className={`dd-main ${driver ? 'map-active' : ''}`}>
@@ -2379,32 +2412,6 @@ export default function DriverDashboard() {
                 ciudad={driverData?.ciudad}
               />
 
-              {/* ─── BANNER DE PRÓXIMA PARADA ─── */}
-              <div className="dd-next-stop-container">
-                {routeSequence.length > 0 ? (
-                  <div className="dd-next-stop-banner animate-slide-down">
-                    <div className="next-stop-icon">🎯</div>
-                    <div className="next-stop-info">
-                      <span className="next-stop-label">Siguiente Parada</span>
-                      <span className="next-stop-address">{routeSequence[0].address}</span>
-                      <div className="next-stop-meta">
-                        <span>{routeSequence[0].distance}</span>
-                        <span className="dot">•</span>
-                        <span>{routeSequence[0].duration} aprox.</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="dd-next-stop-banner animate-slide-down">
-                    <div className="next-stop-icon" style={{ background: '#94a3b8' }}>🏁</div>
-                    <div className="next-stop-info">
-                      <span className="next-stop-label" style={{ color: '#64748b' }}>Estado</span>
-                      <span className="next-stop-address">Buscando pedidos para entregar...</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
               {/* ─── CAPA SUPERIOR (Estadísticas y Locales) ─── */}
               {view === 'main' && (
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, padding: '12px 16px', pointerEvents: 'none' }}>
@@ -2418,26 +2425,35 @@ export default function DriverDashboard() {
                     boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
                     border: '1px solid rgba(0,0,0,0.05)'
                   }}>
-                    <div className="dd-stats-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showStats ? 12 : 0 }}>
-                        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1rem' }}>
-                          Hola, <span>{driverData?.Nombre?.split(' ')[0] || '...'}</span>
-                          <span style={{ 
-                            fontSize: '0.65rem', 
-                            background: 'var(--red-100)', 
-                            color: 'var(--red-600)', 
-                            padding: '2px 8px', 
-                            borderRadius: '50px',
-                            fontWeight: '800',
-                            marginLeft: '4px'
-                          }}>
-                            {pedidos.filter(p => !p.esBroadcast && ['Confirmado', 'Retirado', 'Pendiente de Pago', 'Pendiente', 'Aceptado', 'Listo', 'Preparando'].includes(p.estado)).length} pedidos pendientes
-                          </span>
-                        </h3>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <button onClick={() => setShowStats(!showStats)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--red-600)', display: 'flex', alignItems: 'center' }}>
+                    <div className="dd-next-stop-container" style={{ position: 'relative', top: 0, left: 0, transform: 'none', width: '100%', maxWidth: 'none', zIndex: 1, marginBottom: showStats ? 12 : 0 }}>
+                      {routeSequence.length > 0 ? (
+                        <div className="dd-next-stop-banner" style={{ background: 'transparent', boxShadow: 'none', border: 'none', padding: 0 }}>
+                          <div className="next-stop-icon">🎯</div>
+                          <div className="next-stop-info">
+                            <span className="next-stop-label">Siguiente Parada</span>
+                            <span className="next-stop-address">{routeSequence[0].address}</span>
+                            <div className="next-stop-meta">
+                              <span>{routeSequence[0].distance}</span>
+                              <span className="dot">•</span>
+                              <span>{routeSequence[0].duration} aprox.</span>
+                            </div>
+                          </div>
+                          <button onClick={() => setShowStats(!showStats)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--red-600)', display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
                             {showStats ? '▴' : '▾'}
                           </button>
-                       </div>
+                        </div>
+                      ) : (
+                        <div className="dd-next-stop-banner" style={{ background: 'transparent', boxShadow: 'none', border: 'none', padding: 0 }}>
+                          <div className="next-stop-icon" style={{ background: '#94a3b8' }}>🏁</div>
+                          <div className="next-stop-info">
+                            <span className="next-stop-label" style={{ color: '#64748b' }}>Estado</span>
+                            <span className="next-stop-address">Buscando pedidos para entregar...</span>
+                          </div>
+                          <button onClick={() => setShowStats(!showStats)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--red-600)', display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
+                            {showStats ? '▴' : '▾'}
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     {showStats && (
@@ -2465,82 +2481,22 @@ export default function DriverDashboard() {
                       </div>
                     )}
                   </div>
-
-                  {/* Locales Activos + Botón Ubicación (GPS) */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
-                    <div className="animate-fade-in" style={{ 
-                      pointerEvents: 'auto',
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '8px', 
-                      overflowX: 'auto', 
-                      scrollbarWidth: 'none',
-                      background: 'rgba(255,255,255,0.9)',
-                      backdropFilter: 'blur(5px)',
-                      padding: '6px 14px',
-                      borderRadius: '50px',
-                      width: 'fit-content',
-                      maxWidth: '70%',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.08)',
-                      border: '1px solid rgba(255,255,255,0.3)'
-                    }}>
-                      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Locales:</span>
-                      {activeLocales.map(local => (
-                        <div key={local.id} style={{ flex: '0 0 auto', position: 'relative' }}>
-                          <img 
-                            src={local.logo || "https://i.postimg.cc/Z5N1N0c9/user-avatar.png"} 
-                            alt={local.nombre} 
-                            style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1.5px solid #fff', objectFit: 'cover' }}
-                          />
-                          <span style={{ position: 'absolute', bottom: '0', right: '0', width: '8px', height: '8px', background: '#22c55e', border: '1.5px solid white', borderRadius: '50%' }}></span>
-                        </div>
-                      ))}
-                      {activeLocales.length === 0 && !loadingLocales && <small style={{ fontSize: '0.6rem', color: '#999' }}>Ninguno</small>}
-                    </div>
-
-                    <button 
-                      onClick={iniciarGPS} 
-                      style={{ 
-                        pointerEvents: 'auto',
-                        background: 'rgba(255,255,255,0.95)', 
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(225,29,72,0.2)',
-                        borderRadius: '50px',
-                        padding: '10px 18px',
-                        fontSize: '0.8rem',
-                        fontWeight: 800,
-                        color: 'var(--red-600)',
-                        boxShadow: '0 8px 25px rgba(0,0,0,0.12)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        transition: 'all 0.2s'
-                      }}
-                      className="animate-pulse"
-                    >
-                      <span style={{ fontSize: '1.1rem' }}>🎯</span> GPS
-                    </button>
-                  </div>
                 </div>
               )}
 
               {/* ─── CAPA INFERIOR (Pedidos Flotantes) ─── */}
               <div style={{ 
                 position: 'absolute', 
-                bottom: '20px', 
+                bottom: '0', 
                 left: 0, 
                 right: 0, 
                 zIndex: 10, 
-                maxHeight: '48%', 
-                overflowY: 'auto', 
-                overflowX: 'hidden', 
-                padding: '10px 16px',
+                padding: '10px 16px 20px',
                 background: 'linear-gradient(to top, rgba(0,0,0,0.15) 0%, transparent 100%)',
                 pointerEvents: 'none',
-                scrollbarWidth: 'none'
               }}>
                 {view === 'main' && (
-                  <div style={{ pointerEvents: 'auto' }}>
+                  <div style={{ pointerEvents: 'auto', maxHeight: '50vh', overflowY: 'auto', scrollbarWidth: 'none', paddingBottom: '10px' }}>
                     <div className="dd-floating-orders-list">
                       {renderDisponibles()}
                     </div>
@@ -2996,3 +2952,4 @@ export default function DriverDashboard() {
     </div>
   );
 }
+

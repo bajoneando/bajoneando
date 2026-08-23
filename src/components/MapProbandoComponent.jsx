@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { GoogleMap, MarkerF, InfoWindowF, DirectionsRenderer } from '@react-google-maps/api';
 import './MapComponent.css';
 
@@ -40,11 +40,18 @@ const MapProbandoComponent = ({
 
   const cityConfig = useMemo(() => getCityConfig(ciudad), [ciudad, getCityConfig]);
 
-  const center = useMemo(() => {
-    if (driverLat && driverLng) return { lat: Number(driverLat), lng: Number(driverLng) };
-    if (localLat && localLng) return { lat: Number(localLat), lng: Number(localLng) };
-    return cityConfig.center; 
-  }, [localLat, localLng, driverLat, driverLng, cityConfig]);
+  const [mapCenter, setMapCenter] = useState(cityConfig.center);
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (initializedRef.current) return;
+    if (driverLat && driverLng) {
+      setMapCenter({ lat: Number(driverLat), lng: Number(driverLng) });
+      initializedRef.current = true;
+    } else if (localLat && localLng) {
+      setMapCenter({ lat: Number(localLat), lng: Number(localLng) });
+      initializedRef.current = true;
+    }
+  }, [driverLat, driverLng, localLat, localLng]);
 
   const isWithinCity = useCallback((lat, lng, cityName) => {
     const latNum = Number(lat);
@@ -126,7 +133,7 @@ const MapProbandoComponent = ({
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
-      center={center}
+      center={mapCenter}
       zoom={15}
       onLoad={onLoad}
       options={{

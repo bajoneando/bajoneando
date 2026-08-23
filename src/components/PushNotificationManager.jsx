@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import * as api from '../services/api';
 
 export default function PushNotificationManager() {
-  const { user } = useAuth();
+  const { user, driver, localUser } = useAuth();
   const [pushToken, setPushToken] = useState(null);
 
   useEffect(() => {
@@ -59,14 +59,18 @@ export default function PushNotificationManager() {
   useEffect(() => {
     const token = pushToken || localStorage.getItem('push_token_temporal');
     
-    if (user?.id && token) {
-      api.usuarioUpdateOneSignalId(user.id, token).then(() => {
-        // window.alert("Token guardado en base de datos correctamente para el usuario.");
-      }).catch(err => {
-        window.alert("Error guardando en Supabase: " + err.message);
-      });
+    if (token) {
+      if (user?.id) {
+        api.usuarioUpdateOneSignalId(user.id, token).catch(err => console.error("Error guardando en usuarios:", err));
+      }
+      if (driver?.id) {
+        api.repartidorUpdateOneSignalId(driver.id, token).catch(err => console.error("Error guardando en repartidores:", err));
+      }
+      if (localUser?.id) {
+        api.localUpdateOneSignalId(localUser.id, token).catch(err => console.error("Error guardando en locales:", err));
+      }
     }
-  }, [user, pushToken]);
+  }, [user, driver, localUser, pushToken]);
 
   return null;
 }

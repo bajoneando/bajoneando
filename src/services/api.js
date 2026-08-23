@@ -578,6 +578,8 @@ export async function repartidorUpdatePerfil(params) {
   if (params.password) dbUpdates.password = params.password;
   if (params.patente) dbUpdates.patente = params.patente;
   if (params.marca_modelo) dbUpdates.marca_modelo = params.marca_modelo;
+    if (params.alias_cbu !== undefined) dbUpdates.alias_cbu = params.alias_cbu;
+    if (params.nombre_cuenta !== undefined) dbUpdates.nombre_cuenta = params.nombre_cuenta;
   if (params.foto_url) dbUpdates.foto_url = params.foto_url;
   if (params.horario_apertura !== undefined) dbUpdates.horario_apertura = params.horario_apertura;
   if (params.horario_cierre !== undefined) dbUpdates.horario_cierre = params.horario_cierre;
@@ -4038,6 +4040,7 @@ export async function repartidorGetCobros(repartidorId) {
     success: true,
     totalDisponible: +totalDisponible.toFixed(2),
     idsIncluidos: idsIncluidos.join(', '),
+      cantidadEntregas: idsIncluidos.length,
     historial: (historial || []).map(h => ({
       fechaSolicitud: h.fecha_solicitud || h.created_at,
       montoNeto: +h.monto_neto || 0,
@@ -4391,11 +4394,38 @@ export async function notifyDriverAboutPaymentInProgress(pedidoId, repartidorId)
 
 export async function sendPushNotification({ subscriptionIds, title, message, data, url }) {
   try {
-    const { data: res, error } = await supabase.functions.invoke('send-push', {
-      body: { subscriptionIds, title, message, data, url }
+    const onesignalTokens = [];
+    const firebaseTokens = [];
+
+    subscriptionIds.forEach(id => {
+      if (!id) return;
+      if (id.length === 36 && id.includes('-')) {
+        onesignalTokens.push(id);
+      } else {
+        firebaseTokens.push(id);
+      }
     });
-    if (error) throw error;
-    return { success: true, data: res };
+
+    const promesas = [];
+
+    if (onesignalTokens.length > 0) {
+      promesas.push(
+        supabase.functions.invoke('send-push', {
+          body: { subscriptionIds: onesignalTokens, title, message, data, url }
+        })
+      );
+    }
+
+    if (firebaseTokens.length > 0) {
+      promesas.push(
+        supabase.functions.invoke('send-firebase-push', {
+          body: { tokens: firebaseTokens, title, message, data, url }
+        })
+      );
+    }
+
+    const results = await Promise.allSettled(promesas);
+    return { success: true, data: results };
   } catch (err) {
     console.error("Error in sendPushNotification:", err);
     return { success: false, error: err.message };
@@ -7780,3 +7810,4 @@ export async function saveSurveyResponse(response) {
     throw err;
   }
 }
+
