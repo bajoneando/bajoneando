@@ -51,8 +51,7 @@ export async function loginUsuario(email, password) {
     emailConfirmado: data.email_confirmado,
     role: data.role || 'user',
     ya_realizo_pedidos: data.ya_realizo_pedidos || false,
-    ciudad: data.ciudad || 'Santo Tomé',
-    onesignal_id: data.onesignal_id || null
+    ciudad: data.ciudad || 'Santo Tomé'
   };
 }
 
@@ -78,7 +77,7 @@ export async function registerUsuario(nombre, email, password, direccion, telefo
     }
     throw new Error(error.message);
   }
-
+  
   // Enviar email de confirmación
   sendConfirmationEmail(email, code, 'usuario', nombre).catch(console.error);
   
@@ -108,8 +107,7 @@ export async function syncFirebaseUser(firebaseUser) {
       emailConfirmado: existing.email_confirmado || firebaseUser.emailVerified,
       role: existing.role || 'user',
       ya_realizo_pedidos: existing.ya_realizo_pedidos || false,
-      ciudad: existing.ciudad || 'Santo Tomé',
-      onesignal_id: existing.onesignal_id || null
+      ciudad: existing.ciudad || 'Santo Tomé'
     };
   }
   
@@ -580,6 +578,8 @@ export async function repartidorUpdatePerfil(params) {
   if (params.password) dbUpdates.password = params.password;
   if (params.patente) dbUpdates.patente = params.patente;
   if (params.marca_modelo) dbUpdates.marca_modelo = params.marca_modelo;
+    if (params.alias_cbu !== undefined) dbUpdates.alias_cbu = params.alias_cbu;
+    if (params.nombre_cuenta !== undefined) dbUpdates.nombre_cuenta = params.nombre_cuenta;
   if (params.foto_url) dbUpdates.foto_url = params.foto_url;
   if (params.horario_apertura !== undefined) dbUpdates.horario_apertura = params.horario_apertura;
   if (params.horario_cierre !== undefined) dbUpdates.horario_cierre = params.horario_cierre;
@@ -673,53 +673,12 @@ export async function repartidorUpdateFcmToken(driverId, fcmToken) {
   return { success: true };
 }
 
-function getHaversineDistanceMeters(lat1, lon1, lat2, lon2) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
 export async function updateDriverCoords(driverId, lat, lng) {
   const { error } = await supabase
     .from('repartidores')
     .update({ lat, lng, ultima_actividad: new Date().toISOString() })
     .eq('id', driverId);
   if (error) throw new Error(error.message);
-
-  // 📍 Chequeo Proximidad Repartidor Cerca (< 500 metros)
-  try {
-    const { data: activeOrders } = await supabase
-      .from('pedidos_general')
-      .select('id, usuario_id, lat, lng, ubicacion_lat, ubicacion_lng, repartidor_cerca_notified')
-      .eq('repartidor_id', driverId)
-      .in('estado', ['Retirado', 'En camino']);
-
-    if (activeOrders && activeOrders.length > 0) {
-      for (const order of activeOrders) {
-        if (order.repartidor_cerca_notified) continue;
-        const destLat = Number(order.lat || order.ubicacion_lat);
-        const destLng = Number(order.lng || order.ubicacion_lng);
-
-        if (destLat && destLng && !isNaN(destLat) && !isNaN(destLng)) {
-          const distMeters = getHaversineDistanceMeters(Number(lat), Number(lng), destLat, destLng);
-          if (distMeters <= 500) {
-            await supabase.from('pedidos_general').update({ repartidor_cerca_notified: true }).eq('id', order.id);
-            adminLogCRMEvent(order.usuario_id, 'REPARTIDOR_CERCA', { order_id: order.id, dist_meters: Math.round(distMeters) })
-              .catch(e => console.error("Error CRM REPARTIDOR_CERCA:", e));
-          }
-        }
-      }
-    }
-  } catch (e) {
-    console.warn("Proximity check skipped:", e.message);
-  }
-
   return { success: true };
 }
 
@@ -1747,13 +1706,6 @@ export async function updateEstadoLocalOrder(pedidoLocalId, estado) {
         }
       }
       
-      if (['Aceptado', 'Confirmado', 'En preparacion'].includes(estado) && pg?.usuario_id) {
-        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ACEPTADO', { order_id: pl.pedido_id }).catch(e => console.error("Error CRM PEDIDO_ACEPTADO (Local):", e));
-      }
-      if (['Retirado', 'Listo'].includes(estado) && pg?.usuario_id) {
-        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RETIRADO', { order_id: pl.pedido_id }).catch(e => console.error("Error CRM PEDIDO_RETIRADO (Local):", e));
-      }
-      
       if (estado === 'Entregado') {
         if (pg?.usuario_id && pg.usuario_id.length > 20) {
           await supabase.from('usuarios').update({ ya_realizo_pedidos: true }).eq('id', pg.usuario_id);
@@ -1763,8 +1715,6 @@ export async function updateEstadoLocalOrder(pedidoLocalId, estado) {
           } catch (e) {
             console.error("Error acreditando crédito Wallet (Local):", e);
           }
-          // Registrar evento CRM PEDIDO_ENTREGADO
-          adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pl.pedido_id }).catch(e => console.error("Error registrando CRM PEDIDO_ENTREGADO (Local):", e));
         }
       }
     }
@@ -2564,39 +2514,14 @@ export async function adminUpdateRepartidorEstado(repId, estado) {
   return { success: true };
 }
 
-export async function adminDeleteRepartidor(repId) {
-  // Desvincular de pedidos (para evitar FK error)
-  await supabase.from('pedidos_general').update({ repartidor_id: null }).eq('repartidor_id', repId);
-  await supabase.from('pedidos_general').update({ repartidor_propuesto_id: null }).eq('repartidor_propuesto_id', repId);
-  // Borrar pagos asociados si existe constraint
-  await supabase.from('repartidores_pagos').delete().eq('repartidor_id', repId);
-  // Desvincular como partner de otros repartidores
-  await supabase.from('repartidores').update({ partner_id: null }).eq('partner_id', repId);
-  
-  // Finalmente, eliminar el repartidor
-  const { error } = await supabase.from('repartidores').delete().eq('id', repId);
-  if (error) throw new Error(error.message);
-  return { success: true };
-}
-
-
 // ═══════════════════════════════════════════════════
 // ADMIN — Pedidos General
 // ═══════════════════════════════════════════════════
-export async function adminGetPedidosGeneral(dateStart = null, dateEnd = null) {
-  let query = supabase.from('pedidos_general')
+export async function adminGetPedidosGeneral() {
+  const { data, error } = await supabase.from('pedidos_general')
     .select('*, locales(nombre, tipo_servicio, ciudad), repartidores:repartidor_id(nombre, telefono), usuarios:usuario_id(telefono)')
-    .order('created_at', { ascending: false });
-
-  if (dateStart && dateEnd) {
-    query = query.gte('created_at', `${dateStart}T00:00:00`).lte('created_at', `${dateEnd}T23:59:59.999`);
-  } else if (dateStart) {
-    query = query.gte('created_at', `${dateStart}T00:00:00`).lte('created_at', `${dateStart}T23:59:59.999`);
-  } else {
-    query = query.limit(20);
-  }
-
-  const { data, error } = await query;
+    .order('created_at', { ascending: false })
+    .limit(20);
   if (error) throw new Error(error.message);
   return data || [];
 }
@@ -2660,27 +2585,6 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
 
 
   try {
-    if (['Aceptado', 'Confirmado', 'En preparacion'].includes(status)) {
-      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
-      if (pg?.usuario_id) {
-        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ACEPTADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ACEPTADO:", e));
-      }
-    }
-    if (status === 'Retirado') {
-      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
-      if (pg?.usuario_id) {
-        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RETIRADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RETIRADO:", e));
-      }
-    }
-    if (status === 'En camino') {
-      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
-      if (pg?.usuario_id) {
-        adminLogCRMEvent(pg.usuario_id, 'REPARTIDOR_ASIGNADO', { order_id: pedidoId }).catch(e => console.error("Error CRM en camino:", e));
-      }
-    }
-  } catch (e) { console.warn("CRM status triggers skipped:", e.message); }
-
-  try {
     if (status === 'Rechazado' || status === 'Cancelado') {
       const { data: pg } = await supabase.from('pedidos_general').select('repartidor_id').eq('id', pedidoId).maybeSingle();
       if (pg?.repartidor_id && pg.repartidor_id.length > 20) {
@@ -2700,8 +2604,6 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
         } catch (e) {
           console.error("Error acreditando crédito Wallet:", e);
         }
-        // Registrar evento CRM PEDIDO_ENTREGADO
-        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pedidoId }).catch(e => console.error("Error registrando CRM PEDIDO_ENTREGADO (Driver):", e));
       } else {
         console.warn(`[Wallet] El pedido ${pedidoId} no tiene usuario_id asignado. No se puede acreditar crédito.`);
       }
@@ -2710,43 +2612,6 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
   
   return { success: true };
 }
-
-export async function adminForceUpdatePedidoStatus(pedidoId, status) {
-  // 1. Ejecutar RPC en base de datos para saltar los triggers
-  const { error: rpcErr } = await supabase.rpc('admin_force_update_pedido_status', {
-    p_pedido_id: pedidoId,
-    p_estado: status
-  });
-  if (rpcErr) throw rpcErr;
-
-  // 2. Ejecutar efectos secundarios de negocio (liberar repartidor, acreditar wallet, etc.)
-  try {
-    if (status === 'Rechazado' || status === 'Cancelado') {
-      const { data: pg } = await supabase.from('pedidos_general').select('repartidor_id').eq('id', pedidoId).maybeSingle();
-      if (pg?.repartidor_id && pg.repartidor_id.length > 20) {
-        await supabase.from('repartidores').update({ estado: 'Activo' }).eq('id', pg.repartidor_id);
-      }
-    }
-  } catch (e) { console.warn("Driver release skipped:", e.message); }
-
-  try {
-    if (status === 'Entregado') {
-      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
-      if (pg?.usuario_id) {
-        await supabase.from('usuarios').update({ ya_realizo_pedidos: true }).eq('id', pg.usuario_id);
-        try {
-          await supabase.rpc('earn_wallet_credit_from_order', { p_order_id: pedidoId });
-        } catch (e) {
-          console.error("Error acreditando crédito Wallet:", e);
-        }
-        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pedidoId }).catch(e => console.error("Error registrando CRM PEDIDO_ENTREGADO (Driver):", e));
-      }
-    }
-  } catch (e) { console.warn("Post-delivery tasks skipped:", e.message); }
-
-  return { success: true };
-}
-
 
 // ═══════════════════════════════════════════════════
 // ADMIN — Gestión de Usuarios
@@ -4175,6 +4040,7 @@ export async function repartidorGetCobros(repartidorId) {
     success: true,
     totalDisponible: +totalDisponible.toFixed(2),
     idsIncluidos: idsIncluidos.join(', '),
+      cantidadEntregas: idsIncluidos.length,
     historial: (historial || []).map(h => ({
       fechaSolicitud: h.fecha_solicitud || h.created_at,
       montoNeto: +h.monto_neto || 0,
@@ -4528,11 +4394,38 @@ export async function notifyDriverAboutPaymentInProgress(pedidoId, repartidorId)
 
 export async function sendPushNotification({ subscriptionIds, title, message, data, url }) {
   try {
-    const { data: res, error } = await supabase.functions.invoke('send-push', {
-      body: { subscriptionIds, title, message, data, url }
+    const onesignalTokens = [];
+    const firebaseTokens = [];
+
+    subscriptionIds.forEach(id => {
+      if (!id) return;
+      if (id.length === 36 && id.includes('-')) {
+        onesignalTokens.push(id);
+      } else {
+        firebaseTokens.push(id);
+      }
     });
-    if (error) throw error;
-    return { success: true, data: res };
+
+    const promesas = [];
+
+    if (onesignalTokens.length > 0) {
+      promesas.push(
+        supabase.functions.invoke('send-push', {
+          body: { subscriptionIds: onesignalTokens, title, message, data, url }
+        })
+      );
+    }
+
+    if (firebaseTokens.length > 0) {
+      promesas.push(
+        supabase.functions.invoke('send-firebase-push', {
+          body: { tokens: firebaseTokens, title, message, data, url }
+        })
+      );
+    }
+
+    const results = await Promise.allSettled(promesas);
+    return { success: true, data: results };
   } catch (err) {
     console.error("Error in sendPushNotification:", err);
     return { success: false, error: err.message };
@@ -5565,7 +5458,7 @@ export async function updateRubroConfig(id, updates) {
 
 export async function adminGetRepartidoresDetallado() {
   const { data } = await supabase.from('repartidores')
-    .select('id, nombre, email, telefono, patente, marca_modelo, estado, admin_status, created_at, tipo_vehiculo, nivel_repartidor, foto_url, onesignal_id, horario_apertura, horario_cierre, dias_apertura, ultima_actividad, locales_prioridad, es_partner, partner_id, ciudad')
+    .select('id, nombre, email, telefono, patente, marca_modelo, estado, admin_status, created_at, tipo_vehiculo, nivel_repartidor, foto_url, onesignal_id, horario_apertura, horario_cierre, dias_apertura, ultima_actividad, locales_prioridad, es_partner, partner_id')
     .order('created_at', { ascending: false });
   return data || [];
 }
@@ -6260,126 +6153,6 @@ export async function adminRemoveTagFromUser(userId, tagId) {
   return { success: true };
 }
 
-export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
-  if (!userId) return null;
-  try {
-    const { data, error } = await supabase
-      .from('crm_events')
-      .insert({
-        usuario_id: userId,
-        event_type: eventType,
-        metadata: metadata,
-        created_at: new Date().toISOString()
-      })
-      .select();
-    
-    if (error) {
-      console.warn("crm_events insert warning:", error.message);
-    }
-
-    // Process matrix rules to ensure WhatsApp HSM dispatch is recorded and dispatched
-    try {
-      const matrix = await adminGetCRMAutomationMatrix();
-      if (Array.isArray(matrix) && matrix.length > 0) {
-        const rule = matrix.find(r => 
-          r.id === eventType || 
-          r.trigger_config?.evento_key === eventType ||
-          (r.id === 'registrado_sin_pedidos' && (eventType === 'USUARIO_REGISTRADO' || eventType === 'USER_REGISTERED')) ||
-          (r.id === 'visito_no_compro' && eventType === 'VISITA_SIN_COMPRA') ||
-          (r.id === 'carrito_abandono' && eventType === 'CARRITO_ABANDONADO') ||
-          (r.id === 'pedido_no_pago' && eventType === 'PEDIDO_NO_PAGADO') ||
-          (r.id === 'pedido_aceptado' && eventType === 'PEDIDO_ACEPTADO') ||
-          (r.id === 'pedido_retirado' && eventType === 'PEDIDO_RETIRADO') ||
-          (r.id === 'repartidor_cerca' && eventType === 'REPARTIDOR_CERCA') ||
-          (r.id === 'en_camino' && eventType === 'REPARTIDOR_ASIGNADO') ||
-          (r.id === 'pedido_entregado' && eventType === 'PEDIDO_ENTREGADO')
-        );
-
-        if (rule && rule.enabled !== false) {
-          const channels = rule.canales || ['whatsapp', 'push'];
-          const firstActiveChannel = channels.find(ch => ch !== 'none' && rule.configs?.[ch]?.enabled !== false) || 'whatsapp';
-          const templateName = rule.configs?.whatsapp?.template_name || rule.configs?.whatsapp?.template || 'recuperacion_1';
-
-          let dispatchResult = null;
-
-          // Disparar WhatsApp Meta API REAL usando Edge Function
-          if (firstActiveChannel === 'whatsapp') {
-            const { data: userObj } = await supabase
-              .from('usuarios')
-              .select('telefono, nombre')
-              .eq('id', userId)
-              .maybeSingle();
-
-            if (userObj && userObj.telefono) {
-              const cleanPhone = userObj.telefono;
-              const tName = templateName;
-              let success = false;
-              let logDetail = '';
-
-              try {
-                const res = await sendWhatsappTemplateMessage({
-                  to: cleanPhone,
-                  templateName: tName,
-                  languageCode: 'es_AR',
-                  skipHistoryLog: true
-                });
-                if (res && res.success !== false) {
-                  success = true;
-                  logDetail = `Enviado por WhatsApp Meta API (Plantilla: ${tName})`;
-                } else {
-                  logDetail = `Respuesta Meta API: ${JSON.stringify(res)}`;
-                  success = true;
-                }
-              } catch (err) {
-                console.error("Meta WhatsApp API error:", err);
-                logDetail = `Error Meta API: ${err.message}`;
-              }
-
-              dispatchResult = { success, logDetail };
-            } else {
-              dispatchResult = { success: false, reason: 'Usuario sin teléfono registrado' };
-            }
-          }
-
-          // Registrar en crm_history
-          await supabase.from('crm_history').insert({
-            usuario_id: userId,
-            tipo: 'automatizacion_ejecutada',
-            canal: firstActiveChannel,
-            descripcion: `Disparo automático ${rule.evento || eventType} vía ${firstActiveChannel.toUpperCase()} (${templateName})`,
-            metadata: {
-              template_name: templateName,
-              channel: firstActiveChannel,
-              event_type: eventType,
-              rule_id: rule.id,
-              dispatch_result: dispatchResult
-            },
-            created_at: new Date().toISOString()
-          });
-        }
-      }
-    } catch (matrixErr) {
-      console.warn("Error processing CRM matrix in adminLogCRMEvent:", matrixErr.message);
-    }
-
-    // Call stored procedure to trigger automation cascade if configured in DB
-    try {
-      await supabase.rpc('trigger_crm_event_notification', {
-        p_user_id: userId,
-        p_event_id: eventType,
-        p_params: metadata
-      });
-    } catch (triggerErr) {
-      console.warn("trigger_crm_event_notification execution notice:", triggerErr.message);
-    }
-
-    return data ? data[0] : { success: true, event_type: eventType };
-  } catch (err) {
-    console.error("Error logging CRM Event:", err);
-    return null;
-  }
-}
-
 export async function adminGetCRMEvents(userId) {
   let query = supabase.from('crm_events').select('*').order('created_at', { ascending: false });
   if (userId) query = query.eq('usuario_id', userId);
@@ -6675,42 +6448,52 @@ export async function adminSendCRMMessage(userId, channel, message, title = "Wep
       cleanPhone = cleanPhone.substring(1);
     }
 
-    // Extraer templateName si viene especificado en el mensaje
-    let tName = 'recuperacion_1';
-    if (message && message.includes('Plantilla Meta HSM:')) {
-      tName = message.split('Plantilla Meta HSM:')[1]?.trim() || tName;
-    } else if (message && !message.includes(' ')) {
-      tName = message.trim();
-    }
+    // ─────────────────────────────────────────────────────────────
+    // SOPORTE WHATSAPP API (META DEVELOPERS)
+    // Para activar la integración automática con la API de Meta en el futuro:
+    // 1. Cambia USE_META_API a true.
+    // 2. Coloca tu token y tu Phone Number ID de Meta.
+    // ─────────────────────────────────────────────────────────────
+    const USE_META_API = false; 
+    const META_PHONE_NUMBER_ID = 'YOUR_META_PHONE_NUMBER_ID';
+    const META_ACCESS_TOKEN = 'YOUR_META_ACCESS_TOKEN';
 
-    if (cleanPhone) {
+    if (USE_META_API) {
       try {
-        const res = await sendWhatsappTemplateMessage({
-          to: cleanPhone,
-          templateName: tName,
-          languageCode: 'es_AR',
-          skipHistoryLog: true
+        const response = await fetch(`https://graph.facebook.com/v19.0/${META_PHONE_NUMBER_ID}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${META_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: cleanPhone,
+            type: "text",
+            text: { body: personalizedMessage }
+          })
         });
-        if (res && res.success !== false) {
+        const resData = await response.json();
+        if (response.ok) {
           success = true;
-          logDetail = `Enviado por WhatsApp Meta API (Plantilla: ${tName})`;
+          logDetail = 'Enviado automáticamente por WhatsApp Cloud API';
         } else {
-          logDetail = `Respuesta Meta API: ${JSON.stringify(res)}`;
-          success = true; // registrado
+          throw new Error(resData.error?.message || 'Meta API Error');
         }
       } catch (err) {
         console.error("Meta WhatsApp API error:", err);
-        logDetail = `Error Meta API: ${err.message}`;
+        logDetail = `Error Meta API: ${err.message}. Intentando fallback a enlace manual...`;
       }
     }
 
-    // Fallback: wa.me manual link si no hubo éxito con la API
-    if (!success && cleanPhone) {
+    // Fallback: wa.me manual link
+    if (!success) {
       const encodedText = encodeURIComponent(personalizedMessage);
       const link = `https://wa.me/${cleanPhone}?text=${encodedText}`;
       success = true;
       logDetail = 'Enlace manual wa.me generado';
       
+      // Abrir enlace en pestaña nueva si estamos en navegador
       if (typeof window !== 'undefined') {
         window.open(link, '_blank');
       }
@@ -7855,7 +7638,7 @@ export async function deleteWhatsappTemplate(id) {
 }
 
 // Enviar plantilla de WhatsApp Meta API (HSM) como sin_repartidores
-export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repartidores', languageCode = 'es_AR', phoneId, components, skipHistoryLog = false }) {
+export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repartidores', languageCode = 'es_AR', phoneId, components }) {
   if (!to) return { success: false, error: 'Sin teléfono de destino' };
 
   try {
@@ -7875,37 +7658,6 @@ export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repa
     });
     
     const data = await res.json();
-
-    // Registrar en crm_history para auditoría visual en el monitor de plantillas (ej: sin_repartidores)
-    if (!skipHistoryLog) {
-      try {
-        const cleanPhoneDigits = to.replace(/[\s-+]/g, '');
-        const { data: usr } = await supabase
-          .from('usuarios')
-          .select('id, nombre, telefono')
-          .or(`telefono.ilike.%${cleanPhoneDigits.slice(-8)}%,telefono.eq.${to}`)
-          .maybeSingle();
-
-        await supabase.from('crm_history').insert({
-          usuario_id: usr?.id || null,
-          tipo: templateName === 'sin_repartidores' ? 'rescate_sin_repartidores' : 'plantilla_whatsapp',
-          canal: 'whatsapp',
-          descripcion: `Disparo plantilla HSM "${templateName}" a ${to}`,
-          metadata: {
-            template_name: templateName,
-            channel: 'whatsapp',
-            to: to,
-            phone: to,
-            customer_name: usr?.nombre || null,
-            dispatch_result: data
-          },
-          created_at: new Date().toISOString()
-        });
-      } catch (logErr) {
-        console.warn("Notice logging WhatsApp HSM dispatch to crm_history:", logErr.message);
-      }
-    }
-
     return data;
   } catch (err) {
     console.error("Error enviando plantilla WhatsApp Meta:", err);
@@ -8058,3 +7810,4 @@ export async function saveSurveyResponse(response) {
     throw err;
   }
 }
+

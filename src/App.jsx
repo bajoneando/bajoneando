@@ -17,7 +17,6 @@ import ConfirmarEmail from './pages/ConfirmarEmail';
 import AdminDashboard from './pages/AdminDashboard';
 import ConsentBanner from './components/ConsentBanner';
 import PushNotificationManager from './components/PushNotificationManager';
-import AppRedirectHandler from './components/AppRedirectHandler';
 import Mundialista from './pages/Mundialista';
 import WepiAds from './pages/WepiAds';
 import { useAuth } from './context/AuthContext';
@@ -25,7 +24,6 @@ import * as api from './services/api';
 import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Capacitor } from '@capacitor/core';
 import PrivacyPolicy from './pages/PrivacyPolicy';
-import DownloadAppPopup from './components/DownloadAppPopup';
 
 function AdminRoute({ children }) {
   const { user } = useAuth();
@@ -230,9 +228,8 @@ export default function App() {
     <AuthProvider>
       <CartProvider>
         <PushNotificationManager />
-        <AppRedirectHandler />
         <Routes>
-          <Route path="/" element={Capacitor.isNativePlatform() ? <Navigate to="/pedir" replace /> : <Landing />} />
+          <Route path="/" element={Capacitor.isNativePlatform() ? <Navigate to="/repartidores" replace /> : <Landing />} />
           <Route path="/mantenimiento" element={<Maintenance />} />
           <Route path="/pedir" element={
             <MaintenanceGuard configKey="mantenimiento_pedir">
@@ -322,7 +319,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <ConsentBanner />
-        {location.pathname.startsWith('/pedir') && <DownloadAppPopup />}
       </CartProvider>
     </AuthProvider>
   );

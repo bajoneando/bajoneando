@@ -11,13 +11,13 @@
   position: relative;
   background: var(--red-800);
   color: white;
-  padding: 24px 20px 32px;
+  padding: 12px 20px;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
 }
 
 .dd-logo {
-  height: 60px;
+  height: 45px;
   object-fit: contain;
 }
 
@@ -26,7 +26,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
 }
 
 .dd-header h1 {
@@ -573,7 +572,7 @@
   color: var(--gray-400);
   text-transform: uppercase;
   letter-spacing: 1.2px;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1324,4 +1323,18 @@
     height: 100%;
     z-index: 1000;
   }
+}
+
+.dd-en-curso-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+.dd-en-curso-container::-webkit-scrollbar { display: none; }
+.dd-simple-card {
+  flex: 0 0 92%;
+  scroll-snap-align: center;
 }
