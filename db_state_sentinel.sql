@@ -22,6 +22,18 @@ BEGIN
         RETURN NEW;
     END IF;
 
+    -- 3. Seguro contra rechazos/cancelaciones automáticas o no autorizadas
+    -- Un pedido que ya está 'Confirmado' o 'Aceptado' NO puede ser Rechazado/Cancelado
+    -- por el cliente (lo cual bloquea los cambios automáticos disparados por el temporizador del frontend).
+    -- NOTA: El comercio (desde /locales) y los Admins sí podrán seguir rechazándolos.
+    IF (OLD.estado IN ('Confirmado', 'Aceptado') AND NEW.estado IN ('Rechazado', 'Cancelado')) THEN
+        -- Si el que ejecuta la orden de rechazo es la app del propio cliente (auth.uid() coincide)
+        IF (auth.uid() = OLD.usuario_id) THEN
+            NEW.estado := OLD.estado;
+            RETURN NEW;
+        END IF;
+    END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
