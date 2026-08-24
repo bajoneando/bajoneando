@@ -16,9 +16,10 @@ DECLARE
   v_segundos INT;
   v_puntos_base INT := 0;
   v_cycle_id TEXT;
+  v_payment_id TEXT;
 BEGIN
     -- 1. Obtener estado actual y método de pago
-    SELECT estado, created_at, metodo_pago INTO v_current_estado, v_created_at, v_metodo_pago 
+    SELECT estado, created_at, metodo_pago, payment_id INTO v_current_estado, v_created_at, v_metodo_pago, v_payment_id
     FROM public.pedidos_general 
     WHERE id = p_pedido_id AND repartidor_id IS NULL;
 
@@ -27,10 +28,10 @@ BEGIN
     END IF;
 
     -- 2. Definir estado de destino basado en el método de pago
-    -- Si es Efectivo -> Confirmado (para que el local empiece a preparar)
-    -- Si es Transferencia/MP -> Pendiente de Pago
+    -- Si es Efectivo o ya pagado -> Confirmado (para que el local empiece a preparar)
+    -- Si es Transferencia/MP y falta pagar -> Pendiente de Pago
     IF v_current_estado IN ('Buscando Repartidor', 'Pendiente') THEN
-        IF LOWER(v_metodo_pago) LIKE '%efectivo%' THEN
+        IF LOWER(v_metodo_pago) LIKE '%efectivo%' OR v_payment_id IS NOT NULL THEN
             v_target_estado := 'Confirmado';
         ELSE
             v_target_estado := 'Pendiente de Pago';

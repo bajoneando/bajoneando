@@ -1457,6 +1457,10 @@ export default function PruebasWalletApp() {
             toast.success(`¡Pago confirmado! Tu pedido #${pendingData.pedidoId} está siendo procesado.`);
             setConfirmedOrderId(pendingData.pedidoId);
             setShowConfirmedModal(true);
+            setSearchingDriver(false);
+            setFoundDriver(null);
+            setPendingOrderId(null);
+            localStorage.removeItem('pendingOrderData');
             
             // Actualizar estado del pedido en la base de datos
             api.markOrderAsPaid(
@@ -2554,14 +2558,20 @@ export default function PruebasWalletApp() {
       try {
         const { data } = await api.supabase
           .from('pedidos_general')
-          .select('estado, repartidor_id')
+          .select('id, estado, repartidor_id, payment_id')
           .eq('id', pendingOrderId)
           .single();
           
         if (data) {
-          // Si ya se asignó repartidor o estamos en el modal de repartidor encontrado, no cancelar
-          if (data.repartidor_id || foundDriver) {
-            if (!foundDriver) handleDriverFound(data);
+          if (data.estado === 'Confirmado' && data.payment_id) {
+            console.log("✅ Order confirmed via webhook (Detected via Polling/Initial Check)!");
+            toast.success(`¡Pago confirmado! Tu pedido #${data.id} está siendo procesado.`);
+            setConfirmedOrderId(data.id);
+            setShowConfirmedModal(true);
+            setSearchingDriver(false);
+            setFoundDriver(null);
+            setPendingOrderId(null);
+            localStorage.removeItem('pendingOrderData');
             return true;
           }
 
@@ -2572,12 +2582,20 @@ export default function PruebasWalletApp() {
             setPendingOrderId(null);
             setMpRedirectUrl(null);
             setCheckoutLoading(false);
+            setFoundDriver(null);
             localStorage.removeItem('pendingOrderDataPruebas');
             localStorage.removeItem('pendingOrderData');
             toast.error('El pedido fue cancelado o rechazado.');
             return true;
           }
-          if ((data.estado === 'Pendiente de Pago' || data.estado === 'Confirmado' || data.estado === 'Aceptado') && data.repartidor_id && !foundDriver) {
+
+          // Si ya se asignó repartidor o estamos en el modal de repartidor encontrado, no cancelar
+          if (data.repartidor_id || foundDriver) {
+            if (!foundDriver) handleDriverFound(data);
+            return true;
+          }
+
+          if ((data.estado === 'Pendiente de Pago' || data.estado === 'Aceptado') && data.repartidor_id && !foundDriver) {
             console.log("✅ Order accepted with driver (Detected via Polling/Initial Check)!");
             handleDriverFound(data);
             return true;
@@ -2604,8 +2622,15 @@ export default function PruebasWalletApp() {
         const newOrder = payload.new;
         console.log("🔄 Realtime update:", newOrder.id, newOrder.estado, "Driver ID:", newOrder.repartidor_id);
         
-        if (newOrder.repartidor_id || foundDriver) {
-          if (!foundDriver) handleDriverFound(newOrder);
+        if (newOrder.estado === 'Confirmado' && newOrder.payment_id) {
+          console.log("✅ Order confirmed via webhook (Realtime Update)!");
+          toast.success(`¡Pago confirmado! Tu pedido #${newOrder.id} está siendo procesado.`);
+          setConfirmedOrderId(newOrder.id);
+          setShowConfirmedModal(true);
+          setSearchingDriver(false);
+          setFoundDriver(null);
+          setPendingOrderId(null);
+          localStorage.removeItem('pendingOrderData');
           return;
         }
 
@@ -2616,10 +2641,19 @@ export default function PruebasWalletApp() {
           setPendingOrderId(null);
           setMpRedirectUrl(null);
           setCheckoutLoading(false);
+          setFoundDriver(null); // Added this to clear modal
           localStorage.removeItem('pendingOrderDataPruebas');
           localStorage.removeItem('pendingOrderData');
           toast.error('El pedido fue cancelado o rechazado.');
-        } else if ((newOrder.estado === 'Pendiente de Pago' || newOrder.estado === 'Confirmado' || newOrder.estado === 'Aceptado') && newOrder.repartidor_id && !foundDriver) {
+          return;
+        }
+
+        if (newOrder.repartidor_id || foundDriver) {
+          if (!foundDriver) handleDriverFound(newOrder);
+          return;
+        }
+
+        if ((newOrder.estado === 'Pendiente de Pago' || newOrder.estado === 'Aceptado') && newOrder.repartidor_id && !foundDriver) {
           handleDriverFound(newOrder);
         }
       })

@@ -3950,7 +3950,7 @@ export async function updateEstadoPedido(pedidoId, nuevoEstado, repartidorId, pi
   try {
     const ok = ['Confirmado', 'Retirado', 'En camino', 'Entregado'];
     if (!ok.includes(nuevoEstado)) return { success: false, error: `Estado no permitido: ${nuevoEstado}` };
-    const { data: ped, error: pedError } = await supabase.from('pedidos_general').select('id, num_confirmacion, metodo_pago, estado')
+    const { data: ped, error: pedError } = await supabase.from('pedidos_general').select('id, num_confirmacion, metodo_pago, estado, payment_id')
       .eq('id', pedidoId).eq('repartidor_id', repartidorId).single();
     
     if (pedError || !ped) {
@@ -3966,9 +3966,10 @@ export async function updateEstadoPedido(pedidoId, nuevoEstado, repartidorId, pi
     let targetEstado = nuevoEstado;
     if (targetEstado === 'Confirmado') {
       const isCash = (ped.metodo_pago || '').toLowerCase().includes('efectivo');
-      const needsPayment = !isCash;
+      const alreadyPaid = !!ped.payment_id;
+      const needsPayment = !isCash && !alreadyPaid;
       
-      // Si el repartidor acepta un pedido que requiere pago previo, lo pasamos a 'Pendiente de Pago'
+      // Si el repartidor acepta un pedido que requiere pago previo y NO fue pagado aún, lo pasamos a 'Pendiente de Pago'
       if (needsPayment && (ped.estado === 'Buscando Repartidor' || ped.estado === 'Pendiente')) {
         targetEstado = 'Pendiente de Pago';
       }
