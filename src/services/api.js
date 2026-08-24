@@ -2549,7 +2549,7 @@ export async function adminGetPedidoDetalle(pedidoId) {
   let locales_names = [];
   if (locales_info && locales_info.length > 0) {
     const localIds = [...new Set(locales_info.map(l => l.local_id))];
-    const { data: lData } = await supabase.from('locales').select('id, nombre, tipo_servicio').in('id', localIds);
+    const { data: lData } = await supabase.from('locales').select('id, nombre, tipo_servicio, ciudad').in('id', localIds);
     locales_names = lData || [];
   }
 
@@ -2612,6 +2612,70 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
   
   return { success: true };
 }
+
+export async function adminForceUpdatePedidoStatus(pedidoId, status) {
+  // 1. Ejecutar RPC en base de datos para saltar los triggers
+  const { error: rpcErr } = await supabase.rpc('admin_force_update_pedido_status', {
+    p_pedido_id: pedidoId,
+    p_estado: status
+  });
+  if (rpcErr) throw rpcErr;
+
+  // 2. Ejecutar efectos secundarios de negocio (liberar repartidor, acreditar wallet, etc.)
+  try {
+    if (status === 'Rechazado' || status === 'Cancelado') {
+      const { data: pg } = await supabase.from('pedidos_general').select('repartidor_id').eq('id', pedidoId).maybeSingle();
+      if (pg?.repartidor_id && pg.repartidor_id.length > 20) {
+        await supabase.from('repartidores').update({ estado: 'Activo' }).eq('id', pg.repartidor_id);
+      }
+    }
+  } catch (e) { console.warn("Driver release skipped:", e.message); }
+
+  try {
+    if (status === 'Entregado') {
+      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
+      if (pg?.usuario_id) {
+        await supabase.from('usuarios').update({ ya_realizo_pedidos: true }).eq('id', pg.usuario_id);
+        try {
+          await supabase.rpc('earn_wallet_credit_from_order', { p_order_id: pedidoId });
+        } catch (e) {
+          console.error("Error acreditando crédito Wallet:", e);
+        }
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pedidoId }).catch(e => console.error("Error registrando CRM PEDIDO_ENTREGADO (Driver):", e));
+      }
+    }
+  } catch (e) { console.warn("Post-delivery tasks skipped:", e.message); }
+
+  return { success: true };
+}
+
+export async function adminAssignRepartidor(pedidoId, nuevoRepartidorId) {
+  const { error } = await supabase
+    .from('pedidos_general')
+    .update({ 
+      repartidor_id: nuevoRepartidorId || null
+    })
+    .eq('id', pedidoId);
+
+  if (error) throw error;
+  return { success: true };
+}
+
+export async function adminDeleteRepartidor(repId) {
+  // Desvincular de pedidos (para evitar FK error)
+  await supabase.from('pedidos_general').update({ repartidor_id: null }).eq('repartidor_id', repId);
+  await supabase.from('pedidos_general').update({ repartidor_propuesto_id: null }).eq('repartidor_propuesto_id', repId);
+  // Borrar pagos asociados si existe constraint
+  await supabase.from('repartidores_pagos').delete().eq('repartidor_id', repId);
+  // Desvincular como partner de otros repartidores
+  await supabase.from('repartidores').update({ partner_id: null }).eq('partner_id', repId);
+  
+  // Finalmente, eliminar el repartidor
+  const { error } = await supabase.from('repartidores').delete().eq('id', repId);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
 
 // ═══════════════════════════════════════════════════
 // ADMIN — Gestión de Usuarios

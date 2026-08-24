@@ -19,6 +19,16 @@ const AdminPedidos = () => {
     const [modalLoading, setModalLoading] = useState(false);
     const [pedidoDetalle, setPedidoDetalle] = useState(null);
     const [forceMode, setForceMode] = useState(false);
+    const [allRepartidores, setAllRepartidores] = useState([]);
+
+    const loadRepartidores = async () => {
+        try {
+            const reps = await api.adminGetRepartidoresDetallado();
+            setAllRepartidores(reps || []);
+        } catch (err) {
+            console.error('Error al cargar repartidores:', err);
+        }
+    };
 
     const loadPedidos = async () => {
         setLoading(true);
@@ -39,6 +49,10 @@ const AdminPedidos = () => {
     useEffect(() => {
         loadPedidos();
     }, [dateStartFilter, dateEndFilter]);
+
+    useEffect(() => {
+        loadRepartidores();
+    }, []);
 
     const handleOpenDetail = async (id) => {
         setModalLoading(true);
@@ -347,13 +361,54 @@ const AdminPedidos = () => {
                                         <p><strong>Entrega:</strong> {pedidoDetalle.tipo_entrega}</p>
                                         <p><strong>Total:</strong> <span className="total-price">${Number(pedidoDetalle.total).toLocaleString('es-AR')}</span></p>
                                         <p><strong>PIN de Entrega:</strong> <span style={{ color: 'var(--red-600)', fontWeight: 'bold', fontSize: '1.1rem' }}>{pedidoDetalle.num_confirmacion || 'N/A'}</span></p>
-                                        {pedidoDetalle.repartidores && (
-                                            <div className="driver-info-box" style={{ marginTop: '10px', padding: '10px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #dcfce7' }}>
-                                                <p style={{ margin: 0, fontWeight: 700, color: '#166534' }}>🛵 Repartidor Asignado:</p>
-                                                <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}><strong>Nombre:</strong> {pedidoDetalle.repartidores.nombre}</p>
-                                                <p style={{ margin: '2px 0 0 0', fontSize: '0.9rem' }}><strong>Teléfono:</strong> {pedidoDetalle.repartidores.telefono || 'No disponible'}</p>
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            const orderCity = pedidoDetalle?.locales_info?.[0]?.locales?.ciudad || 'Santo Tomé';
+                                            const repartidoresFiltrados = allRepartidores.filter(rep => 
+                                                rep.admin_status === 'Aceptado' && 
+                                                rep.ciudad === orderCity
+                                            );
+                                            return (
+                                                <div className="driver-assign-box" style={{ marginTop: '10px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                                    <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}>🛵 Repartidor Asignado:</p>
+                                                    
+                                                    {pedidoDetalle.repartidores ? (
+                                                        <div style={{ marginBottom: '8px', fontSize: '0.9rem' }}>
+                                                            <strong>{pedidoDetalle.repartidores.nombre}</strong> ({pedidoDetalle.repartidores.telefono || 'Sin teléfono'})
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8', fontStyle: 'italic' }}>Ningún repartidor asignado</div>
+                                                    )}
+
+                                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                        <select
+                                                            className="filter-select"
+                                                            style={{ flex: 1, height: '36px', fontSize: '0.85rem', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                                            value={pedidoDetalle.repartidor_id || ''}
+                                                            onChange={async (e) => {
+                                                                const newDriverId = e.target.value;
+                                                                if (window.confirm('¿Cambiar el repartidor asignado a este pedido?')) {
+                                                                    try {
+                                                                        await api.adminAssignRepartidor(pedidoDetalle.id, newDriverId || null);
+                                                                        toast.success('Repartidor actualizado');
+                                                                        handleOpenDetail(pedidoDetalle.id);
+                                                                        loadPedidos();
+                                                                    } catch (err) {
+                                                                        toast.error('Error al asignar repartidor: ' + err.message);
+                                                                    }
+                                                                }
+                                                            }}
+                                                        >
+                                                            <option value="">-- Sin asignar / Remover --</option>
+                                                            {repartidoresFiltrados.map(rep => (
+                                                                <option key={rep.id} value={rep.id}>
+                                                                    {rep.nombre} ({rep.email})
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Tiempos Cronometrados */}
                                         <div className="driver-info-box" style={{ marginTop: '10px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }}>
