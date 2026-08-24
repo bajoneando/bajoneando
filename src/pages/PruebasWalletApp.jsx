@@ -2755,6 +2755,12 @@ export default function PruebasWalletApp() {
       const paymentResponse = await iniciarPagoMercadoPago(paymentData);
 
       if (paymentResponse?.init_point) {
+        // Registrar evento CRM PEDIDO_NO_PAGADO (si el usuario no completa el pago en MP)
+        if (user?.id) {
+          api.adminLogCRMEvent(user.id, 'PEDIDO_NO_PAGADO', { order_id: pendingData.pedidoId, total: pendingData.total })
+            .catch(e => console.error("Error CRM PEDIDO_NO_PAGADO:", e));
+        }
+
         // Use standard key for return handling
         localStorage.setItem('pendingOrderData', JSON.stringify({
            ...pendingData,

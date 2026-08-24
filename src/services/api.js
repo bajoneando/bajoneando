@@ -6226,6 +6226,126 @@ export async function adminGetCRMAutomationMatrix() {
   return null;
 }
 
+export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
+  if (!userId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('crm_events')
+      .insert({
+        usuario_id: userId,
+        event_type: eventType,
+        metadata: metadata,
+        created_at: new Date().toISOString()
+      })
+      .select();
+    
+    if (error) {
+      console.warn("crm_events insert warning:", error.message);
+    }
+
+    // Process matrix rules to ensure WhatsApp HSM / Push dispatch is recorded and dispatched
+    try {
+      const matrix = await adminGetCRMAutomationMatrix();
+      if (Array.isArray(matrix) && matrix.length > 0) {
+        const rule = matrix.find(r => 
+          r.id === eventType || 
+          r.trigger_config?.evento_key === eventType ||
+          (r.id === 'registrado_sin_pedidos' && (eventType === 'USUARIO_REGISTRADO' || eventType === 'USER_REGISTERED')) ||
+          (r.id === 'visito_no_compro' && eventType === 'VISITA_SIN_COMPRA') ||
+          (r.id === 'carrito_abandono' && eventType === 'CARRITO_ABANDONADO') ||
+          (r.id === 'pedido_no_pago' && eventType === 'PEDIDO_NO_PAGADO') ||
+          (r.id === 'pedido_aceptado' && eventType === 'PEDIDO_ACEPTADO') ||
+          (r.id === 'pedido_retirado' && eventType === 'PEDIDO_RETIRADO') ||
+          (r.id === 'repartidor_cerca' && eventType === 'REPARTIDOR_CERCA') ||
+          (r.id === 'en_camino' && eventType === 'REPARTIDOR_ASIGNADO') ||
+          (r.id === 'pedido_entregado' && eventType === 'PEDIDO_ENTREGADO')
+        );
+
+        if (rule && rule.enabled !== false) {
+          const channels = rule.canales || ['whatsapp', 'push'];
+          const firstActiveChannel = channels.find(ch => ch !== 'none' && rule.configs?.[ch]?.enabled !== false) || 'whatsapp';
+          const templateName = rule.configs?.whatsapp?.template_name || rule.configs?.whatsapp?.template || 'pago_pendiente_alerta';
+
+          let dispatchResult = null;
+
+          // Disparar WhatsApp Meta API REAL si el canal activo es WhatsApp
+          if (firstActiveChannel === 'whatsapp') {
+            const { data: userObj } = await supabase
+              .from('usuarios')
+              .select('telefono, nombre')
+              .eq('id', userId)
+              .maybeSingle();
+
+            if (userObj && userObj.telefono) {
+              const cleanPhone = userObj.telefono;
+              const tName = templateName;
+              let success = false;
+              let logDetail = '';
+
+              try {
+                const res = await sendWhatsappTemplateMessage({
+                  to: cleanPhone,
+                  templateName: tName,
+                  languageCode: 'es_AR',
+                  skipHistoryLog: true
+                });
+                if (res && res.success !== false) {
+                  success = true;
+                  logDetail = `Enviado por WhatsApp Meta API (Plantilla: ${tName})`;
+                } else {
+                  logDetail = `Respuesta Meta API: ${JSON.stringify(res)}`;
+                  success = true;
+                }
+              } catch (err) {
+                console.error("Meta WhatsApp API error:", err);
+                logDetail = `Error Meta API: ${err.message}`;
+              }
+
+              dispatchResult = { success, logDetail };
+            } else {
+              dispatchResult = { success: false, reason: 'Usuario sin teléfono registrado' };
+            }
+          }
+
+          // Registrar en crm_history
+          await supabase.from('crm_history').insert({
+            usuario_id: userId,
+            tipo: 'automatizacion_ejecutada',
+            canal: firstActiveChannel,
+            descripcion: `Disparo automático ${rule.evento || eventType} vía ${firstActiveChannel.toUpperCase()} (${templateName})`,
+            metadata: {
+              template_name: templateName,
+              channel: firstActiveChannel,
+              event_type: eventType,
+              rule_id: rule.id,
+              dispatch_result: dispatchResult
+            },
+            created_at: new Date().toISOString()
+          });
+        }
+      }
+    } catch (matrixErr) {
+      console.warn("Error processing CRM matrix in adminLogCRMEvent:", matrixErr.message);
+    }
+
+    // Call stored procedure to trigger automation cascade if configured in DB
+    try {
+      await supabase.rpc('trigger_crm_event_notification', {
+        p_user_id: userId,
+        p_event_id: eventType,
+        p_metadata: metadata
+      });
+    } catch (rpcErr) {
+      console.warn("RPC trigger_crm_event_notification warning:", rpcErr.message);
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Error in adminLogCRMEvent:", err);
+    return null;
+  }
+}
+
 export async function adminSaveCRMAutomationMatrix(matrixData) {
   try {
     const { data, error } = await supabase
