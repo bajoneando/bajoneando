@@ -229,7 +229,7 @@ export default function App() {
       <CartProvider>
         <PushNotificationManager />
         <Routes>
-          <Route path="/" element={Capacitor.isNativePlatform() ? <Navigate to="/repartidores" replace /> : <Landing />} />
+          <Route path="/" element={import.meta.env.VITE_APP_TYPE === 'driver' ? <Navigate to="/repartidores" replace /> : <Landing />} />
           <Route path="/mantenimiento" element={<Maintenance />} />
           <Route path="/pedir" element={
             <MaintenanceGuard configKey="mantenimiento_pedir">

@@ -95,10 +95,10 @@ function connectToSupabase(localId) {
                 // Validación para evitar caídas si el payload es nulo (por ejemplo, eventos de borrado o de sistema)
                 if (!order) return;
                 
-                // Imprimir si el estado es 'Confirmado', 'Pendiente' o 'Aceptado'
-                const printableStates = ['Confirmado', 'Pendiente', 'Aceptado'];
+                // Imprimir SOLO si el estado es 'Confirmado' para estar alineados con el dashboard web
+                const printableStates = ['Confirmado'];
                 if (printableStates.includes(order.estado)) {
-                    // Evitar duplicados (por ejemplo si hay varios updates seguidos)
+                    // Evitar duplicados por id de pedido para que no imprima 2 veces el mismo confirmado
                     if (!window.printedOrdersSet) window.printedOrdersSet = new Set();
                     if (window.printedOrdersSet.has(order.pedido_id)) return;
                     window.printedOrdersSet.add(order.pedido_id);
@@ -108,7 +108,7 @@ function connectToSupabase(localId) {
                 } else {
                     // Loggeamos el cambio pero no disparamos la impresión
                     const shortId = order.pedido_id ? order.pedido_id.substring(order.pedido_id.length - 6) : '???';
-                    addLog(`Pedido #${shortId} en estado: ${order.estado} (No se imprime)`);
+                    addLog(`Pedido #${shortId} en estado: ${order.estado} (Espera a Confirmado)`);
                 }
             }
         )

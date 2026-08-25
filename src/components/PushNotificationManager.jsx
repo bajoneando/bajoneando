@@ -33,6 +33,16 @@ export default function PushNotificationManager() {
       console.error('Error al registrar:', JSON.stringify(error));
     });
 
+    // Limpiar notificaciones de la bandeja al hacer clic o abrir la app
+    PushNotifications.addListener('pushNotificationActionPerformed', async (notification) => {
+      console.log('Notificación tocada/abierta:', notification);
+      try {
+        await PushNotifications.removeAllDeliveredNotifications();
+      } catch (e) {
+        console.warn("Error limpiando notificaciones entregadas:", e);
+      }
+    });
+
     const registerPush = async () => {
       try {
         let permStatus = await PushNotifications.checkPermissions();
@@ -40,12 +50,13 @@ export default function PushNotificationManager() {
           permStatus = await PushNotifications.requestPermissions();
         }
         if (permStatus.receive !== 'granted') {
-          window.alert("Permiso denegado por el usuario de iOS.");
           return;
         }
         await PushNotifications.register();
+        // Limpiar bandeja de notificaciones acumuladas al iniciar
+        await PushNotifications.removeAllDeliveredNotifications().catch(() => {});
       } catch (err) {
-        window.alert("Crash al pedir permisos: " + err.message);
+        console.warn("Error registrando notificaciones push:", err.message);
       }
     };
 

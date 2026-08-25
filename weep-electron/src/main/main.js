@@ -126,9 +126,10 @@ ipcMain.on('save-settings', (event, settings) => {
 });
 
 ipcMain.on('new-order', (event, order) => {
-    // Evitar duplicados
-    if (order.id === lastProcessedOrderId) return;
-    lastProcessedOrderId = order.id;
+    // Evitar duplicados usando db_id que es el UUID real de la DB para que no haya colisiones
+    const uniqueId = order.db_id || order.id;
+    if (uniqueId === lastProcessedOrderId) return;
+    lastProcessedOrderId = uniqueId;
 
     console.log('Nuevo pedido recibido:', order.id);
     

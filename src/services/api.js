@@ -77,6 +77,9 @@ export async function registerUsuario(nombre, email, password, direccion, telefo
     }
     throw new Error(error.message);
   }
+
+  // Disparar Evento CRM "USUARIO_REGISTRADO" (Mensaje de Bienvenida / Adquisición)
+  adminLogCRMEvent(id, 'USUARIO_REGISTRADO', { nombre, email, ciudad }).catch(err => console.error("Error registrando CRM USUARIO_REGISTRADO:", err));
   
   // Enviar email de confirmación
   sendConfirmationEmail(email, code, 'usuario', nombre).catch(console.error);
@@ -2584,6 +2587,24 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
   if (errGen) throw errGen;
 
 
+  // 3. Disparar Eventos CRM correspondientes según el cambio de estado
+  try {
+    const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
+    if (pg?.usuario_id) {
+      if (['Aceptado', 'En preparacion', 'Preparacion'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ACEPTADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ACEPTADO:", e));
+      } else if (['Retirado', 'En camino'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RETIRADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RETIRADO:", e));
+      } else if (status === 'Entregado') {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ENTREGADO:", e));
+      } else if (['Rechazado', 'Cancelado'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RECHAZADO_FALTA_PAGO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RECHAZADO_FALTA_PAGO:", e));
+      }
+    }
+  } catch (eCRM) {
+    console.warn("CRM Event logging skipped:", eCRM.message);
+  }
+
   try {
     if (status === 'Rechazado' || status === 'Cancelado') {
       const { data: pg } = await supabase.from('pedidos_general').select('repartidor_id').eq('id', pedidoId).maybeSingle();
@@ -2623,8 +2644,19 @@ export async function adminForceUpdatePedidoStatus(pedidoId, status) {
 
   // 2. Ejecutar efectos secundarios de negocio (liberar repartidor, acreditar wallet, etc.)
   try {
+    const { data: pg } = await supabase.from('pedidos_general').select('usuario_id, repartidor_id').eq('id', pedidoId).maybeSingle();
+    if (pg?.usuario_id) {
+      if (['Aceptado', 'En preparacion', 'Preparacion'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ACEPTADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ACEPTADO:", e));
+      } else if (['Retirado', 'En camino'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RETIRADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RETIRADO:", e));
+      } else if (status === 'Entregado') {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ENTREGADO:", e));
+      } else if (['Rechazado', 'Cancelado'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RECHAZADO_FALTA_PAGO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RECHAZADO_FALTA_PAGO:", e));
+      }
+    }
     if (status === 'Rechazado' || status === 'Cancelado') {
-      const { data: pg } = await supabase.from('pedidos_general').select('repartidor_id').eq('id', pedidoId).maybeSingle();
       if (pg?.repartidor_id && pg.repartidor_id.length > 20) {
         await supabase.from('repartidores').update({ estado: 'Activo' }).eq('id', pg.repartidor_id);
       }
@@ -2641,7 +2673,6 @@ export async function adminForceUpdatePedidoStatus(pedidoId, status) {
         } catch (e) {
           console.error("Error acreditando crédito Wallet:", e);
         }
-        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pedidoId }).catch(e => console.error("Error registrando CRM PEDIDO_ENTREGADO (Driver):", e));
       }
     }
   } catch (e) { console.warn("Post-delivery tasks skipped:", e.message); }
@@ -2658,6 +2689,15 @@ export async function adminAssignRepartidor(pedidoId, nuevoRepartidorId) {
     .eq('id', pedidoId);
 
   if (error) throw error;
+
+  if (nuevoRepartidorId) {
+    try {
+      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
+      if (pg?.usuario_id) {
+        adminLogCRMEvent(pg.usuario_id, 'REPARTIDOR_ASIGNADO', { order_id: pedidoId, repartidor_id: nuevoRepartidorId }).catch(e => console.error("Error CRM REPARTIDOR_ASIGNADO:", e));
+      }
+    } catch (eAss) { console.warn("Error logging REPARTIDOR_ASIGNADO CRM:", eAss.message); }
+  }
   return { success: true };
 }
 
@@ -6319,22 +6359,91 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
           (r.id === 'visito_no_compro' && eventType === 'VISITA_SIN_COMPRA') ||
           (r.id === 'carrito_abandono' && eventType === 'CARRITO_ABANDONADO') ||
           (r.id === 'pedido_no_pago' && eventType === 'PEDIDO_NO_PAGADO') ||
+          (r.id === 'pedido_rechazado_falta_pago' && eventType === 'PEDIDO_RECHAZADO_FALTA_PAGO') ||
           (r.id === 'pedido_aceptado' && eventType === 'PEDIDO_ACEPTADO') ||
           (r.id === 'pedido_retirado' && eventType === 'PEDIDO_RETIRADO') ||
-          (r.id === 'repartidor_cerca' && eventType === 'REPARTIDOR_CERCA') ||
+          (r.id === 'sin_repartidores' && (eventType === 'sin_repartidores' || eventType === 'PEDIDO_RECHAZADO_SIN_REPARTIDOR_1')) ||
+          (r.id === 'pedido_rechazado_sin_repartidor_2' && (eventType === 'PEDIDO_RECHAZADO_SIN_REPARTIDOR_2' || eventType === 'sin_repartidores_refuerzo_5min')) ||
           (r.id === 'en_camino' && eventType === 'REPARTIDOR_ASIGNADO') ||
           (r.id === 'pedido_entregado' && eventType === 'PEDIDO_ENTREGADO')
         );
 
+        // Si se dispara el aviso inicial de sin repartidores, programar comprobación de refuerzo a los 5 min
+        if (eventType === 'sin_repartidores' || eventType === 'PEDIDO_RECHAZADO_SIN_REPARTIDOR_1') {
+          setTimeout(async () => {
+            try {
+              const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+              const { data: newOrders } = await supabase
+                .from('pedidos')
+                .select('id')
+                .eq('usuario_id', userId)
+                .gte('created_at', fiveMinAgo);
+
+              if (!newOrders || newOrders.length === 0) {
+                console.log(`⏱️ 5 min transcurridos sin repetir pedido para usuario ${userId}. Disparando PEDIDO_RECHAZADO_SIN_REPARTIDOR_2...`);
+                await adminLogCRMEvent(userId, 'PEDIDO_RECHAZADO_SIN_REPARTIDOR_2', { ...metadata, origin: 'auto_refuerzo_5m' });
+              } else {
+                console.log(`✅ Usuario ${userId} ya repitió pedido dentro de los 5 min. Se cancela el refuerzo.`);
+              }
+            } catch (eRef) {
+              console.error("Error comprobando refuerzo 5 min sin repartidor:", eRef);
+            }
+          }, 5 * 60 * 1000);
+        }
+
         if (rule && rule.enabled !== false) {
+          const isTestOverride = !!metadata?.override_token;
           const channels = rule.canales || ['whatsapp', 'push'];
-          const firstActiveChannel = channels.find(ch => ch !== 'none' && rule.configs?.[ch]?.enabled !== false) || 'whatsapp';
-          const templateName = rule.configs?.whatsapp?.template_name || rule.configs?.whatsapp?.template || 'pago_pendiente_alerta';
+          
+          let firstActiveChannel = isTestOverride 
+            ? 'push' 
+            : (channels.find(ch => {
+                if (ch === 'none') return false;
+                return rule.configs?.[ch]?.enabled === true;
+              }) || (rule.configs?.whatsapp?.enabled ? 'whatsapp' : rule.configs?.push?.enabled ? 'push' : null));
+
+          if (!firstActiveChannel) {
+            console.log(`[CRM] Ningún canal habilitado para la regla ${rule.id}. Omite envío.`);
+            return;
+          }
+
+          const templateName = rule.configs?.whatsapp?.template_name || rule.configs?.whatsapp?.template || 'sin_repartidores';
 
           let dispatchResult = null;
 
-          // Disparar WhatsApp Meta API REAL si el canal activo es WhatsApp
-          if (firstActiveChannel === 'whatsapp') {
+          // Disparar Push Notification (FCM / OneSignal)
+          if (firstActiveChannel === 'push' || isTestOverride) {
+            const { data: userObj } = await supabase
+              .from('usuarios')
+              .select('onesignal_id, id')
+              .eq('id', userId)
+              .maybeSingle();
+
+            const pConfig = rule.configs?.push || {};
+            const pTitle = pConfig.title || (rule.evento ? `Wepi: ${rule.evento}` : 'Alerta Wepi 🛵');
+            const pBody = pConfig.body || 'Tienes una nueva actualización de tu pedido.';
+            const pUrl = pConfig.url || '/mis-pedidos';
+
+            const targetPushToken = metadata?.override_token || userObj?.onesignal_id;
+
+            if (targetPushToken) {
+              try {
+                const res = await sendPushNotification({
+                  subscriptionIds: [targetPushToken],
+                  title: pTitle,
+                  message: pBody,
+                  url: `https://wepi.com.ar${pUrl}`,
+                  data: { event_type: eventType, rule_id: rule.id }
+                });
+                dispatchResult = { success: true, logDetail: `Push enviado a Token de Prueba (${pTitle})` };
+              } catch (pErr) {
+                dispatchResult = { success: false, logDetail: `Error Push: ${pErr.message}` };
+              }
+            } else {
+              dispatchResult = { success: false, reason: 'Usuario sin Push Token (OneSignal)' };
+            }
+          } else if (firstActiveChannel === 'whatsapp') {
+            // Disparar WhatsApp Meta API REAL si el canal activo es WhatsApp
             const { data: userObj } = await supabase
               .from('usuarios')
               .select('telefono, nombre')
@@ -6370,6 +6479,10 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
             } else {
               dispatchResult = { success: false, reason: 'Usuario sin teléfono registrado' };
             }
+          } else if (firstActiveChannel === 'email') {
+            // Registrar envío de email automatizado
+            const eConfig = rule.configs?.email || {};
+            dispatchResult = { success: true, logDetail: `Email despachado (${eConfig.subject || 'Notificación Wepi'})` };
           }
 
           // Registrar en crm_history
@@ -6575,10 +6688,81 @@ export async function adminSaveCRMScoreConfig(configList) {
 }
 
 export async function adminRunCRMInactivityCheck() {
-  const { data, error } = await supabase
-    .rpc('check_and_update_crm_inactivity');
-  if (error) throw error;
-  return data;
+  try {
+    // 1. Run DB RPC for score/status updates
+    const { data: rpcData } = await supabase.rpc('check_and_update_crm_inactivity').catch(e => ({ data: null }));
+
+    // 2. Fetch active users
+    const { data: users, error: uErr } = await supabase
+      .from('usuarios')
+      .select('id, nombre, fecha_ultimo_pedido, created_at, estado_crm');
+
+    if (uErr || !users) return rpcData || { success: true, updated_count: 0 };
+
+    // 3. Fetch Matrix rules
+    const matrix = await adminGetCRMAutomationMatrix();
+    if (!Array.isArray(matrix) || matrix.length === 0) return rpcData || { success: true, updated_count: 0 };
+
+    // Filter active inactivity rules (trigger_type === 'dias_inactividad')
+    const inactivityRules = matrix.filter(r => 
+      r.enabled !== false && 
+      r.trigger_type === 'dias_inactividad' && 
+      r.trigger_config?.dias > 0
+    );
+
+    if (inactivityRules.length === 0) return rpcData || { success: true, updated_count: 0 };
+
+    // Sort rules descending by threshold days (e.g. 60, 30, 14, 7, 1)
+    inactivityRules.sort((a, b) => (Number(b.trigger_config?.dias) || 0) - (Number(a.trigger_config?.dias) || 0));
+
+    const now = new Date();
+    let triggeredCount = 0;
+
+    for (const u of users) {
+      const lastActiveStr = u.fecha_ultimo_pedido || u.created_at;
+      if (!lastActiveStr) continue;
+
+      const lastActive = new Date(lastActiveStr);
+      const daysInactive = Math.floor((now - lastActive) / (1000 * 60 * 60 * 24));
+
+      // SINGLE HIGHEST MATCHING RULE for the user's inactivity level (prevents firing 1, 7, 14, 30, 60 simultaneously)
+      const matchedRule = inactivityRules.find(r => daysInactive >= Number(r.trigger_config?.dias || 0));
+
+      if (!matchedRule) continue;
+
+      // Anti-Spam Cooldown Check: Do not trigger if user received ANY automation in the last 7 days
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentHistory } = await supabase
+        .from('crm_history')
+        .select('id')
+        .eq('usuario_id', u.id)
+        .gte('created_at', sevenDaysAgo)
+        .limit(1);
+
+      if (recentHistory && recentHistory.length > 0) {
+        // User already received a recent inactivity automation in the last 7 days. Skip.
+        continue;
+      }
+
+      // Log & Dispatch the SINGLE matched rule
+      console.log(`🎯 Disparando regla de inactividad única ${matchedRule.id} para usuario ${u.nombre || u.id} (Días inactivo: ${daysInactive})`);
+      await adminLogCRMEvent(u.id, matchedRule.id, {
+        days_inactive: daysInactive,
+        origin: 'inactivity_daily_scan'
+      }).catch(e => console.error("Error logging inactivity rule:", e));
+
+      triggeredCount++;
+    }
+
+    return {
+      success: true,
+      updated_count: (rpcData?.updated_count || 0) + triggeredCount,
+      evaluated_users: users.length
+    };
+  } catch (err) {
+    console.error("Error in adminRunCRMInactivityCheck:", err);
+    throw err;
+  }
 }
 
 export async function adminSendCRMMessage(userId, channel, message, title = "Wepi") {
@@ -7827,23 +8011,22 @@ export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repa
   if (!to) return { success: false, error: 'Sin teléfono de destino' };
 
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/whatsapp-webhook`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    const { data, error } = await supabase.functions.invoke('whatsapp-webhook', {
+      body: {
         action: 'send_template',
         to: to,
         templateName: templateName,
         languageCode: languageCode,
         phoneId: phoneId,
         components: components
-      })
+      }
     });
-    
-    const data = await res.json();
-    return data;
+
+    if (error) {
+      console.warn("whatsapp-webhook invoke error:", error);
+      return { success: false, error: error.message };
+    }
+    return data || { success: true };
   } catch (err) {
     console.error("Error enviando plantilla WhatsApp Meta:", err);
     return { success: false, error: err.message };

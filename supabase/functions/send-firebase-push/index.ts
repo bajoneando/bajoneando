@@ -65,11 +65,27 @@ serve(async (req) => {
       tokens: tokens,
       notification: payload.notification,
       data: payload.data,
-      // Opciones para Android
+      // Opciones para Android (reemplazo automático de notificaciones amontonadas)
       android: {
         priority: 'high',
+        collapseKey: 'wepi_push_general',
         notification: {
           sound: 'default',
+          tag: 'wepi_notification',
+          sticky: false,
+          defaultSound: true,
+          notificationCount: 1
+        }
+      },
+      // Opciones para Web Push
+      webpush: {
+        headers: {
+          Urgency: 'high',
+          Topic: 'wepi_notification'
+        },
+        notification: {
+          tag: 'wepi_notification',
+          renotify: true
         }
       }
     });

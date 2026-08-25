@@ -2577,6 +2577,12 @@ export default function PruebasWalletApp() {
 
           if (['Cancelado', 'Rechazado'].includes(data.estado)) {
             console.log("❌ Order canceled or rejected (Detected via Polling/Initial Check)!");
+            if (user?.id) {
+              const isNoDriver = !data.repartidor_id || (data.motivo_cancelacion && data.motivo_cancelacion.toLowerCase().includes('repartidor'));
+              const targetEvent = isNoDriver ? 'sin_repartidores' : 'PEDIDO_RECHAZADO_FALTA_PAGO';
+              api.adminLogCRMEvent(user.id, targetEvent, { order_id: data.id, total: data.total })
+                .catch(e => console.error(`Error CRM ${targetEvent}:`, e));
+            }
             setSearchingDriver(false);
             setDriverSearchTimeout(false);
             setPendingOrderId(null);
@@ -2585,7 +2591,7 @@ export default function PruebasWalletApp() {
             setFoundDriver(null);
             localStorage.removeItem('pendingOrderDataPruebas');
             localStorage.removeItem('pendingOrderData');
-            toast.error('El pedido fue cancelado o rechazado.');
+            toast.error(data.repartidor_id ? 'El pedido fue cancelado o rechazado.' : 'No encontramos repartidores disponibles para tu pedido.');
             return true;
           }
 
@@ -2636,6 +2642,12 @@ export default function PruebasWalletApp() {
 
         if (['Cancelado', 'Rechazado'].includes(newOrder.estado)) {
           console.log("❌ Order canceled or rejected (Realtime Update)!");
+          if (user?.id) {
+            const isNoDriver = !newOrder.repartidor_id || (newOrder.motivo_cancelacion && newOrder.motivo_cancelacion.toLowerCase().includes('repartidor'));
+            const targetEvent = isNoDriver ? 'sin_repartidores' : 'PEDIDO_RECHAZADO_FALTA_PAGO';
+            api.adminLogCRMEvent(user.id, targetEvent, { order_id: newOrder.id, total: newOrder.total })
+              .catch(e => console.error(`Error CRM ${targetEvent}:`, e));
+          }
           setSearchingDriver(false);
           setDriverSearchTimeout(false);
           setPendingOrderId(null);
@@ -2644,7 +2656,7 @@ export default function PruebasWalletApp() {
           setFoundDriver(null); // Added this to clear modal
           localStorage.removeItem('pendingOrderDataPruebas');
           localStorage.removeItem('pendingOrderData');
-          toast.error('El pedido fue cancelado o rechazado.');
+          toast.error(newOrder.repartidor_id ? 'El pedido fue cancelado o rechazado.' : 'No encontramos repartidores disponibles para tu pedido.');
           return;
         }
 
@@ -2735,13 +2747,12 @@ export default function PruebasWalletApp() {
           api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
         ]);
 
-        // Enviar plantilla "sin_repartidores" (Meta API HSM) ÚNICAMENTE al rechazarse/cancelarse el pedido
-        if (recipientPhone) {
-          api.sendWhatsappTemplateMessage({
-            to: recipientPhone,
-            templateName: 'sin_repartidores',
-            languageCode: 'es_AR'
-          }).catch(err => console.error("Error enviando plantilla sin_repartidores:", err));
+        // Registrar evento CRM "sin_repartidores" (dispara WhatsApp/Push y programa el refuerzo de 5 min)
+        if (currentUser?.id || user?.id) {
+          api.adminLogCRMEvent(currentUser?.id || user?.id, 'sin_repartidores', {
+            order_id: orderIdToCancel,
+            phone: recipientPhone
+          }).catch(err => console.error("Error registrando evento CRM sin_repartidores:", err));
         }
 
         toast.success('Búsqueda cancelada');
