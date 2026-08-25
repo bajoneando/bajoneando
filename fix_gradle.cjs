@@ -1,0 +1,1 @@
+const fs = require('fs'); let b = fs.readFileSync('C:/Users/Axel/OneDrive/Desktop/Wepi Antigravity/android/app/build.gradle', 'utf8'); b = b.replace(/versionCode 1/, 'versionCode 2').replace(/versionName "1\.0"/, 'versionName "1.1.0"'); fs.writeFileSync('C:/Users/Axel/OneDrive/Desktop/Wepi Antigravity/android/app/build.gradle', b);
