@@ -1164,6 +1164,19 @@ export default function RestaurantDashboard() {
           duration: 6000,
           icon: '🔔'
         });
+        
+        if (profileDataRef.current?.onesignal_id) {
+          const subscriptionIds = profileDataRef.current.onesignal_id.split(',').map(id => id.trim()).filter(Boolean);
+          if (subscriptionIds.length > 0) {
+            api.sendPushNotification({
+              subscriptionIds: subscriptionIds,
+              title: '¡Pedidos Pendientes! ⚠️',
+              message: `Tenés ${unacceptedIds.length} pedido(s) esperando a ser aceptados. ¡Ingresá para confirmarlos!`,
+              url: 'https://wepi.com.ar/locales',
+              data: { type: 'unaccepted_orders' }
+            }).catch(e => console.error("Error enviando recordatorio push:", e));
+          }
+        }
       }
     }, 5000);
 

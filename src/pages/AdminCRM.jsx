@@ -415,6 +415,10 @@ const DEFAULT_WEPI_HABITS_CONFIG = {
 const AdminCRM = () => {
     // Sub-navigation tabs
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [specialCampaigns, setSpecialCampaigns] = useState([]);
+    const [showSpecialCampaignForm, setShowSpecialCampaignForm] = useState(false);
+    const [specialCampaignForm, setSpecialCampaignForm] = useState({ id: null, nombre: '', canales: ['whatsapp', 'push', 'email'], configs: { whatsapp: { enabled: true, template_name: '' }, push: { enabled: true, title: '', body: '', url: '' }, email: { enabled: true, subject: '', body: '' } }, trigger_time: '' });
+    const [savingSpecialCampaign, setSavingSpecialCampaign] = useState(false);
     
     // Core data states
     const [usuarios, setUsuarios] = useState([]);
@@ -466,6 +470,10 @@ const AdminCRM = () => {
     const [cityFilter, setCityFilter] = useState('Todos');
     const [tagFilter, setTagFilter] = useState('Todos');
     const [scoreMinFilter, setScoreMinFilter] = useState('');
+    const [ordersMinFilter, setOrdersMinFilter] = useState('');
+    const [ordersMaxFilter, setOrdersMaxFilter] = useState('');
+    const [orderTimeStart, setOrderTimeStart] = useState('');
+    const [orderTimeEnd, setOrderTimeEnd] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('Todos');
     const [inactivityDaysFilter, setInactivityDaysFilter] = useState('Todos');
     const [selectedUsers, setSelectedUsers] = useState(new Set());
@@ -533,10 +541,193 @@ const AdminCRM = () => {
         loadAllCRMData();
     }, []);
 
+    // Frontend execution interval for special campaigns
+    useEffect(() => {
+        const executePendingCampaigns = async () => {
+            if (!specialCampaigns || specialCampaigns.length === 0) return;
+            const now = new Date();
+            
+            for (let camp of specialCampaigns) {
+                if (!camp.executed && camp.trigger_time && new Date(camp.trigger_time) <= now) {
+                    try {
+                        // Mark as executed immediately to prevent double firing
+                        await api.adminSaveCRMSpecialCampaign({ ...camp, executed: true });
+                        setSpecialCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, executed: true } : c));
+                        
+                        // Execute messages
+                        for (let uid of camp.target_user_ids) {
+                            const user = usuarios.find(u => u.id === uid);
+                            if (!user) continue;
+
+                            let sent = false;
+                            const logData = { campaign_id: camp.id, campaign_nombre: camp.nombre };
+
+                            for (let ch of camp.canales) {
+                                if (sent) break;
+                                const config = camp.configs[ch];
+                                if (!config || !config.enabled) continue;
+
+                                try {
+                                    if (ch === 'whatsapp') {
+                                        const phone = user.telefono ? user.telefono.replace(/\D/g, '') : null;
+                                        if (phone) {
+                                            await api.sendWhatsappTemplateMessage({ to: phone, templateName: config.template_name });
+                                            sent = true;
+                                            logData.canal = 'whatsapp';
+                                        }
+                                    } else if (ch === 'push') {
+                                        if (user.onesignal_player_id) {
+                                            await api.sendPushNotification({ subscriptionIds: [user.onesignal_player_id], title: config.title, message: config.body, url: config.url });
+                                            sent = true;
+                                            logData.canal = 'push';
+                                        }
+                                    } else if (ch === 'email') {
+                                        if (user.email) {
+                                            await api.sendCRMActionEmail(user.email, config.subject, config.body);
+                                            sent = true;
+                                            logData.canal = 'email';
+                                        }
+                                    }
+                                } catch (err) {
+                                    console.error(`Error sending ${ch} for user ${uid}`, err);
+                                }
+                            }
+                            
+                            if (sent) {
+                                await api.adminLogCRMEvent(uid, 'CAMPANA_ESPECIAL', { ...logData, descripcion: `Campaña Especial: ${camp.nombre}` });
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Error executing special campaign", camp.id, err);
+                    }
+                }
+            }
+        };
+
+        const interval = setInterval(() => {
+            executePendingCampaigns();
+        }, 30000);
+        return () => clearInterval(interval);
+    }, [specialCampaigns, usuarios]);
+
+    const handleSaveSpecialCampaign = async () => {
+        if (!specialCampaignForm.nombre || !specialCampaignForm.trigger_time) {
+            toast.error("El nombre y el horario son obligatorios");
+            return;
+        }
+        setSavingSpecialCampaign(true);
+        try {
+            const dataToSave = {
+                id: specialCampaignForm.id,
+                nombre: specialCampaignForm.nombre,
+                canales: specialCampaignForm.canales,
+                configs: specialCampaignForm.configs,
+                trigger_time: new Date(specialCampaignForm.trigger_time).toISOString(),
+                target_user_ids: Array.from(selectedUsers),
+                executed: false
+            };
+            if (!dataToSave.id) delete dataToSave.id;
+            
+            const saved = await api.adminSaveCRMSpecialCampaign(dataToSave);
+            toast.success("Campaña especial guardada!");
+            setShowSpecialCampaignForm(false);
+            setSpecialCampaignForm({ id: null, nombre: '', canales: ['whatsapp', 'push', 'email'], configs: { whatsapp: { enabled: true, template_name: '' }, push: { enabled: true, title: '', body: '', url: '' }, email: { enabled: true, subject: '', body: '' } }, trigger_time: '' });
+            setSelectedUsers(new Set()); // clear selection
+            loadAllCRMData();
+        } catch (err) {
+            toast.error("Error al guardar: " + err.message);
+        } finally {
+            setSavingSpecialCampaign(false);
+        }
+    };
+    
+    const handleDivideCampaigns = async () => {
+        const numPartes = prompt("¿En cuántas campañas deseas dividir los usuarios seleccionados?");
+        if (!numPartes || isNaN(numPartes) || numPartes <= 1) return;
+        
+        const partes = parseInt(numPartes);
+        const usersArray = Array.from(selectedUsers);
+        if (usersArray.length === 0) return;
+
+        const chunkSize = Math.ceil(usersArray.length / partes);
+        setSavingSpecialCampaign(true);
+        try {
+            for (let i = 0; i < partes; i++) {
+                const chunk = usersArray.slice(i * chunkSize, (i + 1) * chunkSize);
+                if (chunk.length === 0) continue;
+
+                // Create placeholder campaign starting in 24 hours just as a safe default
+                const defaultDate = new Date();
+                defaultDate.setDate(defaultDate.getDate() + 1);
+
+                const dataToSave = {
+                    nombre: `NO CONFIGURADO AUN - Parte ${i + 1}`,
+                    canales: ['whatsapp', 'push', 'email'],
+                    configs: { 
+                        whatsapp: { enabled: false, template_name: '' }, 
+                        push: { enabled: false, title: '', body: '', url: '' }, 
+                        email: { enabled: false, subject: '', body: '' } 
+                    },
+                    trigger_time: defaultDate.toISOString(),
+                    target_user_ids: chunk,
+                    executed: false
+                };
+                await api.adminSaveCRMSpecialCampaign(dataToSave);
+            }
+            toast.success(`Se crearon ${partes} campañas exitosamente.`);
+            setSelectedUsers(new Set()); // clear selection
+            loadAllCRMData();
+        } catch (err) {
+            toast.error("Error al dividir: " + err.message);
+        } finally {
+            setSavingSpecialCampaign(false);
+        }
+    };
+    
+    const handleEditSpecialCampaign = (camp) => {
+        // Transform the DB structure back to form state
+        // trigger_time needs to be formatted for datetime-local (YYYY-MM-DDThh:mm)
+        const dateObj = new Date(camp.trigger_time);
+        dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
+        const localDateTimeStr = dateObj.toISOString().slice(0, 16);
+
+        setSpecialCampaignForm({
+            id: camp.id,
+            nombre: camp.nombre,
+            canales: camp.canales || ['whatsapp', 'push', 'email'],
+            configs: camp.configs || { whatsapp: { enabled: false, template_name: '' }, push: { enabled: false, title: '', body: '', url: '' }, email: { enabled: false, subject: '', body: '' } },
+            trigger_time: localDateTimeStr
+        });
+        // Select the users from the campaign
+        setSelectedUsers(new Set(camp.target_user_ids || []));
+        setShowSpecialCampaignForm(true);
+    };
+
+    const handleDeleteSpecialCampaign = async (id) => {
+        if(!window.confirm("¿Eliminar esta campaña especial?")) return;
+        try {
+            await api.adminDeleteCRMSpecialCampaign(id);
+            toast.success("Campaña eliminada");
+            loadAllCRMData();
+        } catch (e) {
+            toast.error("Error al eliminar: " + e.message);
+        }
+    };
+    
+    const pendingCampaignsUserIds = useMemo(() => {
+        const ids = new Set();
+        specialCampaigns.forEach(c => {
+            if (!c.executed && c.target_user_ids) {
+                c.target_user_ids.forEach(uid => ids.add(uid));
+            }
+        });
+        return ids;
+    }, [specialCampaigns]);
+
     const loadAllCRMData = async () => {
         setLoading(true);
         try {
-            const [usersRes, tagsRes, autoRes, campRes, scoreRes, eventsRes, historyRes, matrixRes, habitsRes, botFlowsRes, optinsRes] = await Promise.all([
+            const [usersRes, tagsRes, autoRes, campRes, scoreRes, eventsRes, historyRes, matrixRes, habitsRes, botFlowsRes, optinsRes, specialCampRes] = await Promise.all([
                 api.adminGetCRMUsers(),
                 api.adminGetCRMTags(),
                 api.adminGetCRMAutomations(),
@@ -547,7 +738,8 @@ const AdminCRM = () => {
                 api.adminGetCRMAutomationMatrix().catch(() => null),
                 api.adminGetWepiHabitsConfig().catch(() => null),
                 api.getWhatsappBotFlows().catch(() => null),
-                api.getWhatsappOptins().catch(() => [])
+                api.getWhatsappOptins().catch(() => []),
+                api.adminGetCRMSpecialCampaigns().catch(() => [])
             ]);
 
             setUsuarios(usersRes || []);
@@ -558,6 +750,7 @@ const AdminCRM = () => {
             setEventsLog(eventsRes || []);
             setHistoryLog(historyRes || []);
             setOptins(optinsRes || []);
+            setSpecialCampaigns(specialCampRes || []);
             
             let finalMatrix = [...DEFAULT_CRM_AUTOMATION_MATRIX];
             if (matrixRes && Array.isArray(matrixRes) && matrixRes.length > 0) {
@@ -783,6 +976,11 @@ const AdminCRM = () => {
             const scoreVal = Number(user.wepi_score) || 0;
             const matchesScore = !scoreMinFilter || scoreVal >= Number(scoreMinFilter);
 
+            // Orders
+            const ordersVal = Number(user.cantidad_pedidos) || 0;
+            const matchesOrdersMin = !ordersMinFilter || ordersVal >= Number(ordersMinFilter);
+            const matchesOrdersMax = !ordersMaxFilter || ordersVal <= Number(ordersMaxFilter);
+
             // Inactivity days
             let matchesInactivity = true;
             if (inactivityDaysFilter !== 'Todos') {
@@ -794,9 +992,26 @@ const AdminCRM = () => {
                 else if (inactivityDaysFilter === '90') matchesInactivity = daysVal >= 90;
             }
 
-            return matchesSearch && matchesStatus && matchesCity && matchesTag && matchesCategory && matchesScore && matchesInactivity;
+            // Order Time
+            let matchesOrderTime = true;
+            if (orderTimeStart || orderTimeEnd) {
+                if (user.fecha_ultimo_pedido) {
+                    const d = new Date(user.fecha_ultimo_pedido);
+                    // Add timezone offset to get local hour correctly, or just use getHours/getMinutes which are local
+                    const hh = d.getHours().toString().padStart(2, '0');
+                    const mm = d.getMinutes().toString().padStart(2, '0');
+                    const timeStr = `${hh}:${mm}`;
+                    
+                    if (orderTimeStart && timeStr < orderTimeStart) matchesOrderTime = false;
+                    if (orderTimeEnd && timeStr > orderTimeEnd) matchesOrderTime = false;
+                } else {
+                    matchesOrderTime = false; // No orders, so it doesn't match a time filter
+                }
+            }
+
+            return matchesSearch && matchesStatus && matchesCity && matchesTag && matchesCategory && matchesScore && matchesOrdersMin && matchesOrdersMax && matchesInactivity && matchesOrderTime;
         });
-    }, [usuarios, searchTerm, statusFilter, cityFilter, tagFilter, categoryFilter, scoreMinFilter, inactivityDaysFilter]);
+    }, [usuarios, searchTerm, statusFilter, cityFilter, tagFilter, categoryFilter, scoreMinFilter, ordersMinFilter, ordersMaxFilter, inactivityDaysFilter, orderTimeStart, orderTimeEnd]);
 
     // Dynamic Lists (Quick Access Lists)
     const handleQuickAccessList = (listType) => {
@@ -805,6 +1020,10 @@ const AdminCRM = () => {
         setTagFilter('Todos');
         setCategoryFilter('Todos');
         setScoreMinFilter('');
+        setOrdersMinFilter('');
+        setOrdersMaxFilter('');
+        setOrderTimeStart('');
+        setOrderTimeEnd('');
         setInactivityDaysFilter('Todos');
         
         if (listType === 'prospectos') {
@@ -2120,6 +2339,40 @@ const AdminCRM = () => {
                                 />
                             </div>
                             <div className="filter-item">
+                                <label>Pedidos Mín.</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Ej: 3"
+                                    value={ordersMinFilter}
+                                    onChange={(e) => setOrdersMinFilter(e.target.value)}
+                                />
+                            </div>
+                            <div className="filter-item">
+                                <label>Pedidos Máx.</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Ej: 10"
+                                    value={ordersMaxFilter}
+                                    onChange={(e) => setOrdersMaxFilter(e.target.value)}
+                                />
+                            </div>
+                            <div className="filter-item">
+                                <label>Hora Pedido Desde</label>
+                                <input 
+                                    type="time" 
+                                    value={orderTimeStart}
+                                    onChange={(e) => setOrderTimeStart(e.target.value)}
+                                />
+                            </div>
+                            <div className="filter-item">
+                                <label>Hora Pedido Hasta</label>
+                                <input 
+                                    type="time" 
+                                    value={orderTimeEnd}
+                                    onChange={(e) => setOrderTimeEnd(e.target.value)}
+                                />
+                            </div>
+                            <div className="filter-item">
                                 <label>Inactividad</label>
                                 <select value={inactivityDaysFilter} onChange={(e) => setInactivityDaysFilter(e.target.value)}>
                                     <option value="Todos">Cualquier período</option>
@@ -2150,15 +2403,21 @@ const AdminCRM = () => {
                                     <button 
                                         className="btn-bulk-campaign"
                                         onClick={() => {
-                                            setCampaignForm(prev => ({
+                                            setShowSpecialCampaignForm(true);
+                                            setSpecialCampaignForm(prev => ({
                                                 ...prev,
-                                                nombre: `Campaña Especial - ${selectedUsers.size} seleccionados`,
-                                                filtros: { ...prev.filtros, tag: 'Todos' } // manual select overrides filters
+                                                nombre: `Campaña Especial - ${selectedUsers.size} seleccionados`
                                             }));
-                                            setActiveTab('campanas');
                                         }}
                                     >
                                         ✉️ Crear Campaña Especial
+                                    </button>
+                                    <button 
+                                        className="btn-bulk-campaign"
+                                        onClick={handleDivideCampaigns}
+                                        style={{ background: '#f59e0b', color: '#fff', border: 'none', marginLeft: '5px' }}
+                                    >
+                                        ➗ Dividir en Campañas
                                     </button>
                                     <button 
                                         className="btn-copy-phones"
@@ -2180,6 +2439,110 @@ const AdminCRM = () => {
                                         📋 Copiar Teléfonos
                                     </button>
                                 </div>
+                            </div>
+                        )}
+                        {/* Special Campaigns Form & List */}
+                        {showSpecialCampaignForm && (
+                            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #cbd5e1', marginTop: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                <h4 style={{marginTop:0, marginBottom:'10px'}}>Configurador de Campaña Especial Inline</h4>
+                                <div style={{display:'flex', gap:'10px', flexWrap:'wrap', marginBottom:'10px'}}>
+                                    <div style={{flex:1}}>
+                                        <label>Nombre de Campaña:</label>
+                                        <input type="text" className="form-control" value={specialCampaignForm.nombre} onChange={e => setSpecialCampaignForm({...specialCampaignForm, nombre: e.target.value})} />
+                                    </div>
+                                    <div style={{flex:1}}>
+                                        <label>Horario de Disparador:</label>
+                                        <input type="datetime-local" className="form-control" value={specialCampaignForm.trigger_time} onChange={e => setSpecialCampaignForm({...specialCampaignForm, trigger_time: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div style={{marginBottom:'10px'}}>
+                                    <label>Prioridad de Envío (Cascada):</label>
+                                    <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                                        {[0, 1, 2].map(idx => (
+                                            <div key={idx} style={{display:'flex', alignItems:'center', gap:'5px'}}>
+                                                <span>{idx + 1}°</span>
+                                                <select 
+                                                    className="form-control" 
+                                                    style={{width: 'auto'}}
+                                                    value={specialCampaignForm.canales[idx] || 'none'}
+                                                    onChange={e => {
+                                                        const newCanales = [...specialCampaignForm.canales];
+                                                        newCanales[idx] = e.target.value;
+                                                        setSpecialCampaignForm({...specialCampaignForm, canales: newCanales});
+                                                    }}
+                                                >
+                                                    <option value="none">Ninguno</option>
+                                                    <option value="whatsapp">WhatsApp</option>
+                                                    <option value="push">Push</option>
+                                                    <option value="email">Email</option>
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div style={{display:'flex', gap:'15px', flexWrap:'wrap', background:'#fff', padding:'10px', borderRadius:'8px', border:'1px solid #e2e8f0', marginBottom:'10px'}}>
+                                    <div style={{flex:1, minWidth:'250px'}}>
+                                        <label style={{fontWeight:'bold'}}>🟢 WhatsApp</label>
+                                        <div>
+                                            <input type="checkbox" checked={specialCampaignForm.configs.whatsapp.enabled} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, whatsapp: {...specialCampaignForm.configs.whatsapp, enabled: e.target.checked}}})} /> Habilitar WhatsApp
+                                        </div>
+                                        {specialCampaignForm.configs.whatsapp.enabled && (
+                                            <input type="text" className="form-control" placeholder="Nombre Template (ej: sin_repartidores)" value={specialCampaignForm.configs.whatsapp.template_name} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, whatsapp: {...specialCampaignForm.configs.whatsapp, template_name: e.target.value}}})} />
+                                        )}
+                                    </div>
+                                    <div style={{flex:1, minWidth:'250px'}}>
+                                        <label style={{fontWeight:'bold'}}>🔴 Push Notification</label>
+                                        <div>
+                                            <input type="checkbox" checked={specialCampaignForm.configs.push.enabled} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, push: {...specialCampaignForm.configs.push, enabled: e.target.checked}}})} /> Habilitar Push
+                                        </div>
+                                        {specialCampaignForm.configs.push.enabled && (
+                                            <>
+                                                <input type="text" className="form-control" placeholder="Título" value={specialCampaignForm.configs.push.title} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, push: {...specialCampaignForm.configs.push, title: e.target.value}}})} style={{marginBottom:'5px'}} />
+                                                <textarea className="form-control" placeholder="Mensaje" value={specialCampaignForm.configs.push.body} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, push: {...specialCampaignForm.configs.push, body: e.target.value}}})} style={{marginBottom:'5px'}} />
+                                                <input type="text" className="form-control" placeholder="URL Destino (ej: /pedir)" value={specialCampaignForm.configs.push.url} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, push: {...specialCampaignForm.configs.push, url: e.target.value}}})} />
+                                            </>
+                                        )}
+                                    </div>
+                                    <div style={{flex:1, minWidth:'250px'}}>
+                                        <label style={{fontWeight:'bold'}}>📧 Email</label>
+                                        <div>
+                                            <input type="checkbox" checked={specialCampaignForm.configs.email.enabled} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, email: {...specialCampaignForm.configs.email, enabled: e.target.checked}}})} /> Habilitar Email
+                                        </div>
+                                        {specialCampaignForm.configs.email.enabled && (
+                                            <>
+                                                <input type="text" className="form-control" placeholder="Asunto" value={specialCampaignForm.configs.email.subject} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, email: {...specialCampaignForm.configs.email, subject: e.target.value}}})} style={{marginBottom:'5px'}} />
+                                                <textarea className="form-control" placeholder="Cuerpo HTML/Texto" value={specialCampaignForm.configs.email.body} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, email: {...specialCampaignForm.configs.email, body: e.target.value}}})} />
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                                <div style={{display:'flex', gap:'10px'}}>
+                                    <button className="btn btn-primary" onClick={handleSaveSpecialCampaign} disabled={savingSpecialCampaign}>{savingSpecialCampaign ? 'Guardando...' : 'Guardar y Programar'}</button>
+                                    <button className="btn btn-secondary" onClick={() => setShowSpecialCampaignForm(false)}>Cancelar</button>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {specialCampaigns.length > 0 && (
+                            <div style={{ marginTop: '16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px' }}>
+                                <h5 style={{marginTop:0}}>Campaña Especiales Pendientes/Ejecutadas</h5>
+                                <table className="crm-table" style={{marginTop:'10px', width: '100%'}}>
+                                    <thead><tr><th>Nombre</th><th>Usuarios</th><th>Horario</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                    <tbody>
+                                        {specialCampaigns.map(c => (
+                                            <tr key={c.id}>
+                                                <td>{c.nombre}</td>
+                                                <td>{c.target_user_ids?.length || 0} users</td>
+                                                <td>{new Date(c.trigger_time).toLocaleString()}</td>
+                                                <td>{c.executed ? <span style={{color:'green', fontWeight:'bold'}}>Ejecutada</span> : <span style={{color:'orange', fontWeight:'bold'}}>Pendiente</span>}</td>
+                                                <td>
+                                                    <button className="btn-icon" onClick={() => handleEditSpecialCampaign(c)} title="Editar">✏️</button>
+                                                    <button className="btn-icon" onClick={() => handleDeleteSpecialCampaign(c.id)} title="Eliminar">🗑️</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </div>
@@ -2217,6 +2580,8 @@ const AdminCRM = () => {
                                                 <input 
                                                     type="checkbox"
                                                     checked={selectedUsers.has(user.id)}
+                                                    disabled={pendingCampaignsUserIds.has(user.id)}
+                                                    title={pendingCampaignsUserIds.has(user.id) ? 'Usuario bloqueado: Ya está en una campaña especial pendiente' : ''}
                                                     onChange={() => handleSelectUser(user.id)}
                                                 />
                                             </td>
@@ -2233,7 +2598,7 @@ const AdminCRM = () => {
                                             <td><strong>{user.cantidad_pedidos || 0}</strong></td>
                                             <td>{formatCurrency(user.total_gastado)}</td>
                                             <td>{formatCurrency(user.ticket_promedio)}</td>
-                                            <td>{formatDateStr(user.fecha_ultimo_pedido)}</td>
+                                            <td>{user.fecha_ultimo_pedido ? `${formatDateStr(user.fecha_ultimo_pedido)} ${new Date(user.fecha_ultimo_pedido).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '-'}</td>
                                             <td><span className="badge-category">{user.categoria_favorita || '-'}</span></td>
                                             <td>
                                                 <span className={`badge-crm state-${(user.estado_crm || 'REGISTRADO').toLowerCase()}`}>

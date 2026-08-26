@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { supabase } from '../services/supabase';
 import * as api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -16,9 +17,10 @@ const AdminPedidos = () => {
     
     // Modal state
     const [selectedPedido, setSelectedPedido] = useState(null);
-    const [modalLoading, setModalLoading] = useState(false);
     const [pedidoDetalle, setPedidoDetalle] = useState(null);
+    const [modalLoading, setModalLoading] = useState(false);
     const [forceMode, setForceMode] = useState(false);
+    const [userCrmHistory, setUserCrmHistory] = useState([]);
     const [allRepartidores, setAllRepartidores] = useState([]);
 
     const loadRepartidores = async () => {
@@ -57,9 +59,14 @@ const AdminPedidos = () => {
     const handleOpenDetail = async (id) => {
         setModalLoading(true);
         setSelectedPedido(id);
+        setUserCrmHistory([]);
         try {
             const detalle = await api.adminGetPedidoDetalle(id);
             setPedidoDetalle(detalle);
+            if (detalle?.user_id) {
+                const { data } = await supabase.from('crm_history').select('*').eq('usuario_id', detalle.user_id).order('created_at', { ascending: false }).limit(3);
+                setUserCrmHistory(data || []);
+            }
         } catch (err) {
             toast.error('Error al cargar detalle del pedido');
             setSelectedPedido(null);
@@ -71,6 +78,7 @@ const AdminPedidos = () => {
     const handleCloseModal = () => {
         setSelectedPedido(null);
         setPedidoDetalle(null);
+        setUserCrmHistory([]);
         setForceMode(false);
     };
 
@@ -452,9 +460,24 @@ const AdminPedidos = () => {
                                                 )}
                                             </div>
                                         )}
-
                                     </section>
                                 </div>
+                                
+                                {userCrmHistory.length > 0 && (
+                                    <div className="crm-history-box" style={{ marginTop: '16px', padding: '12px', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a', fontSize: '0.9rem' }}>
+                                        <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>📢 Campañas Recientes a este usuario:</p>
+                                        <ul style={{ paddingLeft: '20px', margin: 0, color: '#b45309' }}>
+                                            {userCrmHistory.map(hist => (
+                                                <li key={hist.id} style={{ marginBottom: '4px' }}>
+                                                    <strong>{hist.detalle || hist.tipo}</strong> — 
+                                                    <span style={{ fontSize: '0.8rem', marginLeft: '6px' }}>
+                                                        {new Date(hist.created_at).toLocaleString()}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
 
                                 <section className="detail-section items-section">
                                     <h4>📦 Detalle por Local</h4>

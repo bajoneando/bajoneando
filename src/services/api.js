@@ -8179,3 +8179,43 @@ export async function saveSurveyResponse(response) {
   }
 }
 
+export async function adminGetCRMSpecialCampaigns() {
+  const { data, error } = await supabase
+    .from('crm_special_campaigns')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error && error.code === '42P01') {
+      return [];
+  }
+  if (error) throw error;
+  return data || [];
+}
+
+export async function adminSaveCRMSpecialCampaign(campaign) {
+  const { data, error } = await supabase
+    .from('crm_special_campaigns')
+    .upsert(campaign)
+    .select();
+  if (error) throw error;
+  return data ? data[0] : null;
+}
+
+export async function adminDeleteCRMSpecialCampaign(id) {
+  const { error } = await supabase
+    .from('crm_special_campaigns')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+  return { success: true };
+}
+
+export async function sendCRMActionEmail(email, subject, htmlContent) {
+  return supabase.functions.invoke('send-email', {
+    body: {
+      to: email,
+      subject: subject,
+      html: htmlContent
+    }
+  });
+}
+
