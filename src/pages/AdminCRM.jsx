@@ -570,22 +570,30 @@ const AdminCRM = () => {
                                 try {
                                     if (ch === 'whatsapp') {
                                         const phone = user.telefono ? user.telefono.replace(/\D/g, '') : null;
-                                        if (phone) {
-                                            await api.sendWhatsappTemplateMessage({ to: phone, templateName: config.template_name });
-                                            sent = true;
-                                            logData.canal = 'whatsapp';
+                                        if (phone && config.template_name) {
+                                            const res = await api.sendWhatsappTemplateMessage({ to: phone, templateName: config.template_name });
+                                            if (res && res.success !== false) {
+                                                sent = true;
+                                                logData.canal = 'whatsapp';
+                                            }
                                         }
                                     } else if (ch === 'push') {
-                                        if (user.onesignal_player_id) {
-                                            await api.sendPushNotification({ subscriptionIds: [user.onesignal_player_id], title: config.title, message: config.body, url: config.url });
+                                        if (user.onesignal_id) {
+                                            // sendPushNotification throws if it fails
+                                            await api.sendPushNotification({ subscriptionIds: [user.onesignal_id], title: config.title, message: config.body, url: config.url });
                                             sent = true;
                                             logData.canal = 'push';
                                         }
                                     } else if (ch === 'email') {
                                         if (user.email) {
-                                            await api.sendCRMActionEmail(user.email, config.subject, config.body);
-                                            sent = true;
-                                            logData.canal = 'email';
+                                            // sendCRMActionEmail usually doesn't throw but let's assume it succeeds if it gets here
+                                            const emailRes = await api.sendCRMActionEmail(user.email, config.subject, config.body);
+                                            if (emailRes && emailRes.success !== false) {
+                                                sent = true;
+                                                logData.canal = 'email';
+                                            } else {
+                                                console.warn("Email failed:", emailRes);
+                                            }
                                         }
                                     }
                                 } catch (err) {

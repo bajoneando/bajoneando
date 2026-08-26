@@ -8026,6 +8026,12 @@ export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repa
       console.warn("whatsapp-webhook invoke error:", error);
       return { success: false, error: error.message };
     }
+    
+    if (data && data.metaResponse && data.metaResponse.error) {
+      console.warn("Meta API returned an error:", data.metaResponse.error);
+      return { success: false, error: data.metaResponse.error.message };
+    }
+
     return data || { success: true };
   } catch (err) {
     console.error("Error enviando plantilla WhatsApp Meta:", err);
@@ -8210,12 +8216,43 @@ export async function adminDeleteCRMSpecialCampaign(id) {
 }
 
 export async function sendCRMActionEmail(email, subject, htmlContent) {
-  return supabase.functions.invoke('send-email', {
+  const currentYear = new Date().getFullYear();
+  const formattedHtml = `
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
+          <div style="text-align: center; margin-bottom: 30px;">
+              <img src="https://i.postimg.cc/wjN5JF7h/wepi-(1).png" alt="Wepi" style="width: 120px; height: auto;">
+          </div>
+          <div style="background-color: #d32f2f; padding: 2px; border-radius: 4px; margin-bottom: 30px;"></div>
+          <h1 style="color: #1e293b; font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 20px;">${subject}</h1>
+          <div style="font-size: 16px; color: #475569; line-height: 1.8; margin-bottom: 40px; white-space: pre-wrap;">
+${htmlContent}
+          </div>
+          <div style="background-color: #f8fafc; padding: 30px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <h3 style="color: #d32f2f; margin-bottom: 10px; font-size: 18px;">WEPI — Plataforma de pedidos y delivery</h3>
+          </div>
+          <div style="text-align: center; margin-top: 40px; color: #94a3b8; font-size: 12px;">
+              <p>© ${currentYear} WEPI. Todos los derechos reservados.</p>
+              <p>Este es un mensaje institucional enviado desde la plataforma oficial de Wepi.</p>
+          </div>
+      </div>
+  `;
+
+  const { data, error } = await supabase.functions.invoke('send-email', {
     body: {
       to: email,
       subject: subject,
-      html: htmlContent
+      htmlBody: formattedHtml
     }
   });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  
+  if (data && data.error) {
+    return { success: false, error: data.error };
+  }
+
+  return { success: true, data };
 }
 
