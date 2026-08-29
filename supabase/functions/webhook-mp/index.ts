@@ -86,7 +86,8 @@ Deno.serve(async (req) => {
           p_cart: tempOrder.cart_data,
           p_precio_envio: tempOrder.order_info.precioEnvio || 0,
           p_id: externalReference,
-          p_external_reference: externalReference
+          p_external_reference: externalReference,
+          p_fee_envio: tempOrder.order_info.feeEnvio || 0
         })
 
         if (rpcError) {

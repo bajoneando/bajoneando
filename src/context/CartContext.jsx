@@ -11,6 +11,8 @@ export function CartProvider({ children }) {
   const [costoEnvioShops, setCostoEnvioShops] = useState(2000); 
   const [incentivoActivo, setIncentivoActivo] = useState(0);
   const [customShippingCost, setCustomShippingCost] = useState(null);
+  const [feeEnvio, setFeeEnvio] = useState(250);
+  const [feeEnvioActivo, setFeeEnvioActivo] = useState(true);
 
   useEffect(() => {
     const fetchCosto = async () => {
@@ -28,6 +30,8 @@ export function CartProvider({ children }) {
         setCostoEnvioDelivery(baseDelivery + incentivo);
         setCostoEnvioShops(baseShops);
         setIncentivoActivo(incentivo);
+        setFeeEnvio(Number(config?.fee_envio ?? 250));
+        setFeeEnvioActivo(config?.fee_envio_activo ?? true);
       } catch (err) {
         console.error('Error fetching dynamic shipping cost:', err);
         setCostoEnvioDelivery(1800);
@@ -167,7 +171,8 @@ export function CartProvider({ children }) {
       subtotal, shippingCost, total, totalItems, hasDrink,
       COSTO_ENVIO: costoEnvio,
       incentivoActivo,
-      customShippingCost, setCustomShippingCost
+      customShippingCost, setCustomShippingCost,
+      feeEnvio, feeEnvioActivo
     }}>
       {children}
     </CartContext.Provider>

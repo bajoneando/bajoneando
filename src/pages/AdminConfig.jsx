@@ -55,6 +55,8 @@ const AdminConfig = () => {
             await api.updateConfiguracion({ 
                 valor_envio: Number(config.valor_envio),
                 valor_envio_shops: Number(config.valor_envio_shops),
+                fee_envio: Number(config.fee_envio !== undefined ? config.fee_envio : 250),
+                fee_envio_activo: config.fee_envio_activo !== undefined ? config.fee_envio_activo : true,
                 mantenimiento_pedir: config.mantenimiento_pedir,
                 mantenimiento_locales: config.mantenimiento_locales,
                 mantenimiento_repartidores: config.mantenimiento_repartidores,
@@ -147,6 +149,44 @@ const AdminConfig = () => {
                         />
                         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginBottom: 0 }}>
                             Este valor se aplicará a todos los pedidos con envío en la plataforma de Shops.
+                        </p>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+                    <div className="form-group" style={{ flex: '1', minWidth: '280px', maxWidth: '400px', marginBottom: 0 }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                            Fee de Envío (Mercado Pago) ($)
+                        </label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <input
+                                type="number"
+                                value={config.fee_envio !== undefined ? config.fee_envio : 250}
+                                onChange={(e) => setConfig({ ...config, fee_envio: e.target.value })}
+                                className="admin-input"
+                                style={{
+                                    flex: 1,
+                                    padding: '0.75rem',
+                                    background: 'rgba(0,0,0,0.2)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '0.5rem',
+                                    color: 'white',
+                                    fontSize: '1rem'
+                                }}
+                                required
+                            />
+                            <label className="toggle" style={{ transform: 'scale(0.8)', margin: 0 }}>
+                                <input
+                                    type="checkbox"
+                                    checked={config.fee_envio_activo !== undefined ? config.fee_envio_activo : true}
+                                    onChange={(e) => setConfig({ ...config, fee_envio_activo: e.target.checked })}
+                                />
+                                <span className="toggle-track" />
+                                <span className="toggle-thumb" />
+                            </label>
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginBottom: 0 }}>
+                            Este fee se sumará al valor del envío pagado por el cliente cuando use Mercado Pago, y quedará para Wepi. El switch lo activa o desactiva.
                         </p>
                     </div>
                 </div>

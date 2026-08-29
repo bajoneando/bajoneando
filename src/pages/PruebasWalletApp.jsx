@@ -873,7 +873,7 @@ export default function PruebasWalletApp() {
   }, [allPromotions, calculateDiscountedPrice, selectedLocal, user, userPromoUsage]);
 
 
-  const calculateCheckoutTotals = React.useCallback((P, E, method) => {
+  const calculateCheckoutTotals = React.useCallback((P, E, method, appliedFeeEnvio = 0) => {
     // 1. Evaluar Promociones Unificadas
     const localId = cart.items.length > 0 ? cart.items[0].local_id : null;
     
@@ -941,17 +941,20 @@ export default function PruebasWalletApp() {
     const descuentoCupon = cuponPromo ? ((promoResults.discountTotal || 0) + (promoResults.shippingDiscount || 0)) : 0;
     
     let result;
-    if (method === 'transferencia') {
-      const marketplace_fee = isShopsMode ? discountedE : (discountedE + net_commission);
+    // Apply fee by default (no selection or Mercado Pago). Remove only if explicitly 'efectivo'.
+    if (method !== 'efectivo') {
+      const total_con_fee = total_net + appliedFeeEnvio;
+      const marketplace_fee = isShopsMode ? (discountedE + appliedFeeEnvio) : (discountedE + net_commission + appliedFeeEnvio);
       result = {
-        total: Math.round(total_net),
+        total: Math.round(total_con_fee),
         product_total: P,
         discounted_product_total: discountedP,
         delivery_fee: E,
+        fee_envio: appliedFeeEnvio,
         discounted_delivery_fee: discountedE,
         commission: Math.round(net_commission),
         mp_fee: 0,
-        merchant_payout: Math.round(total_net - marketplace_fee),
+        merchant_payout: Math.round(total_con_fee - marketplace_fee),
         platform_gross: Math.round(marketplace_fee),
         platform_net: Math.round(marketplace_fee),
         appliedPromos: promoResults.appliedPromos,
@@ -959,12 +962,13 @@ export default function PruebasWalletApp() {
         descuentoCupon
       };
     } else {
-      // Default (Efectivo)
+      // (Efectivo)
       result = {
         total: Math.round(discountedP + discountedE),
         product_total: P,
         discounted_product_total: discountedP,
         delivery_fee: E,
+        fee_envio: 0,
         discounted_delivery_fee: discountedE,
         commission: Math.round(net_commission),
         mp_fee: 0,
@@ -1979,16 +1983,20 @@ export default function PruebasWalletApp() {
     setAuthLoading(false);
   };
 
+  const safeFeeEnvio = cart.feeEnvio !== undefined ? Number(cart.feeEnvio) : 250;
+  const safeFeeActivo = cart.feeEnvioActivo !== false;
+  const actualFeeEnvio = (safeFeeActivo && cart.deliveryType === 'envio') ? safeFeeEnvio : 0;
+
   const checkoutTotals = React.useMemo(() => {
-    return calculateCheckoutTotals(cart.subtotal, cart.shippingCost, metodoPago);
-  }, [calculateCheckoutTotals, cart.subtotal, cart.shippingCost, metodoPago]);
+    return calculateCheckoutTotals(cart.subtotal, cart.shippingCost, metodoPago, actualFeeEnvio);
+  }, [calculateCheckoutTotals, cart.subtotal, cart.shippingCost, metodoPago, actualFeeEnvio]);
 
   const totalConComision = checkoutTotals.total;
   const visibleMpFee = checkoutTotals.mp_fee;
   
   const potentialCredit = checkoutTotals.potentialCredit || 0;
   const walletDiscountUI = checkoutTotals.walletDiscount || 0;
-  const visibleShipping = cart.deliveryType === 'envio' ? cart.shippingCost : 0;
+  const visibleShipping = cart.deliveryType === 'envio' ? (cart.shippingCost + (checkoutTotals.fee_envio || 0)) : 0;
 
 
 
@@ -2343,7 +2351,7 @@ export default function PruebasWalletApp() {
       const calcSubtotal = cart.items.reduce((sum, i) => sum + (Number(i.precio) * i.qty), 0);
       const shipping = cart.deliveryType === 'envio' ? cart.COSTO_ENVIO : 0;
       
-      const finalTotals = calculateCheckoutTotals(calcSubtotal, shipping, mp);
+      const finalTotals = calculateCheckoutTotals(calcSubtotal, shipping, mp, actualFeeEnvio);
       const exactTotal = finalTotals.total;
 
       const orderItems = cart.items.map(i => ({
@@ -2399,7 +2407,8 @@ export default function PruebasWalletApp() {
         promociones_aplicadas: finalTotals.appliedPromos?.map(p => p.id) || [],
         ganancia_credito: finalTotals.potentialCredit || 0,
         cuponId: finalTotals.appliedCuponId || null,
-        descuentoCupon: finalTotals.descuentoCupon || 0
+        descuentoCupon: finalTotals.descuentoCupon || 0,
+        feeEnvio: finalTotals.fee_envio || 0
       };
 
       if (cart.deliveryType === 'envio' || mp === 'efectivo' || mp === 'transferencia') {

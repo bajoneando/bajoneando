@@ -1329,7 +1329,7 @@ export async function validateOrderAvailability(localIds, itemIds) {
 // ═══════════════════════════════════════════════════
 // PEDIDOS
 // ═══════════════════════════════════════════════════
-export async function crearPedido({ userId, pedidoId, direccion, metodoPago, observaciones, tipoEntrega, items, emailCliente, nombreCliente, estadoInicial, totalCalculado, lat, lng, precioEnvio, cuponId = null, descuentoCupon = 0, creditoWallet = 0, promociones_aplicadas = [], ganancia_credito = 0, origen_pedido = 'enlace_local' }) {
+export async function crearPedido({ userId, pedidoId, direccion, metodoPago, observaciones, tipoEntrega, items, emailCliente, nombreCliente, estadoInicial, totalCalculado, lat, lng, precioEnvio, cuponId = null, descuentoCupon = 0, creditoWallet = 0, promociones_aplicadas = [], ganancia_credito = 0, origen_pedido = 'enlace_local', feeEnvio = 0 }) {
   const total = totalCalculado !== undefined ? totalCalculado : items.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
   const estado = estadoInicial || 'Pendiente';
 
@@ -1370,7 +1370,8 @@ export async function crearPedido({ userId, pedidoId, direccion, metodoPago, obs
     p_cupon_id: cuponId,
     p_descuento_cupon: descuentoCupon,
     p_promociones_aplicadas: promociones_aplicadas,
-    p_ganancia_credito: ganancia_credito
+    p_ganancia_credito: ganancia_credito,
+    p_fee_envio: feeEnvio
   });
 
   if (error) {
@@ -4910,13 +4911,15 @@ export async function getConfiguracion() {
   
   if (error) {
     console.error('Error fetching configuration:', error);
-    return { valor_envio: 2000, valor_envio_shops: 2000 }; // Default fallback
+    return { valor_envio: 2000, valor_envio_shops: 2000, fee_envio: 250, fee_envio_activo: true }; // Default fallback
   }
   
   return data ? {
     ...data,
-    valor_envio_shops: data.valor_envio_shops !== undefined && data.valor_envio_shops !== null ? data.valor_envio_shops : 2000
-  } : { valor_envio: 2000, valor_envio_shops: 2000 };
+    valor_envio_shops: data.valor_envio_shops !== undefined && data.valor_envio_shops !== null ? data.valor_envio_shops : 2000,
+    fee_envio: data.fee_envio !== undefined && data.fee_envio !== null ? data.fee_envio : 250,
+    fee_envio_activo: data.fee_envio_activo !== undefined && data.fee_envio_activo !== null ? data.fee_envio_activo : true
+  } : { valor_envio: 2000, valor_envio_shops: 2000, fee_envio: 250, fee_envio_activo: true };
 }
 
 export async function updateConfiguracion(updates) {

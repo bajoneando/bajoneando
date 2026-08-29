@@ -539,31 +539,36 @@ export default function CustomerApp() {
   // --- Business Logic for Totals ---
   const MP_FEE_RATE = 0.0824;
 
-  const calculateCheckoutTotals = (P, E, method) => {
+  const calculateCheckoutTotals = (P, E, method, appliedFeeEnvio = 0) => {
+    console.log("CALCULATING TOTALS:", { P, E, method, appliedFeeEnvio });
     const net_commission = P * localCommission;
     const net_local = P - net_commission;
     const total_net = P + E;
 
-    if (method === 'transferencia') {
-      const marketplace_fee = E + net_commission;
+    // Apply fee by default (no selection or Mercado Pago). Remove only if explicitly 'efectivo'.
+    if (method !== 'efectivo') {
+      const total_con_fee = total_net + appliedFeeEnvio;
+      const marketplace_fee = E + net_commission + appliedFeeEnvio;
 
       return {
-        total: Math.round(total_net),
+        total: Math.round(total_con_fee),
         product_total: P,
         delivery_fee: E,
+        fee_envio: appliedFeeEnvio,
         commission: Math.round(net_commission),
         mp_fee: 0,
-        merchant_payout: Math.round(total_net - marketplace_fee),
+        merchant_payout: Math.round(total_con_fee - marketplace_fee),
         platform_gross: Math.round(marketplace_fee),
-        platform_net: Math.round(E + net_commission)
+        platform_net: Math.round(E + net_commission + appliedFeeEnvio)
       };
     }
 
-    // Default (Efectivo)
+    // (Efectivo)
     return {
-      total: Math.round(P + E),
+      total: Math.round(total_net),
       product_total: P,
       delivery_fee: E,
+      fee_envio: 0,
       commission: Math.round(net_commission),
       mp_fee: 0,
       merchant_payout: Math.round(net_local),
@@ -572,7 +577,12 @@ export default function CustomerApp() {
     };
   };
 
-  const checkoutTotals = calculateCheckoutTotals(cart.subtotal, cart.shippingCost, metodoPago);
+  const safeFeeEnvio = cart.feeEnvio !== undefined ? Number(cart.feeEnvio) : 250;
+  const safeFeeActivo = cart.feeEnvioActivo !== false; // defaults to true
+  const actualFeeEnvio = (safeFeeActivo && cart.deliveryType === 'envio') ? safeFeeEnvio : 0;
+  console.log("Cart values for fee:", { activo: cart.feeEnvioActivo, val: cart.feeEnvio, delType: cart.deliveryType, safeFeeEnvio, safeFeeActivo, actualFeeEnvio });
+  
+  const checkoutTotals = calculateCheckoutTotals(cart.subtotal, cart.shippingCost, metodoPago, actualFeeEnvio);
   const totalConComision = checkoutTotals.total;
   const mpFeeUI = checkoutTotals.mp_fee;
 
@@ -610,7 +620,7 @@ export default function CustomerApp() {
 
   // When shipping is $2,000, we show it as $1,700 and add the $300 to the fee label.
   const showSurchargeDisguise = false;
-  const visibleShipping = showSurchargeDisguise ? 1500 : cart.shippingCost;
+  const visibleShipping = showSurchargeDisguise ? 1500 : (cart.shippingCost + (checkoutTotals.fee_envio || 0));
   const visibleMpFee = showSurchargeDisguise ? (mpFeeUI + 300) : mpFeeUI;
 
   const handleAddToCart = async (menu) => {
@@ -874,7 +884,8 @@ export default function CustomerApp() {
           totalCalculado: exactTotal,
           lat: addressData.lat,
           lng: addressData.lng,
-          precioEnvio: shipping
+          precioEnvio: shipping,
+          feeEnvio: finalTotals.fee_envio
         });
 
         toast.success(`¡Pedido #${response.pedidoId} registrado exitosamente!`);
@@ -937,7 +948,8 @@ export default function CustomerApp() {
           totalCalculado: exactTotal,
           lat: addressData.lat,
           lng: addressData.lng,
-          precioEnvio: shipping
+          precioEnvio: shipping,
+          feeEnvio: finalTotals.fee_envio
         };
 
         await api.crearPedidoTemporal({
