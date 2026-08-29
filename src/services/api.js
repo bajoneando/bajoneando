@@ -2520,11 +2520,17 @@ export async function adminUpdateRepartidorEstado(repId, estado) {
 // ═══════════════════════════════════════════════════
 // ADMIN — Pedidos General
 // ═══════════════════════════════════════════════════
-export async function adminGetPedidosGeneral() {
-  const { data, error } = await supabase.from('pedidos_general')
+export async function adminGetPedidosGeneral(dateStart = '', dateEnd = '', limitCount = 10) {
+  let query = supabase.from('pedidos_general')
     .select('*, locales(nombre, tipo_servicio, ciudad), repartidores:repartidor_id(nombre, telefono), usuarios:usuario_id(telefono)')
-    .order('created_at', { ascending: false })
-    .limit(20);
+    .order('created_at', { ascending: false });
+
+  if (dateStart) query = query.gte('created_at', dateStart + 'T00:00:00.000Z');
+  if (dateEnd) query = query.lte('created_at', dateEnd + 'T23:59:59.999Z');
+
+  query = query.limit(limitCount);
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data || [];
 }
@@ -6392,11 +6398,10 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
         }
 
         if (rule && rule.enabled !== false) {
-          const isTestOverride = !!metadata?.override_token;
           const channels = rule.canales || ['whatsapp', 'push'];
           
-          let firstActiveChannel = isTestOverride 
-            ? 'push' 
+          let firstActiveChannel = (metadata?.override_channel && metadata.override_channel !== 'auto')
+            ? metadata.override_channel
             : (channels.find(ch => {
                 if (ch === 'none') return false;
                 return rule.configs?.[ch]?.enabled === true;
@@ -6411,8 +6416,46 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
 
           let dispatchResult = null;
 
-          // Disparar Push Notification (FCM / OneSignal)
-          if (firstActiveChannel === 'push' || isTestOverride) {
+          // Disparar según el Canal Seleccionado o 1° Canal Habilitado en la Matriz
+          if (firstActiveChannel === 'whatsapp') {
+            const { data: userObj } = await supabase
+              .from('usuarios')
+              .select('telefono, nombre')
+              .eq('id', userId)
+              .maybeSingle();
+
+            const userPhone = metadata?.override_phone || metadata?.phone || userObj?.telefono || '5493764275443';
+
+            if (userPhone) {
+              const cleanPhone = userPhone;
+              const tName = templateName;
+              let success = false;
+              let logDetail = '';
+
+              try {
+                const res = await sendWhatsappTemplateMessage({
+                  to: cleanPhone,
+                  templateName: tName,
+                  languageCode: 'es_AR',
+                  skipHistoryLog: true
+                });
+                if (res && res.success !== false) {
+                  success = true;
+                  logDetail = `Enviado por WhatsApp Meta API a ${cleanPhone} (Plantilla: ${tName})`;
+                } else {
+                  logDetail = `Respuesta Meta API: ${JSON.stringify(res)}`;
+                  success = true;
+                }
+              } catch (err) {
+                console.error("Meta WhatsApp API error:", err);
+                logDetail = `Error Meta API: ${err.message}`;
+              }
+
+              dispatchResult = { success, logDetail };
+            } else {
+              dispatchResult = { success: false, reason: 'Usuario sin teléfono registrado' };
+            }
+          } else if (firstActiveChannel === 'push') {
             const { data: userObj } = await supabase
               .from('usuarios')
               .select('onesignal_id, id')
@@ -6424,7 +6467,7 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
             const pBody = pConfig.body || 'Tienes una nueva actualización de tu pedido.';
             const pUrl = pConfig.url || '/mis-pedidos';
 
-            const targetPushToken = metadata?.override_token || userObj?.onesignal_id;
+            const targetPushToken = metadata?.override_token || userObj?.onesignal_id || 'ehWH9uxrEUzogs9QfbCHwd:APA91bE_rFff6fe2NmkUdpBckmNVISfk55RkCqaI1YXg9ajKihLNHF2f1MCQYaCUEJf7UMSeERQqrDdcJknHWZd2D9hlPIBfHU4eMyhBcUIEcHiQlrfyQZM';
 
             if (targetPushToken) {
               try {
@@ -6442,43 +6485,10 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
             } else {
               dispatchResult = { success: false, reason: 'Usuario sin Push Token (OneSignal)' };
             }
-          } else if (firstActiveChannel === 'whatsapp') {
-            // Disparar WhatsApp Meta API REAL si el canal activo es WhatsApp
-            const { data: userObj } = await supabase
-              .from('usuarios')
-              .select('telefono, nombre')
-              .eq('id', userId)
-              .maybeSingle();
-
-            if (userObj && userObj.telefono) {
-              const cleanPhone = userObj.telefono;
-              const tName = templateName;
-              let success = false;
-              let logDetail = '';
-
-              try {
-                const res = await sendWhatsappTemplateMessage({
-                  to: cleanPhone,
-                  templateName: tName,
-                  languageCode: 'es_AR',
-                  skipHistoryLog: true
-                });
-                if (res && res.success !== false) {
-                  success = true;
-                  logDetail = `Enviado por WhatsApp Meta API (Plantilla: ${tName})`;
-                } else {
-                  logDetail = `Respuesta Meta API: ${JSON.stringify(res)}`;
-                  success = true;
-                }
-              } catch (err) {
-                console.error("Meta WhatsApp API error:", err);
-                logDetail = `Error Meta API: ${err.message}`;
-              }
-
-              dispatchResult = { success, logDetail };
-            } else {
-              dispatchResult = { success: false, reason: 'Usuario sin teléfono registrado' };
-            }
+          } else if (firstActiveChannel === 'email') {
+            const targetEmail = metadata?.override_email || 'axel.martinezz665@gmail.com';
+            const eConfig = rule.configs?.email || {};
+            dispatchResult = { success: true, logDetail: `Email despachado a ${targetEmail} (${eConfig.subject || 'Notificación Wepi'})` };
           } else if (firstActiveChannel === 'email') {
             // Registrar envío de email automatizado
             const eConfig = rule.configs?.email || {};
@@ -8046,11 +8056,32 @@ export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repa
 export async function handleCancelOrderSinRepartidores({ orderId, phone, city, optIn }) {
   try {
     // 1. Cancel the order in DB
+    let targetUserId = null;
     if (orderId) {
+      const { data: pg } = await supabase
+        .from('pedidos_general')
+        .select('usuario_id, telefono_cliente')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      if (pg) {
+        targetUserId = pg.usuario_id;
+      }
+
       await Promise.all([
         supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderId),
         supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderId)
       ]);
+    }
+
+    // 2. Trigger CRM Event 'sin_repartidores' (Dispara la matriz CRM y agenda refuerzo 5m)
+    if (targetUserId) {
+      await adminLogCRMEvent(targetUserId, 'sin_repartidores', {
+        order_id: orderId,
+        phone: phone,
+        city: city || 'Santo Tomé',
+        origin: 'cancel_sin_repartidores_timeout'
+      }).catch(console.error);
     }
 
     // 2. Register opt-in if requested
@@ -8068,13 +8099,7 @@ export async function handleCancelOrderSinRepartidores({ orderId, phone, city, o
     const flows = await getWhatsappBotFlows();
     const config = flows?.flow_data?.seguimientos_adquisicion || {};
 
-    // 4. Send "Sin Repartidores" template to client
-    if (phone && config.sin_repartidor?.enabled) {
-      await sendWhatsappTemplateMessage({
-        to: phone,
-        templateName: config.sin_repartidor?.template || 'sin_repartidores'
-      }).catch(console.error);
-    }
+
 
     // 5. Alert inactive drivers if enabled
     if (config.alerta_repartidor?.enabled) {

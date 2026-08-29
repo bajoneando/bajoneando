@@ -15,7 +15,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'adquisicion_bienvenida' },
+            whatsapp: { enabled: true, template_name: 'adquisicion_1' },
             push: { enabled: true, title: '¡Bienvenido a Wepi!', body: 'Descubre los mejores locales cerca tuyo.', url: '/pedir' },
             email: { enabled: true, subject: '¡Bienvenido a Wepi! 🍔', body: 'Hola [Nombre], gracias por registrarte...', url: 'https://wepi.com.ar/pedir', logo_url: '' }
         }
@@ -32,7 +32,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'email'],
         configs: {
             push: { enabled: true, title: '¿Tienes hambre?', body: 'Encuentra promociones exclusivas hoy.', url: '/pedir' },
-            whatsapp: { enabled: true, template_name: 'activacion_visita' },
+            whatsapp: { enabled: true, template_name: 'activacion_1' },
             email: { enabled: true, subject: 'Tus tiendas favoritas te esperan', body: 'Hola [Nombre]...', url: 'https://wepi.com.ar', logo_url: '' }
         }
     },
@@ -63,7 +63,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'none'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'pago_pendiente_alerta' },
+            whatsapp: { enabled: true, template_name: 'recuperacion_pago_1' },
             push: { enabled: true, title: 'Pago pendiente', body: 'Tu pedido aguarda por la confirmación de pago.', url: '/mis-pedidos' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
@@ -79,7 +79,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'none'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'pago_rechazado_alerta' },
+            whatsapp: { enabled: true, template_name: 'pedido_rechazado_pago' },
             push: { enabled: true, title: 'Pago Rechazado ❌', body: 'Tu pago no pudo ser procesado. Reintenta con otro medio de pago.', url: '/checkout' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
@@ -95,7 +95,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'none'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'seguimiento_demora_repartidor' },
+            whatsapp: { enabled: true, template_name: 'pedido_rechazado_repartidor_1' },
             push: { enabled: true, title: 'Buscando repartidor...', body: 'Seguimos asignando tu pedido.', url: '/mis-pedidos' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
@@ -111,7 +111,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'none'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'sin_repartidores' },
+            whatsapp: { enabled: true, template_name: 'pedido_rechazado_repartidor_1' },
             push: { enabled: true, title: 'Buscando repartidor... 🛵', body: 'No encontramos repartidores cercanos. Guardamos tu pedido para reintentar en 1 clic.', url: '/checkout' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
@@ -127,7 +127,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'none'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'sin_repartidores_refuerzo_5m' },
+            whatsapp: { enabled: true, template_name: 'pedido_rechazado_repartidor_2' },
             push: { enabled: true, title: '🛵 ¿Reintentamos tu pedido?', body: 'Han pasado 5 min y tu carrito sigue guardado. Reintenta tu pedido en 1 solo clic.', url: '/checkout' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
@@ -144,7 +144,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'none'],
         configs: {
             push: { enabled: true, title: '¡Tu pedido fue aceptado! 🍳', body: 'El comercio ya está preparando tu comida.', url: '/mis-pedidos' },
-            whatsapp: { enabled: true, template_name: 'pedido_en_preparacion' },
+            whatsapp: { enabled: true, template_name: 'tenemos_repartidor' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
     },
@@ -160,7 +160,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'none'],
         configs: {
             push: { enabled: true, title: '¡Pedido retirado! 🛵', body: 'El repartidor ya lleva tu pedido en camino.', url: '/mis-pedidos' },
-            whatsapp: { enabled: true, template_name: 'pedido_retirado_camino' },
+            whatsapp: { enabled: true, template_name: 'llego_pedido' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
     },
@@ -176,7 +176,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'none'],
         configs: {
             push: { enabled: true, title: '🛵 ¡Tu repartidor está cerca!', body: 'Está a menos de 500 metros de tu domicilio. Prepárate para recibirlo.', url: '/mis-pedidos' },
-            whatsapp: { enabled: true, template_name: 'repartidor_cerca_alerta' },
+            whatsapp: { enabled: true, template_name: 'llego_pedido' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
     },
@@ -192,7 +192,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'none'],
         configs: {
             push: { enabled: true, title: '¡Tu pedido va en camino! 🛵', body: 'El repartidor está cerca de tu ubicación.', url: '/mis-pedidos' },
-            whatsapp: { enabled: true, template_name: 'repartidor_en_camino' },
+            whatsapp: { enabled: true, template_name: 'tenemos_repartidor' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
     },
@@ -207,7 +207,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'encuesta_satisfaccion' },
+            whatsapp: { enabled: true, template_name: 'retencion_1' },
             push: { enabled: true, title: '¿Cómo estuvo tu pedido?', body: 'Danos tu calificación para seguir mejorando.', url: '/mis-pedidos' },
             email: { enabled: true, subject: '¿Qué tal tu experiencia con Wepi?', body: 'Gracias por pedir...', url: 'https://wepi.com.ar', logo_url: '' }
         }
@@ -223,7 +223,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'fidelizacion_cupon_descuento' },
+            whatsapp: { enabled: true, template_name: 'retencion_2' },
             push: { enabled: true, title: '¡Regalo para tu próximo pedido!', body: 'Tienes un cupón activo.', url: '/pedir' },
             email: { enabled: true, subject: 'Un regalo especial para ti 🎁', body: 'Aprovecha este beneficio...', url: 'https://wepi.com.ar', logo_url: '' }
         }
@@ -240,7 +240,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'email'],
         configs: {
             push: { enabled: true, title: '¡Te extrañamos!', body: 'Hace una semana que no pides. ¿Qué se te antoja hoy?', url: '/pedir' },
-            whatsapp: { enabled: true, template_name: 'recompra_7dias' },
+            whatsapp: { enabled: true, template_name: 'recompra_1' },
             email: { enabled: true, subject: 'Es hora de darte un gusto 🍔', body: 'Descubre los menúes de hoy...', url: 'https://wepi.com.ar', logo_url: '' }
         }
     },
@@ -256,7 +256,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'email'],
         configs: {
             push: { enabled: true, title: '¿Sin ganas de cocinar?', body: 'Tu comida favorita lista para ser entregada.', url: '/pedir' },
-            whatsapp: { enabled: true, template_name: 'recompra_14dias' },
+            whatsapp: { enabled: true, template_name: 'recompra_2' },
             email: { enabled: true, subject: 'Tu próximo pedido tiene descuento 🚀', body: 'Hola...', url: 'https://wepi.com.ar', logo_url: '' }
         }
     },
@@ -271,7 +271,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'reactivacion_30dias' },
+            whatsapp: { enabled: true, template_name: 'dormido_30' },
             push: { enabled: true, title: '¡Regresa a Wepi!', body: 'Reclama tu cupón de reactivación antes de que venza.', url: '/pedir' },
             email: { enabled: true, subject: 'Te echamos de menos en Wepi 💛', body: 'Te extrañamos...', url: 'https://wepi.com.ar', logo_url: '' }
         }
@@ -287,7 +287,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'reactivacion_fuerte_60dias' },
+            whatsapp: { enabled: true, template_name: 'dormido_60' },
             push: { enabled: true, title: 'Descuento especial del 25%', body: 'Vuelve hoy y aprovecha esta súper oferta.', url: '/pedir' },
             email: { enabled: true, subject: '¡Último llamado! Vuelve con 25% OFF', body: 'Te extrañamos...', url: 'https://wepi.com.ar', logo_url: '' }
         }
@@ -304,7 +304,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'email'],
         configs: {
             push: { enabled: true, title: '¡Gracias por ser un cliente fiel!', body: 'Suma puntos extra en tu saldo de Wallet.', url: '/pedir' },
-            whatsapp: { enabled: true, template_name: 'fidelizacion_frecuente' },
+            whatsapp: { enabled: true, template_name: 'retencion_3' },
             email: { enabled: true, subject: 'Beneficios exclusivos por tu fidelidad 🌟', body: 'Hola...', url: 'https://wepi.com.ar', logo_url: '' }
         }
     },
@@ -319,7 +319,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'email', 'push'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'vip_exclusivo' },
+            whatsapp: { enabled: true, template_name: 'reactivacion_2' },
             email: { enabled: true, subject: '👑 Acceso VIP Exclusivo a Wepi Premier', body: 'Gracias por ser cliente VIP...', url: 'https://wepi.com.ar', logo_url: '' },
             push: { enabled: true, title: '👑 Eres Cliente VIP', body: 'Disfruta de envíos gratis y atención prioritaria.', url: '/pedir' }
         }
@@ -820,23 +820,26 @@ const AdminCRM = () => {
 
     // Event Simulation Handler
     const [simEventType, setSimEventType] = useState('CARRITO_ABANDONADO');
-    const [simOverrideToken, setSimOverrideToken] = useState('dRgiZ1HtD03RqUBOWIwPt1:APA91bHpqDGFdN2YoZArYHOeXcR5gxOi-1xtZ0VzDLc9hdZrdmlwwqHWIOzjNjBMpj2-w9HbNnF0ejVTAaIGDypAjBpLexFlnSt9dh2dYsZ-v_yT0TOq5rI');
+    const [simChannel, setSimChannel] = useState('auto');
+    const [simPhone, setSimPhone] = useState('+5493764275443');
+    const [simEmail, setSimEmail] = useState('axel.martinezz665@gmail.com');
+    const [simOverrideToken, setSimOverrideToken] = useState('ehWH9uxrEUzogs9QfbCHwd:APA91bE_rFff6fe2NmkUdpBckmNVISfk55RkCqaI1YXg9ajKihLNHF2f1MCQYaCUEJf7UMSeERQqrDdcJknHWZd2D9hlPIBfHU4eMyhBcUIEcHiQlrfyQZM');
 
     const handleSimulateCRMEvent = async () => {
-        if (!simOverrideToken) {
-            toast.error("Ingresa un Token Push de destino para probar");
-            return;
-        }
         const targetUserId = usuarios[0]?.id || 'test_user';
         const loadToast = toast.loading(`Disparando evento ${simEventType}...`);
         try {
             await api.adminLogCRMEvent(targetUserId, simEventType, { 
                 simulated: true, 
+                override_channel: simChannel,
+                override_phone: simPhone,
+                override_email: simEmail,
                 override_token: simOverrideToken,
                 triggered_at: new Date().toISOString() 
             });
             toast.dismiss(loadToast);
-            toast.success(`¡Evento ${simEventType} enviado a tu Token Push de prueba!`);
+            const channelLabel = simChannel === 'whatsapp' ? '💬 WhatsApp' : simChannel === 'push' ? '🔔 Push Notification' : simChannel === 'email' ? '📧 Email' : '⚡ Auto (1° Canal Matriz)';
+            toast.success(`¡Evento ${simEventType} disparado por ${channelLabel}!`);
             loadAllCRMData();
         } catch (err) {
             toast.dismiss(loadToast);
@@ -851,26 +854,54 @@ const AdminCRM = () => {
                     🧪 Probador / Disparador de Triggers CRM en Tiempo Real
                 </label>
                 <span style={{ fontSize: '0.75rem', color: '#475569', background: '#e2e8f0', padding: '2px 8px', borderRadius: '6px' }}>
-                    Las Push se despachan en vivo al Token especificado
+                    Pruebas en vivo con destino fijado
                 </span>
             </div>
 
-            <div style={{ marginBottom: '10px' }}>
-                <label style={{ fontSize: '0.78rem', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '4px' }}>
-                    🔑 Token OneSignal / Push de Prueba de Destino:
-                </label>
-                <input 
-                    type="text" 
-                    className="form-control"
-                    style={{ fontSize: '0.78rem', fontFamily: 'monospace', width: '100%', padding: '6px 10px', background: '#ffffff', border: '1px solid #94a3b8', borderRadius: '6px' }}
-                    value={simOverrideToken}
-                    onChange={(e) => setSimOverrideToken(e.target.value)}
-                    placeholder="Token OneSignal / Firebase Push..."
-                />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
+                        💬 Destino WhatsApp:
+                    </label>
+                    <input 
+                        type="text" 
+                        className="form-control"
+                        style={{ fontSize: '0.78rem', fontFamily: 'monospace', width: '100%', padding: '6px 10px', background: '#ffffff', border: '1px solid #94a3b8', borderRadius: '6px' }}
+                        value={simPhone}
+                        onChange={(e) => setSimPhone(e.target.value)}
+                        placeholder="Número WhatsApp..."
+                    />
+                </div>
+                <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
+                        📧 Destino Email:
+                    </label>
+                    <input 
+                        type="text" 
+                        className="form-control"
+                        style={{ fontSize: '0.78rem', fontFamily: 'monospace', width: '100%', padding: '6px 10px', background: '#ffffff', border: '1px solid #94a3b8', borderRadius: '6px' }}
+                        value={simEmail}
+                        onChange={(e) => setSimEmail(e.target.value)}
+                        placeholder="Email de prueba..."
+                    />
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
+                        🔑 Destino Push Token (OneSignal / FCM):
+                    </label>
+                    <input 
+                        type="text" 
+                        className="form-control"
+                        style={{ fontSize: '0.78rem', fontFamily: 'monospace', width: '100%', padding: '6px 10px', background: '#ffffff', border: '1px solid #94a3b8', borderRadius: '6px' }}
+                        value={simOverrideToken}
+                        onChange={(e) => setSimOverrideToken(e.target.value)}
+                        placeholder="Token OneSignal / Push..."
+                    />
+                </div>
             </div>
 
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <div style={{ flex: 2, minWidth: '240px' }}>
+                <div style={{ flex: 1.5, minWidth: '220px' }}>
                     <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '2px' }}>Evento / Trigger a Probar:</label>
                     <select 
                         className="form-control"
@@ -891,6 +922,21 @@ const AdminCRM = () => {
                         <option value="PEDIDO_RETIRADO">📦 PEDIDO_RETIRADO (11. Retirado en camino)</option>
                         <option value="REPARTIDOR_CERCA">📍 REPARTIDOR_CERCA (12. A menos de 500m)</option>
                         <option value="PEDIDO_ENTREGADO">✅ PEDIDO_ENTREGADO (13. Entregado / Satisfacción)</option>
+                    </select>
+                </div>
+
+                <div style={{ flex: 1, minWidth: '180px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '2px' }}>Canal de Destino para Prueba:</label>
+                    <select 
+                        className="form-control"
+                        style={{ fontSize: '0.82rem', width: '100%', fontWeight: 'bold', color: '#1e293b' }}
+                        value={simChannel}
+                        onChange={(e) => setSimChannel(e.target.value)}
+                    >
+                        <option value="auto">⚡ Auto (1° Canal Matriz CRM)</option>
+                        <option value="whatsapp">💬 WhatsApp (Meta Cloud API)</option>
+                        <option value="push">🔔 Push Notification</option>
+                        <option value="email">📧 Email</option>
                     </select>
                 </div>
 

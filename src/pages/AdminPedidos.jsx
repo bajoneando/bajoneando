@@ -13,6 +13,7 @@ const AdminPedidos = () => {
     const [cityFilter, setCityFilter] = useState('Todos');
     const [dateStartFilter, setDateStartFilter] = useState('');
     const [dateEndFilter, setDateEndFilter] = useState('');
+    const [limit, setLimit] = useState(10);
     const [locales, setLocales] = useState([]);
     
     // Modal state
@@ -35,7 +36,7 @@ const AdminPedidos = () => {
     const loadPedidos = async () => {
         setLoading(true);
         try {
-            const data = await api.adminGetPedidosGeneral(dateStartFilter, dateEndFilter);
+            const data = await api.adminGetPedidosGeneral(dateStartFilter, dateEndFilter, limit);
             setPedidos(data);
             
             // Fetch locales for filter
@@ -50,7 +51,7 @@ const AdminPedidos = () => {
 
     useEffect(() => {
         loadPedidos();
-    }, [dateStartFilter, dateEndFilter]);
+    }, [dateStartFilter, dateEndFilter, limit]);
 
     useEffect(() => {
         loadRepartidores();
@@ -134,16 +135,17 @@ const AdminPedidos = () => {
     const estadosPosibles = ['Buscando Repartidor', 'Pendiente de Pago', 'Pendiente', 'Confirmado', 'Preparando', 'Listo', 'Retirado', 'En camino', 'Entregado', 'Rechazado', 'Cancelado'];
     return (
         <div className="panel-card animate-fade-in">
-            <header className="panel-header">
-                <div className="header-info">
+            <header className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'flex-start' }}>
+                <div className="header-info" style={{ minWidth: '200px' }}>
                     <h2>Historial de Pedidos</h2>
                     <p style={{ fontSize: '0.85rem', color: '#64748b' }}>{filteredPedidos.length} pedidos encontrados</p>
                 </div>
-                <div className="header-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div className="header-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-start' }}>
                     <input 
                         type="text" 
                         placeholder="Buscar ID o Cliente..." 
                         className="filter-input"
+                        style={{ maxWidth: '180px' }}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -152,6 +154,7 @@ const AdminPedidos = () => {
                         <input 
                             type="date" 
                             className="filter-input"
+                            style={{ maxWidth: '130px', padding: '0.5rem' }}
                             value={dateStartFilter}
                             onChange={(e) => setDateStartFilter(e.target.value)}
                             title="Fecha inicio"
@@ -162,6 +165,7 @@ const AdminPedidos = () => {
                         <input 
                             type="date" 
                             className="filter-input"
+                            style={{ maxWidth: '130px', padding: '0.5rem' }}
                             value={dateEndFilter}
                             onChange={(e) => setDateEndFilter(e.target.value)}
                             title="Fecha fin"
@@ -169,6 +173,7 @@ const AdminPedidos = () => {
                     </div>
                     <select 
                         className="filter-select"
+                        style={{ minWidth: 'auto', maxWidth: '160px', padding: '0.5rem' }}
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                     >
@@ -178,6 +183,7 @@ const AdminPedidos = () => {
 
                     <select 
                         className="filter-select"
+                        style={{ minWidth: 'auto', maxWidth: '160px', padding: '0.5rem' }}
                         value={cityFilter}
                         onChange={(e) => setCityFilter(e.target.value)}
                     >
@@ -188,12 +194,29 @@ const AdminPedidos = () => {
 
                     <select 
                         className="filter-select"
+                        style={{ minWidth: 'auto', maxWidth: '180px', padding: '0.5rem' }}
                         value={localFilter}
                         onChange={(e) => setLocalFilter(e.target.value)}
                     >
                         <option value="Todos">Todos los locales</option>
                         {locales.map(l => <option key={l.id} value={l.id}>{l.nombre}</option>)}
                     </select>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Cargar:</span>
+                        <select 
+                            className="filter-select"
+                            style={{ minWidth: 'auto', padding: '0.5rem' }}
+                            value={limit}
+                            onChange={(e) => setLimit(Number(e.target.value))}
+                        >
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                    </div>
+
                     <button className="btn btn-primary" onClick={loadPedidos}>Refrescar</button>
                 </div>
             </header>

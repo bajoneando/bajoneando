@@ -201,6 +201,11 @@ export default function CustomerApp() {
     // Verificar repartidores al cargar
     api.checkActiveRepartidores().then(r => setHasRepartidores(r.hasActive)).catch(() => {});
     if (user) {
+      // Trigger CRM VISITA_SIN_COMPRA despues de 60s navegando
+      const timerVisita = setTimeout(() => {
+        api.adminLogCRMEvent(user.id, 'VISITA_SIN_COMPRA', { origin: 'customer_app_browsing' }).catch(() => {});
+      }, 60000);
+
       api.getFavoritos(user.id).then(d => {
         if (Array.isArray(d)) setFavorites(d);
       }).catch(() => {});
@@ -785,18 +790,7 @@ export default function CustomerApp() {
       return;
     }
 
-    // Check repartidores active strictly before proceeding if envio is selected
-    if (cart.deliveryType === 'envio') {
-      const freshRiders = await api.checkActiveRepartidores();
-      if (!freshRiders.hasActive) {
-        setHasRepartidores(false);
-        const puedeRetirar = currentLocal?.acepta_retiro === true;
-        if (puedeRetirar) {
-          cart.setDeliveryType('retiro');
-        }
-        return;
-      }
-    }
+
 
     if (cart.deliveryType === 'retiro' && currentLocal?.acepta_retiro !== true) {
       toast.error('Este local no ofrece la opción de retiro en el local.');
