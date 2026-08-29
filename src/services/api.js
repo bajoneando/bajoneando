@@ -6403,31 +6403,42 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
         if (rule && rule.enabled !== false) {
           const channels = rule.canales || ['whatsapp', 'push'];
           
-          let firstActiveChannel = (metadata?.override_channel && metadata.override_channel !== 'auto')
+          let selectedChannel = (metadata?.override_channel && metadata.override_channel !== 'auto')
             ? metadata.override_channel
             : (channels.find(ch => {
                 if (ch === 'none') return false;
                 return rule.configs?.[ch]?.enabled === true;
               }) || (rule.configs?.whatsapp?.enabled ? 'whatsapp' : rule.configs?.push?.enabled ? 'push' : null));
 
-          if (!firstActiveChannel) {
+          if (!selectedChannel) {
             console.log(`[CRM] Ningún canal habilitado para la regla ${rule.id}. Omite envío.`);
             return;
+          }
+
+          // Consultar usuario en BD para validar canales disponibles
+          const { data: userObj } = await supabase
+            .from('usuarios')
+            .select('telefono, nombre, email, onesignal_id')
+            .eq('id', userId)
+            .maybeSingle();
+
+          // Si el canal seleccionado es Push pero el usuario real NO tiene Push Token, hacer failover al siguiente canal habilitado (ej: WhatsApp)
+          if (selectedChannel === 'push' && !userObj?.onesignal_id && !metadata?.simulated && !metadata?.override_token) {
+            if (rule.configs?.whatsapp?.enabled && (userObj?.telefono || metadata?.phone)) {
+              console.log(`[CRM Failover] Usuario ${userId} sin Push Token. Redirigiendo a WhatsApp.`);
+              selectedChannel = 'whatsapp';
+            }
           }
 
           const templateName = rule.configs?.whatsapp?.template_name || rule.configs?.whatsapp?.template || 'sin_repartidores';
 
           let dispatchResult = null;
 
-          // Disparar según el Canal Seleccionado o 1° Canal Habilitado en la Matriz
-          if (firstActiveChannel === 'whatsapp') {
-            const { data: userObj } = await supabase
-              .from('usuarios')
-              .select('telefono, nombre')
-              .eq('id', userId)
-              .maybeSingle();
-
-            const userPhone = metadata?.override_phone || metadata?.phone || userObj?.telefono || '5493764275443';
+          // Disparar según el Canal Seleccionado
+          if (selectedChannel === 'whatsapp') {
+            const userPhone = metadata?.simulated 
+              ? (metadata?.override_phone || metadata?.phone || userObj?.telefono || '5493764275443')
+              : (metadata?.phone || userObj?.telefono);
 
             if (userPhone) {
               const cleanPhone = userPhone;
@@ -6458,19 +6469,15 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
             } else {
               dispatchResult = { success: false, reason: 'Usuario sin teléfono registrado' };
             }
-          } else if (firstActiveChannel === 'push') {
-            const { data: userObj } = await supabase
-              .from('usuarios')
-              .select('onesignal_id, id')
-              .eq('id', userId)
-              .maybeSingle();
-
+          } else if (selectedChannel === 'push') {
             const pConfig = rule.configs?.push || {};
             const pTitle = pConfig.title || (rule.evento ? `Wepi: ${rule.evento}` : 'Alerta Wepi 🛵');
             const pBody = pConfig.body || 'Tienes una nueva actualización de tu pedido.';
             const pUrl = pConfig.url || '/mis-pedidos';
 
-            const targetPushToken = metadata?.override_token || userObj?.onesignal_id || 'ehWH9uxrEUzogs9QfbCHwd:APA91bE_rFff6fe2NmkUdpBckmNVISfk55RkCqaI1YXg9ajKihLNHF2f1MCQYaCUEJf7UMSeERQqrDdcJknHWZd2D9hlPIBfHU4eMyhBcUIEcHiQlrfyQZM';
+            const targetPushToken = metadata?.simulated 
+              ? (metadata?.override_token || userObj?.onesignal_id || 'ehWH9uxrEUzogs9QfbCHwd:APA91bE_rFff6fe2NmkUdpBckmNVISfk55RkCqaI1YXg9ajKihLNHF2f1MCQYaCUEJf7UMSeERQqrDdcJknHWZd2D9hlPIBfHU4eMyhBcUIEcHiQlrfyQZM')
+              : (metadata?.override_token || userObj?.onesignal_id);
 
             if (targetPushToken) {
               try {
@@ -6481,32 +6488,30 @@ export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
                   url: `https://wepi.com.ar${pUrl}`,
                   data: { event_type: eventType, rule_id: rule.id }
                 });
-                dispatchResult = { success: true, logDetail: `Push enviado a Token de Prueba (${pTitle})` };
+                dispatchResult = { success: true, logDetail: `Push enviado (${pTitle})` };
               } catch (pErr) {
                 dispatchResult = { success: false, logDetail: `Error Push: ${pErr.message}` };
               }
             } else {
               dispatchResult = { success: false, reason: 'Usuario sin Push Token (OneSignal)' };
             }
-          } else if (firstActiveChannel === 'email') {
-            const targetEmail = metadata?.override_email || 'axel.martinezz665@gmail.com';
+          } else if (selectedChannel === 'email') {
+            const targetEmail = metadata?.simulated
+              ? (metadata?.override_email || userObj?.email || 'axel.martinezz665@gmail.com')
+              : (metadata?.override_email || userObj?.email);
             const eConfig = rule.configs?.email || {};
             dispatchResult = { success: true, logDetail: `Email despachado a ${targetEmail} (${eConfig.subject || 'Notificación Wepi'})` };
-          } else if (firstActiveChannel === 'email') {
-            // Registrar envío de email automatizado
-            const eConfig = rule.configs?.email || {};
-            dispatchResult = { success: true, logDetail: `Email despachado (${eConfig.subject || 'Notificación Wepi'})` };
           }
 
           // Registrar en crm_history
           await supabase.from('crm_history').insert({
             usuario_id: userId,
             tipo: 'automatizacion_ejecutada',
-            canal: firstActiveChannel,
-            descripcion: `Disparo automático ${rule.evento || eventType} vía ${firstActiveChannel.toUpperCase()} (${templateName})`,
+            canal: selectedChannel,
+            descripcion: `Disparo automático ${rule.evento || eventType} vía ${selectedChannel.toUpperCase()} (${templateName})`,
             metadata: {
               template_name: templateName,
-              channel: firstActiveChannel,
+              channel: selectedChannel,
               event_type: eventType,
               rule_id: rule.id,
               dispatch_result: dispatchResult
