@@ -92,6 +92,18 @@ export default function PruebasWalletApp() {
   });
 
   React.useEffect(() => {
+    const getOtaVersion = async () => {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const { OtaKit } = await import('@otakit/capacitor-updater');
+          const state = await OtaKit.getState();
+          if (state?.current?.version) setOtaVersion('v' + state.current.version);
+        }
+      } catch (e) { console.error('Error fetching ota version', e); }
+    };
+    getOtaVersion();
+
+
     try {
       const decodedPath = decodeURIComponent(location.pathname);
       const path = decodedPath.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -5036,7 +5048,7 @@ export default function PruebasWalletApp() {
         <img src="https://i.postimg.cc/htHr0QMM/Tarde-de-superclasico-(1)-(1).png" alt="Wepi" style={{ height: '80px', objectFit: 'contain' }} />
         <p>
           © 2026 <strong>Wepi</strong> — Plataforma de Pedidos y Delivery
-          <span style={{ display: 'inline-block', marginLeft: '8px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56,189, 248, 0.4)', fontSize: '0.75rem', fontWeight: 'bold' }}>v1.1.1</span>
+          <span style={{ display: 'inline-block', marginLeft: '8px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56,189, 248, 0.4)', fontSize: '0.75rem', fontWeight: 'bold' }}>{otaVersion}</span>
         </p>
         <p>
           <Link to="/locales">Registrá tu local</Link> •{' '}
