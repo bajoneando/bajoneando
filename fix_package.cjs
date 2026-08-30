@@ -1,0 +1,1 @@
+const fs = require('fs'); let b = fs.readFileSync('C:/Users/Axel/OneDrive/Desktop/Wepi Antigravity/package.json', 'utf8'); b = b.replace(/"version": ".*?"/, '"version": "1.1.1"'); fs.writeFileSync('C:/Users/Axel/OneDrive/Desktop/Wepi Antigravity/package.json', b);
