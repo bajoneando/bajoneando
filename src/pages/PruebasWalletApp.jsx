@@ -13,7 +13,6 @@ import CountdownTimer from '../components/CountdownTimer';
 import { isLocalOpen as isLocalOpenFlexible, getNextStatusChange } from '../utils/businessHours';
 import { evaluatePromotions } from '../utils/promoEngine';
 import { getCitySlug, citiesMatch } from '../utils/city';
-import { CapacitorUpdater } from '@capgo/capacitor-updater';
 import { Capacitor } from '@capacitor/core';
 import './PruebasWalletApp.css';
 
@@ -70,24 +69,6 @@ export default function PruebasWalletApp() {
   const { user, loginAsUser, loginWithGoogle, logoutUser: doLogout, updateUserAddress } = useAuth();
   const cart = useCart();
   const navigate = useNavigate();
-
-  const [capgoVersion, setCapgoVersion] = React.useState(null);
-
-  React.useEffect(() => {
-    async function fetchCapgoVersion() {
-      try {
-        if (Capacitor.isNativePlatform()) {
-          const res = await CapacitorUpdater.current();
-          if (res?.bundle?.version) {
-            setCapgoVersion(res.bundle.version);
-          }
-        }
-      } catch (err) {
-        console.log('Error fetching Capgo version:', err);
-      }
-    }
-    fetchCapgoVersion();
-  }, []);
 
   const [activeCity, setActiveCity] = React.useState(() => {
     try {

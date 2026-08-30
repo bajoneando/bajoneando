@@ -3,10 +3,10 @@
   "appName": "Wepi",
   "webDir": "dist",
   "plugins": {
-    "CapacitorUpdater": {
-      "appId": "com.wepi.app",
-      "autoUpdate": true
+    "OtaKit": {
+      "appId": "36bb893d-ac6e-4780-bc81-87bbeb0837f6"
     },
+
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
     },

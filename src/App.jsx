@@ -21,7 +21,7 @@ import Mundialista from './pages/Mundialista';
 import WepiAds from './pages/WepiAds';
 import { useAuth } from './context/AuthContext';
 import * as api from './services/api';
-import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { OtaKit } from '@otakit/capacitor-updater';
 import { Capacitor } from '@capacitor/core';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 
@@ -132,11 +132,11 @@ export default function App() {
     };
     checkVersion();
 
-    // Notify Capgo Updater that app is ready
+    // Notify OtaKit that app is ready
     try {
-      CapacitorUpdater.notifyAppReady();
+      OtaKit.notifyAppReady();
     } catch (e) {
-      console.error('Error in CapacitorUpdater:', e);
+      console.error('Error in OtaKit:', e);
     }
 
 
