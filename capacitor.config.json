@@ -1,10 +1,10 @@
 {
-  "appId": "com.wepi.logistic",
-  "appName": "Wepi Repartidor",
+  "appId": "com.wepi.app",
+  "appName": "Wepi",
   "webDir": "dist",
   "plugins": {
     "OtaKit": {
-      "appId": "com.wepi.logistic"
+      "appId": "36bb893d-ac6e-4780-bc81-87bbeb0837f6"
     },
 
     "PushNotifications": {
