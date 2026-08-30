@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
       // 4. Filtrar repartidores:
       // Si la ciudad es de tipo partner, enviamos solo a los vinculados a dicho partner
       // Si es local, enviamos solo a los independientes (sin partner_id)
-      let targetDrivers = drivers;
+      let targetDrivers = [];
       if (ciudadLocal) {
         if (configCiudad?.tipo_logistica === 'partner') {
           const partnerId = configCiudad.partner_oficial_id;
@@ -124,6 +124,9 @@ Deno.serve(async (req) => {
           targetDrivers = drivers.filter(d => d.ciudad === ciudadLocal && !d.partner_id);
           console.log(`📌 [Broadcast] Ciudad Local detectada (${ciudadLocal}). Notificando solo a repartidores independientes. Total: ${targetDrivers.length}`);
         }
+      } else {
+        console.warn("⚠️ [Broadcast] No se pudo determinar la ciudad del local. Se aborta el push para no enviar a todos los repartidores.");
+        return new Response(JSON.stringify({ success: false, message: 'City not found for local' }), { headers: corsHeaders });
       }
 
       const titleStr = '¡Nuevo Pedido Disponible! 🛵';
