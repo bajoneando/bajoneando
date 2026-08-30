@@ -486,6 +486,8 @@ export default function PruebasWalletApp() {
   const [searchingDriver, setSearchingDriver] = React.useState(false);
   const [foundDriver, setFoundDriver] = React.useState(null);
   const [driverSearchTimeout, setDriverSearchTimeout] = React.useState(false);
+  const [showEsperaPanel, setShowEsperaPanel] = React.useState(false);
+  const [enEsperaExtra, setEnEsperaExtra] = React.useState(false);
   const [showCancelOptIn, setShowCancelOptIn] = React.useState(false);
   const [searchSeconds, setSearchSeconds] = React.useState(0);
   const [pendingOrderId, setPendingOrderId] = React.useState(null);
@@ -2519,7 +2521,7 @@ export default function PruebasWalletApp() {
     if (searchingDriver && !foundDriver && !driverSearchTimeout) {
       timer = setInterval(() => {
         setSearchSeconds(prev => {
-          if (prev >= 60) { // After 1 minute of UNACCEPTED search
+          if (prev >= 60) { // After 1 min of UNACCEPTED search
             setDriverSearchTimeout(true);
             return 60; 
           }
@@ -5034,21 +5036,7 @@ export default function PruebasWalletApp() {
         <img src="https://i.postimg.cc/htHr0QMM/Tarde-de-superclasico-(1)-(1).png" alt="Wepi" style={{ height: '80px', objectFit: 'contain' }} />
         <p>
           © 2026 <strong>Wepi</strong> — Plataforma de Pedidos y Delivery
-          {capgoVersion && (
-            <span style={{
-              display: 'inline-block',
-              marginLeft: '8px',
-              padding: '2px 8px',
-              borderRadius: '12px',
-              background: 'rgba(56, 189, 248, 0.15)',
-              color: '#38bdf8',
-              border: '1px solid rgba(56, 189, 248, 0.4)',
-              fontSize: '0.75rem',
-              fontWeight: 'bold'
-            }}>
-              ⚡ OTA v{capgoVersion}
-            </span>
-          )}
+          <span style={{ display: 'inline-block', marginLeft: '8px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56,189, 248, 0.4)', fontSize: '0.75rem', fontWeight: 'bold' }}>v1.1.1</span>
         </p>
         <p>
           <Link to="/locales">Registrá tu local</Link> •{' '}
@@ -5363,6 +5351,57 @@ export default function PruebasWalletApp() {
       {driverSearchTimeout && (
         <div className="searching-modal-overlay">
           <div className="searching-modal-card animate-slide-up" style={{ padding: '24px', maxWidth: '360px', borderRadius: '24px' }}>
+              {showEsperaPanel ? (
+                <>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '12px', textAlign: 'center' }}>?</div>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#1e293b', textAlign: 'center', fontSize: '1.35rem' }}>Dejar en espera</h4>
+                  <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '20px', textAlign: 'center' }}>
+                    Durante 10 minutos seguiremos buscando un repartidor para tu pedido.
+                  </p>
+                  
+                  <div style={{ margin: '12px 0 20px 0', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0', textAlign: 'left' }}>
+                    <input 
+                      type="checkbox" 
+                      id="wa-optin-espera"
+                      checked={whatsappCheckoutOptIn}
+                      onChange={e => setWhatsappCheckoutOptIn(e.target.checked)}
+                      style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#25D366' }}
+                    />
+                    <label htmlFor="wa-optin-espera" style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.4', cursor: 'pointer', margin: 0, marginTop: '2px', fontWeight: '500' }}>
+                      Aceptalo para recibir un aviso cuando encontramos al repartidor.
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button 
+                      className="btn btn-full"
+                      style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '12px' }}
+                      onClick={() => setShowEsperaPanel(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      className="btn btn-full"
+                      style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '12px' }}
+                      onClick={() => {
+                        setShowEsperaPanel(false);
+                        setDriverSearchTimeout(false);
+                        api.extenderEsperaRepartidor(pendingOrderId, whatsappCheckoutOptIn, user?.telefono).then(() => {
+                          toast.success('El pedido qued� en espera por 10 minutos ?');
+                          localStorage.removeItem('pendingOrderDataPruebas');
+                          localStorage.removeItem('pendingOrderData');
+                          setPendingOrderId(null);
+                          setSearchingDriver(false);
+                          navigate('/mis-pedidos');
+                        });
+                      }}
+                    >
+                      Confirmar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
             <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px', textAlign: 'center' }}>
               🔎 Seguimos buscando
             </h2>
@@ -5408,9 +5447,44 @@ export default function PruebasWalletApp() {
                 }}
               >
                 🟢 Repetir pedido
-              </button>
+                </button>
 
-              {!optInRegistered && (
+                {!getIsCashOrder() && (() => {
+                   let localId = cart.items?.[0]?.local_id;
+                   if (!localId) {
+                     try {
+                       const pd = JSON.parse(localStorage.getItem('pendingOrderDataPruebas') || '{}');
+                       localId = pd.localId;
+                     } catch(e){}
+                   }
+                   const loc = locals.find(l => l.id === localId);
+                   return loc ? isLocalOpen(loc) : true;
+                })() && (
+                  <button 
+                    className="btn btn-full"
+                    style={{
+                      background: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      fontWeight: '700',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      fontSize: '0.92rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 8px rgba(59, 130, 246, 0.25)',
+                      marginTop: '6px',
+                      marginBottom: '6px'
+                    }}
+                    onClick={() => setShowEsperaPanel(true)}
+                  >
+                    ? Dejar en espera
+                  </button>
+                )}
+
+                {!optInRegistered && (
                 <div style={{ margin: '6px 0', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
                   <input 
                     type="checkbox" 
@@ -5467,9 +5541,11 @@ export default function PruebasWalletApp() {
                 }}
               >
                 ⚪ Cancelar pedido
-              </button>
+                </button>
+              </div>
+              </>
+              )}
             </div>
-          </div>
         </div>
       )}
 
@@ -5867,8 +5943,57 @@ function WalletDetailsPanel({ onClose, balance, transactions, promotions, userId
             </div>
           </div>
         )} */}
+      {/* ESPERA PANEL MODAL */}
+      {showEsperaPanel && (
+        <div className="wa-optin-modal-overlay" style={{ zIndex: 999999 }}>
+          <div className="wa-optin-modal-content animate-slide-up" style={{ padding: '24px', textAlign: 'center' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>?</div>
+            <h4 style={{ margin: '0 0 12px 0', color: '#1e293b' }}>Dejar en espera</h4>
+            <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '20px' }}>
+              Durante 10 minutos seguiremos buscando un repartidor para tu pedido.
+            </p>
+            
+            <div style={{ margin: '12px 0 20px 0', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0', textAlign: 'left' }}>
+              <input 
+                type="checkbox" 
+                id="wa-optin-espera"
+                checked={whatsappCheckoutOptIn}
+                onChange={e => setWhatsappCheckoutOptIn(e.target.checked)}
+                style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#25D366' }}
+              />
+              <label htmlFor="wa-optin-espera" style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.4', cursor: 'pointer', margin: 0, marginTop: '2px', fontWeight: '500' }}>
+                Aceptalo para recibir un aviso cuando encontramos al repartidor.
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                className="btn btn-full"
+                style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '12px' }}
+                onClick={() => setShowEsperaPanel(false)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn btn-full"
+                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '12px' }}
+                onClick={() => {
+                  setShowEsperaPanel(false);
+                  setDriverSearchTimeout(false);
+                  setEnEsperaExtra(true);
+                  setSearchSeconds(0);
+                  api.extenderEsperaRepartidor(pendingOrderId, whatsappCheckoutOptIn, user?.telefono);
+                  toast.success('El pedido qued� en espera por 10 minutos ?');
+                }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
     </div>
   );
 }
-

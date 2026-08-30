@@ -1912,6 +1912,10 @@ export async function getMisPedidos(userId) {
       pago_pendiente_at: p.pago_pendiente_at,
       created_at: p.created_at,
       localId: p.local_id,
+        en_espera_repartidor_10m: p.en_espera_repartidor_10m,
+        espera_hasta: p.espera_hasta,
+        precio_envio: p.precio_envio,
+        id: p.id,
       platform_gross: p.total - items.reduce((sum, i) => sum + (Number(i.precio_unitario) * Number(i.cantidad)), 0),
       itemsResumen: items.map(i => ({ nombre: i.nombre, cantidad: i.cantidad, precio: i.precio_unitario })),
     };
@@ -8299,3 +8303,28 @@ ${htmlContent}
   return { success: true, data };
 }
 
+
+export async function extenderEsperaRepartidor(pedidoId, whatsappOptin, userPhone) {
+  try {
+    if (whatsappOptin && userPhone) {
+      await registerWhatsappOptin({
+        phoneNumber: userPhone,
+        ciudad: '',
+        pedidoId: pedidoId,
+        tipo: 'esperando_repartidor_extendido'
+      });
+    }
+    
+    const esperaHasta = new Date(Date.now() + 10 * 60000).toISOString();
+    await supabase.from('pedidos_general').update({
+      estado: 'Buscando Repartidor',
+        en_espera_repartidor_10m: true,
+        espera_hasta: esperaHasta
+    }).eq('id', pedidoId);
+      await supabase.from('pedidos_locales').update({ estado: 'Buscando Repartidor' }).eq('pedido_id', pedidoId);
+      return { success: true };
+  } catch (error) {
+    console.error('Error extendiendo espera:', error);
+    return { success: false, error };
+  }
+}

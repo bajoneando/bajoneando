@@ -101,6 +101,21 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         }
     },
     {
+        id: 'repartidor_encontrado_espera',
+        evento: 'Repartidor encontrado en espera',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'Repartidor encontrado tras espera extendida',
+        trigger_config: { evento_key: 'repartidor_encontrado_espera' },
+        comunicacion: 'Confirmaci�n de espera',
+        enabled: true,
+        canales: ['whatsapp', 'push', 'none'],
+        metadata: { 
+            message: 'Ya encontramos un repartidor para tu pedido, complet� el pago para confirmarlo.',
+            template_name: 'repartidor_encontrado_espera'
+        }
+    },
+    {
         id: 'sin_repartidores',
         evento: '🛵 1. Aviso Sin Repartidores (Fase 2)',
         estado: 'TODOS',
@@ -2978,7 +2993,7 @@ const AdminCRM = () => {
                                                 <label>Identificador del Evento en Tiempo Real:</label>
                                                 <select 
                                                     className="form-control"
-                                                    value={['USUARIO_REGISTRADO','VISITA_SIN_COMPRA','CARRITO_ABANDONADO','PEDIDO_NO_PAGADO','PEDIDO_RECHAZADO_FALTA_PAGO','sin_repartidores','PEDIDO_RECHAZADO_SIN_REPARTIDOR_2','PEDIDO_ACEPTADO','PEDIDO_RETIRADO','REPARTIDOR_CERCA','ESPERANDO_REPARTIDOR','REPARTIDOR_ASIGNADO','PEDIDO_ENTREGADO'].includes(rowEditForm.trigger_config?.evento_key) ? rowEditForm.trigger_config?.evento_key : 'CUSTOM'}
+                                                    value={['USUARIO_REGISTRADO','VISITA_SIN_COMPRA','CARRITO_ABANDONADO','PEDIDO_NO_PAGADO','PEDIDO_RECHAZADO_FALTA_PAGO','sin_repartidores','repartidor_encontrado_espera','PEDIDO_RECHAZADO_SIN_REPARTIDOR_2','PEDIDO_ACEPTADO','PEDIDO_RETIRADO','REPARTIDOR_CERCA','ESPERANDO_REPARTIDOR','REPARTIDOR_ASIGNADO','PEDIDO_ENTREGADO'].includes(rowEditForm.trigger_config?.evento_key) ? rowEditForm.trigger_config?.evento_key : 'CUSTOM'}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
                                                         setRowEditForm(prev => ({ 
@@ -2993,6 +3008,7 @@ const AdminCRM = () => {
                                                     <option value="PEDIDO_NO_PAGADO">PEDIDO_NO_PAGADO (Pago pendiente)</option>
                                                     <option value="PEDIDO_RECHAZADO_FALTA_PAGO">PEDIDO_RECHAZADO_FALTA_PAGO (Pago rechazado/fallido)</option>
                                                     <option value="sin_repartidores">sin_repartidores (1. Aviso Sin Repartidores)</option>
+<option value="repartidor_encontrado_espera">repartidor_encontrado_espera (Repartidor encontrado en espera)</option>
                                                     <option value="PEDIDO_RECHAZADO_SIN_REPARTIDOR_2">PEDIDO_RECHAZADO_SIN_REPARTIDOR_2 (2. Refuerzo 5 min Sin Repartidor)</option>
                                                     <option value="PEDIDO_ACEPTADO">PEDIDO_ACEPTADO (En preparación)</option>
                                                     <option value="PEDIDO_RETIRADO">PEDIDO_RETIRADO (Retirado por repartidor)</option>
@@ -3003,7 +3019,7 @@ const AdminCRM = () => {
                                                     <option value="CUSTOM">✨ Disparador Personalizado (Escribir Clave Manual...)</option>
                                                 </select>
 
-                                                {(!['USUARIO_REGISTRADO','VISITA_SIN_COMPRA','CARRITO_ABANDONADO','PEDIDO_NO_PAGADO','PEDIDO_RECHAZADO_FALTA_PAGO','sin_repartidores','PEDIDO_RECHAZADO_SIN_REPARTIDOR_2','PEDIDO_ACEPTADO','PEDIDO_RETIRADO','REPARTIDOR_CERCA','ESPERANDO_REPARTIDOR','REPARTIDOR_ASIGNADO','PEDIDO_ENTREGADO'].includes(rowEditForm.trigger_config?.evento_key)) && (
+                                                {(!['USUARIO_REGISTRADO','VISITA_SIN_COMPRA','CARRITO_ABANDONADO','PEDIDO_NO_PAGADO','PEDIDO_RECHAZADO_FALTA_PAGO','sin_repartidores','repartidor_encontrado_espera','PEDIDO_RECHAZADO_SIN_REPARTIDOR_2','PEDIDO_ACEPTADO','PEDIDO_RETIRADO','REPARTIDOR_CERCA','ESPERANDO_REPARTIDOR','REPARTIDOR_ASIGNADO','PEDIDO_ENTREGADO'].includes(rowEditForm.trigger_config?.evento_key)) && (
                                                     <div style={{ marginTop: '10px' }}>
                                                         <label style={{ fontSize: '0.82rem', fontWeight: 'bold' }}>Clave de Evento Personalizada:</label>
                                                         <input 

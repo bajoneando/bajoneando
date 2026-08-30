@@ -1,0 +1,4 @@
+const fs = require('fs');
+let content = fs.readFileSync('src/services/api.js', 'utf8');
+content += `\nexport async function extenderEsperaRepartidor(pedidoId, whatsappOptin, userPhone) {\n  try {\n    if (whatsappOptin && userPhone) {\n      await registerWhatsappOptin({\n        phoneNumber: userPhone,\n        ciudad: '',\n        pedidoId: pedidoId,\n        tipo: 'esperando_repartidor_extendido'\n      });\n    }\n    \n    const esperaHasta = new Date(Date.now() + 10 * 60000).toISOString();\n    await supabase.from('pedidos_general').update({\n      en_espera_repartidor_10m: true,\n      espera_hasta: esperaHasta\n    }).eq('id', pedidoId);\n    return { success: true };\n  } catch (error) {\n    console.error('Error extendiendo espera:', error);\n    return { success: false, error };\n  }\n}\n`;
+fs.writeFileSync('src/services/api.js', content);

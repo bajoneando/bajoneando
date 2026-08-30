@@ -339,6 +339,50 @@ export default function MisPedidos() {
     return idx >= 0 ? idx : 0;
   };
 
+  // Handle 10 min background ping & auto reject
+  const [, setTick] = React.useState(0);
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setTick(t => t + 1); // trigger re-render for timers
+      enCurso.forEach(async (pedido) => {
+        if (pedido.estado === 'Buscando Repartidor' && pedido.en_espera_repartidor_10m && pedido.espera_hasta) {
+          const expiresAt = new Date(pedido.espera_hasta).getTime();
+          const now = Date.now();
+          if (now >= expiresAt && expiresAt > 0) {
+            // Auto reject
+            try {
+              await api.handleCancelOrderSinRepartidores({
+                orderId: pedido.idPedido,
+                phone: user?.telefono,
+                city: '',
+                optIn: false
+              });
+              await api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', pedido.idPedido);
+              await api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', pedido.idPedido);
+              toast.error('Se agot� el tiempo de espera. Pedido cancelado autom�ticamente.');
+              loadPedidos(true);
+            } catch(e) { console.error('Error auto-rejecting:', e); }
+          }
+        }
+      });
+    }, 1000);
+
+    const pingTimer = setInterval(() => {
+      enCurso.forEach(pedido => {
+        if (pedido.estado === 'Buscando Repartidor' && pedido.en_espera_repartidor_10m && pedido.espera_hasta) {
+          const expiresAt = new Date(pedido.espera_hasta).getTime();
+          const now = Date.now();
+          if (now < expiresAt) {
+             const localId = pedido.localId || null;
+             api.broadcastOrderToDrivers(pedido.idPedido, pedido.total, localId, pedido.precio_envio || 0);
+          }
+        }
+      });
+    }, 30000); // every 30 seconds
+
+    return () => { clearInterval(timer); clearInterval(pingTimer); };
+  }, [enCurso, user]);
+
   if (!user) {
     return (
       <div className="mis-pedidos-app">
@@ -423,7 +467,7 @@ export default function MisPedidos() {
                       </div>
                     ))}
                   </div>
-                  {p.numConfirmacion && p.tipoEntrega?.toLowerCase().includes('env') && !['Entregado', 'Cancelado', 'Rechazado'].includes(p.estado) && (
+                  {p.numConfirmacion && p.tipoEntrega?.toLowerCase().includes('env') && !['Pendiente', 'Pendiente de Pago', 'Buscando Repartidor', 'Entregado', 'Cancelado', 'Rechazado'].includes(p.estado) && (
                     <div style={{ background: '#eef2f5', padding: '8px', borderRadius: '6px', marginBottom: '12px', textAlign: 'center' }}>
                       <strong style={{ color: '#d32f2f' }}>PIN de Recepción: {p.numConfirmacion}</strong>
                       <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#666' }}>
@@ -562,7 +606,7 @@ export default function MisPedidos() {
                       </div>
                     )}
 
-                    {seguimiento.numConfirmacion && String(seguimiento.tipoEntrega).toLowerCase().includes('env') && (
+                    {seguimiento.numConfirmacion && String(seguimiento.tipoEntrega).toLowerCase().includes('env') && !['Pendiente', 'Pendiente de Pago', 'Buscando Repartidor', 'Entregado', 'Cancelado', 'Rechazado'].includes(seguimiento.estadoGeneral) && (
                       <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', padding: '12px 16px', borderRadius: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div>
                           <span style={{ fontSize: '0.75rem', color: '#e11d48', fontWeight: 600, display: 'block' }}>PIN DE RECEPCIÓN (Entrega al repartidor)</span>
