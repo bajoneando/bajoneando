@@ -86,8 +86,8 @@ jobs:
             <string>app-store</string>
             <key>provisioningProfiles</key>
             <dict>
-              <key>com.wepi.app</key>
-              <string>Wepi_AppStore_Profile</string>
+              <key>com.wepi.logistic</key>
+              <string>Wepi_Logistic_AppStore_Profile</string>
             </dict>
           </dict>
           </plist>

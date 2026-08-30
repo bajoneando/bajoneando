@@ -21,7 +21,7 @@ import Mundialista from './pages/Mundialista';
 import WepiAds from './pages/WepiAds';
 import { useAuth } from './context/AuthContext';
 import * as api from './services/api';
-import { CapacitorUpdater } from '@capgo/capacitor-updater';
+import { OtaKit } from '@otakit/capacitor-updater';
 import { Capacitor } from '@capacitor/core';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 
@@ -132,11 +132,11 @@ export default function App() {
     };
     checkVersion();
 
-    // Notify Capgo Updater that app is ready
+    // Notify OtaKit that app is ready
     try {
-      CapacitorUpdater.notifyAppReady();
+      OtaKit.notifyAppReady();
     } catch (e) {
-      console.error('Error in CapacitorUpdater:', e);
+      console.error('Error in OtaKit:', e);
     }
 
 
@@ -229,7 +229,7 @@ export default function App() {
       <CartProvider>
         <PushNotificationManager />
         <Routes>
-          <Route path="/" element={Capacitor.isNativePlatform() ? <Navigate to="/repartidores" replace /> : <Landing />} />
+          <Route path="/" element={import.meta.env.VITE_APP_TYPE === 'driver' ? <Navigate to="/repartidores" replace /> : (Capacitor.isNativePlatform() ? <Navigate to="/pedir" replace /> : <Landing />)} />
           <Route path="/mantenimiento" element={<Maintenance />} />
           <Route path="/pedir" element={
             <MaintenanceGuard configKey="mantenimiento_pedir">

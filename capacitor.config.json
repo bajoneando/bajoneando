@@ -3,9 +3,8 @@
   "appName": "Wepi Logistic",
   "webDir": "dist",
   "plugins": {
-    "CapacitorUpdater": {
-      "appId": "com.wepi.logistic",
-      "autoUpdate": true
+    "OtaKit": {
+      "appId": "15f63428-3a14-4781-a52d-346cb127ad40"
     },
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]

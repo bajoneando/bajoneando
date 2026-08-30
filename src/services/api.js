@@ -2459,7 +2459,7 @@ export async function adminUpdateLocalCommission(localId, habilitada, valor) {
 export async function adminGetDriverSettlements() {
   const { data, error } = await supabase
     .from('pedidos_general')
-    .select('id, created_at, total, precio_envio, metodo_pago, repartidor_id, cobro_repartidor_procesado, repartidores!pedidos_repartidor_id_fkey(nombre)')
+    .select('id, created_at, total, fee_envio, precio_envio, metodo_pago, repartidor_id, cobro_repartidor_procesado, repartidores!pedidos_repartidor_id_fkey(nombre)')
     .eq('estado', 'Entregado')
     .order('created_at', { ascending: false });
   
@@ -3817,7 +3817,8 @@ export async function getPedidosDisponibles(repartidorId) {
       telefono_cliente: p.usuarios?.telefono || '',
       direccion: p.direccion || 'Sin dirección',
       monto: +p.total || 0,
-      precio_envio: +p.precio_envio || 0,
+      fee_envio: +p.fee_envio || 0,
+        precio_envio: +p.precio_envio || 0,
       pago: p.metodo_pago || 'Efectivo',
       estado: p.estado, 
       observaciones: p.observaciones || '', 
@@ -5531,7 +5532,8 @@ export async function getPedidosDisponiblesProbando(repartidorId) {
       telefono_cliente: p.usuarios?.telefono || '',
       direccion: p.direccion || 'Sin dirección',
       monto: +p.total || 0,
-      precio_envio: +p.precio_envio || 0,
+      fee_envio: +p.fee_envio || 0,
+        precio_envio: +p.precio_envio || 0,
       pago: p.metodo_pago || 'Efectivo',
       estado: p.estado, 
       observaciones: p.observaciones || '', 
@@ -6790,7 +6792,7 @@ export async function getPartnerPedidos(partnerId, ciudad) {
   if (driverIds.length > 0) {
     const { data: active, error: activeError } = await supabase
       .from('pedidos_general')
-      .select('id, total, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, locales(nombre)')
+      .select('id, total, fee_envio, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, locales(nombre)')
       .in('repartidor_id', driverIds)
       .not('estado', 'in', '(\"Entregado\",\"Cancelado\",\"Rechazado\")')
       .order('created_at', { ascending: false });
@@ -6799,7 +6801,8 @@ export async function getPartnerPedidos(partnerId, ciudad) {
     activeOrders = (active || []).map(p => ({
       id: p.id,
       monto: Number(p.total) || 0,
-      precio_envio: Number(p.precio_envio) || 0,
+      fee_envio: Number(p.fee_envio) || 0,
+        precio_envio: Number(p.precio_envio) || 0,
       pago: p.metodo_pago,
       estado: p.estado,
       direccion: p.direccion,
@@ -6817,7 +6820,7 @@ export async function getPartnerPedidos(partnerId, ciudad) {
   if (driverIds.length > 0) {
     const { data: history, error: historyError } = await supabase
       .from('pedidos_general')
-      .select('id, total, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, locales(nombre)')
+      .select('id, total, fee_envio, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, locales(nombre)')
       .in('repartidor_id', driverIds)
       .eq('estado', 'Entregado')
       .order('created_at', { ascending: false })
@@ -6827,7 +6830,8 @@ export async function getPartnerPedidos(partnerId, ciudad) {
     historyOrders = (history || []).map(p => ({
       id: p.id,
       monto: Number(p.total) || 0,
-      precio_envio: Number(p.precio_envio) || 0,
+      fee_envio: Number(p.fee_envio) || 0,
+        precio_envio: Number(p.precio_envio) || 0,
       pago: p.metodo_pago,
       estado: p.estado,
       direccion: p.direccion,
@@ -6843,7 +6847,7 @@ export async function getPartnerPedidos(partnerId, ciudad) {
 
   const { data: broadcasts, error: broadcastsError } = await supabase
     .from('pedidos_general')
-    .select('id, total, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, repartidor_propuesto_id, locales(nombre, ciudad)')
+    .select('id, total, fee_envio, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, repartidor_propuesto_id, locales(nombre, ciudad)')
     .is('repartidor_id', null)
     .eq('tipo_entrega', 'Con Envío')
     .in('estado', ['Pendiente', 'Buscando Repartidor', 'Listo', 'Preparando', 'Aceptado'])
@@ -6856,7 +6860,8 @@ export async function getPartnerPedidos(partnerId, ciudad) {
     .map(p => ({
       id: p.id,
       monto: Number(p.total) || 0,
-      precio_envio: Number(p.precio_envio) || 0,
+      fee_envio: Number(p.fee_envio) || 0,
+        precio_envio: Number(p.precio_envio) || 0,
       pago: p.metodo_pago,
       estado: p.estado,
       direccion: p.direccion,
@@ -7071,7 +7076,7 @@ export async function partnerGetFinancialReport(partnerId, startDate, endDate) {
   
   let query = supabase
     .from('pedidos_general')
-    .select('id, total, precio_envio, created_at, repartidor_id')
+    .select('id, total, fee_envio, precio_envio, created_at, repartidor_id')
     .in('repartidor_id', driverIds)
     .eq('estado', 'Entregado');
     

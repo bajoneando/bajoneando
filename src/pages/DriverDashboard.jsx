@@ -1393,7 +1393,7 @@ export default function DriverDashboard() {
             const localDir = localObj?.direccion || enViaje.local_direccion || 'Cargando...';
             const localLat = localObj?.lat || enViaje.local_lat;
             const localLng = localObj?.lng || enViaje.local_lng;
-            const montoMostrar = enViaje.monto_local || 0;
+            const montoMostrar = (enViaje.monto_local || 0) - (enViaje.fee_envio || 0);
 
             const isExpanded = expandedOrders[enViaje.id];
 
@@ -2702,7 +2702,7 @@ export default function DriverDashboard() {
                   VALOR DEL SUBTOTAL A PAGAR AL LOCAL:
                 </span>
                 <span style={{ fontSize: '1.5rem', fontWeight: '850', color: '#10b981' }}>
-                  ${Number(cashConfirmPedido.monto_local || 0).toLocaleString('es-AR')}
+                  ${Number((cashConfirmPedido.monto_local || 0) - (cashConfirmPedido.fee_envio || 0)).toLocaleString('es-AR')}
                 </span>
               </div>
               <p style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', margin: 0, lineHeight: '1.4', background: '#f1f5f9', padding: '10px', borderRadius: '6px' }}>
