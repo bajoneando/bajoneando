@@ -32,5 +32,5 @@ jobs:
 
       - name: Upload to OtaKit
         env:
-          OTAKIT_API_KEY: ${{ secrets.OTAKIT_API_KEY }}
+          OTAKIT_TOKEN: ${{ secrets.OTAKIT_TOKEN || secrets.OTAKIT_API_KEY }}
         run: npx @otakit/cli upload --release
