@@ -5031,22 +5031,12 @@ export default function PruebasWalletApp() {
 
 
       <footer className="footer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px 20px' }}>
-        <span style={{
-          display: 'inline-block',
-          marginLeft: '8px',
-          padding: '2px 8px',
-          borderRadius: '12px',
-          background: 'rgba(56, 189, 248, 0.15)',
-          color: '#38bdf8',
-          border: '1px solid rgba(56, 189, 248, 0.4)',
-          fontSize: '0.75rem',
-          fontWeight: 'bold'
-        }}>
-          v1.1.1
-        </span>
         <img src="https://i.postimg.cc/htHr0QMM/Tarde-de-superclasico-(1)-(1).png" alt="Wepi" style={{ height: '80px', objectFit: 'contain' }} />
         <p>
           © 2026 <strong>Wepi</strong> — Plataforma de Pedidos y Delivery
+          {capgoVersion && (
+            <span style={{
+              display: 'inline-block',
               marginLeft: '8px',
               padding: '2px 8px',
               borderRadius: '12px',
