@@ -1,11 +1,10 @@
 {
-  "appId": "com.wepi.app",
-  "appName": "Wepi",
+  "appId": "com.wepi.logistic",
+  "appName": "Wepi Repartidor",
   "webDir": "dist",
   "plugins": {
-    "CapacitorUpdater": {
-      "appId": "com.wepi.app",
-      "autoUpdate": true
+    "OtaKit": {
+      "appId": "com.wepi.logistic"
     },
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
