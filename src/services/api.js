@@ -1379,6 +1379,11 @@ export async function crearPedido({ userId, pedidoId, direccion, metodoPago, obs
     throw new Error(error.message + " | Detalles: " + (error.details || ''));
   }
 
+  if (data && data.success === false) {
+    console.error("🚨 RPC LOGIC ERROR:", data.error);
+    throw new Error(data.error);
+  }
+
   // Deduct wallet credit if applicable
   if (creditoWallet > 0) {
     try {
@@ -3857,7 +3862,8 @@ export async function getPedidosDisponibles(repartidorId) {
 
     // --- FILTRADO POR CIUDAD ---
     const pedidoCiudad = p.locales?.ciudad;
-    if (repData?.ciudad && pedidoCiudad && pedidoCiudad !== repData.ciudad) return false;
+    // CRITICAL FIX: If the order has no city or we don't know it, we MUST NOT show it to drivers from other cities.
+    if (!pedidoCiudad || pedidoCiudad !== repData?.ciudad) return false;
 
     // --- FILTRADO POR LOGISTICA DE PARTNER ---
     const configCiudad = ciudadesConfig?.find(c => c.ciudad === pedidoCiudad);
@@ -5599,7 +5605,7 @@ export async function getPedidosDisponiblesProbando(repartidorId) {
 
   // 3. Obtener Pedidos
   const { data, error } = await supabase.from('pedidos_general')
-    .select('id, total, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, pago_pendiente_at, precio_envio, repartidor_id, usuario_id, usuarios(telefono)')
+    .select('id, total, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, pago_pendiente_at, precio_envio, repartidor_id, usuario_id, usuarios(telefono), locales(ciudad)')
     .or(`repartidor_id.eq.${repartidorId},and(repartidor_id.is.null,estado.in.("Pendiente","Buscando Repartidor","Listo","Preparando","Aceptado"),tipo_entrega.eq."Con Envío")`)
     .in('estado', ['Pendiente', 'Buscando Repartidor', 'Pendiente de Pago', 'Confirmado', 'Retirado', 'En camino', 'Listo', 'Preparando', 'Aceptado'])
     .order('created_at', { ascending: false });
@@ -5609,6 +5615,10 @@ export async function getPedidosDisponiblesProbando(repartidorId) {
   // 4. Filtrar con LÓGICA /PROBANDO
   const filtered = (data || []).filter(p => {
     if (p.repartidor_id === repartidorId) return true;
+
+    // --- FILTRADO POR CIUDAD ESTRICTO ---
+    const pedidoCiudad = p.locales?.ciudad;
+    if (!pedidoCiudad || pedidoCiudad !== repData?.ciudad) return false;
 
     // --- REGLAS PROBANDO ---
     // BICICLETA: Solo 1 pedido máximo
