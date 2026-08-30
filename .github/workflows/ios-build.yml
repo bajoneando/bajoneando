@@ -26,10 +26,7 @@ jobs:
         run: sudo gem install cocoapods
 
       - name: Sync Capacitor iOS
-        run: |
-          npx cap sync ios
-          cd ios/App
-          pod install --repo-update
+        run: npx cap sync ios
         
       - name: Install the Apple certificate and provisioning profile
         env:
@@ -71,7 +68,7 @@ jobs:
         run: |
           cd ios/App
           xcodebuild archive \
-            -workspace App.xcworkspace \
+            -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -archivePath $PWD/build/App.xcarchive
