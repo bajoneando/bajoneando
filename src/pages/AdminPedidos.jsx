@@ -550,7 +550,7 @@ const AdminPedidos = () => {
                                                     <tfoot style={{ borderTop: '1px dashed #cbd5e1' }}>
                                                         <tr>
                                                             <td colSpan="3" style={{ textAlign: 'right', fontWeight: 600, padding: '12px 8px 0' }}>Total Local:</td>
-                                                            <td style={{ textAlign: 'right', fontWeight: 800, padding: '12px 8px 0', color: '#1e293b' }}>${Number(li.total).toLocaleString('es-AR')}</td>
+                                                            <td style={{ textAlign: 'right', fontWeight: 800, padding: '12px 8px 0', color: '#1e293b' }}>${Number(localItems.reduce((acc, item) => acc + (Number(item.subtotal) || 0), 0) || li.total).toLocaleString('es-AR')}</td>
                                                         </tr>
                                                     </tfoot>
                                                 </table>
@@ -570,6 +570,12 @@ const AdminPedidos = () => {
                                                 <span>Costo de Envío</span>
                                                 <span>${Number(pedidoDetalle.precio_envio).toLocaleString('es-AR')}</span>
                                             </div>
+                                        {Number(pedidoDetalle.fee_envio) > 0 && (
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', marginBottom: '8px', fontSize: '0.9rem' }}>
+                                                <span>Tarifa de Servicio Wepi</span>
+                                                <span>${Number(pedidoDetalle.fee_envio).toLocaleString('es-AR')}</span>
+                                            </div>
+                                        )}
                                         )}
                                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>
                                             <span>TOTAL PEDIDO</span>

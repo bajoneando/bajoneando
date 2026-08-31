@@ -2021,6 +2021,7 @@ export async function getPedidosLocalesCompletosByLocal(localId) {
       localId: p.local_id,
       origen_pedido: p.origen_pedido || 'enlace_local',
       precioEnvio: Number(gen.precio_envio || gen.costo_envio || gen.envio || gen.costo_delivery) || 0,
+        fee_envio: Number(gen.fee_envio) || 0,
       totalLocal: Number(p.total) || items.reduce((acc, item) => acc + (Number(item[7]) || 0), 0),
     };
   });
