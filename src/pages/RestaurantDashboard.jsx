@@ -339,9 +339,8 @@ export default function RestaurantDashboard() {
     const totalSectionHtml = isEnvio ? `
       <div style="font-weight:bold; text-align:right; margin-top:6px; font-size:0.95rem;">
         <div>Subtotal: $${subtotalVal.toFixed(2)}</div>
-        <div>Envío Wepi: $${costoEnvioVal.toFixed(2)}</div>
-          ${feeEnvioVal > 0 ? `<div>Costo de Servicio: ${feeEnvioVal.toFixed(2)}</div>` : ""}
-        <div style="font-size: 1.1rem; margin-top: 4px;">TOTAL: $${finalTotalVal.toFixed(2)}</div>
+        <div>Env�o Wepi: $${(costoEnvioVal + feeEnvioVal).toFixed(2)}</div>
+          <div style="font-size: 1.1rem; margin-top: 4px;">TOTAL: $${finalTotalVal.toFixed(2)}</div>
       </div>
     ` : `
       <div style="font-weight:bold; text-align:right; margin-top:6px; font-size:0.95rem;">
@@ -6314,10 +6313,9 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre, localLog
           Subtotal: $${subtotalVal.toFixed(2)}
         </div>
         <div style="text-align: right; font-size: 13px;">
-          Envío Wepi: $${envioVal.toFixed(2)}
-        </div>
-          ${feeEnvioVal > 0 ? `<div style="text-align: right; font-size: 13px;">Costo de Servicio: ${feeEnvioVal.toFixed(2)}</div>` : ""}
-        <div class="total-section" style="border-top: none; margin-top: 1mm; padding-top: 0;">
+          Env�o Wepi: $${(envioVal + feeEnvioVal).toFixed(2)}
+          </div>
+          <div class="total-section" style="border-top: none; margin-top: 1mm; padding-top: 0;">
           TOTAL: $${grandTotal.toFixed(2)}
         </div>
       `;
