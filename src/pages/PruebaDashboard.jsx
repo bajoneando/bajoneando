@@ -2818,7 +2818,12 @@ export default function PruebaDashboard() {
                   className="btn btn-ghost"
                   style={{ textAlign: 'left', justifyContent: 'flex-start', padding: '12px 16px', border: '1px solid var(--gray-200)', fontSize: '0.9rem' }}
                   onClick={() => {
-                    handleOrderAction(orderToReject, 'Rechazado', reason);
+                    if (orderToReject?.idPedidoLocal === 'sample-order-1') {
+                      setTutorialSampleOrderState('Rechazado');
+                      toast.success('Pedido de muestra rechazado.');
+                    } else {
+                      handleOrderAction(orderToReject, 'Rechazado', reason);
+                    }
                     setRejectionModalOpen(false);
                     setOrderToReject(null);
                   }}

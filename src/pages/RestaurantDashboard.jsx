@@ -1770,7 +1770,10 @@ export default function RestaurantDashboard() {
       const nextTab = statusMap[action] || action;
       toast.success(`Pedido marcado como ${action}. El pedido se movió a ${nextTab}`);
       loadOrders();
-    } catch { toast.error('Error al actualizar'); }
+    } catch (err) { 
+      console.error("handleOrderAction error:", err);
+      toast.error('Error al actualizar: ' + (err.message || 'Error desconocido')); 
+    }
   };
 
   const handleSaveProfile = async (e) => {
