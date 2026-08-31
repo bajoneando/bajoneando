@@ -8083,9 +8083,13 @@ export async function handleCancelOrderSinRepartidores({ orderId, phone, city, o
     if (orderId) {
       const { data: pg } = await supabase
         .from('pedidos_general')
-        .select('usuario_id, telefono_cliente')
+        .select('usuario_id, telefono_cliente, estado')
         .eq('id', orderId)
         .maybeSingle();
+
+      if (pg && ['Confirmado', 'Aceptado', 'Preparando', 'Listo', 'Retirado', 'En camino', 'Entregado'].includes(pg.estado)) {
+        return { success: false, error: 'Pedido ya confirmado/en proceso' };
+      }
 
       if (pg) {
         targetUserId = pg.usuario_id;

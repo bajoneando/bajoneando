@@ -2737,16 +2737,35 @@ export default function PruebasWalletApp() {
   const handleCancelPendingOrder = async () => {
     const orderIdToCancel = pendingOrderId;
     const recipientPhone = user && user.telefono;
-    setSearchingDriver(false);
-    setFoundDriver(null);
-    setAcceptedOrder(null);
-    setMpRedirectUrl(null);
-    setPendingOrderId(null);
-    setCartOpen(true);
-    localStorage.removeItem('pendingOrderDataPruebas');
     
     if (orderIdToCancel) {
       try {
+        const { data: currentOrder } = await api.supabase
+          .from('pedidos_general')
+          .select('estado')
+          .eq('id', orderIdToCancel)
+          .single();
+          
+        if (currentOrder && ['Confirmado', 'Aceptado', 'Preparando', 'Listo', 'Retirado', 'En camino', 'Entregado'].includes(currentOrder.estado)) {
+          setConfirmedOrderId(orderIdToCancel);
+          setShowConfirmedModal(true);
+          setSearchingDriver(false);
+          setFoundDriver(null);
+          setAcceptedOrder(null);
+          setMpRedirectUrl(null);
+          setPendingOrderId(null);
+          localStorage.removeItem('pendingOrderDataPruebas');
+          return;
+        }
+
+        setSearchingDriver(false);
+        setFoundDriver(null);
+        setAcceptedOrder(null);
+        setMpRedirectUrl(null);
+        setPendingOrderId(null);
+        setCartOpen(true);
+        localStorage.removeItem('pendingOrderDataPruebas');
+
         await Promise.all([
           api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
           api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
