@@ -570,14 +570,14 @@ const AdminPedidos = () => {
                                                 <span>Costo de Envío</span>
                                                 <span>${Number(pedidoDetalle.precio_envio).toLocaleString('es-AR')}</span>
                                             </div>
-                                        {Number(pedidoDetalle.fee_envio) > 0 && (
+                                          )}
+                                          {Number(pedidoDetalle.fee_envio) > 0 && (
                                             <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', marginBottom: '8px', fontSize: '0.9rem' }}>
                                                 <span>Tarifa de Servicio Wepi</span>
                                                 <span>${Number(pedidoDetalle.fee_envio).toLocaleString('es-AR')}</span>
                                             </div>
                                         )}
-                                        )}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>
                                             <span>TOTAL PEDIDO</span>
                                             <span>${Number(pedidoDetalle.total).toLocaleString('es-AR')}</span>
                                         </div>
