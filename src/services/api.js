@@ -1365,7 +1365,7 @@ export async function crearPedido({ userId, pedidoId, direccion, metodoPago, obs
     p_nombre_cliente: nombreCliente || '',
     p_lat: lat || 0,
     p_lng: lng || 0,
-    p_cart: items,
+    p_cart: items.map(i => ({ ...i, qty: i.qty !== undefined ? i.qty : i.cantidad })),
     p_precio_envio: precioEnvio || 0,
     p_cupon_id: cuponId,
     p_descuento_cupon: descuentoCupon,
