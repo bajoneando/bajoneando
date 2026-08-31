@@ -298,8 +298,9 @@ export default function RestaurantDashboard() {
 
     const isEnvio = String(o.tipoEntrega).toLowerCase().includes('env') || String(o.tipoEntrega).toLowerCase().includes('domicilio') || String(o.tipoEntrega).toLowerCase() === 'con envío';
     const costoEnvioVal = Number(o.precioEnvio || o.costoEnvio || 0);
+    const feeEnvioVal = Number(o.fee_envio || 0);
     const subtotalVal = Number(o.totalLocal || o.total || 0);
-    const finalTotalVal = subtotalVal + (isEnvio ? costoEnvioVal : 0);
+    const finalTotalVal = subtotalVal + (isEnvio ? costoEnvioVal : 0) + feeEnvioVal;
 
     const itemsHtml = (o.items || []).map(item => {
       const rawVal = item[4] || item.nombre || 'Producto';
@@ -339,6 +340,7 @@ export default function RestaurantDashboard() {
       <div style="font-weight:bold; text-align:right; margin-top:6px; font-size:0.95rem;">
         <div>Subtotal: $${subtotalVal.toFixed(2)}</div>
         <div>Envío Wepi: $${costoEnvioVal.toFixed(2)}</div>
+          ${feeEnvioVal > 0 ? `<div>Costo de Servicio: ${feeEnvioVal.toFixed(2)}</div>` : ""}
         <div style="font-size: 1.1rem; margin-top: 4px;">TOTAL: $${finalTotalVal.toFixed(2)}</div>
       </div>
     ` : `
@@ -6302,7 +6304,8 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre, localLog
     const subtotalVal = (o.items || []).reduce((sum, i) => sum + (i[7] || 0), 0) || o.totalLocal || 0;
     const isEnvio = String(o.tipoEntrega).toLowerCase().includes('env') || String(o.tipoEntrega).toLowerCase().includes('domicilio') || (o.precioEnvio > 0);
     const envioVal = isEnvio ? (o.precioEnvio || 0) : 0;
-    const grandTotal = (o.totalLocal && o.totalLocal > subtotalVal) ? o.totalLocal : (subtotalVal + envioVal);
+      const feeEnvioVal = Number(o.fee_envio || 0);
+    const grandTotal = (o.totalLocal && o.totalLocal > subtotalVal && (o.totalLocal === subtotalVal + envioVal + feeEnvioVal)) ? o.totalLocal : (subtotalVal + envioVal + feeEnvioVal);
 
     let totalSectionHtml = '';
     if (isEnvio && envioVal > 0) {
@@ -6313,6 +6316,7 @@ function OrderCard({ order: o, onAction, finished, isShop, localNombre, localLog
         <div style="text-align: right; font-size: 13px;">
           Envío Wepi: $${envioVal.toFixed(2)}
         </div>
+          ${feeEnvioVal > 0 ? `<div style="text-align: right; font-size: 13px;">Costo de Servicio: ${feeEnvioVal.toFixed(2)}</div>` : ""}
         <div class="total-section" style="border-top: none; margin-top: 1mm; padding-top: 0;">
           TOTAL: $${grandTotal.toFixed(2)}
         </div>
