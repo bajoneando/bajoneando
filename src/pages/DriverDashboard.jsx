@@ -1341,6 +1341,12 @@ export default function DriverDashboard() {
                 <option value="" disabled>Seleccioná tu Ciudad</option>
                 <option value="Santo Tomé">Santo Tomé</option>
                 <option value="Oberá">Oberá</option>
+                <option value="Alem (Misiones)">Alem (Misiones)</option>
+                <option value="Apóstoles (Misiones)">Apóstoles (Misiones)</option>
+                <option value="Villaguay (Entre Ríos)">Villaguay (Entre Ríos)</option>
+                <option value="Paso de los Libres (Corrientes)">Paso de los Libres (Corrientes)</option>
+                <option value="San Vicente (Misiones)">San Vicente (Misiones)</option>
+                <option value="Colon (Entre Ríos)">Colon (Entre Ríos)</option>
               </select>
             </div>
 

@@ -38,7 +38,10 @@ const getInactiveCityFromSlug = (str) => {
     const norm = decoded.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
     if (norm === 'alem' || norm === 'leandro-n-alem' || norm === 'leandro n alem' || norm === 'l-n-alem') return 'Alem (Misiones)';
     if (norm === 'apostoles' || norm === 'apóstoles') return 'Apóstoles (Misiones)';
-    if (norm === 'goya') return 'Goya (Corrientes)';
+    if (norm === 'villaguay') return 'Villaguay (Entre Ríos)';
+    if (norm === 'paso de los libres' || norm === 'paso-de-los-libres') return 'Paso de los Libres (Corrientes)';
+    if (norm === 'san vicente' || norm === 'san-vicente') return 'San Vicente (Misiones)';
+    if (norm === 'colon' || norm === 'colón') return 'Colon (Entre Ríos)';
   } catch (e) {
     console.error(e);
   }
@@ -4109,7 +4112,10 @@ export default function PruebasWalletApp() {
                     <option value="Oberá">Oberá (Misiones)</option>
                     <option value="Alem (Misiones)">Alem (Misiones)</option>
                     <option value="Apóstoles (Misiones)">Apóstoles (Misiones)</option>
-                    <option value="Goya (Corrientes)">Goya (Corrientes)</option>
+                    <option value="Villaguay (Entre Ríos)">Villaguay (Entre Ríos)</option>
+                    <option value="Paso de los Libres (Corrientes)">Paso de los Libres (Corrientes)</option>
+                    <option value="San Vicente (Misiones)">San Vicente (Misiones)</option>
+                    <option value="Colon (Entre Ríos)">Colon (Entre Ríos)</option>
                   </select>
                 </div>
                 
@@ -4352,7 +4358,7 @@ export default function PruebasWalletApp() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
               <div style={{ textAlign: 'left', fontSize: '0.68rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#e63946', marginBottom: '1px' }}>
-                Ciudades Disponibles
+                CIUDADES DISPONIBLES: Pedí ahora
               </div>
               <button 
                 onClick={() => selectCity('Santo Tomé')} 
@@ -4399,71 +4405,31 @@ export default function PruebasWalletApp() {
               </button>
 
               <div style={{ textAlign: 'left', fontSize: '0.68rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#d97706', marginTop: '6px', marginBottom: '1px' }}>
-                Próximos Lanzamientos
+                Muy pronto en tu ciudad: Recibí novedades
               </div>
 
-              <button 
-                onClick={() => openInactiveCityModal('Alem (Misiones)')} 
-                className="btn btn-full"
-                style={{ 
-                  background: '#f8fafc', 
-                  color: '#334155', 
-                  padding: '7px 11px', 
-                  borderRadius: '9px', 
-                  fontWeight: '500', 
-                  fontSize: '0.82rem',
-                  border: '1px dashed #cbd5e1',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justify: 'center'
-                }}
-              >
-                Alem (Misiones)
-              </button>
-
-              <button 
-                onClick={() => openInactiveCityModal('Apóstoles (Misiones)')} 
-                className="btn btn-full"
-                style={{ 
-                  background: '#f8fafc', 
-                  color: '#334155', 
-                  padding: '7px 11px', 
-                  borderRadius: '9px', 
-                  fontWeight: '500', 
-                  fontSize: '0.82rem',
-                  border: '1px dashed #cbd5e1',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justify: 'center'
-                }}
-              >
-                Apóstoles (Misiones)
-              </button>
-
-              <button 
-                onClick={() => openInactiveCityModal('Goya (Corrientes)')} 
-                className="btn btn-full"
-                style={{ 
-                  background: '#f8fafc', 
-                  color: '#334155', 
-                  padding: '7px 11px', 
-                  borderRadius: '9px', 
-                  fontWeight: '500', 
-                  fontSize: '0.82rem',
-                  border: '1px dashed #cbd5e1',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justify: 'center'
-                }}
-              >
-                Goya (Corrientes)
-              </button>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '10px' }}>
+                <button onClick={() => openInactiveCityModal('Alem (Misiones)')} className="btn btn-full" style={{ background: '#f8fafc', color: '#334155', padding: '7px 11px', borderRadius: '9px', fontWeight: '500', fontSize: '0.82rem', border: '1px dashed #cbd5e1', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  Alem (Misiones)
+                </button>
+                <button onClick={() => openInactiveCityModal('Apóstoles (Misiones)')} className="btn btn-full" style={{ background: '#f8fafc', color: '#334155', padding: '7px 11px', borderRadius: '9px', fontWeight: '500', fontSize: '0.82rem', border: '1px dashed #cbd5e1', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  Apóstoles (Misiones)
+                </button>
+                <button onClick={() => openInactiveCityModal('Villaguay (Entre Ríos)')} className="btn btn-full" style={{ background: '#f8fafc', color: '#334155', padding: '7px 11px', borderRadius: '9px', fontWeight: '500', fontSize: '0.82rem', border: '1px dashed #cbd5e1', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  Villaguay (Entre Ríos)
+                </button>
+                <button onClick={() => openInactiveCityModal('Paso de los Libres (Corrientes)')} className="btn btn-full" style={{ background: '#f8fafc', color: '#334155', padding: '7px 11px', borderRadius: '9px', fontWeight: '500', fontSize: '0.82rem', border: '1px dashed #cbd5e1', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  Paso de los Libres
+                </button>
+                <button onClick={() => openInactiveCityModal('San Vicente (Misiones)')} className="btn btn-full" style={{ background: '#f8fafc', color: '#334155', padding: '7px 11px', borderRadius: '9px', fontWeight: '500', fontSize: '0.82rem', border: '1px dashed #cbd5e1', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  San Vicente (Mnes)
+                </button>
+                <button onClick={() => openInactiveCityModal('Colon (Entre Ríos)')} className="btn btn-full" style={{ background: '#f8fafc', color: '#334155', padding: '7px 11px', borderRadius: '9px', fontWeight: '500', fontSize: '0.82rem', border: '1px dashed #cbd5e1', cursor: 'pointer', transition: 'all 0.15s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  Colon (Entre Ríos)
+                </button>
+              </div>
+            
             </div>
           </div>
         </div>
