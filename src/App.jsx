@@ -56,6 +56,8 @@ function MaintenanceGuard({ children, configKey }) {
     }
     checkMaintenance();
 
+    
+
     return () => clearTimeout(timer);
   }, [configKey, user]);
 
@@ -67,6 +69,8 @@ function MaintenanceGuard({ children, configKey }) {
 
 export default function App() {
   const location = useLocation();
+
+  const isApp = Capacitor.isNativePlatform() || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || /Capacitor|wv|Wepi/i.test(navigator.userAgent);
 
   useEffect(() => {
     // Captura de UTMs de Campañas CRM y Motor de Hábitos (Ventana de 24 hs)
@@ -228,8 +232,11 @@ export default function App() {
     <AuthProvider>
       <CartProvider>
         <PushNotificationManager />
-        <Routes>
-          <Route path="/" element={import.meta.env.VITE_APP_TYPE === 'driver' ? <Navigate to="/repartidores" replace /> : (Capacitor.isNativePlatform() ? <Navigate to="/pedir" replace /> : <Landing />)} />
+        
+  
+
+          <Routes>
+          <Route path="/" element={import.meta.env.VITE_APP_TYPE === 'driver' ? <Navigate to="/repartidores" replace /> : (isApp ? <Navigate to="/pedir" replace /> : <Landing />)} />
           <Route path="/mantenimiento" element={<Maintenance />} />
           <Route path="/pedir" element={
             <MaintenanceGuard configKey="mantenimiento_pedir">

@@ -13,6 +13,7 @@ import CountdownTimer from '../components/CountdownTimer';
 import { isLocalOpen as isLocalOpenFlexible, getNextStatusChange } from '../utils/businessHours';
 import { evaluatePromotions } from '../utils/promoEngine';
 import { getCitySlug, citiesMatch } from '../utils/city';
+import { Capacitor } from '@capacitor/core';
 import './PruebasWalletApp.css';
 
 const GOOGLE_MAPS_LIBRARIES = ['places'];
@@ -45,6 +46,7 @@ const getInactiveCityFromSlug = (str) => {
 };
 
 export default function PruebasWalletApp() {
+  const [otaVersion, setOtaVersion] = React.useState('v1.1.1');
   const { ciudad, slug } = useParams();
   const location = useLocation();
   const isShopsMode = location.pathname.startsWith('/shops');
@@ -91,6 +93,18 @@ export default function PruebasWalletApp() {
   });
 
   React.useEffect(() => {
+    const getOtaVersion = async () => {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const { OtaKit } = await import('@otakit/capacitor-updater');
+          const state = await OtaKit.getState();
+          if (state?.current?.version) setOtaVersion('v' + state.current.version);
+        }
+      } catch (e) { console.error('Error fetching ota version', e); }
+    };
+    getOtaVersion();
+
+
     try {
       const decodedPath = decodeURIComponent(location.pathname);
       const path = decodedPath.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -119,6 +133,41 @@ export default function PruebasWalletApp() {
       console.error(e);
     }
   }, [location.pathname, activeCity]);
+
+  // ── DETECTOR CRM: VISITA_SIN_COMPRA ──
+  React.useEffect(() => {
+    if (!user?.id) return;
+    // Si el usuario ya realizó pedidos en la plataforma, no es una visita sin compra
+    if (user.ya_realizo_pedidos) return;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const lastVisitLogged = localStorage.getItem(`wepi_last_crm_visit_logged_${user.id}`);
+    if (lastVisitLogged === todayStr) return;
+
+    const timer = setTimeout(async () => {
+      const hasCompletedOrder = sessionStorage.getItem('wepi_order_completed_time');
+      if (hasCompletedOrder) return;
+      if (cart.items && cart.items.length > 0) return;
+
+      try {
+        // Verificar en la DB si el usuario tiene pedidos en su historial
+        const { data: userOrders } = await api.supabase
+          .from('pedidos_general')
+          .select('id')
+          .eq('usuario_id', user.id)
+          .limit(1);
+
+        if (userOrders && userOrders.length > 0) return;
+
+        localStorage.setItem(`wepi_last_crm_visit_logged_${user.id}`, todayStr);
+        api.adminLogCRMEvent(user.id, 'VISITA_SIN_COMPRA', { path: location.pathname }).catch(e => console.error("Error CRM visita sin compra:", e));
+      } catch (e) {
+        console.warn("Visita sin compra check skipped:", e.message);
+      }
+    }, 45000);
+
+    return () => clearTimeout(timer);
+  }, [user?.id, user?.ya_realizo_pedidos, location.pathname, cart.items]);
 
   const selectCity = React.useCallback((city) => {
     setActiveCity(city);
@@ -450,6 +499,8 @@ export default function PruebasWalletApp() {
   const [searchingDriver, setSearchingDriver] = React.useState(false);
   const [foundDriver, setFoundDriver] = React.useState(null);
   const [driverSearchTimeout, setDriverSearchTimeout] = React.useState(false);
+  const [showEsperaPanel, setShowEsperaPanel] = React.useState(false);
+  const [enEsperaExtra, setEnEsperaExtra] = React.useState(false);
   const [showCancelOptIn, setShowCancelOptIn] = React.useState(false);
   const [searchSeconds, setSearchSeconds] = React.useState(0);
   const [pendingOrderId, setPendingOrderId] = React.useState(null);
@@ -818,7 +869,7 @@ export default function PruebasWalletApp() {
   }, [allPromotions, calculateDiscountedPrice, selectedLocal, user, userPromoUsage]);
 
 
-  const calculateCheckoutTotals = React.useCallback((P, E, method) => {
+  const calculateCheckoutTotals = React.useCallback((P, E, method, appliedFeeEnvio = 0) => {
     // 1. Evaluar Promociones Unificadas
     const localId = cart.items.length > 0 ? cart.items[0].local_id : null;
     
@@ -886,17 +937,20 @@ export default function PruebasWalletApp() {
     const descuentoCupon = cuponPromo ? ((promoResults.discountTotal || 0) + (promoResults.shippingDiscount || 0)) : 0;
     
     let result;
-    if (method === 'transferencia') {
-      const marketplace_fee = isShopsMode ? discountedE : (discountedE + net_commission);
+    // Apply fee by default (no selection or Mercado Pago). Remove only if explicitly 'efectivo'.
+    if (method !== 'efectivo') {
+      const total_con_fee = total_net + appliedFeeEnvio;
+      const marketplace_fee = isShopsMode ? (discountedE + appliedFeeEnvio) : (discountedE + net_commission + appliedFeeEnvio);
       result = {
-        total: Math.round(total_net),
+        total: Math.round(total_con_fee),
         product_total: P,
         discounted_product_total: discountedP,
         delivery_fee: E,
+        fee_envio: appliedFeeEnvio,
         discounted_delivery_fee: discountedE,
         commission: Math.round(net_commission),
         mp_fee: 0,
-        merchant_payout: Math.round(total_net - marketplace_fee),
+        merchant_payout: Math.round(total_con_fee - marketplace_fee),
         platform_gross: Math.round(marketplace_fee),
         platform_net: Math.round(marketplace_fee),
         appliedPromos: promoResults.appliedPromos,
@@ -904,12 +958,13 @@ export default function PruebasWalletApp() {
         descuentoCupon
       };
     } else {
-      // Default (Efectivo)
+      // (Efectivo)
       result = {
         total: Math.round(discountedP + discountedE),
         product_total: P,
         discounted_product_total: discountedP,
         delivery_fee: E,
+        fee_envio: 0,
         discounted_delivery_fee: discountedE,
         commission: Math.round(net_commission),
         mp_fee: 0,
@@ -1402,6 +1457,10 @@ export default function PruebasWalletApp() {
             toast.success(`¡Pago confirmado! Tu pedido #${pendingData.pedidoId} está siendo procesado.`);
             setConfirmedOrderId(pendingData.pedidoId);
             setShowConfirmedModal(true);
+            setSearchingDriver(false);
+            setFoundDriver(null);
+            setPendingOrderId(null);
+            localStorage.removeItem('pendingOrderData');
             
             // Actualizar estado del pedido en la base de datos
             api.markOrderAsPaid(
@@ -1877,6 +1936,9 @@ export default function PruebasWalletApp() {
         ciudad
       );
       if (d.success) {
+        if (fd.get('whatsapp_optin') === 'on' || !!fd.get('whatsapp_optin')) {
+          api.registerWhatsappOptin({ phoneNumber: telefono, ciudad, userId: d.userId, tipo: 'promociones_novedades' }).catch(() => {});
+        }
         loginAsUser({ 
           userId: d.userId, 
           name: nombre, 
@@ -1917,16 +1979,20 @@ export default function PruebasWalletApp() {
     setAuthLoading(false);
   };
 
+  const safeFeeEnvio = cart.feeEnvio !== undefined ? Number(cart.feeEnvio) : 250;
+  const safeFeeActivo = cart.feeEnvioActivo !== false;
+  const actualFeeEnvio = (safeFeeActivo && cart.deliveryType === 'envio') ? safeFeeEnvio : 0;
+
   const checkoutTotals = React.useMemo(() => {
-    return calculateCheckoutTotals(cart.subtotal, cart.shippingCost, metodoPago);
-  }, [calculateCheckoutTotals, cart.subtotal, cart.shippingCost, metodoPago]);
+    return calculateCheckoutTotals(cart.subtotal, cart.shippingCost, metodoPago, actualFeeEnvio);
+  }, [calculateCheckoutTotals, cart.subtotal, cart.shippingCost, metodoPago, actualFeeEnvio]);
 
   const totalConComision = checkoutTotals.total;
   const visibleMpFee = checkoutTotals.mp_fee;
   
   const potentialCredit = checkoutTotals.potentialCredit || 0;
   const walletDiscountUI = checkoutTotals.walletDiscount || 0;
-  const visibleShipping = cart.deliveryType === 'envio' ? cart.shippingCost : 0;
+  const visibleShipping = cart.deliveryType === 'envio' ? (cart.shippingCost + (checkoutTotals.fee_envio || 0)) : 0;
 
 
 
@@ -2281,7 +2347,7 @@ export default function PruebasWalletApp() {
       const calcSubtotal = cart.items.reduce((sum, i) => sum + (Number(i.precio) * i.qty), 0);
       const shipping = cart.deliveryType === 'envio' ? cart.COSTO_ENVIO : 0;
       
-      const finalTotals = calculateCheckoutTotals(calcSubtotal, shipping, mp);
+      const finalTotals = calculateCheckoutTotals(calcSubtotal, shipping, mp, actualFeeEnvio);
       const exactTotal = finalTotals.total;
 
       const orderItems = cart.items.map(i => ({
@@ -2337,7 +2403,8 @@ export default function PruebasWalletApp() {
         promociones_aplicadas: finalTotals.appliedPromos?.map(p => p.id) || [],
         ganancia_credito: finalTotals.potentialCredit || 0,
         cuponId: finalTotals.appliedCuponId || null,
-        descuentoCupon: finalTotals.descuentoCupon || 0
+        descuentoCupon: finalTotals.descuentoCupon || 0,
+        feeEnvio: finalTotals.fee_envio || 0
       };
 
       if (cart.deliveryType === 'envio' || mp === 'efectivo' || mp === 'transferencia') {
@@ -2345,6 +2412,7 @@ export default function PruebasWalletApp() {
          const response = await api.crearPedido(orderDataForCreation);
 
          if (!response.success) throw new Error("No se pudo crear el pedido base.");
+         cart.markOrderCompleted?.();
 
          // Registrar WhatsApp Opt-in silenciosamente si está marcado
          if (!optInRegistered && whatsappCheckoutOptIn && user && user.telefono) {
@@ -2466,7 +2534,7 @@ export default function PruebasWalletApp() {
     if (searchingDriver && !foundDriver && !driverSearchTimeout) {
       timer = setInterval(() => {
         setSearchSeconds(prev => {
-          if (prev >= 60) { // After 1 minute of UNACCEPTED search
+          if (prev >= 60) { // After 1 min of UNACCEPTED search
             setDriverSearchTimeout(true);
             return 60; 
           }
@@ -2495,30 +2563,50 @@ export default function PruebasWalletApp() {
       try {
         const { data } = await api.supabase
           .from('pedidos_general')
-          .select('estado, repartidor_id')
+          .select('id, estado, repartidor_id, payment_id')
           .eq('id', pendingOrderId)
           .single();
           
         if (data) {
+          if (data.estado === 'Confirmado' && data.payment_id) {
+            console.log("✅ Order confirmed via webhook (Detected via Polling/Initial Check)!");
+            toast.success(`¡Pago confirmado! Tu pedido #${data.id} está siendo procesado.`);
+            setConfirmedOrderId(data.id);
+            setShowConfirmedModal(true);
+            setSearchingDriver(false);
+            setFoundDriver(null);
+            setPendingOrderId(null);
+            localStorage.removeItem('pendingOrderData');
+            return true;
+          }
+
+          if (['Cancelado', 'Rechazado'].includes(data.estado)) {
+            console.log("❌ Order canceled or rejected (Detected via Polling/Initial Check)!");
+            if (user?.id) {
+              const isNoDriver = !data.repartidor_id || (data.motivo_cancelacion && data.motivo_cancelacion.toLowerCase().includes('repartidor'));
+              const targetEvent = isNoDriver ? 'sin_repartidores' : 'PEDIDO_RECHAZADO_FALTA_PAGO';
+              api.adminLogCRMEvent(user.id, targetEvent, { order_id: data.id, total: data.total })
+                .catch(e => console.error(`Error CRM ${targetEvent}:`, e));
+            }
+            setSearchingDriver(false);
+            setDriverSearchTimeout(false);
+            setPendingOrderId(null);
+            setMpRedirectUrl(null);
+            setCheckoutLoading(false);
+            setFoundDriver(null);
+            localStorage.removeItem('pendingOrderDataPruebas');
+            localStorage.removeItem('pendingOrderData');
+            toast.error(data.repartidor_id ? 'El pedido fue cancelado o rechazado.' : 'No encontramos repartidores disponibles para tu pedido.');
+            return true;
+          }
+
           // Si ya se asignó repartidor o estamos en el modal de repartidor encontrado, no cancelar
           if (data.repartidor_id || foundDriver) {
             if (!foundDriver) handleDriverFound(data);
             return true;
           }
 
-          if (['Cancelado', 'Rechazado'].includes(data.estado)) {
-            console.log("❌ Order canceled or rejected (Detected via Polling/Initial Check)!");
-            setSearchingDriver(false);
-            setDriverSearchTimeout(false);
-            setPendingOrderId(null);
-            setMpRedirectUrl(null);
-            setCheckoutLoading(false);
-            localStorage.removeItem('pendingOrderDataPruebas');
-            localStorage.removeItem('pendingOrderData');
-            toast.error('El pedido fue cancelado o rechazado.');
-            return true;
-          }
-          if ((data.estado === 'Pendiente de Pago' || data.estado === 'Confirmado' || data.estado === 'Aceptado') && data.repartidor_id && !foundDriver) {
+          if ((data.estado === 'Pendiente de Pago' || data.estado === 'Aceptado') && data.repartidor_id && !foundDriver) {
             console.log("✅ Order accepted with driver (Detected via Polling/Initial Check)!");
             handleDriverFound(data);
             return true;
@@ -2545,22 +2633,44 @@ export default function PruebasWalletApp() {
         const newOrder = payload.new;
         console.log("🔄 Realtime update:", newOrder.id, newOrder.estado, "Driver ID:", newOrder.repartidor_id);
         
-        if (newOrder.repartidor_id || foundDriver) {
-          if (!foundDriver) handleDriverFound(newOrder);
+        if (newOrder.estado === 'Confirmado' && newOrder.payment_id) {
+          console.log("✅ Order confirmed via webhook (Realtime Update)!");
+          toast.success(`¡Pago confirmado! Tu pedido #${newOrder.id} está siendo procesado.`);
+          setConfirmedOrderId(newOrder.id);
+          setShowConfirmedModal(true);
+          setSearchingDriver(false);
+          setFoundDriver(null);
+          setPendingOrderId(null);
+          localStorage.removeItem('pendingOrderData');
           return;
         }
 
         if (['Cancelado', 'Rechazado'].includes(newOrder.estado)) {
           console.log("❌ Order canceled or rejected (Realtime Update)!");
+          if (user?.id) {
+            const isNoDriver = !newOrder.repartidor_id || (newOrder.motivo_cancelacion && newOrder.motivo_cancelacion.toLowerCase().includes('repartidor'));
+            const targetEvent = isNoDriver ? 'sin_repartidores' : 'PEDIDO_RECHAZADO_FALTA_PAGO';
+            api.adminLogCRMEvent(user.id, targetEvent, { order_id: newOrder.id, total: newOrder.total })
+              .catch(e => console.error(`Error CRM ${targetEvent}:`, e));
+          }
           setSearchingDriver(false);
           setDriverSearchTimeout(false);
           setPendingOrderId(null);
           setMpRedirectUrl(null);
           setCheckoutLoading(false);
+          setFoundDriver(null); // Added this to clear modal
           localStorage.removeItem('pendingOrderDataPruebas');
           localStorage.removeItem('pendingOrderData');
-          toast.error('El pedido fue cancelado o rechazado.');
-        } else if ((newOrder.estado === 'Pendiente de Pago' || newOrder.estado === 'Confirmado' || newOrder.estado === 'Aceptado') && newOrder.repartidor_id && !foundDriver) {
+          toast.error(newOrder.repartidor_id ? 'El pedido fue cancelado o rechazado.' : 'No encontramos repartidores disponibles para tu pedido.');
+          return;
+        }
+
+        if (newOrder.repartidor_id || foundDriver) {
+          if (!foundDriver) handleDriverFound(newOrder);
+          return;
+        }
+
+        if ((newOrder.estado === 'Pendiente de Pago' || newOrder.estado === 'Aceptado') && newOrder.repartidor_id && !foundDriver) {
           handleDriverFound(newOrder);
         }
       })
@@ -2627,28 +2737,46 @@ export default function PruebasWalletApp() {
   const handleCancelPendingOrder = async () => {
     const orderIdToCancel = pendingOrderId;
     const recipientPhone = user && user.telefono;
-    setSearchingDriver(false);
-    setFoundDriver(null);
-    setAcceptedOrder(null);
-    setMpRedirectUrl(null);
-    setPendingOrderId(null);
-    setCartOpen(true);
-    localStorage.removeItem('pendingOrderDataPruebas');
     
     if (orderIdToCancel) {
       try {
+        const { data: currentOrder } = await api.supabase
+          .from('pedidos_general')
+          .select('estado')
+          .eq('id', orderIdToCancel)
+          .single();
+          
+        if (currentOrder && ['Confirmado', 'Aceptado', 'Preparando', 'Listo', 'Retirado', 'En camino', 'Entregado'].includes(currentOrder.estado)) {
+          setConfirmedOrderId(orderIdToCancel);
+          setShowConfirmedModal(true);
+          setSearchingDriver(false);
+          setFoundDriver(null);
+          setAcceptedOrder(null);
+          setMpRedirectUrl(null);
+          setPendingOrderId(null);
+          localStorage.removeItem('pendingOrderDataPruebas');
+          return;
+        }
+
+        setSearchingDriver(false);
+        setFoundDriver(null);
+        setAcceptedOrder(null);
+        setMpRedirectUrl(null);
+        setPendingOrderId(null);
+        setCartOpen(true);
+        localStorage.removeItem('pendingOrderDataPruebas');
+
         await Promise.all([
           api.supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderIdToCancel),
           api.supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderIdToCancel)
         ]);
 
-        // Enviar plantilla "sin_repartidores" (Meta API HSM) ÚNICAMENTE al rechazarse/cancelarse el pedido
-        if (recipientPhone) {
-          api.sendWhatsappTemplateMessage({
-            to: recipientPhone,
-            templateName: 'sin_repartidores',
-            languageCode: 'es_AR'
-          }).catch(err => console.error("Error enviando plantilla sin_repartidores:", err));
+        // Registrar evento CRM "sin_repartidores" (dispara WhatsApp/Push y programa el refuerzo de 5 min)
+        if (currentUser?.id || user?.id) {
+          api.adminLogCRMEvent(currentUser?.id || user?.id, 'sin_repartidores', {
+            order_id: orderIdToCancel,
+            phone: recipientPhone
+          }).catch(err => console.error("Error registrando evento CRM sin_repartidores:", err));
         }
 
         toast.success('Búsqueda cancelada');
@@ -2696,6 +2824,12 @@ export default function PruebasWalletApp() {
       const paymentResponse = await iniciarPagoMercadoPago(paymentData);
 
       if (paymentResponse?.init_point) {
+        // Registrar evento CRM PEDIDO_NO_PAGADO (si el usuario no completa el pago en MP)
+        if (user?.id) {
+          api.adminLogCRMEvent(user.id, 'PEDIDO_NO_PAGADO', { order_id: pendingData.pedidoId, total: pendingData.total })
+            .catch(e => console.error("Error CRM PEDIDO_NO_PAGADO:", e));
+        }
+
         // Use standard key for return handling
         localStorage.setItem('pendingOrderData', JSON.stringify({
            ...pendingData,
@@ -3986,6 +4120,13 @@ export default function PruebasWalletApp() {
                   </label>
                 </div>
 
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px', textAlign: 'left' }}>
+                  <input type="checkbox" id="whatsapp_optin" name="whatsapp_optin" defaultChecked style={{ width: 'auto', marginTop: '4px' }} />
+                  <label htmlFor="whatsapp_optin" style={{ fontSize: '0.85rem', color: 'var(--gray-600)', lineHeight: '1.4' }}>
+                    Acepto recibir novedades y seguimiento de pedidos por WhatsApp
+                  </label>
+                </div>
+
                 <button type="submit" className="btn btn-primary btn-full" disabled={authLoading}>
                   {authLoading ? <span className="spinner spinner-white" /> : 'Registrarme'}
                 </button>
@@ -4016,7 +4157,7 @@ export default function PruebasWalletApp() {
                   <button className="btn btn-secondary btn-full" onClick={() => { setModal(null); navigate('/mis-pedidos'); }}>📦 Mis pedidos</button>
                   <button className="btn btn-secondary btn-full" onClick={() => { fetchByCategory('favoritos', 'Mis favoritos'); setModal(null); }}>❤️ Mis favoritos</button>
                   <button className="btn btn-secondary btn-full" onClick={() => setModal('configuracion')}>⚙️ Configuración</button>
-                  <button className="btn btn-ghost btn-full" style={{ marginTop: '12px' }} onClick={() => { doLogout(); setModal(null); toast.success('Sesión cerrada'); }}>
+                  <button className="btn btn-ghost btn-full" style={{ marginTop: '12px' }} onClick={async () => { await doLogout(); setModal(null); toast.success('Sesión cerrada'); window.location.reload(); }}>
                     Cerrar sesión
                   </button>
                 </div>
@@ -4502,6 +4643,21 @@ export default function PruebasWalletApp() {
                 </label>
               </div>
             )}
+
+            {(!user || !user.onesignal_id) && !Capacitor.isNativePlatform() && (
+              <div style={{ marginTop: '24px', marginBottom: '24px', padding: '16px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                <h4 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '12px', color: '#1e293b' }}>Ahora tenés Wepi más cerca que nunca.</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+                  <a href="https://apps.apple.com/ar/app/wepi-app/id6801576564" target="_blank" rel="noopener noreferrer">
+                    <img src="https://i.postimg.cc/3xLdFwyB/disponible-app-store-rtt.png" alt="App Store" style={{ height: '40px' }} />
+                  </a>
+                  <a href="https://api.whatsapp.com/send/?phone=3756543610&text=Quiero+la+App+de+Wepi+para+Android" target="_blank" rel="noopener noreferrer">
+                    <img src="https://i.postimg.cc/TYddN6vJ/disponible-en-google-play-badge-1.png" alt="Google Play" style={{ height: '40px' }} />
+                  </a>
+                </div>
+              </div>
+            )}
+
             <button 
               className="btn btn-secondary btn-full"
               style={{ padding: '14px 20px', borderRadius: '12px', fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}
@@ -4910,7 +5066,10 @@ export default function PruebasWalletApp() {
 
       <footer className="footer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '40px 20px' }}>
         <img src="https://i.postimg.cc/htHr0QMM/Tarde-de-superclasico-(1)-(1).png" alt="Wepi" style={{ height: '80px', objectFit: 'contain' }} />
-        <p>© 2026 <strong>Wepi</strong> — Plataforma de Pedidos y Delivery</p>
+        <p>
+          © 2026 <strong>Wepi</strong> — Plataforma de Pedidos y Delivery
+          <span style={{ display: 'inline-block', marginLeft: '8px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56,189, 248, 0.4)', fontSize: '0.75rem', fontWeight: 'bold' }}>{otaVersion}</span>
+        </p>
         <p>
           <Link to="/locales">Registrá tu local</Link> •{' '}
           <button className="footer-link" style={{ color: 'white' }} onClick={() => setModal('terms')}>Términos</button> •{' '}
@@ -5039,7 +5198,7 @@ export default function PruebasWalletApp() {
                 className="btn btn-primary" 
                 style={{ background: '#009ee3', borderColor: '#009ee3', flex: 1, fontWeight: '700' }}
                 onClick={() => {
-                  window.location.href = mpRedirectUrl;
+                  window.open(mpRedirectUrl, '_blank');
                 }}
               >
                 Aceptar
@@ -5190,7 +5349,7 @@ export default function PruebasWalletApp() {
                           }}
                           disabled={!mpRedirectUrl}
                           onClick={() => {
-                            window.location.href = mpRedirectUrl;
+                            window.open(mpRedirectUrl, '_blank');
                           }}
                         >
                           {!mpRedirectUrl && <div className="spinner-small" style={{ margin: 0, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', width: '12px', height: '12px' }}></div>}
@@ -5224,6 +5383,57 @@ export default function PruebasWalletApp() {
       {driverSearchTimeout && (
         <div className="searching-modal-overlay">
           <div className="searching-modal-card animate-slide-up" style={{ padding: '24px', maxWidth: '360px', borderRadius: '24px' }}>
+              {showEsperaPanel ? (
+                <>
+                  <div style={{ fontSize: '2.5rem', marginBottom: '12px', textAlign: 'center' }}>?</div>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#1e293b', textAlign: 'center', fontSize: '1.35rem' }}>Dejar en espera</h4>
+                  <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '20px', textAlign: 'center' }}>
+                    Durante 10 minutos seguiremos buscando un repartidor para tu pedido.
+                  </p>
+                  
+                  <div style={{ margin: '12px 0 20px 0', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0', textAlign: 'left' }}>
+                    <input 
+                      type="checkbox" 
+                      id="wa-optin-espera"
+                      checked={whatsappCheckoutOptIn}
+                      onChange={e => setWhatsappCheckoutOptIn(e.target.checked)}
+                      style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#25D366' }}
+                    />
+                    <label htmlFor="wa-optin-espera" style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.4', cursor: 'pointer', margin: 0, marginTop: '2px', fontWeight: '500' }}>
+                      Aceptalo para recibir un aviso cuando encontramos al repartidor.
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button 
+                      className="btn btn-full"
+                      style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '12px' }}
+                      onClick={() => setShowEsperaPanel(false)}
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      className="btn btn-full"
+                      style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '12px' }}
+                      onClick={() => {
+                        setShowEsperaPanel(false);
+                        setDriverSearchTimeout(false);
+                        api.extenderEsperaRepartidor(pendingOrderId, whatsappCheckoutOptIn, user?.telefono).then(() => {
+                          toast.success('El pedido qued� en espera por 10 minutos ?');
+                          localStorage.removeItem('pendingOrderDataPruebas');
+                          localStorage.removeItem('pendingOrderData');
+                          setPendingOrderId(null);
+                          setSearchingDriver(false);
+                          navigate('/mis-pedidos');
+                        });
+                      }}
+                    >
+                      Confirmar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
             <h2 style={{ fontSize: '1.35rem', fontWeight: '800', color: '#1e293b', marginBottom: '12px', textAlign: 'center' }}>
               🔎 Seguimos buscando
             </h2>
@@ -5269,9 +5479,44 @@ export default function PruebasWalletApp() {
                 }}
               >
                 🟢 Repetir pedido
-              </button>
+                </button>
 
-              {!optInRegistered && (
+                {!getIsCashOrder() && (() => {
+                   let localId = cart.items?.[0]?.local_id;
+                   if (!localId) {
+                     try {
+                       const pd = JSON.parse(localStorage.getItem('pendingOrderDataPruebas') || '{}');
+                       localId = pd.localId;
+                     } catch(e){}
+                   }
+                   const loc = locals.find(l => l.id === localId);
+                   return loc ? isLocalOpen(loc) : true;
+                })() && (
+                  <button 
+                    className="btn btn-full"
+                    style={{
+                      background: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      fontWeight: '700',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      fontSize: '0.92rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 8px rgba(59, 130, 246, 0.25)',
+                      marginTop: '6px',
+                      marginBottom: '6px'
+                    }}
+                    onClick={() => setShowEsperaPanel(true)}
+                  >
+                    ? Dejar en espera
+                  </button>
+                )}
+
+                {!optInRegistered && (
                 <div style={{ margin: '6px 0', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
                   <input 
                     type="checkbox" 
@@ -5328,9 +5573,11 @@ export default function PruebasWalletApp() {
                 }}
               >
                 ⚪ Cancelar pedido
-              </button>
+                </button>
+              </div>
+              </>
+              )}
             </div>
-          </div>
         </div>
       )}
 
@@ -5728,8 +5975,57 @@ function WalletDetailsPanel({ onClose, balance, transactions, promotions, userId
             </div>
           </div>
         )} */}
+      {/* ESPERA PANEL MODAL */}
+      {showEsperaPanel && (
+        <div className="wa-optin-modal-overlay" style={{ zIndex: 999999 }}>
+          <div className="wa-optin-modal-content animate-slide-up" style={{ padding: '24px', textAlign: 'center' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>?</div>
+            <h4 style={{ margin: '0 0 12px 0', color: '#1e293b' }}>Dejar en espera</h4>
+            <p style={{ color: '#475569', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '20px' }}>
+              Durante 10 minutos seguiremos buscando un repartidor para tu pedido.
+            </p>
+            
+            <div style={{ margin: '12px 0 20px 0', display: 'flex', alignItems: 'flex-start', gap: '10px', background: '#f0fdf4', padding: '12px', borderRadius: '12px', border: '1px solid #bbf7d0', textAlign: 'left' }}>
+              <input 
+                type="checkbox" 
+                id="wa-optin-espera"
+                checked={whatsappCheckoutOptIn}
+                onChange={e => setWhatsappCheckoutOptIn(e.target.checked)}
+                style={{ marginTop: '3px', width: '18px', height: '18px', accentColor: '#25D366' }}
+              />
+              <label htmlFor="wa-optin-espera" style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.4', cursor: 'pointer', margin: 0, marginTop: '2px', fontWeight: '500' }}>
+                Aceptalo para recibir un aviso cuando encontramos al repartidor.
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                className="btn btn-full"
+                style={{ background: '#f1f5f9', color: '#475569', border: 'none', padding: '12px' }}
+                onClick={() => setShowEsperaPanel(false)}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="btn btn-full"
+                style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '12px' }}
+                onClick={() => {
+                  setShowEsperaPanel(false);
+                  setDriverSearchTimeout(false);
+                  setEnEsperaExtra(true);
+                  setSearchSeconds(0);
+                  api.extenderEsperaRepartidor(pendingOrderId, whatsappCheckoutOptIn, user?.telefono);
+                  toast.success('El pedido qued� en espera por 10 minutos ?');
+                }}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </div>
     </div>
   );
 }
-

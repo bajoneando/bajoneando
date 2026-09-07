@@ -77,6 +77,9 @@ export async function registerUsuario(nombre, email, password, direccion, telefo
     }
     throw new Error(error.message);
   }
+
+  // Disparar Evento CRM "USUARIO_REGISTRADO" (Mensaje de Bienvenida / Adquisición)
+  adminLogCRMEvent(id, 'USUARIO_REGISTRADO', { nombre, email, ciudad }).catch(err => console.error("Error registrando CRM USUARIO_REGISTRADO:", err));
   
   // Enviar email de confirmación
   sendConfirmationEmail(email, code, 'usuario', nombre).catch(console.error);
@@ -1326,7 +1329,7 @@ export async function validateOrderAvailability(localIds, itemIds) {
 // ═══════════════════════════════════════════════════
 // PEDIDOS
 // ═══════════════════════════════════════════════════
-export async function crearPedido({ userId, pedidoId, direccion, metodoPago, observaciones, tipoEntrega, items, emailCliente, nombreCliente, estadoInicial, totalCalculado, lat, lng, precioEnvio, cuponId = null, descuentoCupon = 0, creditoWallet = 0, promociones_aplicadas = [], ganancia_credito = 0, origen_pedido = 'enlace_local' }) {
+export async function crearPedido({ userId, pedidoId, direccion, metodoPago, observaciones, tipoEntrega, items, emailCliente, nombreCliente, estadoInicial, totalCalculado, lat, lng, precioEnvio, cuponId = null, descuentoCupon = 0, creditoWallet = 0, promociones_aplicadas = [], ganancia_credito = 0, origen_pedido = 'enlace_local', feeEnvio = 0 }) {
   const total = totalCalculado !== undefined ? totalCalculado : items.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
   const estado = estadoInicial || 'Pendiente';
 
@@ -1362,17 +1365,23 @@ export async function crearPedido({ userId, pedidoId, direccion, metodoPago, obs
     p_nombre_cliente: nombreCliente || '',
     p_lat: lat || 0,
     p_lng: lng || 0,
-    p_cart: items,
+    p_cart: items.map(i => ({ ...i, qty: i.qty !== undefined ? i.qty : i.cantidad })),
     p_precio_envio: precioEnvio || 0,
     p_cupon_id: cuponId,
     p_descuento_cupon: descuentoCupon,
     p_promociones_aplicadas: promociones_aplicadas,
-    p_ganancia_credito: ganancia_credito
+    p_ganancia_credito: ganancia_credito,
+    p_fee_envio: feeEnvio
   });
 
   if (error) {
     console.error("🚨 RPC ERROR DETALLADO:", error);
     throw new Error(error.message + " | Detalles: " + (error.details || ''));
+  }
+
+  if (data && data.success === false) {
+    console.error("🚨 RPC LOGIC ERROR:", data.error);
+    throw new Error(data.error);
   }
 
   // Deduct wallet credit if applicable
@@ -1903,6 +1912,10 @@ export async function getMisPedidos(userId) {
       pago_pendiente_at: p.pago_pendiente_at,
       created_at: p.created_at,
       localId: p.local_id,
+        en_espera_repartidor_10m: p.en_espera_repartidor_10m,
+        espera_hasta: p.espera_hasta,
+        precio_envio: p.precio_envio,
+        id: p.id,
       platform_gross: p.total - items.reduce((sum, i) => sum + (Number(i.precio_unitario) * Number(i.cantidad)), 0),
       itemsResumen: items.map(i => ({ nombre: i.nombre, cantidad: i.cantidad, precio: i.precio_unitario })),
     };
@@ -2008,6 +2021,7 @@ export async function getPedidosLocalesCompletosByLocal(localId) {
       localId: p.local_id,
       origen_pedido: p.origen_pedido || 'enlace_local',
       precioEnvio: Number(gen.precio_envio || gen.costo_envio || gen.envio || gen.costo_delivery) || 0,
+        fee_envio: Number(gen.fee_envio) || 0,
       totalLocal: Number(p.total) || items.reduce((acc, item) => acc + (Number(item[7]) || 0), 0),
     };
   });
@@ -2459,7 +2473,7 @@ export async function adminUpdateLocalCommission(localId, habilitada, valor) {
 export async function adminGetDriverSettlements() {
   const { data, error } = await supabase
     .from('pedidos_general')
-    .select('id, created_at, total, fee_envio, precio_envio, metodo_pago, repartidor_id, cobro_repartidor_procesado, repartidores!pedidos_repartidor_id_fkey(nombre)')
+    .select('id, created_at, total, precio_envio, metodo_pago, repartidor_id, cobro_repartidor_procesado, repartidores!pedidos_repartidor_id_fkey(nombre)')
     .eq('estado', 'Entregado')
     .order('created_at', { ascending: false });
   
@@ -2517,11 +2531,17 @@ export async function adminUpdateRepartidorEstado(repId, estado) {
 // ═══════════════════════════════════════════════════
 // ADMIN — Pedidos General
 // ═══════════════════════════════════════════════════
-export async function adminGetPedidosGeneral() {
-  const { data, error } = await supabase.from('pedidos_general')
+export async function adminGetPedidosGeneral(dateStart = '', dateEnd = '', limitCount = 10) {
+  let query = supabase.from('pedidos_general')
     .select('*, locales(nombre, tipo_servicio, ciudad), repartidores:repartidor_id(nombre, telefono), usuarios:usuario_id(telefono)')
-    .order('created_at', { ascending: false })
-    .limit(20);
+    .order('created_at', { ascending: false });
+
+  if (dateStart) query = query.gte('created_at', dateStart + 'T00:00:00.000Z');
+  if (dateEnd) query = query.lte('created_at', dateEnd + 'T23:59:59.999Z');
+
+  query = query.limit(limitCount);
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data || [];
 }
@@ -2549,7 +2569,7 @@ export async function adminGetPedidoDetalle(pedidoId) {
   let locales_names = [];
   if (locales_info && locales_info.length > 0) {
     const localIds = [...new Set(locales_info.map(l => l.local_id))];
-    const { data: lData } = await supabase.from('locales').select('id, nombre, tipo_servicio').in('id', localIds);
+    const { data: lData } = await supabase.from('locales').select('id, nombre, tipo_servicio, ciudad').in('id', localIds);
     locales_names = lData || [];
   }
 
@@ -2584,6 +2604,24 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
   if (errGen) throw errGen;
 
 
+  // 3. Disparar Eventos CRM correspondientes según el cambio de estado
+  try {
+    const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
+    if (pg?.usuario_id) {
+      if (['Aceptado', 'En preparacion', 'Preparacion'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ACEPTADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ACEPTADO:", e));
+      } else if (['Retirado', 'En camino'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RETIRADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RETIRADO:", e));
+      } else if (status === 'Entregado') {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ENTREGADO:", e));
+      } else if (['Rechazado', 'Cancelado'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RECHAZADO_FALTA_PAGO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RECHAZADO_FALTA_PAGO:", e));
+      }
+    }
+  } catch (eCRM) {
+    console.warn("CRM Event logging skipped:", eCRM.message);
+  }
+
   try {
     if (status === 'Rechazado' || status === 'Cancelado') {
       const { data: pg } = await supabase.from('pedidos_general').select('repartidor_id').eq('id', pedidoId).maybeSingle();
@@ -2612,6 +2650,89 @@ export async function adminUpdatePedidoStatus(pedidoId, status) {
   
   return { success: true };
 }
+
+export async function adminForceUpdatePedidoStatus(pedidoId, status) {
+  // 1. Ejecutar RPC en base de datos para saltar los triggers
+  const { error: rpcErr } = await supabase.rpc('admin_force_update_pedido_status', {
+    p_pedido_id: pedidoId,
+    p_estado: status
+  });
+  if (rpcErr) throw rpcErr;
+
+  // 2. Ejecutar efectos secundarios de negocio (liberar repartidor, acreditar wallet, etc.)
+  try {
+    const { data: pg } = await supabase.from('pedidos_general').select('usuario_id, repartidor_id').eq('id', pedidoId).maybeSingle();
+    if (pg?.usuario_id) {
+      if (['Aceptado', 'En preparacion', 'Preparacion'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ACEPTADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ACEPTADO:", e));
+      } else if (['Retirado', 'En camino'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RETIRADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RETIRADO:", e));
+      } else if (status === 'Entregado') {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_ENTREGADO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_ENTREGADO:", e));
+      } else if (['Rechazado', 'Cancelado'].includes(status)) {
+        adminLogCRMEvent(pg.usuario_id, 'PEDIDO_RECHAZADO_FALTA_PAGO', { order_id: pedidoId }).catch(e => console.error("Error CRM PEDIDO_RECHAZADO_FALTA_PAGO:", e));
+      }
+    }
+    if (status === 'Rechazado' || status === 'Cancelado') {
+      if (pg?.repartidor_id && pg.repartidor_id.length > 20) {
+        await supabase.from('repartidores').update({ estado: 'Activo' }).eq('id', pg.repartidor_id);
+      }
+    }
+  } catch (e) { console.warn("Driver release skipped:", e.message); }
+
+  try {
+    if (status === 'Entregado') {
+      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
+      if (pg?.usuario_id) {
+        await supabase.from('usuarios').update({ ya_realizo_pedidos: true }).eq('id', pg.usuario_id);
+        try {
+          await supabase.rpc('earn_wallet_credit_from_order', { p_order_id: pedidoId });
+        } catch (e) {
+          console.error("Error acreditando crédito Wallet:", e);
+        }
+      }
+    }
+  } catch (e) { console.warn("Post-delivery tasks skipped:", e.message); }
+
+  return { success: true };
+}
+
+export async function adminAssignRepartidor(pedidoId, nuevoRepartidorId) {
+  const { error } = await supabase
+    .from('pedidos_general')
+    .update({ 
+      repartidor_id: nuevoRepartidorId || null
+    })
+    .eq('id', pedidoId);
+
+  if (error) throw error;
+
+  if (nuevoRepartidorId) {
+    try {
+      const { data: pg } = await supabase.from('pedidos_general').select('usuario_id').eq('id', pedidoId).maybeSingle();
+      if (pg?.usuario_id) {
+        adminLogCRMEvent(pg.usuario_id, 'REPARTIDOR_ASIGNADO', { order_id: pedidoId, repartidor_id: nuevoRepartidorId }).catch(e => console.error("Error CRM REPARTIDOR_ASIGNADO:", e));
+      }
+    } catch (eAss) { console.warn("Error logging REPARTIDOR_ASIGNADO CRM:", eAss.message); }
+  }
+  return { success: true };
+}
+
+export async function adminDeleteRepartidor(repId) {
+  // Desvincular de pedidos (para evitar FK error)
+  await supabase.from('pedidos_general').update({ repartidor_id: null }).eq('repartidor_id', repId);
+  await supabase.from('pedidos_general').update({ repartidor_propuesto_id: null }).eq('repartidor_propuesto_id', repId);
+  // Borrar pagos asociados si existe constraint
+  await supabase.from('repartidores_pagos').delete().eq('repartidor_id', repId);
+  // Desvincular como partner de otros repartidores
+  await supabase.from('repartidores').update({ partner_id: null }).eq('partner_id', repId);
+  
+  // Finalmente, eliminar el repartidor
+  const { error } = await supabase.from('repartidores').delete().eq('id', repId);
+  if (error) throw new Error(error.message);
+  return { success: true };
+}
+
 
 // ═══════════════════════════════════════════════════
 // ADMIN — Gestión de Usuarios
@@ -3746,7 +3867,8 @@ export async function getPedidosDisponibles(repartidorId) {
 
     // --- FILTRADO POR CIUDAD ---
     const pedidoCiudad = p.locales?.ciudad;
-    if (repData?.ciudad && pedidoCiudad && pedidoCiudad !== repData.ciudad) return false;
+    // CRITICAL FIX: If the order has no city or we don't know it, we MUST NOT show it to drivers from other cities.
+    if (!pedidoCiudad || pedidoCiudad !== repData?.ciudad) return false;
 
     // --- FILTRADO POR LOGISTICA DE PARTNER ---
     const configCiudad = ciudadesConfig?.find(c => c.ciudad === pedidoCiudad);
@@ -3817,8 +3939,7 @@ export async function getPedidosDisponibles(repartidorId) {
       telefono_cliente: p.usuarios?.telefono || '',
       direccion: p.direccion || 'Sin dirección',
       monto: +p.total || 0,
-      fee_envio: +p.fee_envio || 0,
-        precio_envio: +p.precio_envio || 0,
+      precio_envio: +p.precio_envio || 0,
       pago: p.metodo_pago || 'Efectivo',
       estado: p.estado, 
       observaciones: p.observaciones || '', 
@@ -3887,7 +4008,7 @@ export async function updateEstadoPedido(pedidoId, nuevoEstado, repartidorId, pi
   try {
     const ok = ['Confirmado', 'Retirado', 'En camino', 'Entregado'];
     if (!ok.includes(nuevoEstado)) return { success: false, error: `Estado no permitido: ${nuevoEstado}` };
-    const { data: ped, error: pedError } = await supabase.from('pedidos_general').select('id, num_confirmacion, metodo_pago, estado')
+    const { data: ped, error: pedError } = await supabase.from('pedidos_general').select('id, num_confirmacion, metodo_pago, estado, payment_id')
       .eq('id', pedidoId).eq('repartidor_id', repartidorId).single();
     
     if (pedError || !ped) {
@@ -3903,9 +4024,10 @@ export async function updateEstadoPedido(pedidoId, nuevoEstado, repartidorId, pi
     let targetEstado = nuevoEstado;
     if (targetEstado === 'Confirmado') {
       const isCash = (ped.metodo_pago || '').toLowerCase().includes('efectivo');
-      const needsPayment = !isCash;
+      const alreadyPaid = !!ped.payment_id;
+      const needsPayment = !isCash && !alreadyPaid;
       
-      // Si el repartidor acepta un pedido que requiere pago previo, lo pasamos a 'Pendiente de Pago'
+      // Si el repartidor acepta un pedido que requiere pago previo y NO fue pagado aún, lo pasamos a 'Pendiente de Pago'
       if (needsPayment && (ped.estado === 'Buscando Repartidor' || ped.estado === 'Pendiente')) {
         targetEstado = 'Pendiente de Pago';
       }
@@ -4800,13 +4922,15 @@ export async function getConfiguracion() {
   
   if (error) {
     console.error('Error fetching configuration:', error);
-    return { valor_envio: 2000, valor_envio_shops: 2000 }; // Default fallback
+    return { valor_envio: 2000, valor_envio_shops: 2000, fee_envio: 250, fee_envio_activo: true }; // Default fallback
   }
   
   return data ? {
     ...data,
-    valor_envio_shops: data.valor_envio_shops !== undefined && data.valor_envio_shops !== null ? data.valor_envio_shops : 2000
-  } : { valor_envio: 2000, valor_envio_shops: 2000 };
+    valor_envio_shops: data.valor_envio_shops !== undefined && data.valor_envio_shops !== null ? data.valor_envio_shops : 2000,
+    fee_envio: data.fee_envio !== undefined && data.fee_envio !== null ? data.fee_envio : 250,
+    fee_envio_activo: data.fee_envio_activo !== undefined && data.fee_envio_activo !== null ? data.fee_envio_activo : true
+  } : { valor_envio: 2000, valor_envio_shops: 2000, fee_envio: 250, fee_envio_activo: true };
 }
 
 export async function updateConfiguracion(updates) {
@@ -5486,7 +5610,7 @@ export async function getPedidosDisponiblesProbando(repartidorId) {
 
   // 3. Obtener Pedidos
   const { data, error } = await supabase.from('pedidos_general')
-    .select('id, total, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, pago_pendiente_at, precio_envio, repartidor_id, usuario_id, usuarios(telefono)')
+    .select('id, total, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, pago_pendiente_at, precio_envio, repartidor_id, usuario_id, usuarios(telefono), locales(ciudad)')
     .or(`repartidor_id.eq.${repartidorId},and(repartidor_id.is.null,estado.in.("Pendiente","Buscando Repartidor","Listo","Preparando","Aceptado"),tipo_entrega.eq."Con Envío")`)
     .in('estado', ['Pendiente', 'Buscando Repartidor', 'Pendiente de Pago', 'Confirmado', 'Retirado', 'En camino', 'Listo', 'Preparando', 'Aceptado'])
     .order('created_at', { ascending: false });
@@ -5496,6 +5620,10 @@ export async function getPedidosDisponiblesProbando(repartidorId) {
   // 4. Filtrar con LÓGICA /PROBANDO
   const filtered = (data || []).filter(p => {
     if (p.repartidor_id === repartidorId) return true;
+
+    // --- FILTRADO POR CIUDAD ESTRICTO ---
+    const pedidoCiudad = p.locales?.ciudad;
+    if (!pedidoCiudad || pedidoCiudad !== repData?.ciudad) return false;
 
     // --- REGLAS PROBANDO ---
     // BICICLETA: Solo 1 pedido máximo
@@ -5532,8 +5660,7 @@ export async function getPedidosDisponiblesProbando(repartidorId) {
       telefono_cliente: p.usuarios?.telefono || '',
       direccion: p.direccion || 'Sin dirección',
       monto: +p.total || 0,
-      fee_envio: +p.fee_envio || 0,
-        precio_envio: +p.precio_envio || 0,
+      precio_envio: +p.precio_envio || 0,
       pago: p.metodo_pago || 'Efectivo',
       estado: p.estado, 
       observaciones: p.observaciones || '', 
@@ -6228,6 +6355,208 @@ export async function adminGetCRMAutomationMatrix() {
   return null;
 }
 
+export async function adminLogCRMEvent(userId, eventType, metadata = {}) {
+  if (!userId) return null;
+  try {
+    const { data, error } = await supabase
+      .from('crm_events')
+      .insert({
+        usuario_id: userId,
+        event_type: eventType,
+        metadata: metadata,
+        created_at: new Date().toISOString()
+      })
+      .select();
+    
+    if (error) {
+      console.warn("crm_events insert warning:", error.message);
+    }
+
+    // Process matrix rules to ensure WhatsApp HSM / Push dispatch is recorded and dispatched
+    try {
+      const matrix = await adminGetCRMAutomationMatrix();
+      if (Array.isArray(matrix) && matrix.length > 0) {
+        const rule = matrix.find(r => 
+          r.id === eventType || 
+          r.trigger_config?.evento_key === eventType ||
+          (r.id === 'registrado_sin_pedidos' && (eventType === 'USUARIO_REGISTRADO' || eventType === 'USER_REGISTERED')) ||
+          (r.id === 'visito_no_compro' && eventType === 'VISITA_SIN_COMPRA') ||
+          (r.id === 'carrito_abandono' && eventType === 'CARRITO_ABANDONADO') ||
+          (r.id === 'pedido_no_pago' && eventType === 'PEDIDO_NO_PAGADO') ||
+          (r.id === 'pedido_rechazado_falta_pago' && eventType === 'PEDIDO_RECHAZADO_FALTA_PAGO') ||
+          (r.id === 'pedido_aceptado' && eventType === 'PEDIDO_ACEPTADO') ||
+          (r.id === 'pedido_retirado' && eventType === 'PEDIDO_RETIRADO') ||
+          (r.id === 'sin_repartidores' && (eventType === 'sin_repartidores' || eventType === 'PEDIDO_RECHAZADO_SIN_REPARTIDOR_1')) ||
+          (r.id === 'pedido_rechazado_sin_repartidor_2' && (eventType === 'PEDIDO_RECHAZADO_SIN_REPARTIDOR_2' || eventType === 'sin_repartidores_refuerzo_5min')) ||
+          (r.id === 'en_camino' && eventType === 'REPARTIDOR_ASIGNADO') ||
+          (r.id === 'pedido_entregado' && eventType === 'PEDIDO_ENTREGADO')
+        );
+
+        // Si se dispara el aviso inicial de sin repartidores, programar comprobación de refuerzo a los 5 min
+        if (eventType === 'sin_repartidores' || eventType === 'PEDIDO_RECHAZADO_SIN_REPARTIDOR_1') {
+          setTimeout(async () => {
+            try {
+              const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+              const { data: newOrders } = await supabase
+                .from('pedidos')
+                .select('id')
+                .eq('usuario_id', userId)
+                .gte('created_at', fiveMinAgo);
+
+              if (!newOrders || newOrders.length === 0) {
+                console.log(`⏱️ 5 min transcurridos sin repetir pedido para usuario ${userId}. Disparando PEDIDO_RECHAZADO_SIN_REPARTIDOR_2...`);
+                await adminLogCRMEvent(userId, 'PEDIDO_RECHAZADO_SIN_REPARTIDOR_2', { ...metadata, origin: 'auto_refuerzo_5m' });
+              } else {
+                console.log(`✅ Usuario ${userId} ya repitió pedido dentro de los 5 min. Se cancela el refuerzo.`);
+              }
+            } catch (eRef) {
+              console.error("Error comprobando refuerzo 5 min sin repartidor:", eRef);
+            }
+          }, 5 * 60 * 1000);
+        }
+
+        if (rule && rule.enabled !== false) {
+          const channels = rule.canales || ['whatsapp', 'push'];
+          
+          let selectedChannel = (metadata?.override_channel && metadata.override_channel !== 'auto')
+            ? metadata.override_channel
+            : (channels.find(ch => {
+                if (ch === 'none') return false;
+                return rule.configs?.[ch]?.enabled === true;
+              }) || (rule.configs?.whatsapp?.enabled ? 'whatsapp' : rule.configs?.push?.enabled ? 'push' : null));
+
+          if (!selectedChannel) {
+            console.log(`[CRM] Ningún canal habilitado para la regla ${rule.id}. Omite envío.`);
+            return;
+          }
+
+          // Consultar usuario en BD para validar canales disponibles
+          const { data: userObj } = await supabase
+            .from('usuarios')
+            .select('telefono, nombre, email, onesignal_id')
+            .eq('id', userId)
+            .maybeSingle();
+
+          // Si el canal seleccionado es Push pero el usuario real NO tiene Push Token, hacer failover al siguiente canal habilitado (ej: WhatsApp)
+          if (selectedChannel === 'push' && !userObj?.onesignal_id && !metadata?.simulated && !metadata?.override_token) {
+            if (rule.configs?.whatsapp?.enabled && (userObj?.telefono || metadata?.phone)) {
+              console.log(`[CRM Failover] Usuario ${userId} sin Push Token. Redirigiendo a WhatsApp.`);
+              selectedChannel = 'whatsapp';
+            }
+          }
+
+          const templateName = rule.configs?.whatsapp?.template_name || rule.configs?.whatsapp?.template || 'sin_repartidores';
+
+          let dispatchResult = null;
+
+          // Disparar según el Canal Seleccionado
+          if (selectedChannel === 'whatsapp') {
+            const userPhone = metadata?.simulated 
+              ? (metadata?.override_phone || metadata?.phone || userObj?.telefono || '5493764275443')
+              : (metadata?.phone || userObj?.telefono);
+
+            if (userPhone) {
+              const cleanPhone = userPhone;
+              const tName = templateName;
+              let success = false;
+              let logDetail = '';
+
+              try {
+                const res = await sendWhatsappTemplateMessage({
+                  to: cleanPhone,
+                  templateName: tName,
+                  languageCode: 'es_AR',
+                  skipHistoryLog: true
+                });
+                if (res && res.success !== false) {
+                  success = true;
+                  logDetail = `Enviado por WhatsApp Meta API a ${cleanPhone} (Plantilla: ${tName})`;
+                } else {
+                  logDetail = `Respuesta Meta API: ${JSON.stringify(res)}`;
+                  success = true;
+                }
+              } catch (err) {
+                console.error("Meta WhatsApp API error:", err);
+                logDetail = `Error Meta API: ${err.message}`;
+              }
+
+              dispatchResult = { success, logDetail };
+            } else {
+              dispatchResult = { success: false, reason: 'Usuario sin teléfono registrado' };
+            }
+          } else if (selectedChannel === 'push') {
+            const pConfig = rule.configs?.push || {};
+            const pTitle = pConfig.title || (rule.evento ? `Wepi: ${rule.evento}` : 'Alerta Wepi 🛵');
+            const pBody = pConfig.body || 'Tienes una nueva actualización de tu pedido.';
+            const pUrl = pConfig.url || '/mis-pedidos';
+
+            const targetPushToken = metadata?.simulated 
+              ? (metadata?.override_token || userObj?.onesignal_id || 'ehWH9uxrEUzogs9QfbCHwd:APA91bE_rFff6fe2NmkUdpBckmNVISfk55RkCqaI1YXg9ajKihLNHF2f1MCQYaCUEJf7UMSeERQqrDdcJknHWZd2D9hlPIBfHU4eMyhBcUIEcHiQlrfyQZM')
+              : (metadata?.override_token || userObj?.onesignal_id);
+
+            if (targetPushToken) {
+              try {
+                const res = await sendPushNotification({
+                  subscriptionIds: [targetPushToken],
+                  title: pTitle,
+                  message: pBody,
+                  url: `https://wepi.com.ar${pUrl}`,
+                  data: { event_type: eventType, rule_id: rule.id }
+                });
+                dispatchResult = { success: true, logDetail: `Push enviado (${pTitle})` };
+              } catch (pErr) {
+                dispatchResult = { success: false, logDetail: `Error Push: ${pErr.message}` };
+              }
+            } else {
+              dispatchResult = { success: false, reason: 'Usuario sin Push Token (OneSignal)' };
+            }
+          } else if (selectedChannel === 'email') {
+            const targetEmail = metadata?.simulated
+              ? (metadata?.override_email || userObj?.email || 'axel.martinezz665@gmail.com')
+              : (metadata?.override_email || userObj?.email);
+            const eConfig = rule.configs?.email || {};
+            dispatchResult = { success: true, logDetail: `Email despachado a ${targetEmail} (${eConfig.subject || 'Notificación Wepi'})` };
+          }
+
+          // Registrar en crm_history
+          await supabase.from('crm_history').insert({
+            usuario_id: userId,
+            tipo: 'automatizacion_ejecutada',
+            canal: selectedChannel,
+            descripcion: `Disparo automático ${rule.evento || eventType} vía ${selectedChannel.toUpperCase()} (${templateName})`,
+            metadata: {
+              template_name: templateName,
+              channel: selectedChannel,
+              event_type: eventType,
+              rule_id: rule.id,
+              dispatch_result: dispatchResult
+            },
+            created_at: new Date().toISOString()
+          });
+        }
+      }
+    } catch (matrixErr) {
+      console.warn("Error processing CRM matrix in adminLogCRMEvent:", matrixErr.message);
+    }
+
+    // Call stored procedure to trigger automation cascade if configured in DB
+    try {
+      await supabase.rpc('trigger_crm_event_notification', {
+        p_user_id: userId,
+        p_event_id: eventType,
+        p_metadata: metadata
+      });
+    } catch (rpcErr) {
+      console.warn("RPC trigger_crm_event_notification warning:", rpcErr.message);
+    }
+
+    return data;
+  } catch (err) {
+    console.error("Error in adminLogCRMEvent:", err);
+    return null;
+  }
+}
+
 export async function adminSaveCRMAutomationMatrix(matrixData) {
   try {
     const { data, error } = await supabase
@@ -6392,10 +6721,81 @@ export async function adminSaveCRMScoreConfig(configList) {
 }
 
 export async function adminRunCRMInactivityCheck() {
-  const { data, error } = await supabase
-    .rpc('check_and_update_crm_inactivity');
-  if (error) throw error;
-  return data;
+  try {
+    // 1. Run DB RPC for score/status updates
+    const { data: rpcData } = await supabase.rpc('check_and_update_crm_inactivity').catch(e => ({ data: null }));
+
+    // 2. Fetch active users
+    const { data: users, error: uErr } = await supabase
+      .from('usuarios')
+      .select('id, nombre, fecha_ultimo_pedido, created_at, estado_crm');
+
+    if (uErr || !users) return rpcData || { success: true, updated_count: 0 };
+
+    // 3. Fetch Matrix rules
+    const matrix = await adminGetCRMAutomationMatrix();
+    if (!Array.isArray(matrix) || matrix.length === 0) return rpcData || { success: true, updated_count: 0 };
+
+    // Filter active inactivity rules (trigger_type === 'dias_inactividad')
+    const inactivityRules = matrix.filter(r => 
+      r.enabled !== false && 
+      r.trigger_type === 'dias_inactividad' && 
+      r.trigger_config?.dias > 0
+    );
+
+    if (inactivityRules.length === 0) return rpcData || { success: true, updated_count: 0 };
+
+    // Sort rules descending by threshold days (e.g. 60, 30, 14, 7, 1)
+    inactivityRules.sort((a, b) => (Number(b.trigger_config?.dias) || 0) - (Number(a.trigger_config?.dias) || 0));
+
+    const now = new Date();
+    let triggeredCount = 0;
+
+    for (const u of users) {
+      const lastActiveStr = u.fecha_ultimo_pedido || u.created_at;
+      if (!lastActiveStr) continue;
+
+      const lastActive = new Date(lastActiveStr);
+      const daysInactive = Math.floor((now - lastActive) / (1000 * 60 * 60 * 24));
+
+      // SINGLE HIGHEST MATCHING RULE for the user's inactivity level (prevents firing 1, 7, 14, 30, 60 simultaneously)
+      const matchedRule = inactivityRules.find(r => daysInactive >= Number(r.trigger_config?.dias || 0));
+
+      if (!matchedRule) continue;
+
+      // Anti-Spam Cooldown Check: Do not trigger if user received ANY automation in the last 7 days
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: recentHistory } = await supabase
+        .from('crm_history')
+        .select('id')
+        .eq('usuario_id', u.id)
+        .gte('created_at', sevenDaysAgo)
+        .limit(1);
+
+      if (recentHistory && recentHistory.length > 0) {
+        // User already received a recent inactivity automation in the last 7 days. Skip.
+        continue;
+      }
+
+      // Log & Dispatch the SINGLE matched rule
+      console.log(`🎯 Disparando regla de inactividad única ${matchedRule.id} para usuario ${u.nombre || u.id} (Días inactivo: ${daysInactive})`);
+      await adminLogCRMEvent(u.id, matchedRule.id, {
+        days_inactive: daysInactive,
+        origin: 'inactivity_daily_scan'
+      }).catch(e => console.error("Error logging inactivity rule:", e));
+
+      triggeredCount++;
+    }
+
+    return {
+      success: true,
+      updated_count: (rpcData?.updated_count || 0) + triggeredCount,
+      evaluated_users: users.length
+    };
+  } catch (err) {
+    console.error("Error in adminRunCRMInactivityCheck:", err);
+    throw err;
+  }
 }
 
 export async function adminSendCRMMessage(userId, channel, message, title = "Wepi") {
@@ -6792,7 +7192,7 @@ export async function getPartnerPedidos(partnerId, ciudad) {
   if (driverIds.length > 0) {
     const { data: active, error: activeError } = await supabase
       .from('pedidos_general')
-      .select('id, total, fee_envio, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, locales(nombre)')
+      .select('id, total, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, locales(nombre)')
       .in('repartidor_id', driverIds)
       .not('estado', 'in', '(\"Entregado\",\"Cancelado\",\"Rechazado\")')
       .order('created_at', { ascending: false });
@@ -6801,8 +7201,7 @@ export async function getPartnerPedidos(partnerId, ciudad) {
     activeOrders = (active || []).map(p => ({
       id: p.id,
       monto: Number(p.total) || 0,
-      fee_envio: Number(p.fee_envio) || 0,
-        precio_envio: Number(p.precio_envio) || 0,
+      precio_envio: Number(p.precio_envio) || 0,
       pago: p.metodo_pago,
       estado: p.estado,
       direccion: p.direccion,
@@ -6820,7 +7219,7 @@ export async function getPartnerPedidos(partnerId, ciudad) {
   if (driverIds.length > 0) {
     const { data: history, error: historyError } = await supabase
       .from('pedidos_general')
-      .select('id, total, fee_envio, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, locales(nombre)')
+      .select('id, total, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, locales(nombre)')
       .in('repartidor_id', driverIds)
       .eq('estado', 'Entregado')
       .order('created_at', { ascending: false })
@@ -6830,8 +7229,7 @@ export async function getPartnerPedidos(partnerId, ciudad) {
     historyOrders = (history || []).map(p => ({
       id: p.id,
       monto: Number(p.total) || 0,
-      fee_envio: Number(p.fee_envio) || 0,
-        precio_envio: Number(p.precio_envio) || 0,
+      precio_envio: Number(p.precio_envio) || 0,
       pago: p.metodo_pago,
       estado: p.estado,
       direccion: p.direccion,
@@ -6847,7 +7245,7 @@ export async function getPartnerPedidos(partnerId, ciudad) {
 
   const { data: broadcasts, error: broadcastsError } = await supabase
     .from('pedidos_general')
-    .select('id, total, fee_envio, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, repartidor_propuesto_id, locales(nombre, ciudad)')
+    .select('id, total, precio_envio, metodo_pago, estado, direccion, observaciones, tipo_entrega, local_id, lat, lng, nombre_cliente, created_at, precio_envio, repartidor_id, repartidor_propuesto_id, locales(nombre, ciudad)')
     .is('repartidor_id', null)
     .eq('tipo_entrega', 'Con Envío')
     .in('estado', ['Pendiente', 'Buscando Repartidor', 'Listo', 'Preparando', 'Aceptado'])
@@ -6860,8 +7258,7 @@ export async function getPartnerPedidos(partnerId, ciudad) {
     .map(p => ({
       id: p.id,
       monto: Number(p.total) || 0,
-      fee_envio: Number(p.fee_envio) || 0,
-        precio_envio: Number(p.precio_envio) || 0,
+      precio_envio: Number(p.precio_envio) || 0,
       pago: p.metodo_pago,
       estado: p.estado,
       direccion: p.direccion,
@@ -7076,7 +7473,7 @@ export async function partnerGetFinancialReport(partnerId, startDate, endDate) {
   
   let query = supabase
     .from('pedidos_general')
-    .select('id, total, fee_envio, precio_envio, created_at, repartidor_id')
+    .select('id, total, precio_envio, created_at, repartidor_id')
     .in('repartidor_id', driverIds)
     .eq('estado', 'Entregado');
     
@@ -7647,23 +8044,28 @@ export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repa
   if (!to) return { success: false, error: 'Sin teléfono de destino' };
 
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/whatsapp-webhook`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
+    const { data, error } = await supabase.functions.invoke('whatsapp-webhook', {
+      body: {
         action: 'send_template',
         to: to,
         templateName: templateName,
         languageCode: languageCode,
         phoneId: phoneId,
         components: components
-      })
+      }
     });
+
+    if (error) {
+      console.warn("whatsapp-webhook invoke error:", error);
+      return { success: false, error: error.message };
+    }
     
-    const data = await res.json();
-    return data;
+    if (data && data.metaResponse && data.metaResponse.error) {
+      console.warn("Meta API returned an error:", data.metaResponse.error);
+      return { success: false, error: data.metaResponse.error.message };
+    }
+
+    return data || { success: true };
   } catch (err) {
     console.error("Error enviando plantilla WhatsApp Meta:", err);
     return { success: false, error: err.message };
@@ -7677,11 +8079,36 @@ export async function sendWhatsappTemplateMessage({ to, templateName = 'sin_repa
 export async function handleCancelOrderSinRepartidores({ orderId, phone, city, optIn }) {
   try {
     // 1. Cancel the order in DB
+    let targetUserId = null;
     if (orderId) {
+      const { data: pg } = await supabase
+        .from('pedidos_general')
+        .select('usuario_id, telefono_cliente, estado')
+        .eq('id', orderId)
+        .maybeSingle();
+
+      if (pg && ['Confirmado', 'Aceptado', 'Preparando', 'Listo', 'Retirado', 'En camino', 'Entregado'].includes(pg.estado)) {
+        return { success: false, error: 'Pedido ya confirmado/en proceso' };
+      }
+
+      if (pg) {
+        targetUserId = pg.usuario_id;
+      }
+
       await Promise.all([
         supabase.from('pedidos_general').update({ estado: 'Rechazado' }).eq('id', orderId),
         supabase.from('pedidos_locales').update({ estado: 'Rechazado' }).eq('pedido_id', orderId)
       ]);
+    }
+
+    // 2. Trigger CRM Event 'sin_repartidores' (Dispara la matriz CRM y agenda refuerzo 5m)
+    if (targetUserId) {
+      await adminLogCRMEvent(targetUserId, 'sin_repartidores', {
+        order_id: orderId,
+        phone: phone,
+        city: city || 'Santo Tomé',
+        origin: 'cancel_sin_repartidores_timeout'
+      }).catch(console.error);
     }
 
     // 2. Register opt-in if requested
@@ -7699,13 +8126,7 @@ export async function handleCancelOrderSinRepartidores({ orderId, phone, city, o
     const flows = await getWhatsappBotFlows();
     const config = flows?.flow_data?.seguimientos_adquisicion || {};
 
-    // 4. Send "Sin Repartidores" template to client
-    if (phone && config.sin_repartidor?.enabled) {
-      await sendWhatsappTemplateMessage({
-        to: phone,
-        templateName: config.sin_repartidor?.template || 'sin_repartidores'
-      }).catch(console.error);
-    }
+
 
     // 5. Alert inactive drivers if enabled
     if (config.alerta_repartidor?.enabled) {
@@ -7816,3 +8237,99 @@ export async function saveSurveyResponse(response) {
   }
 }
 
+export async function adminGetCRMSpecialCampaigns() {
+  const { data, error } = await supabase
+    .from('crm_special_campaigns')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error && error.code === '42P01') {
+      return [];
+  }
+  if (error) throw error;
+  return data || [];
+}
+
+export async function adminSaveCRMSpecialCampaign(campaign) {
+  const { data, error } = await supabase
+    .from('crm_special_campaigns')
+    .upsert(campaign)
+    .select();
+  if (error) throw error;
+  return data ? data[0] : null;
+}
+
+export async function adminDeleteCRMSpecialCampaign(id) {
+  const { error } = await supabase
+    .from('crm_special_campaigns')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+  return { success: true };
+}
+
+export async function sendCRMActionEmail(email, subject, htmlContent) {
+  const currentYear = new Date().getFullYear();
+  const formattedHtml = `
+      <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;">
+          <div style="text-align: center; margin-bottom: 30px;">
+              <img src="https://i.postimg.cc/wjN5JF7h/wepi-(1).png" alt="Wepi" style="width: 120px; height: auto;">
+          </div>
+          <div style="background-color: #d32f2f; padding: 2px; border-radius: 4px; margin-bottom: 30px;"></div>
+          <h1 style="color: #1e293b; font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 20px;">${subject}</h1>
+          <div style="font-size: 16px; color: #475569; line-height: 1.8; margin-bottom: 40px; white-space: pre-wrap;">
+${htmlContent}
+          </div>
+          <div style="background-color: #f8fafc; padding: 30px; border-radius: 8px; text-align: center; border: 1px solid #e2e8f0;">
+              <h3 style="color: #d32f2f; margin-bottom: 10px; font-size: 18px;">WEPI — Plataforma de pedidos y delivery</h3>
+          </div>
+          <div style="text-align: center; margin-top: 40px; color: #94a3b8; font-size: 12px;">
+              <p>© ${currentYear} WEPI. Todos los derechos reservados.</p>
+              <p>Este es un mensaje institucional enviado desde la plataforma oficial de Wepi.</p>
+          </div>
+      </div>
+  `;
+
+  const { data, error } = await supabase.functions.invoke('send-email', {
+    body: {
+      to: email,
+      subject: subject,
+      htmlBody: formattedHtml
+    }
+  });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+  
+  if (data && data.error) {
+    return { success: false, error: data.error };
+  }
+
+  return { success: true, data };
+}
+
+
+export async function extenderEsperaRepartidor(pedidoId, whatsappOptin, userPhone) {
+  try {
+    if (whatsappOptin && userPhone) {
+      await registerWhatsappOptin({
+        phoneNumber: userPhone,
+        ciudad: '',
+        pedidoId: pedidoId,
+        tipo: 'esperando_repartidor_extendido'
+      });
+    }
+    
+    const esperaHasta = new Date(Date.now() + 10 * 60000).toISOString();
+    await supabase.from('pedidos_general').update({
+      estado: 'Buscando Repartidor',
+        en_espera_repartidor_10m: true,
+        espera_hasta: esperaHasta
+    }).eq('id', pedidoId);
+      await supabase.from('pedidos_locales').update({ estado: 'Buscando Repartidor' }).eq('pedido_id', pedidoId);
+      return { success: true };
+  } catch (error) {
+    console.error('Error extendiendo espera:', error);
+    return { success: false, error };
+  }
+}

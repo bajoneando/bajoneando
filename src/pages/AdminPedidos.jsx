@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { supabase } from '../services/supabase';
 import * as api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -10,17 +11,32 @@ const AdminPedidos = () => {
     const [statusFilter, setStatusFilter] = useState('Todos');
     const [localFilter, setLocalFilter] = useState('Todos');
     const [cityFilter, setCityFilter] = useState('Todos');
+    const [dateStartFilter, setDateStartFilter] = useState('');
+    const [dateEndFilter, setDateEndFilter] = useState('');
+    const [limit, setLimit] = useState(10);
     const [locales, setLocales] = useState([]);
     
     // Modal state
     const [selectedPedido, setSelectedPedido] = useState(null);
-    const [modalLoading, setModalLoading] = useState(false);
     const [pedidoDetalle, setPedidoDetalle] = useState(null);
+    const [modalLoading, setModalLoading] = useState(false);
+    const [forceMode, setForceMode] = useState(false);
+    const [userCrmHistory, setUserCrmHistory] = useState([]);
+    const [allRepartidores, setAllRepartidores] = useState([]);
+
+    const loadRepartidores = async () => {
+        try {
+            const reps = await api.adminGetRepartidoresDetallado();
+            setAllRepartidores(reps || []);
+        } catch (err) {
+            console.error('Error al cargar repartidores:', err);
+        }
+    };
 
     const loadPedidos = async () => {
         setLoading(true);
         try {
-            const data = await api.adminGetPedidosGeneral();
+            const data = await api.adminGetPedidosGeneral(dateStartFilter, dateEndFilter, limit);
             setPedidos(data);
             
             // Fetch locales for filter
@@ -35,14 +51,23 @@ const AdminPedidos = () => {
 
     useEffect(() => {
         loadPedidos();
+    }, [dateStartFilter, dateEndFilter, limit]);
+
+    useEffect(() => {
+        loadRepartidores();
     }, []);
 
     const handleOpenDetail = async (id) => {
         setModalLoading(true);
         setSelectedPedido(id);
+        setUserCrmHistory([]);
         try {
             const detalle = await api.adminGetPedidoDetalle(id);
             setPedidoDetalle(detalle);
+            if (detalle?.user_id) {
+                const { data } = await supabase.from('crm_history').select('*').eq('usuario_id', detalle.user_id).order('created_at', { ascending: false }).limit(3);
+                setUserCrmHistory(data || []);
+            }
         } catch (err) {
             toast.error('Error al cargar detalle del pedido');
             setSelectedPedido(null);
@@ -54,20 +79,29 @@ const AdminPedidos = () => {
     const handleCloseModal = () => {
         setSelectedPedido(null);
         setPedidoDetalle(null);
+        setUserCrmHistory([]);
+        setForceMode(false);
     };
 
     const handleUpdateStatus = async (pedidoId, newStatus) => {
-        if (!window.confirm(`¿Cambiar estado a ${newStatus}?`)) return;
+        if (forceMode) {
+            if (!window.confirm(`⚠️ ADVERTENCIA: ¿Seguro que deseas FORZAR el cambio de estado a "${newStatus}"? Esto saltará las restricciones de la base de datos.`)) return;
+        } else {
+            if (!window.confirm(`¿Cambiar estado a ${newStatus}?`)) return;
+        }
         try {
-            await api.adminUpdatePedidoStatus(pedidoId, newStatus);
-            toast.success('Estado actualizado');
+            if (forceMode) {
+                await api.adminForceUpdatePedidoStatus(pedidoId, newStatus);
+            } else {
+                await api.adminUpdatePedidoStatus(pedidoId, newStatus);
+            }
+            toast.success(forceMode ? 'Estado forzado con éxito' : 'Estado actualizado');
             setPedidoDetalle(prev => ({ ...prev, estado: newStatus }));
             loadPedidos();
         } catch (err) {
             console.error(err);
             toast.error('Error al actualizar estado: ' + (err.message || 'Error desconocido'));
         }
-
     };
 
     const formatFecha = (fechaStr) => {
@@ -101,21 +135,45 @@ const AdminPedidos = () => {
     const estadosPosibles = ['Buscando Repartidor', 'Pendiente de Pago', 'Pendiente', 'Confirmado', 'Preparando', 'Listo', 'Retirado', 'En camino', 'Entregado', 'Rechazado', 'Cancelado'];
     return (
         <div className="panel-card animate-fade-in">
-            <header className="panel-header">
-                <div className="header-info">
+            <header className="panel-header" style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'flex-start' }}>
+                <div className="header-info" style={{ minWidth: '200px' }}>
                     <h2>Historial de Pedidos</h2>
                     <p style={{ fontSize: '0.85rem', color: '#64748b' }}>{filteredPedidos.length} pedidos encontrados</p>
                 </div>
-                <div className="header-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div className="header-actions" style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-start' }}>
                     <input 
                         type="text" 
                         placeholder="Buscar ID o Cliente..." 
                         className="filter-input"
+                        style={{ maxWidth: '180px' }}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Desde:</span>
+                        <input 
+                            type="date" 
+                            className="filter-input"
+                            style={{ maxWidth: '130px', padding: '0.5rem' }}
+                            value={dateStartFilter}
+                            onChange={(e) => setDateStartFilter(e.target.value)}
+                            title="Fecha inicio"
+                        />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Hasta:</span>
+                        <input 
+                            type="date" 
+                            className="filter-input"
+                            style={{ maxWidth: '130px', padding: '0.5rem' }}
+                            value={dateEndFilter}
+                            onChange={(e) => setDateEndFilter(e.target.value)}
+                            title="Fecha fin"
+                        />
+                    </div>
                     <select 
                         className="filter-select"
+                        style={{ minWidth: 'auto', maxWidth: '160px', padding: '0.5rem' }}
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
                     >
@@ -125,6 +183,7 @@ const AdminPedidos = () => {
 
                     <select 
                         className="filter-select"
+                        style={{ minWidth: 'auto', maxWidth: '160px', padding: '0.5rem' }}
                         value={cityFilter}
                         onChange={(e) => setCityFilter(e.target.value)}
                     >
@@ -135,12 +194,29 @@ const AdminPedidos = () => {
 
                     <select 
                         className="filter-select"
+                        style={{ minWidth: 'auto', maxWidth: '180px', padding: '0.5rem' }}
                         value={localFilter}
                         onChange={(e) => setLocalFilter(e.target.value)}
                     >
                         <option value="Todos">Todos los locales</option>
                         {locales.map(l => <option key={l.id} value={l.id}>{l.nombre}</option>)}
                     </select>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Cargar:</span>
+                        <select 
+                            className="filter-select"
+                            style={{ minWidth: 'auto', padding: '0.5rem' }}
+                            value={limit}
+                            onChange={(e) => setLimit(Number(e.target.value))}
+                        >
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                    </div>
+
                     <button className="btn btn-primary" onClick={loadPedidos}>Refrescar</button>
                 </div>
             </header>
@@ -316,13 +392,54 @@ const AdminPedidos = () => {
                                         <p><strong>Entrega:</strong> {pedidoDetalle.tipo_entrega}</p>
                                         <p><strong>Total:</strong> <span className="total-price">${Number(pedidoDetalle.total).toLocaleString('es-AR')}</span></p>
                                         <p><strong>PIN de Entrega:</strong> <span style={{ color: 'var(--red-600)', fontWeight: 'bold', fontSize: '1.1rem' }}>{pedidoDetalle.num_confirmacion || 'N/A'}</span></p>
-                                        {pedidoDetalle.repartidores && (
-                                            <div className="driver-info-box" style={{ marginTop: '10px', padding: '10px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #dcfce7' }}>
-                                                <p style={{ margin: 0, fontWeight: 700, color: '#166534' }}>🛵 Repartidor Asignado:</p>
-                                                <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem' }}><strong>Nombre:</strong> {pedidoDetalle.repartidores.nombre}</p>
-                                                <p style={{ margin: '2px 0 0 0', fontSize: '0.9rem' }}><strong>Teléfono:</strong> {pedidoDetalle.repartidores.telefono || 'No disponible'}</p>
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            const orderCity = pedidoDetalle?.locales_info?.[0]?.locales?.ciudad || 'Santo Tomé';
+                                            const repartidoresFiltrados = allRepartidores.filter(rep => 
+                                                rep.admin_status === 'Aceptado' && 
+                                                rep.ciudad === orderCity
+                                            );
+                                            return (
+                                                <div className="driver-assign-box" style={{ marginTop: '10px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                                    <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '6px' }}>🛵 Repartidor Asignado:</p>
+                                                    
+                                                    {pedidoDetalle.repartidores ? (
+                                                        <div style={{ marginBottom: '8px', fontSize: '0.9rem' }}>
+                                                            <strong>{pedidoDetalle.repartidores.nombre}</strong> ({pedidoDetalle.repartidores.telefono || 'Sin teléfono'})
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{ marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8', fontStyle: 'italic' }}>Ningún repartidor asignado</div>
+                                                    )}
+
+                                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                        <select
+                                                            className="filter-select"
+                                                            style={{ flex: 1, height: '36px', fontSize: '0.85rem', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                                            value={pedidoDetalle.repartidor_id || ''}
+                                                            onChange={async (e) => {
+                                                                const newDriverId = e.target.value;
+                                                                if (window.confirm('¿Cambiar el repartidor asignado a este pedido?')) {
+                                                                    try {
+                                                                        await api.adminAssignRepartidor(pedidoDetalle.id, newDriverId || null);
+                                                                        toast.success('Repartidor actualizado');
+                                                                        handleOpenDetail(pedidoDetalle.id);
+                                                                        loadPedidos();
+                                                                    } catch (err) {
+                                                                        toast.error('Error al asignar repartidor: ' + err.message);
+                                                                    }
+                                                                }
+                                                            }}
+                                                        >
+                                                            <option value="">-- Sin asignar / Remover --</option>
+                                                            {repartidoresFiltrados.map(rep => (
+                                                                <option key={rep.id} value={rep.id}>
+                                                                    {rep.nombre} ({rep.email})
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Tiempos Cronometrados */}
                                         <div className="driver-info-box" style={{ marginTop: '10px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.9rem' }}>
@@ -366,9 +483,24 @@ const AdminPedidos = () => {
                                                 )}
                                             </div>
                                         )}
-
                                     </section>
                                 </div>
+                                
+                                {userCrmHistory.length > 0 && (
+                                    <div className="crm-history-box" style={{ marginTop: '16px', padding: '12px', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a', fontSize: '0.9rem' }}>
+                                        <p style={{ margin: '0 0 8px 0', fontWeight: 700, color: '#92400e', display: 'flex', alignItems: 'center', gap: '6px' }}>📢 Campañas Recientes a este usuario:</p>
+                                        <ul style={{ paddingLeft: '20px', margin: 0, color: '#b45309' }}>
+                                            {userCrmHistory.map(hist => (
+                                                <li key={hist.id} style={{ marginBottom: '4px' }}>
+                                                    <strong>{hist.detalle || hist.tipo}</strong> — 
+                                                    <span style={{ fontSize: '0.8rem', marginLeft: '6px' }}>
+                                                        {new Date(hist.created_at).toLocaleString()}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
 
                                 <section className="detail-section items-section">
                                     <h4>📦 Detalle por Local</h4>
@@ -418,7 +550,7 @@ const AdminPedidos = () => {
                                                     <tfoot style={{ borderTop: '1px dashed #cbd5e1' }}>
                                                         <tr>
                                                             <td colSpan="3" style={{ textAlign: 'right', fontWeight: 600, padding: '12px 8px 0' }}>Total Local:</td>
-                                                            <td style={{ textAlign: 'right', fontWeight: 800, padding: '12px 8px 0', color: '#1e293b' }}>${Number(li.total).toLocaleString('es-AR')}</td>
+                                                            <td style={{ textAlign: 'right', fontWeight: 800, padding: '12px 8px 0', color: '#1e293b' }}>${Number(localItems.reduce((acc, item) => acc + (Number(item.subtotal) || 0), 0) || li.total).toLocaleString('es-AR')}</td>
                                                         </tr>
                                                     </tfoot>
                                                 </table>
@@ -438,8 +570,14 @@ const AdminPedidos = () => {
                                                 <span>Costo de Envío</span>
                                                 <span>${Number(pedidoDetalle.precio_envio).toLocaleString('es-AR')}</span>
                                             </div>
+                                          )}
+                                          {Number(pedidoDetalle.fee_envio) > 0 && (
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', marginBottom: '8px', fontSize: '0.9rem' }}>
+                                                <span>Tarifa de Servicio Wepi</span>
+                                                <span>${Number(pedidoDetalle.fee_envio).toLocaleString('es-AR')}</span>
+                                            </div>
                                         )}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 900, color: '#1e293b' }}>
                                             <span>TOTAL PEDIDO</span>
                                             <span>${Number(pedidoDetalle.total).toLocaleString('es-AR')}</span>
                                         </div>
@@ -447,7 +585,17 @@ const AdminPedidos = () => {
                                 </section>
 
                                 <footer className="detail-footer">
-                                    <h4>Acciones de Estado</h4>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' }}>
+                                        <h4 style={{ margin: 0 }}>Acciones de Estado</h4>
+                                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.85rem', color: '#dc2626', fontWeight: 'bold' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                checked={forceMode} 
+                                                onChange={(e) => setForceMode(e.target.checked)} 
+                                            />
+                                            ⚠️ Modo Forzar (Desactivar seguros)
+                                        </label>
+                                    </div>
                                     <div className="action-buttons">
                                         {estadosPosibles.map(est => (
                                             <button 

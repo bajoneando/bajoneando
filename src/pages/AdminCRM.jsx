@@ -15,7 +15,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'adquisicion_bienvenida' },
+            whatsapp: { enabled: true, template_name: 'adquisicion_1' },
             push: { enabled: true, title: '¡Bienvenido a Wepi!', body: 'Descubre los mejores locales cerca tuyo.', url: '/pedir' },
             email: { enabled: true, subject: '¡Bienvenido a Wepi! 🍔', body: 'Hola [Nombre], gracias por registrarte...', url: 'https://wepi.com.ar/pedir', logo_url: '' }
         }
@@ -32,7 +32,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'email'],
         configs: {
             push: { enabled: true, title: '¿Tienes hambre?', body: 'Encuentra promociones exclusivas hoy.', url: '/pedir' },
-            whatsapp: { enabled: true, template_name: 'activacion_visita' },
+            whatsapp: { enabled: true, template_name: 'activacion_1' },
             email: { enabled: true, subject: 'Tus tiendas favoritas te esperan', body: 'Hola [Nombre]...', url: 'https://wepi.com.ar', logo_url: '' }
         }
     },
@@ -47,7 +47,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'none'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'recuperacion_carrito_1' },
+            whatsapp: { enabled: true, template_name: 'recuperacion_1' },
             push: { enabled: true, title: '¡Olvidaste productos en tu carrito!', body: 'Concluye tu pedido en 1 solo clic.', url: '/checkout' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
@@ -63,8 +63,24 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'none'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'pago_pendiente_alerta' },
+            whatsapp: { enabled: true, template_name: 'recuperacion_pago_1' },
             push: { enabled: true, title: 'Pago pendiente', body: 'Tu pedido aguarda por la confirmación de pago.', url: '/mis-pedidos' },
+            email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
+        }
+    },
+    {
+        id: 'pedido_rechazado_falta_pago',
+        evento: '❌ Pedido Rechazado por Falta de Pago',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'Pago rechazado / fallido',
+        trigger_config: { evento_key: 'PEDIDO_RECHAZADO_FALTA_PAGO' },
+        comunicacion: 'Alerta de pago fallido',
+        enabled: true,
+        canales: ['whatsapp', 'push', 'none'],
+        configs: {
+            whatsapp: { enabled: true, template_name: 'pedido_rechazado_pago' },
+            push: { enabled: true, title: 'Pago Rechazado ❌', body: 'Tu pago no pudo ser procesado. Reintenta con otro medio de pago.', url: '/checkout' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
     },
@@ -79,8 +95,103 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'none'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'seguimiento_demora_repartidor' },
+            whatsapp: { enabled: true, template_name: 'pedido_rechazado_repartidor_1' },
             push: { enabled: true, title: 'Buscando repartidor...', body: 'Seguimos asignando tu pedido.', url: '/mis-pedidos' },
+            email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
+        }
+    },
+    {
+        id: 'repartidor_encontrado_espera',
+        evento: 'Repartidor encontrado en espera',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'Repartidor encontrado tras espera extendida',
+        trigger_config: { evento_key: 'repartidor_encontrado_espera' },
+        comunicacion: 'Confirmaci�n de espera',
+        enabled: true,
+        canales: ['whatsapp', 'push', 'none'],
+        metadata: { 
+            message: 'Ya encontramos un repartidor para tu pedido, complet� el pago para confirmarlo.',
+            template_name: 'repartidor_encontrado_espera'
+        }
+    },
+    {
+        id: 'sin_repartidores',
+        evento: '🛵 1. Aviso Sin Repartidores (Fase 2)',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'Sin repartidores disponibles',
+        trigger_config: { evento_key: 'sin_repartidores' },
+        comunicacion: 'Rescate por demanda',
+        enabled: true,
+        canales: ['whatsapp', 'push', 'none'],
+        configs: {
+            whatsapp: { enabled: true, template_name: 'pedido_rechazado_repartidor_1' },
+            push: { enabled: true, title: 'Buscando repartidor... 🛵', body: 'No encontramos repartidores cercanos. Guardamos tu pedido para reintentar en 1 clic.', url: '/checkout' },
+            email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
+        }
+    },
+    {
+        id: 'pedido_rechazado_sin_repartidor_2',
+        evento: '🛵 2. Refuerzo 5 min Sin Repartidor (Sin Repetir Pedido)',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: '5 min sin repetir pedido tras sin_repartidores',
+        trigger_config: { evento_key: 'PEDIDO_RECHAZADO_SIN_REPARTIDOR_2' },
+        comunicacion: 'Refuerzo de rescate',
+        enabled: true,
+        canales: ['whatsapp', 'push', 'none'],
+        configs: {
+            whatsapp: { enabled: true, template_name: 'pedido_rechazado_repartidor_2' },
+            push: { enabled: true, title: '🛵 ¿Reintentamos tu pedido?', body: 'Han pasado 5 min y tu carrito sigue guardado. Reintenta tu pedido en 1 solo clic.', url: '/checkout' },
+            email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
+        }
+    },
+    {
+        id: 'pedido_aceptado',
+        evento: '👨‍🍳 Pedido Aceptado',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'En preparación',
+        trigger_config: { evento_key: 'PEDIDO_ACEPTADO' },
+        comunicacion: 'Confirmación',
+        enabled: true,
+        canales: ['push', 'whatsapp', 'none'],
+        configs: {
+            push: { enabled: true, title: '¡Tu pedido fue aceptado! 🍳', body: 'El comercio ya está preparando tu comida.', url: '/mis-pedidos' },
+            whatsapp: { enabled: true, template_name: 'tenemos_repartidor' },
+            email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
+        }
+    },
+    {
+        id: 'pedido_retirado',
+        evento: '📦 Pedido Retirado',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'Retirado por repartidor',
+        trigger_config: { evento_key: 'PEDIDO_RETIRADO' },
+        comunicacion: 'En camino',
+        enabled: true,
+        canales: ['push', 'whatsapp', 'none'],
+        configs: {
+            push: { enabled: true, title: '¡Pedido retirado! 🛵', body: 'El repartidor ya lleva tu pedido en camino.', url: '/mis-pedidos' },
+            whatsapp: { enabled: true, template_name: 'llego_pedido' },
+            email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
+        }
+    },
+    {
+        id: 'repartidor_cerca',
+        evento: '📍 Repartidor cerca',
+        estado: 'TODOS',
+        trigger_type: 'evento_sistema',
+        trigger_label: 'A menos de 500m',
+        trigger_config: { evento_key: 'REPARTIDOR_CERCA' },
+        comunicacion: 'Aviso de llegada',
+        enabled: true,
+        canales: ['push', 'whatsapp', 'none'],
+        configs: {
+            push: { enabled: true, title: '🛵 ¡Tu repartidor está cerca!', body: 'Está a menos de 500 metros de tu domicilio. Prepárate para recibirlo.', url: '/mis-pedidos' },
+            whatsapp: { enabled: true, template_name: 'llego_pedido' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
     },
@@ -96,7 +207,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'none'],
         configs: {
             push: { enabled: true, title: '¡Tu pedido va en camino! 🛵', body: 'El repartidor está cerca de tu ubicación.', url: '/mis-pedidos' },
-            whatsapp: { enabled: true, template_name: 'repartidor_en_camino' },
+            whatsapp: { enabled: true, template_name: 'tenemos_repartidor' },
             email: { enabled: false, subject: '', body: '', url: '', logo_url: '' }
         }
     },
@@ -111,7 +222,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'encuesta_satisfaccion' },
+            whatsapp: { enabled: true, template_name: 'retencion_1' },
             push: { enabled: true, title: '¿Cómo estuvo tu pedido?', body: 'Danos tu calificación para seguir mejorando.', url: '/mis-pedidos' },
             email: { enabled: true, subject: '¿Qué tal tu experiencia con Wepi?', body: 'Gracias por pedir...', url: 'https://wepi.com.ar', logo_url: '' }
         }
@@ -127,7 +238,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'fidelizacion_cupon_descuento' },
+            whatsapp: { enabled: true, template_name: 'retencion_2' },
             push: { enabled: true, title: '¡Regalo para tu próximo pedido!', body: 'Tienes un cupón activo.', url: '/pedir' },
             email: { enabled: true, subject: 'Un regalo especial para ti 🎁', body: 'Aprovecha este beneficio...', url: 'https://wepi.com.ar', logo_url: '' }
         }
@@ -144,7 +255,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'email'],
         configs: {
             push: { enabled: true, title: '¡Te extrañamos!', body: 'Hace una semana que no pides. ¿Qué se te antoja hoy?', url: '/pedir' },
-            whatsapp: { enabled: true, template_name: 'recompra_7dias' },
+            whatsapp: { enabled: true, template_name: 'recompra_1' },
             email: { enabled: true, subject: 'Es hora de darte un gusto 🍔', body: 'Descubre los menúes de hoy...', url: 'https://wepi.com.ar', logo_url: '' }
         }
     },
@@ -160,7 +271,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'email'],
         configs: {
             push: { enabled: true, title: '¿Sin ganas de cocinar?', body: 'Tu comida favorita lista para ser entregada.', url: '/pedir' },
-            whatsapp: { enabled: true, template_name: 'recompra_14dias' },
+            whatsapp: { enabled: true, template_name: 'recompra_2' },
             email: { enabled: true, subject: 'Tu próximo pedido tiene descuento 🚀', body: 'Hola...', url: 'https://wepi.com.ar', logo_url: '' }
         }
     },
@@ -175,7 +286,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'reactivacion_30dias' },
+            whatsapp: { enabled: true, template_name: 'dormido_30' },
             push: { enabled: true, title: '¡Regresa a Wepi!', body: 'Reclama tu cupón de reactivación antes de que venza.', url: '/pedir' },
             email: { enabled: true, subject: 'Te echamos de menos en Wepi 💛', body: 'Te extrañamos...', url: 'https://wepi.com.ar', logo_url: '' }
         }
@@ -191,7 +302,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'push', 'email'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'reactivacion_fuerte_60dias' },
+            whatsapp: { enabled: true, template_name: 'dormido_60' },
             push: { enabled: true, title: 'Descuento especial del 25%', body: 'Vuelve hoy y aprovecha esta súper oferta.', url: '/pedir' },
             email: { enabled: true, subject: '¡Último llamado! Vuelve con 25% OFF', body: 'Te extrañamos...', url: 'https://wepi.com.ar', logo_url: '' }
         }
@@ -208,7 +319,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         canales: ['push', 'whatsapp', 'email'],
         configs: {
             push: { enabled: true, title: '¡Gracias por ser un cliente fiel!', body: 'Suma puntos extra en tu saldo de Wallet.', url: '/pedir' },
-            whatsapp: { enabled: true, template_name: 'fidelizacion_frecuente' },
+            whatsapp: { enabled: true, template_name: 'retencion_3' },
             email: { enabled: true, subject: 'Beneficios exclusivos por tu fidelidad 🌟', body: 'Hola...', url: 'https://wepi.com.ar', logo_url: '' }
         }
     },
@@ -223,7 +334,7 @@ const DEFAULT_CRM_AUTOMATION_MATRIX = [
         enabled: true,
         canales: ['whatsapp', 'email', 'push'],
         configs: {
-            whatsapp: { enabled: true, template_name: 'vip_exclusivo' },
+            whatsapp: { enabled: true, template_name: 'reactivacion_2' },
             email: { enabled: true, subject: '👑 Acceso VIP Exclusivo a Wepi Premier', body: 'Gracias por ser cliente VIP...', url: 'https://wepi.com.ar', logo_url: '' },
             push: { enabled: true, title: '👑 Eres Cliente VIP', body: 'Disfruta de envíos gratis y atención prioritaria.', url: '/pedir' }
         }
@@ -319,6 +430,10 @@ const DEFAULT_WEPI_HABITS_CONFIG = {
 const AdminCRM = () => {
     // Sub-navigation tabs
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [specialCampaigns, setSpecialCampaigns] = useState([]);
+    const [showSpecialCampaignForm, setShowSpecialCampaignForm] = useState(false);
+    const [specialCampaignForm, setSpecialCampaignForm] = useState({ id: null, nombre: '', canales: ['whatsapp', 'push', 'email'], configs: { whatsapp: { enabled: true, template_name: '' }, push: { enabled: true, title: '', body: '', url: '' }, email: { enabled: true, subject: '', body: '' } }, trigger_time: '' });
+    const [savingSpecialCampaign, setSavingSpecialCampaign] = useState(false);
     
     // Core data states
     const [usuarios, setUsuarios] = useState([]);
@@ -370,6 +485,10 @@ const AdminCRM = () => {
     const [cityFilter, setCityFilter] = useState('Todos');
     const [tagFilter, setTagFilter] = useState('Todos');
     const [scoreMinFilter, setScoreMinFilter] = useState('');
+    const [ordersMinFilter, setOrdersMinFilter] = useState('');
+    const [ordersMaxFilter, setOrdersMaxFilter] = useState('');
+    const [orderTimeStart, setOrderTimeStart] = useState('');
+    const [orderTimeEnd, setOrderTimeEnd] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('Todos');
     const [inactivityDaysFilter, setInactivityDaysFilter] = useState('Todos');
     const [selectedUsers, setSelectedUsers] = useState(new Set());
@@ -407,7 +526,9 @@ const AdminCRM = () => {
             categoria_favorita: 'Todos',
             score_min: 0
         },
-        canal: 'push',
+        canal: 'whatsapp',
+        template_name: '',
+        asunto: '',
         mensaje: '',
         estado: 'Borrador',
         fecha_programada: ''
@@ -415,16 +536,221 @@ const AdminCRM = () => {
 
     // Quick template message sender in User Ficha
     const [selectedUserTemplateText, setSelectedUserTemplateText] = useState('');
-    const [selectedUserTemplateChannel, setSelectedUserTemplateChannel] = useState('push');
+    // Additional states for Bot Flows & WhatsApp Optins
+    const [botFlowData, setBotFlowData] = useState({
+        seguimientos: { sin_repartidor: '', repartidores_disponibles: '', enabled: true },
+        seguimientos_adquisicion: {
+            sin_repartidor: { enabled: true, template: 'sin_repartidores' },
+            falta_pago: { enabled: true, template: 'falta_pago' },
+            alerta_repartidor: { enabled: true, template: 'estas_disponible' },
+            rescate_demanda: { enabled: true, template: 'tenemos_repartidor' }
+        }
+    });
+    const [optins, setOptins] = useState([]);
+    const [savingFlows, setSavingFlows] = useState(false);
+    const [waSearchTerm, setWaSearchTerm] = useState('');
+    const [waModuleFilter, setWaModuleFilter] = useState('Todos');
+    const [waChannelFilter, setWaChannelFilter] = useState('Todos');
 
     useEffect(() => {
         loadAllCRMData();
     }, []);
 
+    // Frontend execution interval for special campaigns
+    useEffect(() => {
+        const executePendingCampaigns = async () => {
+            if (!specialCampaigns || specialCampaigns.length === 0) return;
+            const now = new Date();
+            
+            for (let camp of specialCampaigns) {
+                if (!camp.executed && camp.trigger_time && new Date(camp.trigger_time) <= now) {
+                    try {
+                        // Mark as executed immediately to prevent double firing
+                        await api.adminSaveCRMSpecialCampaign({ ...camp, executed: true });
+                        setSpecialCampaigns(prev => prev.map(c => c.id === camp.id ? { ...c, executed: true } : c));
+                        
+                        // Execute messages
+                        for (let uid of camp.target_user_ids) {
+                            const user = usuarios.find(u => u.id === uid);
+                            if (!user) continue;
+
+                            let sent = false;
+                            const logData = { campaign_id: camp.id, campaign_nombre: camp.nombre };
+
+                            for (let ch of camp.canales) {
+                                if (sent) break;
+                                const config = camp.configs[ch];
+                                if (!config || !config.enabled) continue;
+
+                                try {
+                                    if (ch === 'whatsapp') {
+                                        const phone = user.telefono ? user.telefono.replace(/\D/g, '') : null;
+                                        if (phone && config.template_name) {
+                                            const res = await api.sendWhatsappTemplateMessage({ to: phone, templateName: config.template_name });
+                                            if (res && res.success !== false) {
+                                                sent = true;
+                                                logData.canal = 'whatsapp';
+                                            }
+                                        }
+                                    } else if (ch === 'push') {
+                                        if (user.onesignal_id) {
+                                            // sendPushNotification throws if it fails
+                                            await api.sendPushNotification({ subscriptionIds: [user.onesignal_id], title: config.title, message: config.body, url: config.url });
+                                            sent = true;
+                                            logData.canal = 'push';
+                                        }
+                                    } else if (ch === 'email') {
+                                        if (user.email) {
+                                            // sendCRMActionEmail usually doesn't throw but let's assume it succeeds if it gets here
+                                            const emailRes = await api.sendCRMActionEmail(user.email, config.subject, config.body);
+                                            if (emailRes && emailRes.success !== false) {
+                                                sent = true;
+                                                logData.canal = 'email';
+                                            } else {
+                                                console.warn("Email failed:", emailRes);
+                                            }
+                                        }
+                                    }
+                                } catch (err) {
+                                    console.error(`Error sending ${ch} for user ${uid}`, err);
+                                }
+                            }
+                            
+                            if (sent) {
+                                await api.adminLogCRMEvent(uid, 'CAMPANA_ESPECIAL', { ...logData, descripcion: `Campaña Especial: ${camp.nombre}` });
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Error executing special campaign", camp.id, err);
+                    }
+                }
+            }
+        };
+
+        const interval = setInterval(() => {
+            executePendingCampaigns();
+        }, 30000);
+        return () => clearInterval(interval);
+    }, [specialCampaigns, usuarios]);
+
+    const handleSaveSpecialCampaign = async () => {
+        if (!specialCampaignForm.nombre || !specialCampaignForm.trigger_time) {
+            toast.error("El nombre y el horario son obligatorios");
+            return;
+        }
+        setSavingSpecialCampaign(true);
+        try {
+            const dataToSave = {
+                id: specialCampaignForm.id,
+                nombre: specialCampaignForm.nombre,
+                canales: specialCampaignForm.canales,
+                configs: specialCampaignForm.configs,
+                trigger_time: new Date(specialCampaignForm.trigger_time).toISOString(),
+                target_user_ids: Array.from(selectedUsers),
+                executed: false
+            };
+            if (!dataToSave.id) delete dataToSave.id;
+            
+            const saved = await api.adminSaveCRMSpecialCampaign(dataToSave);
+            toast.success("Campaña especial guardada!");
+            setShowSpecialCampaignForm(false);
+            setSpecialCampaignForm({ id: null, nombre: '', canales: ['whatsapp', 'push', 'email'], configs: { whatsapp: { enabled: true, template_name: '' }, push: { enabled: true, title: '', body: '', url: '' }, email: { enabled: true, subject: '', body: '' } }, trigger_time: '' });
+            setSelectedUsers(new Set()); // clear selection
+            loadAllCRMData();
+        } catch (err) {
+            toast.error("Error al guardar: " + err.message);
+        } finally {
+            setSavingSpecialCampaign(false);
+        }
+    };
+    
+    const handleDivideCampaigns = async () => {
+        const numPartes = prompt("¿En cuántas campañas deseas dividir los usuarios seleccionados?");
+        if (!numPartes || isNaN(numPartes) || numPartes <= 1) return;
+        
+        const partes = parseInt(numPartes);
+        const usersArray = Array.from(selectedUsers);
+        if (usersArray.length === 0) return;
+
+        const chunkSize = Math.ceil(usersArray.length / partes);
+        setSavingSpecialCampaign(true);
+        try {
+            for (let i = 0; i < partes; i++) {
+                const chunk = usersArray.slice(i * chunkSize, (i + 1) * chunkSize);
+                if (chunk.length === 0) continue;
+
+                // Create placeholder campaign starting in 24 hours just as a safe default
+                const defaultDate = new Date();
+                defaultDate.setDate(defaultDate.getDate() + 1);
+
+                const dataToSave = {
+                    nombre: `NO CONFIGURADO AUN - Parte ${i + 1}`,
+                    canales: ['whatsapp', 'push', 'email'],
+                    configs: { 
+                        whatsapp: { enabled: false, template_name: '' }, 
+                        push: { enabled: false, title: '', body: '', url: '' }, 
+                        email: { enabled: false, subject: '', body: '' } 
+                    },
+                    trigger_time: defaultDate.toISOString(),
+                    target_user_ids: chunk,
+                    executed: false
+                };
+                await api.adminSaveCRMSpecialCampaign(dataToSave);
+            }
+            toast.success(`Se crearon ${partes} campañas exitosamente.`);
+            setSelectedUsers(new Set()); // clear selection
+            loadAllCRMData();
+        } catch (err) {
+            toast.error("Error al dividir: " + err.message);
+        } finally {
+            setSavingSpecialCampaign(false);
+        }
+    };
+    
+    const handleEditSpecialCampaign = (camp) => {
+        // Transform the DB structure back to form state
+        // trigger_time needs to be formatted for datetime-local (YYYY-MM-DDThh:mm)
+        const dateObj = new Date(camp.trigger_time);
+        dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
+        const localDateTimeStr = dateObj.toISOString().slice(0, 16);
+
+        setSpecialCampaignForm({
+            id: camp.id,
+            nombre: camp.nombre,
+            canales: camp.canales || ['whatsapp', 'push', 'email'],
+            configs: camp.configs || { whatsapp: { enabled: false, template_name: '' }, push: { enabled: false, title: '', body: '', url: '' }, email: { enabled: false, subject: '', body: '' } },
+            trigger_time: localDateTimeStr
+        });
+        // Select the users from the campaign
+        setSelectedUsers(new Set(camp.target_user_ids || []));
+        setShowSpecialCampaignForm(true);
+    };
+
+    const handleDeleteSpecialCampaign = async (id) => {
+        if(!window.confirm("¿Eliminar esta campaña especial?")) return;
+        try {
+            await api.adminDeleteCRMSpecialCampaign(id);
+            toast.success("Campaña eliminada");
+            loadAllCRMData();
+        } catch (e) {
+            toast.error("Error al eliminar: " + e.message);
+        }
+    };
+    
+    const pendingCampaignsUserIds = useMemo(() => {
+        const ids = new Set();
+        specialCampaigns.forEach(c => {
+            if (!c.executed && c.target_user_ids) {
+                c.target_user_ids.forEach(uid => ids.add(uid));
+            }
+        });
+        return ids;
+    }, [specialCampaigns]);
+
     const loadAllCRMData = async () => {
         setLoading(true);
         try {
-            const [usersRes, tagsRes, autoRes, campRes, scoreRes, eventsRes, historyRes, matrixRes, habitsRes] = await Promise.all([
+            const [usersRes, tagsRes, autoRes, campRes, scoreRes, eventsRes, historyRes, matrixRes, habitsRes, botFlowsRes, optinsRes, specialCampRes] = await Promise.all([
                 api.adminGetCRMUsers(),
                 api.adminGetCRMTags(),
                 api.adminGetCRMAutomations(),
@@ -433,7 +759,10 @@ const AdminCRM = () => {
                 api.adminGetCRMEvents(),
                 api.adminGetCRMHistory(),
                 api.adminGetCRMAutomationMatrix().catch(() => null),
-                api.adminGetWepiHabitsConfig().catch(() => null)
+                api.adminGetWepiHabitsConfig().catch(() => null),
+                api.getWhatsappBotFlows().catch(() => null),
+                api.getWhatsappOptins().catch(() => []),
+                api.adminGetCRMSpecialCampaigns().catch(() => [])
             ]);
 
             setUsuarios(usersRes || []);
@@ -443,18 +772,44 @@ const AdminCRM = () => {
             setScoreConfig(scoreRes || []);
             setEventsLog(eventsRes || []);
             setHistoryLog(historyRes || []);
+            setOptins(optinsRes || []);
+            setSpecialCampaigns(specialCampRes || []);
             
+            let finalMatrix = [...DEFAULT_CRM_AUTOMATION_MATRIX];
             if (matrixRes && Array.isArray(matrixRes) && matrixRes.length > 0) {
-                setMatrixData(matrixRes);
+                const merged = [...matrixRes];
+                DEFAULT_CRM_AUTOMATION_MATRIX.forEach(defItem => {
+                    const exists = merged.some(m => m.id === defItem.id || (m.trigger_config?.evento_key && m.trigger_config?.evento_key === defItem.trigger_config?.evento_key));
+                    if (!exists) {
+                        merged.push(defItem);
+                    }
+                });
+                finalMatrix = merged;
             }
+            setMatrixData(finalMatrix);
             if (habitsRes && habitsRes.moments) {
                 setHabitsConfig(habitsRes);
+            }
+            if (botFlowsRes && botFlowsRes.flow_data) {
+                setBotFlowData(botFlowsRes.flow_data);
             }
         } catch (err) {
             console.error("Error loading CRM datasets:", err);
             toast.error("Error al cargar datos del CRM. Revisa la base de datos.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveBotFlows = async () => {
+        setSavingFlows(true);
+        try {
+            await api.updateWhatsappBotFlows(botFlowData);
+            toast.success("Flujos de seguimiento y plantillas de rescate guardados con éxito 🟢");
+        } catch (err) {
+            toast.error("Error al guardar flujos de seguimiento: " + err.message);
+        } finally {
+            setSavingFlows(false);
         }
     };
 
@@ -477,6 +832,142 @@ const AdminCRM = () => {
             toast.error("Error al ejecutar scan: " + err.message);
         }
     };
+
+    // Event Simulation Handler
+    const [simEventType, setSimEventType] = useState('CARRITO_ABANDONADO');
+    const [simChannel, setSimChannel] = useState('auto');
+    const [simPhone, setSimPhone] = useState('+5493764275443');
+    const [simEmail, setSimEmail] = useState('axel.martinezz665@gmail.com');
+    const [simOverrideToken, setSimOverrideToken] = useState('ehWH9uxrEUzogs9QfbCHwd:APA91bE_rFff6fe2NmkUdpBckmNVISfk55RkCqaI1YXg9ajKihLNHF2f1MCQYaCUEJf7UMSeERQqrDdcJknHWZd2D9hlPIBfHU4eMyhBcUIEcHiQlrfyQZM');
+
+    const handleSimulateCRMEvent = async () => {
+        const targetUserId = usuarios[0]?.id || 'test_user';
+        const loadToast = toast.loading(`Disparando evento ${simEventType}...`);
+        try {
+            await api.adminLogCRMEvent(targetUserId, simEventType, { 
+                simulated: true, 
+                override_channel: simChannel,
+                override_phone: simPhone,
+                override_email: simEmail,
+                override_token: simOverrideToken,
+                triggered_at: new Date().toISOString() 
+            });
+            toast.dismiss(loadToast);
+            const channelLabel = simChannel === 'whatsapp' ? '💬 WhatsApp' : simChannel === 'push' ? '🔔 Push Notification' : simChannel === 'email' ? '📧 Email' : '⚡ Auto (1° Canal Matriz)';
+            toast.success(`¡Evento ${simEventType} disparado por ${channelLabel}!`);
+            loadAllCRMData();
+        } catch (err) {
+            toast.dismiss(loadToast);
+            toast.error("Error al simular evento: " + err.message);
+        }
+    };
+
+    const renderProbadorTriggersCard = () => (
+        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #cbd5e1', marginBottom: '18px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <label style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    🧪 Probador / Disparador de Triggers CRM en Tiempo Real
+                </label>
+                <span style={{ fontSize: '0.75rem', color: '#475569', background: '#e2e8f0', padding: '2px 8px', borderRadius: '6px' }}>
+                    Pruebas en vivo con destino fijado
+                </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', marginBottom: '12px' }}>
+                <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
+                        💬 Destino WhatsApp:
+                    </label>
+                    <input 
+                        type="text" 
+                        className="form-control"
+                        style={{ fontSize: '0.78rem', fontFamily: 'monospace', width: '100%', padding: '6px 10px', background: '#ffffff', border: '1px solid #94a3b8', borderRadius: '6px' }}
+                        value={simPhone}
+                        onChange={(e) => setSimPhone(e.target.value)}
+                        placeholder="Número WhatsApp..."
+                    />
+                </div>
+                <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
+                        📧 Destino Email:
+                    </label>
+                    <input 
+                        type="text" 
+                        className="form-control"
+                        style={{ fontSize: '0.78rem', fontFamily: 'monospace', width: '100%', padding: '6px 10px', background: '#ffffff', border: '1px solid #94a3b8', borderRadius: '6px' }}
+                        value={simEmail}
+                        onChange={(e) => setSimEmail(e.target.value)}
+                        placeholder="Email de prueba..."
+                    />
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#334155', display: 'block', marginBottom: '3px' }}>
+                        🔑 Destino Push Token (OneSignal / FCM):
+                    </label>
+                    <input 
+                        type="text" 
+                        className="form-control"
+                        style={{ fontSize: '0.78rem', fontFamily: 'monospace', width: '100%', padding: '6px 10px', background: '#ffffff', border: '1px solid #94a3b8', borderRadius: '6px' }}
+                        value={simOverrideToken}
+                        onChange={(e) => setSimOverrideToken(e.target.value)}
+                        placeholder="Token OneSignal / Push..."
+                    />
+                </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+                <div style={{ flex: 1.5, minWidth: '220px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '2px' }}>Evento / Trigger a Probar:</label>
+                    <select 
+                        className="form-control"
+                        style={{ fontSize: '0.82rem', width: '100%' }}
+                        value={simEventType}
+                        onChange={(e) => setSimEventType(e.target.value)}
+                    >
+                        <option value="USUARIO_REGISTRADO">👤 USUARIO_REGISTRADO (1. Registrado / Bienvenida)</option>
+                        <option value="VISITA_SIN_COMPRA">👀 VISITA_SIN_COMPRA (2. Visitó sin comprar)</option>
+                        <option value="CARRITO_ABANDONADO">🛒 CARRITO_ABANDONADO (3. Carrito abandonado)</option>
+                        <option value="PEDIDO_NO_PAGADO">💳 PEDIDO_NO_PAGADO (4. Pedido creado sin pago)</option>
+                        <option value="PEDIDO_RECHAZADO_FALTA_PAGO">❌ PEDIDO_RECHAZADO_FALTA_PAGO (5. Pago rechazado)</option>
+                        <option value="sin_repartidores">🛵 sin_repartidores (6. Aviso 1 Sin Repartidores)</option>
+                        <option value="PEDIDO_RECHAZADO_SIN_REPARTIDOR_2">⏱️ PEDIDO_RECHAZADO_SIN_REPARTIDOR_2 (7. Refuerzo 5 min)</option>
+                        <option value="ESPERANDO_REPARTIDOR">🛵 ESPERANDO_REPARTIDOR (8. Demora 15 min)</option>
+                        <option value="PEDIDO_ACEPTADO">👨‍🍳 PEDIDO_ACEPTADO (9. En preparación)</option>
+                        <option value="REPARTIDOR_ASIGNADO">🚴 REPARTIDOR_ASIGNADO (10. Repartidor asignado)</option>
+                        <option value="PEDIDO_RETIRADO">📦 PEDIDO_RETIRADO (11. Retirado en camino)</option>
+                        <option value="REPARTIDOR_CERCA">📍 REPARTIDOR_CERCA (12. A menos de 500m)</option>
+                        <option value="PEDIDO_ENTREGADO">✅ PEDIDO_ENTREGADO (13. Entregado / Satisfacción)</option>
+                    </select>
+                </div>
+
+                <div style={{ flex: 1, minWidth: '180px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '2px' }}>Canal de Destino para Prueba:</label>
+                    <select 
+                        className="form-control"
+                        style={{ fontSize: '0.82rem', width: '100%', fontWeight: 'bold', color: '#1e293b' }}
+                        value={simChannel}
+                        onChange={(e) => setSimChannel(e.target.value)}
+                    >
+                        <option value="auto">⚡ Auto (1° Canal Matriz CRM)</option>
+                        <option value="whatsapp">💬 WhatsApp (Meta Cloud API)</option>
+                        <option value="push">🔔 Push Notification</option>
+                        <option value="email">📧 Email</option>
+                    </select>
+                </div>
+
+                <div style={{ marginTop: '18px' }}>
+                    <button 
+                        type="button" 
+                        className="btn btn-primary"
+                        style={{ fontSize: '0.85rem', padding: '8px 18px', whiteSpace: 'nowrap', fontWeight: 'bold', background: '#2563eb', cursor: 'pointer' }}
+                        onClick={handleSimulateCRMEvent}
+                    >
+                        🚀 Probador / Disparar Evento
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 
     // ─────────────────────────────────────────────────────────────
     // CLASIFICACION & KPIs
@@ -554,6 +1045,11 @@ const AdminCRM = () => {
             const scoreVal = Number(user.wepi_score) || 0;
             const matchesScore = !scoreMinFilter || scoreVal >= Number(scoreMinFilter);
 
+            // Orders
+            const ordersVal = Number(user.cantidad_pedidos) || 0;
+            const matchesOrdersMin = !ordersMinFilter || ordersVal >= Number(ordersMinFilter);
+            const matchesOrdersMax = !ordersMaxFilter || ordersVal <= Number(ordersMaxFilter);
+
             // Inactivity days
             let matchesInactivity = true;
             if (inactivityDaysFilter !== 'Todos') {
@@ -565,9 +1061,26 @@ const AdminCRM = () => {
                 else if (inactivityDaysFilter === '90') matchesInactivity = daysVal >= 90;
             }
 
-            return matchesSearch && matchesStatus && matchesCity && matchesTag && matchesCategory && matchesScore && matchesInactivity;
+            // Order Time
+            let matchesOrderTime = true;
+            if (orderTimeStart || orderTimeEnd) {
+                if (user.fecha_ultimo_pedido) {
+                    const d = new Date(user.fecha_ultimo_pedido);
+                    // Add timezone offset to get local hour correctly, or just use getHours/getMinutes which are local
+                    const hh = d.getHours().toString().padStart(2, '0');
+                    const mm = d.getMinutes().toString().padStart(2, '0');
+                    const timeStr = `${hh}:${mm}`;
+                    
+                    if (orderTimeStart && timeStr < orderTimeStart) matchesOrderTime = false;
+                    if (orderTimeEnd && timeStr > orderTimeEnd) matchesOrderTime = false;
+                } else {
+                    matchesOrderTime = false; // No orders, so it doesn't match a time filter
+                }
+            }
+
+            return matchesSearch && matchesStatus && matchesCity && matchesTag && matchesCategory && matchesScore && matchesOrdersMin && matchesOrdersMax && matchesInactivity && matchesOrderTime;
         });
-    }, [usuarios, searchTerm, statusFilter, cityFilter, tagFilter, categoryFilter, scoreMinFilter, inactivityDaysFilter]);
+    }, [usuarios, searchTerm, statusFilter, cityFilter, tagFilter, categoryFilter, scoreMinFilter, ordersMinFilter, ordersMaxFilter, inactivityDaysFilter, orderTimeStart, orderTimeEnd]);
 
     // Dynamic Lists (Quick Access Lists)
     const handleQuickAccessList = (listType) => {
@@ -576,6 +1089,10 @@ const AdminCRM = () => {
         setTagFilter('Todos');
         setCategoryFilter('Todos');
         setScoreMinFilter('');
+        setOrdersMinFilter('');
+        setOrdersMaxFilter('');
+        setOrderTimeStart('');
+        setOrderTimeEnd('');
         setInactivityDaysFilter('Todos');
         
         if (listType === 'prospectos') {
@@ -1130,8 +1647,18 @@ const AdminCRM = () => {
     }, [usuarios, campaignForm.filtros]);
 
     const handleLaunchCampaign = async () => {
-        if (!campaignForm.nombre || !campaignForm.mensaje) {
-            toast.error("Completa el nombre y el mensaje de la campaña");
+        if (!campaignForm.nombre) {
+            toast.error("Por favor ingresa un nombre para la campaña");
+            return;
+        }
+
+        if (campaignForm.canal === 'whatsapp' && !campaignForm.template_name) {
+            toast.error("Para campañas por WhatsApp debes ingresar el Nombre de la Plantilla Meta (HSM)");
+            return;
+        }
+
+        if ((campaignForm.canal === 'push' || campaignForm.canal === 'email') && !campaignForm.mensaje) {
+            toast.error("Completa el contenido del mensaje de la campaña");
             return;
         }
 
@@ -1144,45 +1671,62 @@ const AdminCRM = () => {
 
         const loader = toast.loading(`${isScheduled ? 'Programando' : 'Ejecutando'} campaña...`);
         try {
-            // Save Campaign
-            const data = {
-                ...campaignForm,
-                estado: isScheduled ? 'Programada' : 'Enviada',
-                fecha_programada: isScheduled ? new Date(campaignForm.fecha_programada).toISOString() : null
-            };
-            
-            const saved = await api.adminSaveCRMCampaign(data);
+            const f = campaignForm.filtros;
+            const targets = usuarios.filter(user => {
+                const matchesCity = f.ciudad === 'Todos' || user.ciudad === f.ciudad;
+                const matchesState = f.estado_crm === 'Todos' || user.estado_crm === f.estado_crm;
+                const matchesTag = f.tag === 'Todos' || (user.crm_usuario_tags && user.crm_usuario_tags.some(t => t.tag_id === f.tag));
+                const matchesOrders = (Number(user.cantidad_pedidos) || 0) >= (Number(f.pedidos_min) || 0);
+                
+                const daysVal = user.fecha_ultimo_pedido ? Math.floor((new Date() - new Date(user.fecha_ultimo_pedido)) / (1000 * 60 * 60 * 24)) : 999;
+                const matchesInact = daysVal >= (Number(f.dias_inactivo_min) || 0);
+                
+                const matchesCat = f.categoria_favorita === 'Todos' || user.categoria_favorita === f.categoria_favorita;
+                const matchesScore = (Number(user.wepi_score) || 0) >= (Number(f.score_min) || 0);
+
+                return matchesCity && matchesState && matchesTag && matchesOrders && matchesInact && matchesCat && matchesScore;
+            });
+
+            let successCount = 0;
+            let failedCount = 0;
 
             if (!isScheduled) {
-                // Execute immediately for matched users
-                const f = campaignForm.filtros;
-                const targets = usuarios.filter(user => {
-                    const matchesCity = f.ciudad === 'Todos' || user.ciudad === f.ciudad;
-                    const matchesState = f.estado_crm === 'Todos' || user.estado_crm === f.estado_crm;
-                    const matchesTag = f.tag === 'Todos' || (user.crm_usuario_tags && user.crm_usuario_tags.some(t => t.tag_id === f.tag));
-                    const matchesOrders = (Number(user.cantidad_pedidos) || 0) >= (Number(f.pedidos_min) || 0);
-                    
-                    const daysVal = user.fecha_ultimo_pedido ? Math.floor((new Date() - new Date(user.fecha_ultimo_pedido)) / (1000 * 60 * 60 * 24)) : 999;
-                    const matchesInact = daysVal >= (Number(f.dias_inactivo_min) || 0);
-                    
-                    const matchesCat = f.categoria_favorita === 'Todos' || user.categoria_favorita === f.categoria_favorita;
-                    const matchesScore = (Number(user.wepi_score) || 0) >= (Number(f.score_min) || 0);
-
-                    return matchesCity && matchesState && matchesTag && matchesOrders && matchesInact && matchesCat && matchesScore;
-                });
-
                 // Send messages
-                let successCount = 0;
+                const msgContent = campaignForm.canal === 'whatsapp' 
+                    ? `Plantilla Meta HSM: ${campaignForm.template_name}` 
+                    : campaignForm.mensaje;
+
                 for (const u of targets) {
                     try {
-                        const result = await api.adminSendCRMMessage(u.id, campaignForm.canal, campaignForm.mensaje, campaignForm.nombre);
-                        if (result.success) successCount++;
+                        const result = await api.adminSendCRMMessage(u.id, campaignForm.canal, msgContent, campaignForm.nombre);
+                        if (result.success) {
+                            successCount++;
+                        } else {
+                            failedCount++;
+                        }
                     } catch (e) {
+                        failedCount++;
                         console.error("Failed sending message to user during campaign:", u.id, e);
                     }
                 }
+            }
+
+            // Save Campaign with execution metrics
+            const data = {
+                ...campaignForm,
+                mensaje: campaignForm.canal === 'whatsapp' ? `Plantilla Meta HSM: ${campaignForm.template_name}` : campaignForm.mensaje,
+                estado: isScheduled ? 'Programada' : 'Enviada',
+                fecha_programada: isScheduled ? new Date(campaignForm.fecha_programada).toISOString() : null,
+                total_audiencia: targets.length,
+                enviados_exito: successCount,
+                fallidos: failedCount
+            };
+            
+            await api.adminSaveCRMCampaign(data);
+
+            if (!isScheduled) {
                 toast.dismiss(loader);
-                toast.success(`Campaña enviada con éxito. Mensajes entregados: ${successCount} de ${targets.length}`);
+                toast.success(`¡Campaña enviada! Despachos exitosos: ${successCount} de ${targets.length} (Fallidos/Sin Opt-in: ${failedCount})`);
             } else {
                 toast.dismiss(loader);
                 toast.success("Campaña programada exitosamente");
@@ -1200,7 +1744,9 @@ const AdminCRM = () => {
                     categoria_favorita: 'Todos',
                     score_min: 0
                 },
-                canal: 'push',
+                canal: 'whatsapp',
+                template_name: '',
+                asunto: '',
                 mensaje: '',
                 estado: 'Borrador',
                 fecha_programada: ''
@@ -1350,6 +1896,218 @@ const AdminCRM = () => {
         );
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // RENDER MONITOR DE ENVÍOS MULTICANAL (WhatsApp, Push, Email)
+    // ─────────────────────────────────────────────────────────────
+    const renderMonitorDeEnviosSection = () => {
+        const filteredHistory = historyLog.filter(h => {
+            const u = usuarios.find(usr => usr.id === h.usuario_id);
+            const q = waSearchTerm.toLowerCase();
+            const channel = (h.canal || h.metadata?.channel || (h.tipo?.includes('whatsapp') ? 'whatsapp' : h.tipo?.includes('push') ? 'push' : 'email')).toLowerCase();
+            const triggerEvent = h.metadata?.event_type || h.metadata?.rule_id || h.descripcion || '';
+            const templateOrTitle = h.metadata?.template_name || h.metadata?.title || h.metadata?.subject || h.descripcion || 'Mensaje enviado';
+
+            const matchesSearch = !q || 
+                (u?.nombre && u.nombre.toLowerCase().includes(q)) ||
+                (u?.telefono && u.telefono.toLowerCase().includes(q)) ||
+                (u?.email && u.email.toLowerCase().includes(q)) ||
+                (h.metadata?.customer_name && h.metadata.customer_name.toLowerCase().includes(q)) ||
+                (h.metadata?.phone && h.metadata.phone.toLowerCase().includes(q)) ||
+                (h.metadata?.to && h.metadata.to.toLowerCase().includes(q)) ||
+                (h.descripcion && h.descripcion.toLowerCase().includes(q)) ||
+                (triggerEvent && triggerEvent.toLowerCase().includes(q)) ||
+                (templateOrTitle && templateOrTitle.toLowerCase().includes(q));
+
+            let matchesModule = true;
+            if (waModuleFilter === 'habitos') matchesModule = h.tipo?.includes('habit') || h.tipo?.includes('desayuno') || h.tipo?.includes('almuerzo') || h.tipo?.includes('cena');
+            else if (waModuleFilter === 'matriz') matchesModule = h.tipo?.includes('auto') || h.tipo?.includes('matriz') || h.tipo?.includes('carrito') || h.tipo?.includes('automatizacion');
+            else if (waModuleFilter === 'campanas') matchesModule = h.tipo?.includes('campana');
+            else if (waModuleFilter === 'seguimientos') matchesModule = h.tipo?.includes('seguimiento') || h.tipo?.includes('rescate') || h.metadata?.template_name === 'sin_repartidores';
+
+            let matchesChannel = true;
+            if (waChannelFilter === 'whatsapp') matchesChannel = channel.includes('whatsapp') || channel === 'wa';
+            else if (waChannelFilter === 'push') matchesChannel = channel.includes('push');
+            else if (waChannelFilter === 'email') matchesChannel = channel.includes('email');
+
+            return matchesSearch && matchesModule && matchesChannel;
+        });
+
+        const totalEnviados = historyLog.length;
+        const totalWa = historyLog.filter(h => h.canal === 'whatsapp' || h.tipo?.includes('whatsapp') || h.metadata?.channel === 'whatsapp').length;
+        const totalPush = historyLog.filter(h => h.canal === 'push' || h.tipo?.includes('push') || h.metadata?.channel === 'push').length;
+        const totalEmail = historyLog.filter(h => h.canal === 'email' || h.tipo?.includes('email') || h.metadata?.channel === 'email').length;
+
+        return (
+            <div className="tab-pane animate-fade-in" style={{ padding: '4px' }}>
+                <div style={{ background: '#f8fafc', padding: '16px 20px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                        <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            📡 Monitor de Envíos Multicanal (WhatsApp HSM, Push & Email)
+                        </h2>
+                        <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: '#475569' }}>
+                            Supervisión y auditoría en tiempo real con disparadores, clientes, plantillas y canales despachados.
+                        </p>
+                    </div>
+                    <span style={{ fontSize: '0.85rem', background: '#e0f2fe', color: '#0369a1', padding: '6px 14px', borderRadius: '20px', fontWeight: 'bold' }}>
+                        🟢 Opt-ins Activos: {optins.length} clientes
+                    </span>
+                </div>
+
+                {/* KPI Cards */}
+                <div className="crm-kpis" style={{ marginBottom: '24px' }}>
+                    <div className="kpi-card" style={{ borderLeft: '4px solid #64748b' }}>
+                        <h3>{totalEnviados}</h3>
+                        <p>📦 Total Despachados</p>
+                    </div>
+                    <div className="kpi-card" style={{ borderLeft: '4px solid #25d366' }}>
+                        <h3>{totalWa}</h3>
+                        <p>💬 WhatsApp HSM</p>
+                    </div>
+                    <div className="kpi-card" style={{ borderLeft: '4px solid #3b82f6' }}>
+                        <h3>{totalPush}</h3>
+                        <p>🔔 Push Notifications</p>
+                    </div>
+                    <div className="kpi-card" style={{ borderLeft: '4px solid #ea580c' }}>
+                        <h3>{totalEmail}</h3>
+                        <p>📧 Emails Despachados</p>
+                    </div>
+                </div>
+
+                {/* Filters */}
+                <div className="filters-panel" style={{ marginBottom: '20px' }}>
+                    <div className="filters-grid" style={{ gridTemplateColumns: '2fr 1fr 1fr' }}>
+                        <div className="filter-item">
+                            <label>Buscar por Cliente / Teléfono / Disparador / Plantilla</label>
+                            <input 
+                                type="text" 
+                                placeholder="Nombre, teléfono, disparador o plantilla..." 
+                                value={waSearchTerm}
+                                onChange={(e) => setWaSearchTerm(e.target.value)}
+                            />
+                        </div>
+                        <div className="filter-item">
+                            <label>Filtrar por Módulo</label>
+                            <select value={waModuleFilter} onChange={(e) => setWaModuleFilter(e.target.value)}>
+                                <option value="Todos">Todos los módulos</option>
+                                <option value="matriz">⚙️ Matriz CRM</option>
+                                <option value="habitos">🧠 Motor de Hábitos</option>
+                                <option value="campanas">🚀 Campañas</option>
+                                <option value="seguimientos">🔄 Flujos de Seguimiento</option>
+                            </select>
+                        </div>
+                        <div className="filter-item">
+                            <label>Filtrar por Canal</label>
+                            <select value={waChannelFilter} onChange={(e) => setWaChannelFilter(e.target.value)}>
+                                <option value="Todos">Todos los canales</option>
+                                <option value="whatsapp">💬 WhatsApp HSM</option>
+                                <option value="push">🔔 Push Notification</option>
+                                <option value="email">📧 Email</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Log Table */}
+                <div className="dashboard-card">
+                    <h3>📡 Registros de Auditoría y Monitor de Envíos</h3>
+                    <div className="table-responsive">
+                        <table className="crm-simple-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha / Hora</th>
+                                    <th>Cliente / Contacto</th>
+                                    <th>Disparador / Evento</th>
+                                    <th>Módulo CRM</th>
+                                    <th>Canal</th>
+                                    <th>Plantilla / Mensaje</th>
+                                    <th>Estado de Envío</th>
+                                    <th>Verificación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredHistory.map((log) => {
+                                    const u = usuarios.find(usr => usr.id === log.usuario_id);
+                                    const rawPhone = u?.telefono || log.metadata?.phone || log.metadata?.to || 'Sin teléfono';
+                                    let cleanPhone = rawPhone.replace(/[\s-]/g, '');
+                                    if (cleanPhone.length >= 10 && !cleanPhone.startsWith('+') && !cleanPhone.startsWith('5')) {
+                                        cleanPhone = '549' + cleanPhone;
+                                    } else if (cleanPhone.startsWith('+')) {
+                                        cleanPhone = cleanPhone.substring(1);
+                                    }
+
+                                    const rawChannel = (log.canal || log.metadata?.channel || (log.tipo?.includes('whatsapp') ? 'whatsapp' : log.tipo?.includes('push') ? 'push' : (log.tipo === 'evento_importante' || log.tipo === 'cambio_estado') ? 'sistema' : 'email')).toLowerCase();
+                                    const triggerEvent = log.metadata?.event_type || log.metadata?.rule_id || (log.tipo?.includes('habit') ? 'HÁBITO_RECURRENTE' : log.tipo?.includes('campana') ? 'CAMPAÑA_MASIVA' : log.tipo === 'cambio_estado' ? 'CAMBIO_ESTADO' : 'EVENTO_SISTEMA_DB');
+                                    const templateOrTitle = log.metadata?.template_name || log.metadata?.title || log.metadata?.subject || log.descripcion || 'Notificación';
+                                    const isRescate = log.tipo?.includes('rescate') || templateOrTitle === 'sin_repartidores' || log.tipo?.includes('seguimiento');
+
+                                    return (
+                                        <tr key={log.id}>
+                                            <td style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                                                {formatDateStr(log.created_at)} <br />
+                                                <span style={{ color: '#64748b' }}>{new Date(log.created_at).toLocaleTimeString()}</span>
+                                            </td>
+                                            <td>
+                                                <strong>{u?.nombre || log.metadata?.customer_name || 'Cliente Wepi'}</strong>
+                                                <br /><span style={{ fontSize: '0.78rem', color: '#64748b' }}>{rawPhone || u?.email || log.usuario_id}</span>
+                                            </td>
+                                            <td>
+                                                <code style={{ background: '#fef3c7', color: '#b45309', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.78rem' }}>
+                                                    {triggerEvent}
+                                                </code>
+                                            </td>
+                                            <td>
+                                                <span style={{ fontSize: '0.78rem', padding: '2px 8px', borderRadius: '6px', fontWeight: 'bold', background: log.tipo?.includes('habit') ? '#e0f2fe' : log.tipo?.includes('campana') ? '#fef3c7' : isRescate ? '#ffedd5' : '#f3e8ff', color: log.tipo?.includes('habit') ? '#0369a1' : log.tipo?.includes('campana') ? '#b45309' : isRescate ? '#c2410c' : '#7e22ce' }}>
+                                                    {log.tipo?.includes('habit') ? '🧠 Hábitos' : log.tipo?.includes('campana') ? '🚀 Campaña' : isRescate ? '🔄 Seguimientos' : '⚙️ Matriz CRM'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span style={{ fontSize: '0.78rem', padding: '3px 8px', borderRadius: '12px', fontWeight: 'bold', background: rawChannel.includes('whatsapp') || rawChannel === 'wa' ? '#dcfce7' : rawChannel.includes('push') ? '#dbeafe' : rawChannel === 'sistema' ? '#f1f5f9' : '#ffedd5', color: rawChannel.includes('whatsapp') || rawChannel === 'wa' ? '#15803d' : rawChannel.includes('push') ? '#1d4ed8' : rawChannel === 'sistema' ? '#475569' : '#c2410c' }}>
+                                                    {rawChannel.includes('whatsapp') || rawChannel === 'wa' ? '💬 WhatsApp' : rawChannel.includes('push') ? '🔔 Push' : rawChannel === 'sistema' ? '⚡ DB / Trigger' : '📧 Email'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <code style={{ background: '#f1f5f9', color: '#0f172a', padding: '3px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.78rem' }}>
+                                                    {templateOrTitle}
+                                                </code>
+                                            </td>
+                                            <td>
+                                                <span style={{ background: rawChannel === 'sistema' ? '#e2e8f0' : '#dcfce7', color: rawChannel === 'sistema' ? '#334155' : '#15803d', padding: '3px 10px', borderRadius: '12px', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                                                    {rawChannel.includes('whatsapp') ? '✅ Meta API Enviado' : rawChannel.includes('push') ? '🔔 Push Entregado' : rawChannel === 'sistema' ? '📝 Log de Auditoría DB' : '📧 Email Despachado'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {(rawChannel.includes('whatsapp') || rawChannel === 'wa') && cleanPhone ? (
+                                                    <a 
+                                                        href={`https://wa.me/${cleanPhone}`} 
+                                                        target="_blank" 
+                                                        rel="noreferrer"
+                                                        className="btn-small"
+                                                        style={{ textDecoration: 'none', background: '#25d366', color: '#fff', fontSize: '0.75rem', padding: '4px 10px', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                                    >
+                                                        💬 Abrir Chat
+                                                    </a>
+                                                ) : (
+                                                    <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>-</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {filteredHistory.length === 0 && (
+                                    <tr>
+                                        <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+                                            No hay registros de envíos que coincidan con los filtros aplicados.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="wepi-crm-container animate-fade-in">
             {/* Header section */}
@@ -1369,6 +2127,9 @@ const AdminCRM = () => {
             <div className="wepi-crm-tabs">
                 <button className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => setActiveTab('dashboard')}>
                     📊 Dashboard
+                </button>
+                <button className={activeTab === 'monitor_wa' ? 'active' : ''} onClick={() => setActiveTab('monitor_wa')}>
+                    📡 Monitor de Envíos
                 </button>
                 <button className={activeTab === 'clientes' ? 'active' : ''} onClick={() => setActiveTab('clientes')}>
                     👥 Clientes y Listas
@@ -1442,9 +2203,14 @@ const AdminCRM = () => {
                             </div>
                         </div>
 
-                        {/* Recent Events Feed */}
+                        {/* Recent Events Feed with Event Simulator */}
                         <div className="dashboard-card feed">
-                            <h3>Eventos Recientes del CRM</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                <h3 style={{ margin: 0 }}>Eventos Recientes del CRM</h3>
+                            </div>
+
+                            {renderProbadorTriggersCard()}
+
                             <div className="events-feed-list">
                                 {eventsLog.slice(0, 8).map(ev => {
                                     const u = usuarios.find(usr => usr.id === ev.usuario_id);
@@ -1453,7 +2219,7 @@ const AdminCRM = () => {
                                             <div className="feed-icon">💡</div>
                                             <div className="feed-info">
                                                 <p>
-                                                    <strong>{u?.nombre || 'Usuario desc.'}</strong> disparó event <code>{ev.event_type}</code>
+                                                    <strong>{u?.nombre || 'Usuario desc.'}</strong> disparó event <code style={{ background: ev.event_type === 'CARRITO_ABANDONADO' ? '#fef3c7' : ev.event_type === 'PEDIDO_NO_PAGADO' ? '#fee2e2' : '#e0f2fe', color: ev.event_type === 'CARRITO_ABANDONADO' ? '#b45309' : ev.event_type === 'PEDIDO_NO_PAGADO' ? '#b91c1c' : '#0369a1', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>{ev.event_type}</code>
                                                 </p>
                                                 <span>{formatDateStr(ev.created_at)} - {new Date(ev.created_at).toLocaleTimeString()}</span>
                                             </div>
@@ -1552,6 +2318,14 @@ const AdminCRM = () => {
                 </div>
             )}
 
+            {/* 📡 MONITOR DE ENVÍOS MULTICANAL FUNCTION */}
+            {(() => {
+                if (activeTab !== 'monitor_wa') return null;
+                return renderMonitorDeEnviosSection();
+            })()}
+
+
+
             {/* TAB CONTENT: CLIENTES */}
             {activeTab === 'clientes' && (
                 <div className="tab-pane">
@@ -1634,6 +2408,40 @@ const AdminCRM = () => {
                                 />
                             </div>
                             <div className="filter-item">
+                                <label>Pedidos Mín.</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Ej: 3"
+                                    value={ordersMinFilter}
+                                    onChange={(e) => setOrdersMinFilter(e.target.value)}
+                                />
+                            </div>
+                            <div className="filter-item">
+                                <label>Pedidos Máx.</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Ej: 10"
+                                    value={ordersMaxFilter}
+                                    onChange={(e) => setOrdersMaxFilter(e.target.value)}
+                                />
+                            </div>
+                            <div className="filter-item">
+                                <label>Hora Pedido Desde</label>
+                                <input 
+                                    type="time" 
+                                    value={orderTimeStart}
+                                    onChange={(e) => setOrderTimeStart(e.target.value)}
+                                />
+                            </div>
+                            <div className="filter-item">
+                                <label>Hora Pedido Hasta</label>
+                                <input 
+                                    type="time" 
+                                    value={orderTimeEnd}
+                                    onChange={(e) => setOrderTimeEnd(e.target.value)}
+                                />
+                            </div>
+                            <div className="filter-item">
                                 <label>Inactividad</label>
                                 <select value={inactivityDaysFilter} onChange={(e) => setInactivityDaysFilter(e.target.value)}>
                                     <option value="Todos">Cualquier período</option>
@@ -1664,15 +2472,21 @@ const AdminCRM = () => {
                                     <button 
                                         className="btn-bulk-campaign"
                                         onClick={() => {
-                                            setCampaignForm(prev => ({
+                                            setShowSpecialCampaignForm(true);
+                                            setSpecialCampaignForm(prev => ({
                                                 ...prev,
-                                                nombre: `Campaña Especial - ${selectedUsers.size} seleccionados`,
-                                                filtros: { ...prev.filtros, tag: 'Todos' } // manual select overrides filters
+                                                nombre: `Campaña Especial - ${selectedUsers.size} seleccionados`
                                             }));
-                                            setActiveTab('campanas');
                                         }}
                                     >
                                         ✉️ Crear Campaña Especial
+                                    </button>
+                                    <button 
+                                        className="btn-bulk-campaign"
+                                        onClick={handleDivideCampaigns}
+                                        style={{ background: '#f59e0b', color: '#fff', border: 'none', marginLeft: '5px' }}
+                                    >
+                                        ➗ Dividir en Campañas
                                     </button>
                                     <button 
                                         className="btn-copy-phones"
@@ -1694,6 +2508,110 @@ const AdminCRM = () => {
                                         📋 Copiar Teléfonos
                                     </button>
                                 </div>
+                            </div>
+                        )}
+                        {/* Special Campaigns Form & List */}
+                        {showSpecialCampaignForm && (
+                            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #cbd5e1', marginTop: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                                <h4 style={{marginTop:0, marginBottom:'10px'}}>Configurador de Campaña Especial Inline</h4>
+                                <div style={{display:'flex', gap:'10px', flexWrap:'wrap', marginBottom:'10px'}}>
+                                    <div style={{flex:1}}>
+                                        <label>Nombre de Campaña:</label>
+                                        <input type="text" className="form-control" value={specialCampaignForm.nombre} onChange={e => setSpecialCampaignForm({...specialCampaignForm, nombre: e.target.value})} />
+                                    </div>
+                                    <div style={{flex:1}}>
+                                        <label>Horario de Disparador:</label>
+                                        <input type="datetime-local" className="form-control" value={specialCampaignForm.trigger_time} onChange={e => setSpecialCampaignForm({...specialCampaignForm, trigger_time: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div style={{marginBottom:'10px'}}>
+                                    <label>Prioridad de Envío (Cascada):</label>
+                                    <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                                        {[0, 1, 2].map(idx => (
+                                            <div key={idx} style={{display:'flex', alignItems:'center', gap:'5px'}}>
+                                                <span>{idx + 1}°</span>
+                                                <select 
+                                                    className="form-control" 
+                                                    style={{width: 'auto'}}
+                                                    value={specialCampaignForm.canales[idx] || 'none'}
+                                                    onChange={e => {
+                                                        const newCanales = [...specialCampaignForm.canales];
+                                                        newCanales[idx] = e.target.value;
+                                                        setSpecialCampaignForm({...specialCampaignForm, canales: newCanales});
+                                                    }}
+                                                >
+                                                    <option value="none">Ninguno</option>
+                                                    <option value="whatsapp">WhatsApp</option>
+                                                    <option value="push">Push</option>
+                                                    <option value="email">Email</option>
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div style={{display:'flex', gap:'15px', flexWrap:'wrap', background:'#fff', padding:'10px', borderRadius:'8px', border:'1px solid #e2e8f0', marginBottom:'10px'}}>
+                                    <div style={{flex:1, minWidth:'250px'}}>
+                                        <label style={{fontWeight:'bold'}}>🟢 WhatsApp</label>
+                                        <div>
+                                            <input type="checkbox" checked={specialCampaignForm.configs.whatsapp.enabled} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, whatsapp: {...specialCampaignForm.configs.whatsapp, enabled: e.target.checked}}})} /> Habilitar WhatsApp
+                                        </div>
+                                        {specialCampaignForm.configs.whatsapp.enabled && (
+                                            <input type="text" className="form-control" placeholder="Nombre Template (ej: sin_repartidores)" value={specialCampaignForm.configs.whatsapp.template_name} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, whatsapp: {...specialCampaignForm.configs.whatsapp, template_name: e.target.value}}})} />
+                                        )}
+                                    </div>
+                                    <div style={{flex:1, minWidth:'250px'}}>
+                                        <label style={{fontWeight:'bold'}}>🔴 Push Notification</label>
+                                        <div>
+                                            <input type="checkbox" checked={specialCampaignForm.configs.push.enabled} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, push: {...specialCampaignForm.configs.push, enabled: e.target.checked}}})} /> Habilitar Push
+                                        </div>
+                                        {specialCampaignForm.configs.push.enabled && (
+                                            <>
+                                                <input type="text" className="form-control" placeholder="Título" value={specialCampaignForm.configs.push.title} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, push: {...specialCampaignForm.configs.push, title: e.target.value}}})} style={{marginBottom:'5px'}} />
+                                                <textarea className="form-control" placeholder="Mensaje" value={specialCampaignForm.configs.push.body} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, push: {...specialCampaignForm.configs.push, body: e.target.value}}})} style={{marginBottom:'5px'}} />
+                                                <input type="text" className="form-control" placeholder="URL Destino (ej: /pedir)" value={specialCampaignForm.configs.push.url} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, push: {...specialCampaignForm.configs.push, url: e.target.value}}})} />
+                                            </>
+                                        )}
+                                    </div>
+                                    <div style={{flex:1, minWidth:'250px'}}>
+                                        <label style={{fontWeight:'bold'}}>📧 Email</label>
+                                        <div>
+                                            <input type="checkbox" checked={specialCampaignForm.configs.email.enabled} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, email: {...specialCampaignForm.configs.email, enabled: e.target.checked}}})} /> Habilitar Email
+                                        </div>
+                                        {specialCampaignForm.configs.email.enabled && (
+                                            <>
+                                                <input type="text" className="form-control" placeholder="Asunto" value={specialCampaignForm.configs.email.subject} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, email: {...specialCampaignForm.configs.email, subject: e.target.value}}})} style={{marginBottom:'5px'}} />
+                                                <textarea className="form-control" placeholder="Cuerpo HTML/Texto" value={specialCampaignForm.configs.email.body} onChange={e => setSpecialCampaignForm({...specialCampaignForm, configs: {...specialCampaignForm.configs, email: {...specialCampaignForm.configs.email, body: e.target.value}}})} />
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                                <div style={{display:'flex', gap:'10px'}}>
+                                    <button className="btn btn-primary" onClick={handleSaveSpecialCampaign} disabled={savingSpecialCampaign}>{savingSpecialCampaign ? 'Guardando...' : 'Guardar y Programar'}</button>
+                                    <button className="btn btn-secondary" onClick={() => setShowSpecialCampaignForm(false)}>Cancelar</button>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {specialCampaigns.length > 0 && (
+                            <div style={{ marginTop: '16px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px' }}>
+                                <h5 style={{marginTop:0}}>Campaña Especiales Pendientes/Ejecutadas</h5>
+                                <table className="crm-table" style={{marginTop:'10px', width: '100%'}}>
+                                    <thead><tr><th>Nombre</th><th>Usuarios</th><th>Horario</th><th>Estado</th><th>Acciones</th></tr></thead>
+                                    <tbody>
+                                        {specialCampaigns.map(c => (
+                                            <tr key={c.id}>
+                                                <td>{c.nombre}</td>
+                                                <td>{c.target_user_ids?.length || 0} users</td>
+                                                <td>{new Date(c.trigger_time).toLocaleString()}</td>
+                                                <td>{c.executed ? <span style={{color:'green', fontWeight:'bold'}}>Ejecutada</span> : <span style={{color:'orange', fontWeight:'bold'}}>Pendiente</span>}</td>
+                                                <td>
+                                                    <button className="btn-icon" onClick={() => handleEditSpecialCampaign(c)} title="Editar">✏️</button>
+                                                    <button className="btn-icon" onClick={() => handleDeleteSpecialCampaign(c.id)} title="Eliminar">🗑️</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </div>
@@ -1731,6 +2649,8 @@ const AdminCRM = () => {
                                                 <input 
                                                     type="checkbox"
                                                     checked={selectedUsers.has(user.id)}
+                                                    disabled={pendingCampaignsUserIds.has(user.id)}
+                                                    title={pendingCampaignsUserIds.has(user.id) ? 'Usuario bloqueado: Ya está en una campaña especial pendiente' : ''}
                                                     onChange={() => handleSelectUser(user.id)}
                                                 />
                                             </td>
@@ -1747,7 +2667,7 @@ const AdminCRM = () => {
                                             <td><strong>{user.cantidad_pedidos || 0}</strong></td>
                                             <td>{formatCurrency(user.total_gastado)}</td>
                                             <td>{formatCurrency(user.ticket_promedio)}</td>
-                                            <td>{formatDateStr(user.fecha_ultimo_pedido)}</td>
+                                            <td>{user.fecha_ultimo_pedido ? `${formatDateStr(user.fecha_ultimo_pedido)} ${new Date(user.fecha_ultimo_pedido).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '-'}</td>
                                             <td><span className="badge-category">{user.categoria_favorita || '-'}</span></td>
                                             <td>
                                                 <span className={`badge-crm state-${(user.estado_crm || 'REGISTRADO').toLowerCase()}`}>
@@ -1782,6 +2702,7 @@ const AdminCRM = () => {
             {/* TAB CONTENT: AUTOMATIZACIONES */}
             {activeTab === 'automatizaciones' && (
                 <div className="tab-pane animate-fade-in">
+                    {renderProbadorTriggersCard()}
                     <div className="matrix-header-info">
                         <div>
                             <h2>🤖 Panel de Automatizaciones por Eventos (Multicanal)</h2>
@@ -2072,20 +2993,50 @@ const AdminCRM = () => {
                                                 <label>Identificador del Evento en Tiempo Real:</label>
                                                 <select 
                                                     className="form-control"
-                                                    value={rowEditForm.trigger_config?.evento_key || 'CARRITO_ABANDONADO'}
-                                                    onChange={(e) => setRowEditForm(prev => ({ 
-                                                        ...prev, 
-                                                        trigger_config: { ...prev.trigger_config, evento_key: e.target.value } 
-                                                    }))}
+                                                    value={['USUARIO_REGISTRADO','VISITA_SIN_COMPRA','CARRITO_ABANDONADO','PEDIDO_NO_PAGADO','PEDIDO_RECHAZADO_FALTA_PAGO','sin_repartidores','repartidor_encontrado_espera','PEDIDO_RECHAZADO_SIN_REPARTIDOR_2','PEDIDO_ACEPTADO','PEDIDO_RETIRADO','REPARTIDOR_CERCA','ESPERANDO_REPARTIDOR','REPARTIDOR_ASIGNADO','PEDIDO_ENTREGADO'].includes(rowEditForm.trigger_config?.evento_key) ? rowEditForm.trigger_config?.evento_key : 'CUSTOM'}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        setRowEditForm(prev => ({ 
+                                                            ...prev, 
+                                                            trigger_config: { ...prev.trigger_config, evento_key: val === 'CUSTOM' ? (prev.trigger_config?.evento_key || 'MI_EVENTO_CUSTOM') : val } 
+                                                        }));
+                                                    }}
                                                 >
                                                     <option value="USUARIO_REGISTRADO">USUARIO_REGISTRADO (Nuevo registro)</option>
                                                     <option value="VISITA_SIN_COMPRA">VISITA_SIN_COMPRA (Navegó sin comprar)</option>
                                                     <option value="CARRITO_ABANDONADO">CARRITO_ABANDONADO (Checkout no enviado)</option>
                                                     <option value="PEDIDO_NO_PAGADO">PEDIDO_NO_PAGADO (Pago pendiente)</option>
+                                                    <option value="PEDIDO_RECHAZADO_FALTA_PAGO">PEDIDO_RECHAZADO_FALTA_PAGO (Pago rechazado/fallido)</option>
+                                                    <option value="sin_repartidores">sin_repartidores (1. Aviso Sin Repartidores)</option>
+<option value="repartidor_encontrado_espera">repartidor_encontrado_espera (Repartidor encontrado en espera)</option>
+                                                    <option value="PEDIDO_RECHAZADO_SIN_REPARTIDOR_2">PEDIDO_RECHAZADO_SIN_REPARTIDOR_2 (2. Refuerzo 5 min Sin Repartidor)</option>
+                                                    <option value="PEDIDO_ACEPTADO">PEDIDO_ACEPTADO (En preparación)</option>
+                                                    <option value="PEDIDO_RETIRADO">PEDIDO_RETIRADO (Retirado por repartidor)</option>
+                                                    <option value="REPARTIDOR_CERCA">REPARTIDOR_CERCA (Repartidor a 500m)</option>
                                                     <option value="ESPERANDO_REPARTIDOR">ESPERANDO_REPARTIDOR (Demora asignación)</option>
                                                     <option value="REPARTIDOR_ASIGNADO">REPARTIDOR_ASIGNADO (En camino)</option>
                                                     <option value="PEDIDO_ENTREGADO">PEDIDO_ENTREGADO (Pedido recibido)</option>
+                                                    <option value="CUSTOM">✨ Disparador Personalizado (Escribir Clave Manual...)</option>
                                                 </select>
+
+                                                {(!['USUARIO_REGISTRADO','VISITA_SIN_COMPRA','CARRITO_ABANDONADO','PEDIDO_NO_PAGADO','PEDIDO_RECHAZADO_FALTA_PAGO','sin_repartidores','repartidor_encontrado_espera','PEDIDO_RECHAZADO_SIN_REPARTIDOR_2','PEDIDO_ACEPTADO','PEDIDO_RETIRADO','REPARTIDOR_CERCA','ESPERANDO_REPARTIDOR','REPARTIDOR_ASIGNADO','PEDIDO_ENTREGADO'].includes(rowEditForm.trigger_config?.evento_key)) && (
+                                                    <div style={{ marginTop: '10px' }}>
+                                                        <label style={{ fontSize: '0.82rem', fontWeight: 'bold' }}>Clave de Evento Personalizada:</label>
+                                                        <input 
+                                                            type="text" 
+                                                            className="form-control"
+                                                            placeholder="ej: MI_EVENTO_CUSTOM, CUMPLEANOS_CLIENTE, REINTEGRO_WALLET"
+                                                            value={rowEditForm.trigger_config?.evento_key || ''}
+                                                            onChange={(e) => {
+                                                                const cleanKey = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+                                                                setRowEditForm(prev => ({ 
+                                                                    ...prev, 
+                                                                    trigger_config: { ...prev.trigger_config, evento_key: cleanKey } 
+                                                                }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -2146,24 +3097,60 @@ const AdminCRM = () => {
                                             </div>
 
                                             {/* CONSTRUCTOR DE ENLACE META CON UTMS */}
-                                            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '10px', border: '1px solid #cbd5e1', marginBottom: '14px' }}>
-                                                <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+                                            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #cbd5e1', marginBottom: '16px' }}>
+                                                <label style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#0f172a', display: 'block', marginBottom: '8px' }}>
                                                     🔗 Enlace UTM Formateado para Meta Business Manager:
                                                 </label>
+
+                                                {/* SELECCIONADOR DE RAMA / RUTA DE DESTINO INSIDE THE PANEL */}
+                                                <div className="form-group" style={{ marginBottom: '10px' }}>
+                                                    <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: '#334155' }}>🌱 Seleccionar Ruta / Rama de Destino en la App:</label>
+                                                    <select 
+                                                        className="form-control"
+                                                        style={{ fontSize: '0.85rem' }}
+                                                        value={['/pedir', '/mis-pedidos', '/checkout', '/cupones', '/perfil', '/locales'].includes(channelEditForm.url || '/pedir') ? (channelEditForm.url || '/pedir') : 'CUSTOM'}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            setChannelEditForm(prev => ({
+                                                                ...prev,
+                                                                url: val === 'CUSTOM' ? (prev.url || '/pedir') : val
+                                                            }));
+                                                        }}
+                                                    >
+                                                        <option value="/pedir">🛒 /pedir (Catálogo & Inicio de Pedidos)</option>
+                                                        <option value="/mis-pedidos">📋 /mis-pedidos (Seguimiento de Pedidos)</option>
+                                                        <option value="/checkout">💳 /checkout (Pantalla de Pago)</option>
+                                                        <option value="/cupones">🎟️ /cupones (Cupones y Descuentos)</option>
+                                                        <option value="/perfil">👤 /perfil (Mi Cuenta y Datos)</option>
+                                                        <option value="/locales">🏪 /locales (Lista de Comercios)</option>
+                                                        <option value="CUSTOM">✏️ Escribir Ruta Personalizada...</option>
+                                                    </select>
+                                                    {(!['/pedir', '/mis-pedidos', '/checkout', '/cupones', '/perfil', '/locales'].includes(channelEditForm.url || '/pedir')) && (
+                                                        <input 
+                                                            type="text" 
+                                                            className="form-control" 
+                                                            style={{ marginTop: '6px', fontSize: '0.85rem' }}
+                                                            placeholder="ej: /local/123 o /categoria/burgers"
+                                                            value={channelEditForm.url || ''}
+                                                            onChange={(e) => setChannelEditForm(prev => ({ ...prev, url: e.target.value }))}
+                                                        />
+                                                    )}
+                                                </div>
+
                                                 <div style={{ display: 'flex', gap: '8px' }}>
                                                     <input 
                                                         type="text"
                                                         readOnly
                                                         className="form-control"
-                                                        style={{ fontSize: '0.8rem', fontFamily: 'monospace', background: '#ffffff', color: '#0284c7' }}
-                                                        value={`https://wepi.com.ar/pedir?utm_source=whatsapp&utm_medium=hsm&utm_campaign=${channelEditForm.template_name || 'plantilla_meta'}`}
+                                                        style={{ fontSize: '0.8rem', fontFamily: 'monospace', background: '#ffffff', color: '#0284c7', fontWeight: 'bold' }}
+                                                        value={`https://wepi.com.ar${channelEditForm.url || '/pedir'}?utm_source=whatsapp&utm_medium=hsm&utm_campaign=${channelEditForm.template_name || 'plantilla_meta'}`}
                                                     />
                                                     <button 
                                                         type="button"
                                                         className="btn btn-outline"
                                                         style={{ whiteSpace: 'nowrap', padding: '6px 12px', fontSize: '0.8rem' }}
                                                         onClick={() => {
-                                                            const url = `https://wepi.com.ar/pedir?utm_source=whatsapp&utm_medium=hsm&utm_campaign=${channelEditForm.template_name || 'plantilla_meta'}`;
+                                                            const url = `https://wepi.com.ar${channelEditForm.url || '/pedir'}?utm_source=whatsapp&utm_medium=hsm&utm_campaign=${channelEditForm.template_name || 'plantilla_meta'}`;
                                                             navigator.clipboard.writeText(url);
                                                             toast.success("¡Enlace copiado! Pégalo en el botón de acción al crear la plantilla en Meta.");
                                                         }}
@@ -2171,8 +3158,8 @@ const AdminCRM = () => {
                                                         📋 Copiar Enlace Meta
                                                     </button>
                                                 </div>
-                                                <p style={{ margin: '6px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
-                                                    💡 Copia este enlace y configúralo en el botón de la plantilla dentro del panel de Meta. Registrará las ventas hechas en las siguientes 24 hs.
+                                                <p style={{ margin: '8px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                                                    💡 Copia este enlace y configúralo en el botón de la plantilla dentro del panel de Meta. Dirigirá al cliente a <code>{channelEditForm.url || '/pedir'}</code> abriendo la App nativa.
                                                 </p>
                                             </div>
 
@@ -2713,28 +3700,105 @@ const AdminCRM = () => {
                                 </div>
                             </div>
 
-                            <h3>Configuración de Mensaje</h3>
+                            <h3>Configuración del Canal y Mensaje</h3>
                             <div className="form-group">
-                                <label>Canal Preferente (Intentará OneSignal Push primero, luego WhatsApp fallback)</label>
+                                <label>Canal de Comunicación</label>
                                 <select 
                                     value={campaignForm.canal}
                                     onChange={(e) => setCampaignForm(prev => ({ ...prev, canal: e.target.value }))}
                                 >
-                                    <option value="push">Push Notification (OneSignal con WA fallback)</option>
-                                    <option value="whatsapp">WhatsApp Direct (wa.me o Meta API)</option>
-                                    <option value="email">Email</option>
-                                    <option value="sms">SMS</option>
+                                    <option value="whatsapp">💬 WhatsApp (Plantilla HSM Meta Aprobada)</option>
+                                    <option value="push">🔔 Push Notification App (OneSignal con WA fallback)</option>
+                                    <option value="email">📧 Email Marketing</option>
                                 </select>
                             </div>
-                            <div className="form-group">
-                                <label>Contenido del Mensaje (Usa <code>[Nombre]</code> para personalizar)</label>
-                                <textarea 
-                                    rows="4" 
-                                    placeholder="¡Hola [Nombre]! Te extrañamos en Wepi. Te dejamos un regalo..."
-                                    value={campaignForm.mensaje}
-                                    onChange={(e) => setCampaignForm(prev => ({ ...prev, mensaje: e.target.value }))}
-                                />
-                            </div>
+
+                            {/* CAMPOS ESPECIFICOS PARA WHATSAPP META HSM */}
+                            {campaignForm.canal === 'whatsapp' && (
+                                <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #cbd5e1', marginBottom: '16px' }}>
+                                    <div className="form-group">
+                                        <label style={{ fontWeight: 'bold' }}>Nombre de la Plantilla de Meta (HSM):</label>
+                                        <input 
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="ej: promo_obera_fin_semana"
+                                            value={campaignForm.template_name}
+                                            onChange={(e) => setCampaignForm(prev => ({ ...prev, template_name: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    {/* CONSTRUCTOR DE ENLACE META CON UTMS */}
+                                    <div style={{ marginTop: '12px' }}>
+                                        <label style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#0f172a', display: 'block', marginBottom: '6px' }}>
+                                            🔗 Enlace UTM Formateado para Meta Business Manager:
+                                        </label>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <input 
+                                                type="text"
+                                                readOnly
+                                                className="form-control"
+                                                style={{ fontSize: '0.8rem', fontFamily: 'monospace', background: '#ffffff', color: '#0284c7' }}
+                                                value={`https://wepi.com.ar/pedir?utm_source=whatsapp&utm_medium=hsm&utm_campaign=${campaignForm.template_name || campaignForm.nombre || 'campana_wa'}`}
+                                            />
+                                            <button 
+                                                type="button"
+                                                className="btn btn-outline"
+                                                style={{ whiteSpace: 'nowrap', padding: '6px 12px', fontSize: '0.8rem' }}
+                                                onClick={() => {
+                                                    const url = `https://wepi.com.ar/pedir?utm_source=whatsapp&utm_medium=hsm&utm_campaign=${campaignForm.template_name || campaignForm.nombre || 'campana_wa'}`;
+                                                    navigator.clipboard.writeText(url);
+                                                    toast.success("¡Enlace copiado! Pégalo en el botón de acción al crear la plantilla en Meta.");
+                                                }}
+                                            >
+                                                📋 Copiar Enlace Meta
+                                            </button>
+                                        </div>
+                                        <p style={{ margin: '6px 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                                            💡 Las plantillas de WhatsApp no permiten texto libre directo. Copia este enlace en el botón de la plantilla dentro del panel de Meta.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CAMPOS ESPECIFICOS PARA PUSH APP */}
+                            {campaignForm.canal === 'push' && (
+                                <div>
+                                    <div className="form-group">
+                                        <label>Cuerpo de la Notificación Push (Usa <code>[Nombre]</code> para personalizar):</label>
+                                        <textarea 
+                                            rows="4" 
+                                            placeholder="¡Hola [Nombre]! Te extrañamos en Wepi. Te dejamos un regalo especial..."
+                                            value={campaignForm.mensaje}
+                                            onChange={(e) => setCampaignForm(prev => ({ ...prev, mensaje: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* CAMPOS ESPECIFICOS PARA EMAIL */}
+                            {campaignForm.canal === 'email' && (
+                                <div>
+                                    <div className="form-group">
+                                        <label>Asunto del Email:</label>
+                                        <input 
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="ej: ¡Te extrañamos en Wepi! Tu regalo de bienvenida 🎁"
+                                            value={campaignForm.asunto}
+                                            onChange={(e) => setCampaignForm(prev => ({ ...prev, asunto: e.target.value }))}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Cuerpo del Correo HTML/Texto (Usa <code>[Nombre]</code> para personalizar):</label>
+                                        <textarea 
+                                            rows="4" 
+                                            placeholder="Hola [Nombre]..."
+                                            value={campaignForm.mensaje}
+                                            onChange={(e) => setCampaignForm(prev => ({ ...prev, mensaje: e.target.value }))}
+                                        />
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="form-group">
                                 <label>Programar Fecha y Hora (Dejar vacío para enviar de inmediato)</label>
@@ -2754,24 +3818,51 @@ const AdminCRM = () => {
                             </button>
                         </div>
 
-                        {/* History list */}
+                        {/* History list with execution metrics */}
                         <div className="campaign-history-card">
-                            <h2>Campañas Lanzadas</h2>
+                            <h2>Campañas Lanzadas y Métricas de Despacho</h2>
                             <div className="campaigns-list">
-                                {campaigns.map(camp => (
-                                    <div key={camp.id} className="campaign-item">
-                                        <div className="camp-header">
-                                            <h4>{camp.nombre}</h4>
-                                            <button className="btn-small btn-delete" onClick={() => handleDeleteCampaign(camp.id)}>Eliminar</button>
+                                {campaigns.map(camp => {
+                                    const total = camp.total_audiencia || 0;
+                                    const success = camp.enviados_exito || 0;
+                                    const failed = camp.fallidos || 0;
+                                    const rate = total > 0 ? ((success / total) * 100).toFixed(1) : '100.0';
+                                    return (
+                                        <div key={camp.id} className="campaign-item">
+                                            <div className="camp-header">
+                                                <h4>{camp.nombre}</h4>
+                                                <button className="btn-small btn-delete" onClick={() => handleDeleteCampaign(camp.id)}>Eliminar</button>
+                                            </div>
+                                            <p className="desc">{camp.mensaje || `Plantilla Meta: ${camp.template_name}`}</p>
+                                            
+                                            {/* METRICAS DE DESPACHO Y MONITOREO */}
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', background: '#f8fafc', padding: '10px', borderRadius: '8px', margin: '10px 0', border: '1px solid #e2e8f0', fontSize: '0.82rem' }}>
+                                                <div>
+                                                    <span style={{ color: '#64748b', display: 'block' }}>Audiencia Objetivo:</span>
+                                                    <strong>{total} usuarios</strong>
+                                                </div>
+                                                <div>
+                                                    <span style={{ color: '#166534', display: 'block' }}>Enviados / Éxito:</span>
+                                                    <strong style={{ color: '#16a34a' }}>{success} exitosos</strong>
+                                                </div>
+                                                <div>
+                                                    <span style={{ color: '#991b1b', display: 'block' }}>Fallidos / Omitidos:</span>
+                                                    <strong style={{ color: '#dc2626' }}>{failed} sin envío</strong>
+                                                </div>
+                                                <div>
+                                                    <span style={{ color: '#0369a1', display: 'block' }}>Tasa Despacho:</span>
+                                                    <strong style={{ color: '#0284c7' }}>{rate} %</strong>
+                                                </div>
+                                            </div>
+
+                                            <div className="meta">
+                                                <span>Canal: <strong style={{ textTransform: 'uppercase' }}>{camp.canal === 'whatsapp' ? '💬 WA Meta' : camp.canal === 'push' ? '🔔 Push' : '📧 Email'}</strong></span>
+                                                <span className={`status-badge ${camp.estado?.toLowerCase()}`}>{camp.estado}</span>
+                                                {camp.fecha_programada && <span>Programada: {formatDateStr(camp.fecha_programada)}</span>}
+                                            </div>
                                         </div>
-                                        <p className="desc">"{camp.mensaje}"</p>
-                                        <div className="meta">
-                                            <span>Canal: <strong style={{ textTransform: 'uppercase' }}>{camp.canal}</strong></span>
-                                            <span className={`status-badge ${camp.estado?.toLowerCase()}`}>{camp.estado}</span>
-                                            {camp.fecha_programada && <span>Programada: {formatDateStr(camp.fecha_programada)}</span>}
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                                 {campaigns.length === 0 && <p className="empty">No hay registro de campañas anteriores.</p>}
                             </div>
                         </div>
