@@ -58,7 +58,7 @@
 		504EC3051FED79650016851F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A4825189D8C1FB82D13F8B53 /* GoogleService-Info.plist */,
+				
 				504EC3041FED79650016851F /* App.app */,
 			);
 			name = Products;
