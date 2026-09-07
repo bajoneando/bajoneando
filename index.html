@@ -51,11 +51,13 @@
         var blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
         var manifestUrl = URL.createObjectURL(blob);
         
-        var link = document.createElement('link');
-        link.id = 'manifest-link';
-        link.rel = 'manifest';
-        link.href = manifestUrl;
-        document.head.appendChild(link);
+        if (!path.startsWith('/pedir') && !path.startsWith('/mis-pedidos')) {
+          var link = document.createElement('link');
+          link.id = 'manifest-link';
+          link.rel = 'manifest';
+          link.href = manifestUrl;
+          document.head.appendChild(link);
+        }
 
         // Canonical dinámico
         var absoluteStartUrl = l.origin + config.start;

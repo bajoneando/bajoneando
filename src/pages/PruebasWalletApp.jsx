@@ -49,7 +49,7 @@ const getInactiveCityFromSlug = (str) => {
 };
 
 export default function PruebasWalletApp() {
-  const [otaVersion, setOtaVersion] = React.useState('v1.1.1');
+  const [otaVersion, setOtaVersion] = React.useState('v1.1.2');
   const { ciudad, slug } = useParams();
   const location = useLocation();
   const isShopsMode = location.pathname.startsWith('/shops');
@@ -101,7 +101,10 @@ export default function PruebasWalletApp() {
         if (Capacitor.isNativePlatform()) {
           const { OtaKit } = await import('@otakit/capacitor-updater');
           const state = await OtaKit.getState();
-          if (state?.current?.version) setOtaVersion('v' + state.current.version);
+          if (state?.current?.version) {
+            const cleanVersion = state.current.version.split('+')[0];
+            setOtaVersion('v' + cleanVersion);
+          }
         }
       } catch (e) { console.error('Error fetching ota version', e); }
     };

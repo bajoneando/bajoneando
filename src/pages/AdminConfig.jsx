@@ -78,7 +78,8 @@ const AdminConfig = () => {
                     min_delivery_fee: c.min_delivery_fee,
                     extra_fee_per_km: c.extra_fee_per_km,
                     max_delivery_distance_km: c.max_delivery_distance_km,
-                    rubros_habilitados: c.rubros_habilitados || []
+                    rubros_habilitados: c.rubros_habilitados || [],
+                    funcional: c.funcional !== undefined ? c.funcional : true
                 });
             }
             toast.success('Configuración guardada correctamente');
@@ -692,3 +693,5 @@ const AdminConfig = () => {
 };
 
 export default AdminConfig;
+
+

@@ -24,10 +24,10 @@ export default function AppRedirectHandler() {
 
       // En Android Chrome podemos intentar abrir la app mediante Intent
       const hasTriedOpen = sessionStorage.getItem('wepi_auto_app_redirect_tried');
-      if (!hasTriedOpen && hasUTM && isAndroid) {
+      if (!hasTriedOpen && isAndroid) {
         sessionStorage.setItem('wepi_auto_app_redirect_tried', 'true');
         const cleanPath = location.pathname.replace(/^\//, '');
-        const intentUrl = `intent://wepi.com.ar/${cleanPath}${location.search}#Intent;scheme=https;package=com.wepi.app;S.browser_fallback_url=${encodeURIComponent(window.location.href)};end;`;
+        const intentUrl = `intent://wepi.com.ar/${cleanPath}${location.search}#Intent;scheme=https;package=com.wepi.app;S.browser_fallback_url=${encodeURIComponent(window.location.href + '?tried=1')};end;`;
         window.location.href = intentUrl;
       }
     }

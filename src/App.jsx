@@ -17,6 +17,7 @@ import ConfirmarEmail from './pages/ConfirmarEmail';
 import AdminDashboard from './pages/AdminDashboard';
 import ConsentBanner from './components/ConsentBanner';
 import PushNotificationManager from './components/PushNotificationManager';
+import AppRedirectHandler from './components/AppRedirectHandler';
 import Mundialista from './pages/Mundialista';
 import WepiAds from './pages/WepiAds';
 import { useAuth } from './context/AuthContext';
@@ -70,7 +71,7 @@ function MaintenanceGuard({ children, configKey }) {
 export default function App() {
   const location = useLocation();
 
-  const isApp = Capacitor.isNativePlatform() || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || /Capacitor|wv|Wepi/i.test(navigator.userAgent);
+  const isApp = !!window.Capacitor || Capacitor.isNativePlatform() || window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost' || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || /Capacitor|wv|Wepi/i.test(navigator.userAgent);
 
   useEffect(() => {
     // Captura de UTMs de Campañas CRM y Motor de Hábitos (Ventana de 24 hs)
@@ -202,14 +203,18 @@ export default function App() {
     const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
     const manifestUrl = URL.createObjectURL(blob);
 
-    if (existingLink) {
-      existingLink.href = manifestUrl;
+    if (path.startsWith('/pedir') || path.startsWith('/mis-pedidos')) {
+      if (existingLink) existingLink.remove();
     } else {
-      const newLink = document.createElement('link');
-      newLink.id = 'manifest-link';
-      newLink.rel = 'manifest';
-      newLink.href = manifestUrl;
-      document.head.appendChild(newLink);
+      if (existingLink) {
+        existingLink.href = manifestUrl;
+      } else {
+        const newLink = document.createElement('link');
+        newLink.id = 'manifest-link';
+        newLink.rel = 'manifest';
+        newLink.href = manifestUrl;
+        document.head.appendChild(newLink);
+      }
     }
 
     let canonical = document.getElementById('canonical-link');
@@ -232,6 +237,7 @@ export default function App() {
     <AuthProvider>
       <CartProvider>
         <PushNotificationManager />
+        <AppRedirectHandler />
         
   
 
