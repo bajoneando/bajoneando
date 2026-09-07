@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { GoogleMap, Autocomplete, MarkerF, useJsApiLoader } from '@react-google-maps/api';
 import toast from 'react-hot-toast';
 import './AddressSelector.css';
@@ -73,7 +73,15 @@ const AddressSelector = ({
   const [isValidArea, setIsValidArea] = useState(true);
   const [isGeocoding, setIsGeocoding] = useState(false);
   const autocompleteRef = useRef(null);
+  const inputRef = useRef(null);
   const lastResolvedAddress = useRef(initialAddress);
+
+  const autocompleteOptions = useMemo(() => ({
+    componentRestrictions: { country: 'AR' },
+    bounds: BOUNDS_MAP[ciudad] || BOUNDS_MAP['Santo Tomé'],
+    strictBounds: true,
+    fields: ['geometry', 'formatted_address']
+  }), [ciudad]);
 
   // Validación de área dinámica
   const checkArea = useCallback((lat, lng) => {
@@ -86,6 +94,13 @@ const AddressSelector = ({
   useEffect(() => {
     setIsValidArea(checkArea(position.lat, position.lng));
   }, [position, checkArea]);
+
+  // Sincronizar input DOM
+  useEffect(() => {
+    if (inputRef.current && inputRef.current.value !== address) {
+      inputRef.current.value = address;
+    }
+  }, [address]);
 
   // Geocodificación inicial si solo hay texto
   useEffect(() => {
@@ -159,15 +174,22 @@ const AddressSelector = ({
 
   const handleManualGeocode = () => {
     return new Promise((resolve) => {
-      if (!address || !window.google || !window.google.maps || !window.google.maps.Geocoder) {
+      const currentText = inputRef.current?.value || address;
+      if (!currentText || !window.google || !window.google.maps || !window.google.maps.Geocoder) {
         resolve(null);
         return;
       }
       
+      if (currentText.length < 4) {
+        toast.error('Por favor ingresá tu dirección completa con número.');
+        resolve(null);
+        return;
+      }
+
       setIsGeocoding(true);
       const geocoder = new window.google.maps.Geocoder();
       const cityFmt = ciudad === 'Oberá' ? 'Oberá, Misiones' : 'Santo Tomé, Corrientes';
-      const fullAddress = address.includes(ciudad) ? address : `${address}, ${cityFmt}, Argentina`;
+      const fullAddress = currentText.includes(ciudad) ? currentText : `${currentText}, ${cityFmt}, Argentina`;
       
       geocoder.geocode({ 
         address: fullAddress, 
@@ -208,7 +230,8 @@ const AddressSelector = ({
     let finalLng = position.lng;
 
     // Si el texto cambió y no fue geocodificado aún, forzar geocodificación
-    if (address !== lastResolvedAddress.current) {
+    const currentText = inputRef.current?.value || address;
+    if (currentText !== lastResolvedAddress.current) {
       const result = await handleManualGeocode();
       if (result) {
         finalAddress = result.address;
@@ -250,18 +273,13 @@ const AddressSelector = ({
             <Autocomplete
               onLoad={(ref) => (autocompleteRef.current = ref)}
               onPlaceChanged={onPlaceChanged}
-              options={{
-                componentRestrictions: { country: 'AR' },
-                bounds: BOUNDS_MAP[ciudad] || BOUNDS_MAP['Santo Tomé'],
-                strictBounds: true,
-                fields: ['address_components', 'geometry', 'icon', 'name', 'formatted_address']
-              }}
+              options={autocompleteOptions}
             >
               <input
+                ref={inputRef}
                 type="text"
                 placeholder={title.includes('Local') ? "Ubicación de tu negocio..." : "Escribí tu calle y número (Ej: Brasil 719)..."}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                defaultValue={address}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -316,7 +334,7 @@ const AddressSelector = ({
           <button 
             className={`btn btn-primary btn-full ${!isValidArea ? 'disabled' : ''}`} 
             onClick={handleConfirm}
-            disabled={!isValidArea || !address || isGeocoding}
+            disabled={!isValidArea || isGeocoding}
           >
             {isGeocoding ? 'Cargando...' : 'Confirmar Ubicación'}
           </button>
