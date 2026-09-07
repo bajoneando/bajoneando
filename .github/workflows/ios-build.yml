@@ -54,9 +54,9 @@ jobs:
           security default-keychain -s $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
-          # apply provisioning profile from repository
+          # apply provisioning profile from clean base64 text file
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp ios/App/Wepi_Logistic_AppStore_Profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          cat profile_base64_clean.txt | base64 --decode -o ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
 
       - name: Set Build Number
         run: |
