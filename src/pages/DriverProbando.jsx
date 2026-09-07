@@ -1780,36 +1780,6 @@ export default function DriverProbando() {
           </div>
         )}
 
-        {/* ─── Banner PWA para iPhone ─── */}
-        {isIOS && !isStandalone && (
-          <div className="pwa-install-banner" style={{
-            background: 'linear-gradient(135deg, #c62828 0%, #b71c1c 100%)',
-            color: 'white',
-            borderRadius: '12px',
-            padding: '20px',
-            margin: '10px 16px',
-            boxShadow: '0 8px 24px rgba(198, 40, 40, 0.25)',
-            position: 'relative',
-            zIndex: 20,
-            overflow: 'hidden'
-          }}>
-            <div style={{ position: 'relative', zIndex: 2 }}>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: 'white' }}>¡Instala Wepi en tu iPhone! 📱</h3>
-              <p style={{ margin: '0 0 15px 0', fontSize: '0.9rem', opacity: 0.9, lineHeight: '1.4' }}>
-                Para recibir notificaciones y usar el GPS en tiempo real, añade Wepi a tu pantalla de inicio.
-              </p>
-              <button 
-                className="btn btn-white btn-sm" 
-                style={{ background: 'white', color: '#c62828', fontWeight: 'bold' }}
-                onClick={() => setShowPWAInstructions(true)}
-              >
-                Ver cómo instalar ➔
-              </button>
-            </div>
-            <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', fontSize: '5rem', opacity: 0.2 }}>📲</div>
-          </div>
-        )}
-
         {/* ─── Banner de Notificaciones ─── */}
         {driver && notificationStatus !== 'granted' && (
           <div className="notification-status-banner" style={{

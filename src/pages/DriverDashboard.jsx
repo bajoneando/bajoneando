@@ -1341,6 +1341,12 @@ export default function DriverDashboard() {
                 <option value="" disabled>Seleccioná tu Ciudad</option>
                 <option value="Santo Tomé">Santo Tomé</option>
                 <option value="Oberá">Oberá</option>
+                <option value="Alem (Misiones)">Alem (Misiones)</option>
+                <option value="Apóstoles (Misiones)">Apóstoles (Misiones)</option>
+                <option value="Villaguay (Entre Ríos)">Villaguay (Entre Ríos)</option>
+                <option value="Paso de los Libres (Corrientes)">Paso de los Libres (Corrientes)</option>
+                <option value="San Vicente (Misiones)">San Vicente (Misiones)</option>
+                <option value="Colon (Entre Ríos)">Colon (Entre Ríos)</option>
               </select>
             </div>
 
@@ -1393,7 +1399,7 @@ export default function DriverDashboard() {
             const localDir = localObj?.direccion || enViaje.local_direccion || 'Cargando...';
             const localLat = localObj?.lat || enViaje.local_lat;
             const localLng = localObj?.lng || enViaje.local_lng;
-            const montoMostrar = (enViaje.monto_local || enViaje.monto || 0) - (enViaje.fee_envio || 0) - (enViaje.precio_envio || 0);
+            const montoMostrar = enViaje.monto_local || 0;
 
             const isExpanded = expandedOrders[enViaje.id];
 
@@ -2198,37 +2204,6 @@ export default function DriverDashboard() {
           </div>
         )}
 
-        {/* ─── Banner PWA para iPhone ─── */}
-        {isIOS && !isStandalone && (
-          <div className="pwa-install-banner" style={{
-            background: 'linear-gradient(135deg, #c62828 0%, #b71c1c 100%)',
-            color: 'white',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '20px',
-            margin: '0 16px 20px',
-            boxShadow: '0 8px 24px rgba(198, 40, 40, 0.25)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{ position: 'relative', zIndex: 2 }}>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📱 Instala Wepi en tu iPhone
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.95, lineHeight: '1.4' }}>
-                Para <strong>recibir pedidos</strong> en tiempo real, debes anclar la app al inicio:
-                <br />
-                1. Presiona el botón <img src="https://i.postimg.cc/T3yKbZy3/png-transparent-share-icon-computer-icons-button-graphical-user-interface-safari-button-angle-rectan.png" alt="compartir" style={{ height: '22px', verticalAlign: 'middle', margin: '0 2px' }} /> <strong>(icono de la imagen)</strong>.
-                <br />
-                2. Busca y elige <strong>"Agregar a inicio"</strong>.
-                <br />
-                3. Abre la app desde el icono creado.
-              </p>
-            </div>
-            <div style={{ position: 'absolute', right: '-20px', bottom: '-20px', fontSize: '80px', opacity: 0.1 }}>🔔</div>
-          </div>
-        )}
-
         {/* ─── Banner de Notificaciones ─── */}
         {driver && notificationStatus !== 'granted' && (
           <div className={`notification-status-banner ${notificationStatus === 'denied' ? 'denied' : 'pending'}`}>
@@ -2702,7 +2677,7 @@ export default function DriverDashboard() {
                   VALOR DEL SUBTOTAL A PAGAR AL LOCAL:
                 </span>
                 <span style={{ fontSize: '1.5rem', fontWeight: '850', color: '#10b981' }}>
-                  ${Number((cashConfirmPedido.monto_local || cashConfirmPedido.monto || 0) - (cashConfirmPedido.fee_envio || 0) - (cashConfirmPedido.precio_envio || 0)).toLocaleString('es-AR')}
+                  ${Number(cashConfirmPedido.monto_local || 0).toLocaleString('es-AR')}
                 </span>
               </div>
               <p style={{ fontSize: '0.75rem', color: '#64748b', fontStyle: 'italic', margin: 0, lineHeight: '1.4', background: '#f1f5f9', padding: '10px', borderRadius: '6px' }}>
