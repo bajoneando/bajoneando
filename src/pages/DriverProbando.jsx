@@ -1824,7 +1824,7 @@ export default function DriverProbando() {
           </div>
         )}
 
-        {renderPWAInstructionsModal()}
+
         {!driver ? renderAuth() : (
           <div style={{ 
             position: 'relative', 
@@ -2214,7 +2214,8 @@ export default function DriverProbando() {
       <footer className="footer" style={{ background: 'var(--red-800)', color: 'white', borderTop: 'none', padding: '40px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
         <img src="https://i.postimg.cc/htHr0QMM/Tarde-de-superclasico-(1)-(1).png" alt="Wepi" style={{ height: '50px', objectFit: 'contain' }} />
         <p style={{ margin: 0 }}>© 2026 Wepi - Todos los derechos reservados</p>
-        <p style={{ fontSize: '0.8rem', opacity: 0.8, margin: 0 }}>PWA optimizada para uso en moto • GPS en tiempo real</p>
+        <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 'bold' }}>v. 1.1.2</p>
+        <p style={{ fontSize: '0.8rem', opacity: 0.8, margin: 0 }}>PWA optimizada para uso en moto 🛵 GPS en tiempo real</p>
         <button 
           onClick={() => setShowTerms(true)} 
           style={{ background: 'none', border: 'none', color: 'white', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.9rem', opacity: 0.9 }}
