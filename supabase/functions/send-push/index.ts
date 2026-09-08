@@ -256,46 +256,81 @@ Deno.serve(async (req) => {
       throw new Error("Missing required parameters: subscriptionIds (Array)");
     }
 
-    const payload = {
-      app_id: onesignalAppId,
-      include_subscription_ids: subscriptionIds,
-      headings: { 
-        "es": title || "Wepi",
-        "en": title || "Wepi" 
-      },
-      contents: { 
-        "es": message || "Tienes una nueva actualización",
-        "en": message || "You have a new update"
-      },
-      url: url || "https://wepi.com.ar/repartidores",
-      data: data || {},
-    };
+    const osIds: string[] = [];
+    const fcmTokens: string[] = [];
 
-    console.log("🚀 Enviando a OneSignal:", JSON.stringify(payload, null, 2));
-
-    const response = await fetch("https://onesignal.com/api/v1/notifications", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Authorization": `Basic ${onesignalApiKey}`,
-      },
-      body: JSON.stringify(payload),
+    subscriptionIds.forEach(id => {
+      if (!id) return;
+      if (id.length === 36 && id.includes('-')) {
+        osIds.push(id);
+      } else {
+        fcmTokens.push(id);
+      }
     });
 
-    const result = await response.json();
-    console.log("📡 Respuesta de OneSignal:", JSON.stringify(result, null, 2));
+    const promesas = [];
 
-    if (!response.ok) {
-      console.error("❌ Error de OneSignal API:", result);
-      return new Response(JSON.stringify({ success: false, error: result }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: response.status
-      });
+    // Enviar a OneSignal
+    if (osIds.length > 0) {
+      const payloadOS = {
+        app_id: onesignalAppId,
+        include_subscription_ids: osIds,
+        headings: { 
+          "es": title || "Wepi",
+          "en": title || "Wepi" 
+        },
+        contents: { 
+          "es": message || "Tienes una nueva actualización",
+          "en": message || "You have a new update"
+        },
+        url: url || "https://wepi.com.ar/repartidores",
+        data: data || {},
+      };
+
+      console.log("🚀 Enviando a OneSignal:", JSON.stringify(payloadOS, null, 2));
+
+      promesas.push(
+        fetch("https://onesignal.com/api/v1/notifications", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Authorization": `Basic ${onesignalApiKey}`,
+          },
+          body: JSON.stringify(payloadOS),
+        }).then(res => res.json()).then(res => console.log("✅ Respuesta OS:", JSON.stringify(res)))
+      );
     }
 
-    return new Response(JSON.stringify({ success: true, result }), {
+    // Enviar a Firebase FCM
+    if (fcmTokens.length > 0) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+      const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+      
+      console.log(`🚀 Enviando a Firebase FCM (${fcmTokens.length} tokens)`);
+      
+      promesas.push(
+        fetch(`${supabaseUrl}/functions/v1/send-firebase-push`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceRole}`
+          },
+          body: JSON.stringify({
+            tokens: fcmTokens,
+            title: title || "Wepi",
+            message: message || "Tienes una nueva actualización",
+            data: data || {},
+            url: url || "https://wepi.com.ar/repartidores"
+          })
+        }).then(res => res.json()).then(res => console.log("✅ Respuesta FCM:", JSON.stringify(res)))
+      );
+    }
+
+    await Promise.allSettled(promesas);
+
+    return new Response(JSON.stringify({ success: true, message: 'Push sent to Hybrid channels' }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-    })
+    });
 
   } catch (error) {
     console.error("🔥 Error crítico en Edge Function:", (error as Error).message);
