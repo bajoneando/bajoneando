@@ -76,6 +76,7 @@ export default function PushNotificationManager() {
       }
       if (driver?.id) {
         api.repartidorUpdateOneSignalId(driver.id, token).catch(err => console.error("Error guardando en repartidores:", err));
+        api.repartidorUpdateFcmToken(driver.id, token).catch(err => console.error("Error guardando FCM en repartidores:", err));
       }
       if (localUser?.id) {
         api.localUpdateOneSignalId(localUser.id, token).catch(err => console.error("Error guardando en locales:", err));

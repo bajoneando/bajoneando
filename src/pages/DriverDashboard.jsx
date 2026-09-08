@@ -2204,37 +2204,6 @@ export default function DriverDashboard() {
           </div>
         )}
 
-        {/* ─── Banner PWA para iPhone ─── */}
-        {isIOS && !isStandalone && (
-          <div className="pwa-install-banner" style={{
-            background: 'linear-gradient(135deg, #c62828 0%, #b71c1c 100%)',
-            color: 'white',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '20px',
-            margin: '0 16px 20px',
-            boxShadow: '0 8px 24px rgba(198, 40, 40, 0.25)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{ position: 'relative', zIndex: 2 }}>
-              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📱 Instala Wepi en tu iPhone
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.95, lineHeight: '1.4' }}>
-                Para <strong>recibir pedidos</strong> en tiempo real, debes anclar la app al inicio:
-                <br />
-                1. Presiona el botón <img src="https://i.postimg.cc/T3yKbZy3/png-transparent-share-icon-computer-icons-button-graphical-user-interface-safari-button-angle-rectan.png" alt="compartir" style={{ height: '22px', verticalAlign: 'middle', margin: '0 2px' }} /> <strong>(icono de la imagen)</strong>.
-                <br />
-                2. Busca y elige <strong>"Agregar a inicio"</strong>.
-                <br />
-                3. Abre la app desde el icono creado.
-              </p>
-            </div>
-            <div style={{ position: 'absolute', right: '-20px', bottom: '-20px', fontSize: '80px', opacity: 0.1 }}>🔔</div>
-          </div>
-        )}
-
         {/* ─── Banner de Notificaciones ─── */}
         {driver && notificationStatus !== 'granted' && (
           <div className={`notification-status-banner ${notificationStatus === 'denied' ? 'denied' : 'pending'}`}>
@@ -2242,25 +2211,11 @@ export default function DriverDashboard() {
               {notificationStatus === 'denied' ? (
                 <>🚫 <strong>Bloqueadas:</strong> No recibirás alertas de pedidos. Revisa los permisos.</>
               ) : (
-                <>
-                  {isIOS && !isStandalone ? (
-                    <>🔔 <strong>Activa la App:</strong> Añade Wepi al inicio para habilitar el GPS.</>
-                  ) : (
-                    <>🔔 <strong>Activa alertas:</strong> Presiona el botón para recibir pedidos al instante.</>
-                  )}
-                </>
+                <>🔔 <strong>Activa alertas:</strong> Presiona el botón para recibir pedidos al instante.</>
               )}
             </span>
             <div className="banner-actions">
-              {(isIOS || isAndroid) && !isStandalone ? (
-                <button 
-                  className="btn btn-outline btn-sm" 
-                  onClick={() => setShowPWAInstructions(true)}
-                >
-                  {isIOS ? '📱 Instrucciones' : (deferredPrompt ? '📲 Descargar' : '📱 Info')}
-                </button>
-              ) : null}
-              {notificationStatus !== 'denied' && (!isIOS || isStandalone) && (
+              {notificationStatus !== 'denied' && (
                 <button 
                   className="btn btn-primary btn-sm" 
                   onClick={() => {
@@ -2269,13 +2224,14 @@ export default function DriverDashboard() {
                     }
                   }}
                 >
-                  Activar 🛎️
+                  Activar 🔔
                 </button>
               )}
             </div>
           </div>
         )}
-        {renderPWAInstructionsModal()}
+
+
         {!driver ? renderAuth() : (
           driverData === null ? (
             <div className="loading-state" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh', fontSize: '1.2rem', color: 'var(--gray-600)' }}>
