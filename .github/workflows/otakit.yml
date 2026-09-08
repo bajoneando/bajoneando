@@ -3,7 +3,7 @@ name: Deploy to OtaKit
 on:
   push:
     branches:
-      - main
+      - repartidores
 
 jobs:
   deploy:
