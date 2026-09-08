@@ -1803,17 +1803,10 @@ export default function DriverProbando() {
               {notificationStatus === 'denied' ? (
                 <>🚫 <strong>Bloqueadas:</strong> No recibirás alertas de pedidos. Revisa los permisos.</>
               ) : (
-                <>
-                  {isIOS && !isStandalone ? (
-                    <>🔔 <strong>Activa la App:</strong> Añade Wepi al inicio para habilitar el GPS.</>
-                  ) : (
-                    <>🔔 <strong>Activa alertas:</strong> Presiona el botón para recibir pedidos al instante.</>
-                  )}
-                </>
+                <>🔔 <strong>Activa alertas:</strong> Presiona el botón para recibir pedidos al instante.</>
               )}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: window.innerWidth < 500 ? '100%' : 'auto', justifyContent: window.innerWidth < 500 ? 'flex-end' : 'flex-start' }}>
-              
               {notificationStatus !== 'denied' && (
                 <button 
                   className="btn btn-primary btn-sm" 

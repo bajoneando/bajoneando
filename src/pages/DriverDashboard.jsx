@@ -715,8 +715,35 @@ export default function DriverDashboard() {
       // ─── Sync Push Notifications (Hybrid Native/Web) ───
       const platform = Capacitor.getPlatform();
       if (platform === 'ios' || platform === 'android') {
-        console.log("Push: Native environment detected. PushNotificationManager handles registration.");
-        setNotificationStatus('granted');
+        // Native App: Use Firebase Cloud Messaging (FCM) via Capacitor PushNotifications
+        console.log("🔔 Push: Native environment detected. Using Firebase FCM.");
+        
+        PushNotifications.checkPermissions().then((res) => {
+          if (res.receive !== 'granted') {
+            PushNotifications.requestPermissions().then((res) => {
+              if (res.receive === 'denied') {
+                console.log("Push permissions denied.");
+                setNotificationStatus('denied');
+              } else {
+                setNotificationStatus('granted');
+                PushNotifications.register();
+              }
+            });
+          } else {
+            setNotificationStatus('granted');
+            PushNotifications.register();
+          }
+        });
+
+        PushNotifications.addListener('registration', async (token) => {
+          console.log("✅ Firebase FCM Token obtained:", token.value);
+          await api.repartidorUpdateFcmToken(driver.id, token.value).catch(console.error);
+        });
+
+        PushNotifications.addListener('registrationError', (error) => {
+          console.error("❌ Firebase FCM Error:", error);
+        });
+
       } else {
         // PWA/Web: Use OneSignal
         console.log("🔔 Push: Web environment detected. Using OneSignal.");
@@ -2184,8 +2211,348 @@ export default function DriverDashboard() {
               {notificationStatus === 'denied' ? (
                 <>🚫 <strong>Bloqueadas:</strong> No recibirás alertas de pedidos. Revisa los permisos.</>
               ) : (
-                <>
-                  }
+                <>🔔 <strong>Activa alertas:</strong> Presiona el botón para recibir pedidos al instante.</>
+              )}
+            </span>
+            <div className="banner-actions">
+              {notificationStatus !== 'denied' && (
+                <button 
+                  className="btn btn-primary btn-sm" 
+                  onClick={() => {
+                    if (window.OneSignal) {
+                      window.OneSignal.Notifications.requestPermission();
+                    }
+                  }}
+                >
+                  Activar 🔔
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+
+        {!driver ? renderAuth() : (
+          driverData === null ? (
+            <div className="loading-state" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh', fontSize: '1.2rem', color: 'var(--gray-600)' }}>
+              <div className="spinner" style={{ marginRight: '12px' }}></div> Cargando panel de repartidor...
+            </div>
+          ) : driverData.admin_status !== 'Aceptado' ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: 'calc(100vh - 120px)',
+              padding: '24px',
+              background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+              textAlign: 'center'
+            }}>
+              <div className="card" style={{
+                maxWidth: '480px',
+                width: '100%',
+                padding: '40px 32px',
+                borderRadius: '24px',
+                boxShadow: 'var(--shadow-lg)',
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                animation: 'scaleIn 0.5s var(--ease-out) both'
+              }}>
+                <div className="pulse-orange" style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: '#fffbeb',
+                  border: '2px solid #f59e0b',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2.5rem',
+                  marginBottom: '24px'
+                }}>
+                  ⏳
+                </div>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--gray-900)', marginBottom: '16px' }}>
+                  Cuenta pendiente de activación
+                </h2>
+                <p style={{ color: 'var(--gray-600)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '28px' }}>
+                  Hola <strong>{driverData.Nombre || driver.nombre}</strong>. Tu cuenta de repartidor aún no ha sido dada de alta por la administración de Wepi.
+                  <br /><br />
+                  Para comenzar a recibir pedidos y realizar entregas, debés solicitar tu activación.
+                </p>
+
+                <div style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  fontSize: '0.85rem',
+                  color: 'var(--gray-700)',
+                  width: '100%',
+                  textAlign: 'left',
+                  marginBottom: '28px'
+                }}>
+                  <strong>Email registrado:</strong> {driverData.Email || driver.email}
+                </div>
+
+                <a 
+                  href={`https://wa.me/5493756543610?text=${encodeURIComponent(`quiero dar de alta mi cuenta de repartidor en Wepi. Email registrado: ${driverData.Email || driver.email}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary btn-full"
+                  style={{
+                    background: '#25D366',
+                    color: '#ffffff',
+                    boxShadow: '0 4px 14px rgba(37, 211, 102, 0.3)',
+                    border: 'none',
+                    fontSize: '1rem',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '8px',
+                    textDecoration: 'none'
+                  }}
+                >
+                  💬 Pedir alta por WhatsApp
+                </a>
+
+                <button 
+                  onClick={logoutDriver}
+                  className="btn btn-ghost btn-full"
+                  style={{ marginTop: '12px', color: 'var(--red-600)', borderColor: 'var(--red-200)' }}
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
+          ) :
+            <div style={{ 
+              display: 'flex',
+              flexDirection: 'row',
+              position: 'relative', 
+              height: 'calc(100vh - 120px)', 
+              width: '100%', 
+              overflow: 'hidden',
+              background: '#f8f9fa'
+            }}>
+            {/* ─── PANEL LATERAL (Side Panel para Subvistas) ─── */}
+            {view !== 'main' && (
+              <div className="dd-side-panel animate-slide-right">
+                <div style={{ padding: '20px', borderBottom: '1px solid #edf2f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--gray-900)' }}>
+                    {view === 'historial' && '📜 Historial de Entregas'}
+                    {view === 'archivados' && '📁 Liquidaciones Archivadas'}
+                    {view === 'cobros' && '💰 Gestión Cobros'}
+                    {view === 'perfil' && '👤 Configuración'}
+                  </h3>
+                  <button className="btn btn-outline btn-sm" style={{ padding: '4px 8px', minWidth: 'auto', border: '1px solid #cbd5e1' }} onClick={() => setView('main')}>✕ Cerrar</button>
+                </div>
+                <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+                  {view === 'historial' && renderHistorial()}
+                  {view === 'archivados' && renderArchivados()}
+                  {view === 'cobros' && renderCobros()}
+                  {view === 'perfil' && renderPerfil()}
+                </div>
+              </div>
+            )}
+
+            {/* ─── MAPA DE FONDO ─── */}
+            <div style={{ position: 'relative', flex: 1, height: '100%', zIndex: 0 }}>
+              <MapProbandoComponent 
+                localLat={localInfo.lat} 
+                localLng={localInfo.lng} 
+                pedidosActivos={pedidos.filter(p => !p.esBroadcast && ['Confirmado', 'Retirado', 'Pendiente de Pago', 'Pendiente', 'Aceptado', 'Listo', 'Preparando'].includes(p.estado))}
+                driverLat={driverLocation.lat} 
+                driverLng={driverLocation.lng}
+                localName={localInfo.nombre} 
+                isLoaded={isMapLoaded}
+                directions={directions}
+                routeSequence={routeSequence}
+                ciudad={driverData?.ciudad}
+              />
+
+              {/* ─── CAPA SUPERIOR (Estadísticas y Locales) ─── */}
+              {view === 'main' && (
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, padding: '12px 16px', pointerEvents: 'none' }}>
+                  <div className="dd-stats-box animate-slide-down" style={{ 
+                    pointerEvents: 'auto', 
+                    background: 'rgba(255,255,255,0.95)', 
+                    backdropFilter: 'blur(10px)',
+                    marginBottom: '10px',
+                    padding: '12px 16px',
+                    borderRadius: '16px',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+                    border: '1px solid rgba(0,0,0,0.05)'
+                  }}>
+                    <div className="dd-next-stop-container" style={{ position: 'relative', top: 0, left: 0, transform: 'none', width: '100%', maxWidth: 'none', zIndex: 1, marginBottom: showStats ? 12 : 0 }}>
+                      {routeSequence.length > 0 ? (
+                        <div className="dd-next-stop-banner" style={{ background: 'transparent', boxShadow: 'none', border: 'none', padding: 0 }}>
+                          <div className="next-stop-icon">🎯</div>
+                          <div className="next-stop-info">
+                            <span className="next-stop-label">Siguiente Parada</span>
+                            <span className="next-stop-address">{routeSequence[0].address}</span>
+                            <div className="next-stop-meta">
+                              <span>{routeSequence[0].distance}</span>
+                              <span className="dot">•</span>
+                              <span>{routeSequence[0].duration} aprox.</span>
+                            </div>
+                          </div>
+                          <button onClick={() => setShowStats(!showStats)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--red-600)', display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
+                            {showStats ? '▴' : '▾'}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="dd-next-stop-banner" style={{ background: 'transparent', boxShadow: 'none', border: 'none', padding: 0 }}>
+                          <div className="next-stop-icon" style={{ background: '#94a3b8' }}>🏁</div>
+                          <div className="next-stop-info">
+                            <span className="next-stop-label" style={{ color: '#64748b' }}>Estado</span>
+                            <span className="next-stop-address">Buscando pedidos para entregar...</span>
+                          </div>
+                          <button onClick={() => setShowStats(!showStats)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--red-600)', display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
+                            {showStats ? '▴' : '▾'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {showStats && (
+                      <div className="dd-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px' }}>
+                        <div className="dd-stat-item" onClick={() => setShowRankingModal(true)} style={{ padding: '6px 4px', border: 'none', background: '#fff9f0' }}>
+                          <small style={{ fontSize: '0.55rem' }}>🏆 Rank</small>
+                          <strong style={{ fontSize: '0.9rem' }}>#{gamificationStats?.rank_posicion || '—'}</strong>
+                        </div>
+                        <div className="dd-stat-item" onClick={loadPointsHistory} style={{ padding: '6px 4px', border: 'none', background: '#f1f8ff' }}>
+                          <small style={{ fontSize: '0.55rem' }}>💎 Pts</small>
+                          <strong style={{ fontSize: '0.9rem' }}>{gamificationStats?.puntos_totales || 0}</strong>
+                        </div>
+                        <div className="dd-stat-item" style={{ padding: '6px 4px', border: 'none', background: '#f0fdf4' }}>
+                          <small style={{ fontSize: '0.55rem' }}>📦 Env</small>
+                          <strong style={{ fontSize: '0.9rem' }}>{realStats.viajesHoy || 0}</strong>
+                        </div>
+                        <div className="dd-stat-item" onClick={() => setView('cobros')} style={{ padding: '6px 4px', border: 'none', background: '#fef2f2' }}>
+                          <small style={{ fontSize: '0.55rem' }}>💰 Gan</small>
+                          <strong style={{ fontSize: '0.9rem' }}>${realStats.gananciasTotalesHoy || 0}</strong>
+                        </div>
+                        <div className="dd-stat-item" style={{ padding: '6px 4px', border: 'none', background: '#f5f3ff' }}>
+                          <small style={{ fontSize: '0.55rem' }}>⏱️ Retiro</small>
+                          <strong style={{ fontSize: '0.9rem' }}>{realStats.promedioRetiro !== undefined && realStats.promedioRetiro !== null ? `${realStats.promedioRetiro}m` : '—'}</strong>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ─── CAPA INFERIOR (Pedidos Flotantes) ─── */}
+              <div style={{ 
+                position: 'absolute', 
+                bottom: '0', 
+                left: 0, 
+                right: 0, 
+                zIndex: 10, 
+                padding: '10px 16px 20px',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.15) 0%, transparent 100%)',
+                pointerEvents: 'none',
+              }}>
+                {view === 'main' && (
+                  <div style={{ pointerEvents: 'auto', maxHeight: '50vh', overflowY: 'auto', scrollbarWidth: 'none', paddingBottom: '10px' }}>
+                    <div className="dd-floating-orders-list">
+                      {renderDisponibles()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            {renderBroadcastOverlay()}
+          </div>
+        )}
+      </main>
+
+
+
+      {/* Profile Sidebar/Menu */}
+      {driver && profileMenuOpen && (
+        <div className="dd-sidebar-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 1500 }} onClick={() => setProfileMenuOpen(false)}>
+          <div className="dd-sidebar animate-slide-right" style={{ background: 'white', width: '280px', height: '100%', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
+            <div className="dd-sidebar-header" style={{ padding: '30px 20px', background: 'var(--gray-50)', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <img src={driverData?.FotoUrl || "https://i.postimg.cc/Z5N1N0c9/user-avatar.png"} alt="Avatar" className="dd-user-avatar" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--red-500)' }} />
+              <div className="dd-user-info">
+                <strong style={{ display: 'block', fontSize: '1.1rem' }}>{driverData?.Nombre}</strong>
+                <small style={{ color: 'var(--gray-500)' }}>{driverData?.Email}</small>
+              </div>
+            </div>
+            <nav className="dd-sidebar-nav" style={{ flex: 1, padding: '20px 0' }}>
+              <button className={`dd-nav-item ${view === 'main' ? 'active' : ''}`} style={{ 
+                width: '100%', padding: '15px 20px', textAlign: 'left', border: 'none', background: view === 'main' ? 'var(--red-50)' : 'transparent', color: view === 'main' ? 'var(--red-600)' : 'var(--gray-700)', fontWeight: view === 'main' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '12px' 
+              }} onClick={() => { setView('main'); setProfileMenuOpen(false); }}>
+                🏁 Mis Entregas
+              </button>
+              <button className={`dd-nav-item ${view === 'historial' ? 'active' : ''}`} style={{ 
+                width: '100%', padding: '15px 20px', textAlign: 'left', border: 'none', background: view === 'historial' ? 'var(--red-50)' : 'transparent', color: view === 'historial' ? 'var(--red-600)' : 'var(--gray-700)', fontWeight: view === 'historial' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '12px' 
+              }} onClick={() => { setView('historial'); setProfileMenuOpen(false); }}>
+                📜 Historial de Entregas
+              </button>
+              <button className={`dd-nav-item ${view === 'archivados' ? 'active' : ''}`} style={{ 
+                width: '100%', padding: '15px 20px', textAlign: 'left', border: 'none', background: view === 'archivados' ? 'var(--red-50)' : 'transparent', color: view === 'archivados' ? 'var(--red-600)' : 'var(--gray-700)', fontWeight: view === 'archivados' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '12px' 
+              }} onClick={() => { setView('archivados'); fetchArchivados(); setProfileMenuOpen(false); }}>
+                📁 Liquidaciones Archivadas
+              </button>
+              <button className={`dd-nav-item ${view === 'cobros' ? 'active' : ''}`} style={{ 
+                width: '100%', padding: '15px 20px', textAlign: 'left', border: 'none', background: view === 'cobros' ? 'var(--red-50)' : 'transparent', color: view === 'cobros' ? 'var(--red-600)' : 'var(--gray-700)', fontWeight: view === 'cobros' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '12px' 
+              }} onClick={() => { setView('cobros'); loadCobros(); setProfileMenuOpen(false); }}>
+                💰 Gestión Cobros
+              </button>
+              <button className={`dd-nav-item ${view === 'perfil' ? 'active' : ''}`} style={{ 
+                width: '100%', padding: '15px 20px', textAlign: 'left', border: 'none', background: view === 'perfil' ? 'var(--red-50)' : 'transparent', color: view === 'perfil' ? 'var(--red-600)' : 'var(--gray-700)', fontWeight: view === 'perfil' ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: '12px' 
+              }} onClick={() => { setView('perfil'); setProfileMenuOpen(false); }}>
+                👤 Configuración
+              </button>
+
+              <div style={{ margin: '20px 0', height: '1px', background: '#eee' }}></div>
+              <button className="dd-nav-item text-red" style={{ 
+                width: '100%', padding: '15px 20px', textAlign: 'left', border: 'none', background: 'transparent', color: 'var(--red-600)', display: 'flex', alignItems: 'center', gap: '12px' 
+              }} onClick={handleLogout}>
+                🚪 Cerrar Sesión
+              </button>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Modal */}
+      {showChatModal && (
+        <div className="dd-modal-overlay" onClick={() => { setShowChatModal(false); setActiveChatPedidoId(null); }}>
+          <div className="dd-modal-content animate-slide-down" onClick={e => e.stopPropagation()} style={{ height: '500px' }}>
+            <div className="dd-modal-header">
+              <h5>Chat con Cliente</h5>
+              <button className="dd-modal-close" onClick={() => { setShowChatModal(false); setActiveChatPedidoId(null); }}>×</button>
+            </div>
+            <div className="dd-modal-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
+              {chatMessages.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--gray-400)', margin: 'auto' }}>Inicia la conversación con el cliente</div>
+              ) : (
+                chatMessages.map((msg, i) => (
+                  <div key={i} style={{ 
+                    textAlign: msg.sender_id === driver.id ? 'right' : 'left',
+                    marginBottom: '8px'
+                  }}>
+                    <div style={{ 
+                      background: msg.sender_id === driver.id ? 'var(--red-600)' : '#f0f0f0', 
+                      color: msg.sender_id === driver.id ? 'white' : 'black', 
+                      padding: '8px 12px', 
+                      borderRadius: '12px', 
+                      display: 'inline-block',
+                      maxWidth: '80%',
+                      fontSize: '0.9rem',
+                      lineHeight: '1.4'
+                    }}>
+                      {msg.message}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '2px' }}>
+                      {new Date(msg.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' })}
                     </div>
                   </div>
                 ))
