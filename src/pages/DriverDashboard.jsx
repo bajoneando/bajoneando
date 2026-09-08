@@ -712,86 +712,19 @@ export default function DriverDashboard() {
       }
       loadData();
       
-      // ─── Sync Push Notifications (Hybrid Native/Web) ───
+      // 🚀🚀🚀 Sync Push Notifications (Hybrid Native/Web) 🚀🚀🚀
+      // Push notifications are now handled globally by PushNotificationManager.jsx
+      // We only read the permission state for the UI
       const platform = Capacitor.getPlatform();
       if (platform === 'ios' || platform === 'android') {
-        // Native App: Use Firebase Cloud Messaging (FCM) via Capacitor PushNotifications
-        console.log("🔔 Push: Native environment detected. Using Firebase FCM.");
-        
         PushNotifications.checkPermissions().then((res) => {
-          if (res.receive !== 'granted') {
-            PushNotifications.requestPermissions().then((res) => {
-              if (res.receive === 'denied') {
-                console.log("Push permissions denied.");
-                setNotificationStatus('denied');
-              } else {
-                setNotificationStatus('granted');
-                PushNotifications.register();
-              }
-            });
-          } else {
-            setNotificationStatus('granted');
-            PushNotifications.register();
-          }
+          setNotificationStatus(res.receive === 'granted' ? 'granted' : 'denied');
         });
-
-        PushNotifications.addListener('registration', async (token) => {
-          console.log("✅ Firebase FCM Token obtained:", token.value);
-          await api.repartidorUpdateFcmToken(driver.id, token.value).catch(console.error);
-        });
-
-        PushNotifications.addListener('registrationError', (error) => {
-          console.error("❌ Firebase FCM Error:", error);
-        });
-
       } else {
-        // PWA/Web: Use OneSignal
-        console.log("🔔 Push: Web environment detected. Using OneSignal.");
         if (window.OneSignalDeferred) {
-          window.OneSignalDeferred.push(async (OneSignal) => {
-            try {
-              const updateStatus = () => {
-                const perm = OneSignal.Notifications.permission;
-                setNotificationStatus(perm ? 'granted' : (OneSignal.Notifications.permissionNative === 'denied' ? 'denied' : 'default'));
-              };
-              updateStatus();
-
-              const currentSubscription = OneSignal.User.PushSubscription;
-              if (currentSubscription.id) {
-                await api.repartidorUpdateOneSignalId(driver.id, currentSubscription.id);
-              }
-
-              OneSignal.Notifications.addEventListener("permissionChange", async (permission) => {
-                updateStatus();
-                if (permission) {
-                  const sub = OneSignal.User.PushSubscription;
-                  if (sub.id) {
-                    await api.repartidorUpdateOneSignalId(driver.id, sub.id).catch(console.error);
-                  }
-                }
-              });
-
-              OneSignal.User.PushSubscription.addEventListener("change", async (event) => {
-                const newId = event.current?.id || OneSignal.User.PushSubscription.id;
-                if (newId) {
-                  await api.repartidorUpdateOneSignalId(driver.id, newId).catch(console.error);
-                }
-              });
-
-              if (!isIOS && OneSignal.Notifications.permissionNative === 'default' && isActive) {
-                const granted = await OneSignal.Notifications.requestPermission();
-                if (granted) {
-                  setTimeout(async () => {
-                    const subId = OneSignal.User.PushSubscription.id;
-                    if (subId) {
-                      await api.repartidorUpdateOneSignalId(driver.id, subId).catch(console.error);
-                    }
-                  }, 1000);
-                }
-              }
-            } catch (err) {
-              console.error("❌ OneSignal Sync Error:", err);
-            }
+          window.OneSignalDeferred.push((OneSignal) => {
+            const perm = OneSignal.Notifications.permission;
+            setNotificationStatus(perm ? 'granted' : (OneSignal.Notifications.permissionNative === 'denied' ? 'denied' : 'default'));
           });
         }
       }

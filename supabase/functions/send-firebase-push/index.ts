@@ -77,6 +77,18 @@ serve(async (req) => {
           notificationCount: 1
         }
       },
+      // Opciones para iOS (Apple APNs)
+      apns: {
+        headers: {
+          'apns-priority': '10',
+        },
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1
+          }
+        }
+      },
       // Opciones para Web Push
       webpush: {
         headers: {

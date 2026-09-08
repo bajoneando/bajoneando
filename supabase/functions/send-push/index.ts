@@ -139,7 +139,9 @@ Deno.serve(async (req) => {
       const otherDrivers = targetDrivers.filter(d => !priorityDrivers.includes(d));
 
       const sendToHybrid = async (targetDriversList: any[]) => {
-        const osIds = targetDriversList.map(d => d.onesignal_id).filter(Boolean);
+        const rawOsIds = targetDriversList.map(d => d.onesignal_id).filter(Boolean);
+        // Solo enviar a OneSignal los IDs que tengan formato UUID (36 chars con guiones)
+        const osIds = rawOsIds.filter(id => id.length === 36 && id.includes('-'));
         const fcmTokens = targetDriversList.map(d => d.fcm_token).filter(Boolean);
         
         if (osIds.length === 0 && fcmTokens.length === 0) return;
