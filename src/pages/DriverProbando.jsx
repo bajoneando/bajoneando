@@ -1813,16 +1813,8 @@ export default function DriverProbando() {
               )}
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: window.innerWidth < 500 ? '100%' : 'auto', justifyContent: window.innerWidth < 500 ? 'flex-end' : 'flex-start' }}>
-              {(isIOS || isAndroid) && !isStandalone ? (
-                <button 
-                  className="btn btn-outline btn-sm" 
-                  style={{ whiteSpace: 'nowrap', padding: '6px 10px', background: 'white', borderColor: '#91d5ff', color: '#0050b3', fontSize: '0.75rem' }}
-                  onClick={() => setShowPWAInstructions(true)}
-                >
-                  {isIOS ? '📱 Instrucciones' : (deferredPrompt ? '📲 Descargar' : '📱 Info')}
-                </button>
-              ) : null}
-              {notificationStatus !== 'denied' && (!isIOS || isStandalone) && (
+              
+              {notificationStatus !== 'denied' && (
                 <button 
                   className="btn btn-primary btn-sm" 
                   style={{ whiteSpace: 'nowrap', padding: '6px 10px', fontSize: '0.75rem' }}
